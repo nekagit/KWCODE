@@ -1,0 +1,5 @@
+# One prompt ID per line (lines starting with # are ignored)
+# From prompts-export.json: 8=Major Feature, 7=Cursorrules, 4=Implement further
+8
+7
+4
