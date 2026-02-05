@@ -29,11 +29,11 @@ SLEEP_BETWEEN_ROUNDS="${SLEEP_BETWEEN_ROUNDS:-240}"
 # We always send Cmd+I twice so Composer ends open (close-then-open when it was open). Unused; kept for env compatibility.
 AGENT_PANEL_DOUBLE_I="${AGENT_PANEL_DOUBLE_I:-1}"
 
+# Fallback only when cursor_projects.json is missing or empty; count = length of JSON array.
 DEFAULT_PROJECTS=(
     "/Users/nenadkalicanin/Documents/February/KW-February-AITrello"
     "/Users/nenadkalicanin/Documents/February/KW-February-Soladia"
     "/Users/nenadkalicanin/Documents/February/KW-February-Saas"
-    "/Users/nenadkalicanin/Documents/February/KW-February-AIISO"
 )
 
 usage() {
@@ -172,10 +172,15 @@ open_cursor_project() {
 }
 
 run_agent_prompt_in_front() {
-    # Optional $1 = project index (0-based). Use longer toggle delay for 2nd and 3rd projects (index 1, 2) so panel reopens.
+    # Optional $1 = project index (0-based). Longer toggle delay per project so panel reopens (round 1 & 2).
+    # Index 0: 3.5s (1st); index 1: 2.5s (2nd); index 2: 3.0s (3rd); else default.
     local project_index="${1:-0}"
     local toggle_delay="$SLEEP_BETWEEN_TOGGLE"
-    [ "$project_index" = "1" ] || [ "$project_index" = "2" ] && toggle_delay="2.5"
+    case "$project_index" in
+        0) toggle_delay="3.5" ;;
+        1) toggle_delay="2.5" ;;
+        2) toggle_delay="3.0" ;;
+    esac
     # Activate once, then both Cmd+I in same window (no re-activate between them so round 2 stays on correct window).
     osascript <<APPLESCRIPT 2>/dev/null
 tell application "Cursor" to activate
