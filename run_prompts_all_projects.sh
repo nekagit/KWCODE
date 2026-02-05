@@ -208,19 +208,22 @@ run_agent_prompt_in_front() {
     local project_path="${2:-}"
     local round_num="${3:-1}"
     local toggle_delay="$SLEEP_BETWEEN_TOGGLE"
-    # Per-project delays for first rounds; from round 7 onward use longer delay so Composer reliably reopens.
+    local panel_delay="$SLEEP_AFTER_PANEL"
+    # Per-project delays: first window needs more time to be ready and for Composer input to focus; third needs longer toggle so panel reopens.
     if [ "$round_num" -ge 7 ] 2>/dev/null; then
         toggle_delay="5.0"
     else
         case "$project_index" in
-            0) toggle_delay="3.5" ;;
+            0) toggle_delay="3.5"; panel_delay="2.0" ;;  # First window: extra time after opening Composer so paste target is focused
             1) toggle_delay="2.5" ;;
-            2) toggle_delay="3.0" ;;
+            2) toggle_delay="4.5" ;;  # Third window: longer toggle so Composer reliably reopens
         esac
     fi
     # Ensure the correct Cursor window is frontmost (critical after round 7 when many windows exist).
     focus_cursor_window_for_project "$project_path"
     sleep "$SLEEP_AFTER_OPEN"
+    # First project: window may still be initializing; give it extra time before sending Cmd+I.
+    [ "$project_index" -eq 0 ] && sleep 2.0
     # Activate once, then both Cmd+I in same window (close-then-open Composer).
     osascript <<APPLESCRIPT 2>/dev/null
 tell application "Cursor" to activate
@@ -228,7 +231,7 @@ delay 0.2
 tell application "System Events" to keystroke "i" using command down
 delay $toggle_delay
 tell application "System Events" to keystroke "i" using command down
-delay $SLEEP_AFTER_PANEL
+delay $panel_delay
 APPLESCRIPT
     # Paste into Composer input (Cmd+V) then submit (Enter)
     osascript -e 'tell application "Cursor" to activate' 2>/dev/null
