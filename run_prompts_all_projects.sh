@@ -20,11 +20,12 @@ PROMPT_IDS_FILE="${SCRIPT_DIR}/prompt_ids.txt"
 
 SLEEP_AFTER_OPEN_PROJECT="${SLEEP_AFTER_OPEN_PROJECT:-2.5}"
 SLEEP_AFTER_OPEN="${SLEEP_AFTER_OPEN:-2.0}"
-SLEEP_AFTER_PANEL="${SLEEP_AFTER_PANEL:-0.8}"
+SLEEP_AFTER_PANEL="${SLEEP_AFTER_PANEL:-1.5}"
 SLEEP_AFTER_PASTE="${SLEEP_AFTER_PASTE:-0.5}"
 SLEEP_AFTER_ENTER="${SLEEP_AFTER_ENTER:-1.2}"
 SLEEP_BETWEEN_PROJECTS="${SLEEP_BETWEEN_PROJECTS:-2.0}"
 SLEEP_BETWEEN_ROUNDS="${SLEEP_BETWEEN_ROUNDS:-330}"
+# We always send Cmd+I twice so Composer ends open (close-then-open when it was open). Unused; kept for env compatibility.
 AGENT_PANEL_DOUBLE_I="${AGENT_PANEL_DOUBLE_I:-1}"
 
 DEFAULT_PROJECTS=(
@@ -172,12 +173,12 @@ open_cursor_project() {
 run_agent_prompt_in_front() {
     osascript -e 'tell application "Cursor" to activate' 2>/dev/null
     sleep "$SLEEP_AFTER_OPEN"
+    # Cmd+I toggles Composer. Send twice so we end with panel OPEN (works when panel was open: close then open).
     osascript -e 'tell application "System Events" to keystroke "i" using command down' 2>/dev/null
-    if [ "${AGENT_PANEL_DOUBLE_I}" = "1" ]; then
-        sleep 0.4
-        osascript -e 'tell application "System Events" to keystroke "i" using command down' 2>/dev/null
-    fi
+    sleep 0.6
+    osascript -e 'tell application "System Events" to keystroke "i" using command down' 2>/dev/null
     sleep "$SLEEP_AFTER_PANEL"
+    # Paste into Composer input (Cmd+V) then submit (Enter)
     osascript -e 'tell application "System Events" to keystroke "v" using command down' 2>/dev/null
     sleep "$SLEEP_AFTER_PASTE"
     osascript -e 'tell application "System Events" to key code 36' 2>/dev/null
