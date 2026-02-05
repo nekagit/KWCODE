@@ -19,9 +19,9 @@ DEFAULT_JSON="${SCRIPT_DIR}/cursor_projects.json"
 PROMPT_IDS_FILE="${SCRIPT_DIR}/prompt_ids.txt"
 
 SLEEP_AFTER_OPEN_PROJECT="${SLEEP_AFTER_OPEN_PROJECT:-2.5}"
-SLEEP_AFTER_OPEN="${SLEEP_AFTER_OPEN:-2.0}"
-SLEEP_BETWEEN_TOGGLE="${SLEEP_BETWEEN_TOGGLE:-2.5}"
-SLEEP_AFTER_PANEL="${SLEEP_AFTER_PANEL:-1.5}"
+SLEEP_AFTER_OPEN="${SLEEP_AFTER_OPEN:-1.5}"
+SLEEP_BETWEEN_TOGGLE="${SLEEP_BETWEEN_TOGGLE:-2.0}"
+SLEEP_AFTER_PANEL="${SLEEP_AFTER_PANEL:-1.2}"
 SLEEP_AFTER_PASTE="${SLEEP_AFTER_PASTE:-0.5}"
 SLEEP_AFTER_ENTER="${SLEEP_AFTER_ENTER:-1.2}"
 SLEEP_BETWEEN_PROJECTS="${SLEEP_BETWEEN_PROJECTS:-2.0}"
@@ -172,18 +172,16 @@ open_cursor_project() {
 }
 
 run_agent_prompt_in_front() {
-    # Optional $1 = project index (0-based). Use longer toggle delay for 3rd project (index 2) so panel reopens.
+    # Optional $1 = project index (0-based). Use longer toggle delay for 2nd and 3rd projects (index 1, 2) so panel reopens.
     local project_index="${1:-0}"
     local toggle_delay="$SLEEP_BETWEEN_TOGGLE"
-    [ "$project_index" = "2" ] && toggle_delay="3.5"
-    # Run activate + both Cmd+I in one AppleScript so Cursor keeps focus and second Cmd+I is delivered.
+    [ "$project_index" = "1" ] || [ "$project_index" = "2" ] && toggle_delay="2.5"
+    # Activate once, then both Cmd+I in same window (no re-activate between them so round 2 stays on correct window).
     osascript <<APPLESCRIPT 2>/dev/null
 tell application "Cursor" to activate
 delay $SLEEP_AFTER_OPEN
 tell application "System Events" to keystroke "i" using command down
 delay $toggle_delay
-tell application "Cursor" to activate
-delay 0.8
 tell application "System Events" to keystroke "i" using command down
 delay $SLEEP_AFTER_PANEL
 APPLESCRIPT

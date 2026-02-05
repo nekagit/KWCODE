@@ -47,7 +47,7 @@ Combined prompt = content of prompt ID 1, then `---`, then content of ID 2, etc.
 - `SLEEP_BETWEEN_ROUNDS` – seconds between rounds (default: 240)
 - `SLEEP_AFTER_OPEN_PROJECT` – seconds to wait after opening each project before paste/Enter (default: 2.5); increase if the 4th (or later) project doesn’t get focus
 - `SLEEP_BETWEEN_PROJECTS` – seconds between moving to the next project (default: 2.0)
-- `SLEEP_BETWEEN_TOGGLE` – seconds between the two Cmd+I (close then reopen Composer); increase if panel doesn’t reopen (default: 2.5)
+- `SLEEP_BETWEEN_TOGGLE` – seconds between the two Cmd+I (close then reopen Composer); increase if panel doesn’t reopen (default: 2.0)
 - `SLEEP_AFTER_OPEN`, `SLEEP_AFTER_PANEL`, `SLEEP_AFTER_PASTE`, `SLEEP_AFTER_ENTER` – timing for UI automation
 - `AGENT_PANEL_DOUBLE_I` – script always sends Cmd+I twice so Composer ends open (close then open when it was open).
 
