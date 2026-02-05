@@ -172,13 +172,16 @@ open_cursor_project() {
 }
 
 run_agent_prompt_in_front() {
+    # Optional $1 = project index (0-based). Use longer toggle delay for 3rd project (index 2) so panel reopens.
+    local project_index="${1:-0}"
+    local toggle_delay="$SLEEP_BETWEEN_TOGGLE"
+    [ "$project_index" = "2" ] && toggle_delay="3.5"
     # Run activate + both Cmd+I in one AppleScript so Cursor keeps focus and second Cmd+I is delivered.
-    # Cmd+I toggles Composer: 1st close, 2nd open (so we end with panel OPEN).
     osascript <<APPLESCRIPT 2>/dev/null
 tell application "Cursor" to activate
 delay $SLEEP_AFTER_OPEN
 tell application "System Events" to keystroke "i" using command down
-delay $SLEEP_BETWEEN_TOGGLE
+delay $toggle_delay
 tell application "Cursor" to activate
 delay 0.8
 tell application "System Events" to keystroke "i" using command down
@@ -283,7 +286,7 @@ while true; do
         open_cursor_project "${PROJECTS[$i]}" "$(basename "${PROJECTS[$i]}")"
         sleep "$SLEEP_AFTER_OPEN_PROJECT"
         echo "  → Composer: paste prompt, Enter..."
-        run_agent_prompt_in_front
+        run_agent_prompt_in_front "$i"
         echo "  ✓ Prompt sent."
         [ $i -lt $((${#PROJECTS[@]} - 1)) ] && sleep "$SLEEP_BETWEEN_PROJECTS"
     done
