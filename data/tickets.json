@@ -1,0 +1,11 @@
+[
+  {
+    "id": "7a439a81-c282-4f8d-bb0e-b53b6080f820",
+    "title": "Calendar event adding",
+    "description": "i want to click on a day in the calendar and it opens a shadcn component belwo where i add the details to add",
+    "status": "backlog",
+    "priority": 0,
+    "created_at": "2026-02-05T12:57:53.154Z",
+    "updated_at": "2026-02-05T12:57:53.154Z"
+  }
+]

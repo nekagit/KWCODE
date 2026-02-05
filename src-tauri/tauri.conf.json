@@ -1,0 +1,36 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Run Prompts Control",
+  "identifier": "com.runprompts.app",
+  "build": {
+    "beforeDevCommand": "npm run dev:tauri",
+    "devUrl": "http://127.0.0.1:4000/tauri-load.html",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../out"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "Run Prompts Control",
+        "width": 1000,
+        "height": 780,
+        "minWidth": 800,
+        "minHeight": 600,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "assetProtocol": {
+        "enable": true,
+        "scope": [
+          "**"
+        ]
+      },
+      "capabilities": [
+        "default"
+      ]
+    }
+  },
+  "plugins": {}
+}
