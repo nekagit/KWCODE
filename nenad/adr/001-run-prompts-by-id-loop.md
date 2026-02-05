@@ -13,7 +13,7 @@ We need to run the same set of prompts (from an export JSON) in every Cursor pro
 - **New script**: `run_prompts_all_projects.sh` (separate from `open_cursor_projects.sh`).
 - **Prompt selection**: User supplies a list of prompt IDs (e.g. `8 7 4`). Script loads `prompts-export.json`, looks up each ID, and concatenates the `content` fields in order (with `---` between them). That combined text is copied to the clipboard and pasted once per project per round.
 - **Projects**: Reuse the same source as existing automation: `cursor_projects.json` (array of project paths), with the same defaults if the file is missing.
-- **Loop**: For each round: set clipboard from combined prompt → for each project open Cursor, open Composer, paste, Enter → sleep 330 seconds → repeat. Process runs until terminated (e.g. Ctrl+C).
+- **Loop**: For each round: set clipboard from combined prompt → for each project open Cursor, open Composer, paste, Enter → sleep 240 seconds → repeat. Process runs until terminated (e.g. Ctrl+C).
 - **Clipboard**: Use a temp file for the combined prompt and `pbcopy < file` to avoid huge shell variables and to support large prompt bodies.
 - **IDs input**: Support `-p ID [ID ...]` and `-p ID1,ID2,ID3`, and optionally `-f prompt_ids.txt` (one ID per line).
 
