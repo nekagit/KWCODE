@@ -1,7 +1,7 @@
 #!/bin/bash
 # Run selected prompts from prompts-export.json in each Cursor project, in a loop.
 # For each project: open Cursor, open Composer (Cmd+I), paste prompt content, Enter.
-# Then wait 240 seconds and repeat until you stop the process (Ctrl+C).
+# Then wait 180 seconds and repeat until you stop the process (Ctrl+C).
 #
 # Usage:
 #   ./run_prompts_all_projects.sh -p 8 7 4
@@ -25,7 +25,7 @@ SLEEP_AFTER_PANEL="${SLEEP_AFTER_PANEL:-1.2}"
 SLEEP_AFTER_PASTE="${SLEEP_AFTER_PASTE:-0.5}"
 SLEEP_AFTER_ENTER="${SLEEP_AFTER_ENTER:-1.2}"
 SLEEP_BETWEEN_PROJECTS="${SLEEP_BETWEEN_PROJECTS:-2.0}"
-SLEEP_BETWEEN_ROUNDS="${SLEEP_BETWEEN_ROUNDS:-240}"
+SLEEP_BETWEEN_ROUNDS="${SLEEP_BETWEEN_ROUNDS:-180}"
 # We always send Cmd+I twice so Composer ends open (close-then-open when it was open). Unused; kept for env compatibility.
 AGENT_PANEL_DOUBLE_I="${AGENT_PANEL_DOUBLE_I:-1}"
 
@@ -171,20 +171,60 @@ open_cursor_project() {
     return 0
 }
 
+# Bring the Cursor window whose title contains the project folder name to front.
+# After many rounds, the correct window may not be frontmost; this ensures we send Cmd+I to the right window.
+focus_cursor_window_for_project() {
+    local project_path="$1"
+    [ -z "$project_path" ] && return 0
+    local win_name
+    win_name=$(basename "$project_path")
+    [ -z "$win_name" ] && return 0
+    # Escape for AppleScript string: backslash and double-quote
+    local win_name_escaped
+    win_name_escaped=$(printf '%s' "$win_name" | sed 's/\\/\\\\/g; s/"/\\"/g')
+    osascript 2>/dev/null <<APPLESCRIPT
+tell application "Cursor" to activate
+delay 0.3
+tell application "System Events"
+    tell process "Cursor"
+        set winCount to count of windows
+        repeat with w from 1 to winCount
+            try
+                set winName to name of window w
+                if winName contains "$win_name_escaped" then
+                    set index of window w to 1
+                    return
+                end if
+            end try
+        end repeat
+    end tell
+end tell
+APPLESCRIPT
+}
+
 run_agent_prompt_in_front() {
-    # Optional $1 = project index (0-based). Longer toggle delay per project so panel reopens (round 1 & 2).
-    # Index 0: 3.5s (1st); index 1: 2.5s (2nd); index 2: 3.0s (3rd); else default.
+    # $1 = project index (0-based), $2 = project path (for window focus), $3 = round number (for later-round delays).
     local project_index="${1:-0}"
+    local project_path="${2:-}"
+    local round_num="${3:-1}"
     local toggle_delay="$SLEEP_BETWEEN_TOGGLE"
-    case "$project_index" in
-        0) toggle_delay="3.5" ;;
-        1) toggle_delay="2.5" ;;
-        2) toggle_delay="3.0" ;;
-    esac
-    # Activate once, then both Cmd+I in same window (no re-activate between them so round 2 stays on correct window).
+    # Per-project delays for first rounds; from round 7 onward use longer delay so Composer reliably reopens.
+    if [ "$round_num" -ge 7 ] 2>/dev/null; then
+        toggle_delay="5.0"
+    else
+        case "$project_index" in
+            0) toggle_delay="3.5" ;;
+            1) toggle_delay="2.5" ;;
+            2) toggle_delay="3.0" ;;
+        esac
+    fi
+    # Ensure the correct Cursor window is frontmost (critical after round 7 when many windows exist).
+    focus_cursor_window_for_project "$project_path"
+    sleep "$SLEEP_AFTER_OPEN"
+    # Activate once, then both Cmd+I in same window (close-then-open Composer).
     osascript <<APPLESCRIPT 2>/dev/null
 tell application "Cursor" to activate
-delay $SLEEP_AFTER_OPEN
+delay 0.2
 tell application "System Events" to keystroke "i" using command down
 delay $toggle_delay
 tell application "System Events" to keystroke "i" using command down
@@ -289,7 +329,7 @@ while true; do
         open_cursor_project "${PROJECTS[$i]}" "$(basename "${PROJECTS[$i]}")"
         sleep "$SLEEP_AFTER_OPEN_PROJECT"
         echo "  → Composer: paste prompt, Enter..."
-        run_agent_prompt_in_front "$i"
+        run_agent_prompt_in_front "$i" "${PROJECTS[$i]}" "$ROUND"
         echo "  ✓ Prompt sent."
         [ $i -lt $((${#PROJECTS[@]} - 1)) ] && sleep "$SLEEP_BETWEEN_PROJECTS"
     done
