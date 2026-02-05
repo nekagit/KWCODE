@@ -1,7 +1,7 @@
 #!/bin/bash
 # Run selected prompts from prompts-export.json in each Cursor project, in a loop.
-# For each project: open Cursor, open Composer (Cmd+I), paste prompt content, Enter.
-# Then wait 180 seconds and repeat until you stop the process (Ctrl+C).
+# For each project: open Cursor, find Composer sidebar input (Plan, @... or Add a follow-up), focus it, paste prompt, Enter.
+# If the panel isn't visible, open Composer with Cmd+I once, then focus and paste. Then wait 180s and repeat. Stop with Ctrl+C.
 #
 # Usage:
 #   ./run_prompts_all_projects.sh -p 8 7 4
@@ -171,6 +171,62 @@ open_cursor_project() {
     return 0
 }
 
+# Find the Composer sidebar input (placeholder "Plan, @ for context..." or "Add a follow-up") and focus it.
+# If the input is not found, the sidebar is not open — open it with Cmd+I, wait, then find and focus the input.
+# Returns 0 if input was focused, 1 if not found.
+focus_composer_input() {
+    local result
+    result=$(osascript 2>/dev/null <<'APPLESCRIPT'
+tell application "Cursor" to activate
+delay 0.5
+tell application "System Events"
+    tell process "Cursor"
+        try
+            set frontWin to front window
+            set allEls to entire contents of frontWin
+            repeat with el in allEls
+                try
+                    set r to role of el as text
+                    set desc to (description of el) as text
+                    set val to (value of el) as text
+                    if (r is "AXTextField" or r is "AXTextArea" or r is "AXComboBox" or r contains "text") then
+                        if (desc contains "Plan" or desc contains "follow-up" or desc contains "follow up" or desc contains "Add a follow" or val contains "Plan" or val contains "follow-up" or val contains "follow up" or val contains "Add a follow") then
+                            perform action "AXPress" of el
+                            delay 0.5
+                            return "ok"
+                        end if
+                    end if
+                end try
+            end repeat
+            -- No input found: sidebar is not open — open it with Cmd+I
+            keystroke "i" using command down
+            delay 3.0
+            set allEls to entire contents of front window
+            repeat with el in allEls
+                try
+                    set r to role of el as text
+                    set desc to (description of el) as text
+                    set val to (value of el) as text
+                    if (r is "AXTextField" or r is "AXTextArea" or r is "AXComboBox" or r contains "text") then
+                        if (desc contains "Plan" or desc contains "follow-up" or desc contains "follow up" or desc contains "Add a follow" or val contains "Plan" or val contains "follow-up" or val contains "follow up" or val contains "Add a follow") then
+                            perform action "AXPress" of el
+                            delay 0.5
+                            return "ok"
+                        end if
+                    end if
+                end try
+            end repeat
+            return "fail"
+        on error errMsg
+            return "fail"
+        end try
+    end tell
+end tell
+APPLESCRIPT
+)
+    [ "$result" = "ok" ]
+}
+
 # Bring the Cursor window whose title contains the project folder name to front.
 # After many rounds, the correct window may not be frontmost; this ensures we send Cmd+I to the right window.
 focus_cursor_window_for_project() {
@@ -203,37 +259,20 @@ APPLESCRIPT
 }
 
 run_agent_prompt_in_front() {
-    # $1 = project index (0-based), $2 = project path (for window focus), $3 = round number (for later-round delays).
+    # $1 = project index (0-based), $2 = project path (for window focus), $3 = round number (unused; kept for compatibility).
     local project_index="${1:-0}"
     local project_path="${2:-}"
-    local round_num="${3:-1}"
-    local toggle_delay="$SLEEP_BETWEEN_TOGGLE"
-    local panel_delay="$SLEEP_AFTER_PANEL"
-    # Per-project delays: first window needs more time to be ready and for Composer input to focus; third needs longer toggle so panel reopens.
-    if [ "$round_num" -ge 7 ] 2>/dev/null; then
-        toggle_delay="5.0"
-    else
-        case "$project_index" in
-            0) toggle_delay="3.5"; panel_delay="2.0" ;;  # First window: extra time after opening Composer so paste target is focused
-            1) toggle_delay="2.5" ;;
-            2) toggle_delay="4.5" ;;  # Third window: longer toggle so Composer reliably reopens
-        esac
-    fi
-    # Ensure the correct Cursor window is frontmost (critical after round 7 when many windows exist).
+    # Ensure the correct Cursor window is frontmost.
     focus_cursor_window_for_project "$project_path"
     sleep "$SLEEP_AFTER_OPEN"
-    # First project: window may still be initializing; give it extra time before sending Cmd+I.
-    [ "$project_index" -eq 0 ] && sleep 2.0
-    # Activate once, then both Cmd+I in same window (close-then-open Composer).
-    osascript <<APPLESCRIPT 2>/dev/null
-tell application "Cursor" to activate
-delay 0.2
-tell application "System Events" to keystroke "i" using command down
-delay $toggle_delay
-tell application "System Events" to keystroke "i" using command down
-delay $panel_delay
-APPLESCRIPT
-    # Paste into Composer input (Cmd+V) then submit (Enter)
+    # First project: window may still be initializing.
+    [ "$project_index" -eq 0 ] && sleep 1.5
+    # Find Composer input; if not found, sidebar is not open — focus_composer_input opens it with Cmd+I and then finds/focuses the input.
+    if ! focus_composer_input; then
+        # focus_composer_input already sent Cmd+I once; still no input found. Wait a bit then paste (Cursor may have focused the input when opening).
+        sleep 0.5
+    fi
+    # Paste into Composer input and submit (Enter)
     osascript -e 'tell application "Cursor" to activate' 2>/dev/null
     sleep 0.2
     osascript -e 'tell application "System Events" to keystroke "v" using command down' 2>/dev/null
