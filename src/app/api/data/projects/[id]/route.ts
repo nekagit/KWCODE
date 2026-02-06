@@ -173,6 +173,17 @@ export async function PUT(
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
     const now = new Date().toISOString();
+    const specFilesValid =
+      Array.isArray(body.specFiles) &&
+      body.specFiles.every(
+        (e: unknown) => {
+          if (typeof e !== "object" || e == null || !("name" in e) || !("path" in e)) return false;
+          const o = e as { name: unknown; path: unknown; content?: unknown };
+          return typeof o.name === "string" && typeof o.path === "string" && (o.content === undefined || typeof o.content === "string");
+        }
+      )
+        ? (body.specFiles as { name: string; path: string; content?: string }[])
+        : undefined;
     const updated: Project = {
       ...projects[idx],
       ...(typeof body.name === "string" && { name: body.name.trim() }),
@@ -185,6 +196,7 @@ export async function PUT(
       ...(Array.isArray(body.designIds) && { designIds: body.designIds.filter((s: unknown) => typeof s === "string") }),
       ...(Array.isArray(body.architectureIds) && { architectureIds: body.architectureIds.filter((s: unknown) => typeof s === "string") }),
       ...(body.entityCategories !== undefined && typeof body.entityCategories === "object" && body.entityCategories !== null && { entityCategories: body.entityCategories as ProjectEntityCategories }),
+      ...(specFilesValid !== undefined && { specFiles: specFilesValid }),
       updated_at: now,
     };
     projects[idx] = updated;
@@ -197,6 +209,14 @@ export async function PUT(
       { status: 500 }
     );
   }
+}
+
+/** PATCH: same as PUT (partial merge). */
+export async function PATCH(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  return PUT(request, context);
 }
 
 /** DELETE: remove project */

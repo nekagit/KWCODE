@@ -34,6 +34,8 @@ export interface Project {
   architectureIds?: string[];
   /** Per-entity categorizations (phase, step, organization, categorizer, other) within this project. */
   entityCategories?: ProjectEntityCategories;
+  /** Files in the project spec: from .cursor (path only) or exported from Design/Architecture/Features (path + content). */
+  specFiles?: { name: string; path: string; content?: string }[];
   created_at?: string;
   updated_at?: string;
 }

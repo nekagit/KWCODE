@@ -1,26 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Empty } from "@/components/ui/empty";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Folders, Plus, MessageSquare, Ticket as TicketIcon, Layers, Lightbulb, Loader2, ArrowRight, Sparkles, Wand2, Trash2 } from "lucide-react";
+import { Folders, Plus, MessageSquare, Ticket as TicketIcon, Layers, Lightbulb, Loader2, ArrowRight, Sparkles, Wand2, Trash2, FolderOpen } from "lucide-react";
 import type { Project } from "@/types/project";
 import { TEMPLATE_IDEAS } from "@/data/template-ideas";
 import { listProjects, deleteProject } from "@/lib/api-projects";
+import { invoke, isTauri } from "@/lib/tauri";
 
 export default function ProjectsListPage() {
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [localPaths, setLocalPaths] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [seeding, setSeeding] = useState(false);
@@ -35,7 +38,6 @@ export default function ProjectsListPage() {
   const handleDelete = async (projectId: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!confirm("Delete this project? This does not delete linked designs, ideas, or prompts from their libraries.")) return;
     setError(null);
     try {
       await deleteProject(projectId);
@@ -45,23 +47,35 @@ export default function ProjectsListPage() {
     }
   };
 
+  const timedOutRef = useRef(false);
   useEffect(() => {
     let cancelled = false;
+    timedOutRef.current = false;
     setLoading(true);
     setError(null);
-    const timeoutMs = 8_000;
+    const timeoutMs = 6_000;
     const timeoutId = setTimeout(() => {
       if (!cancelled) {
+        timedOutRef.current = true;
         setLoading(false);
         setError("Request timed out. Check that the app is connected (browser: dev server running; Tauri: data/projects.json readable).");
       }
     }, timeoutMs);
-    listProjects()
+    const listWithTimeout = Promise.race([
+      listProjects(),
+      new Promise<Project[]>((_, reject) =>
+        setTimeout(() => {
+          timedOutRef.current = true;
+          reject(new Error("Request timed out"));
+        }, timeoutMs - 500)
+      ),
+    ]);
+    listWithTimeout
       .then((data) => {
-        if (!cancelled) setProjects(Array.isArray(data) ? data : []);
+        if (!cancelled && !timedOutRef.current) setProjects(Array.isArray(data) ? data : []);
       })
       .catch((e) => {
-        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
+        if (!cancelled && !timedOutRef.current) setError(e instanceof Error ? e.message : String(e));
       })
       .finally(() => {
         if (!cancelled) {
@@ -69,6 +83,21 @@ export default function ProjectsListPage() {
           setLoading(false);
         }
       });
+
+    const loadLocalPaths = () => {
+      if (isTauri()) {
+        invoke<string[]>("list_february_folders")
+          .then((paths) => setLocalPaths(Array.isArray(paths) ? paths : []))
+          .catch(() => setLocalPaths([]));
+      } else {
+        fetch("/api/data/february-folders")
+          .then((r) => (r.ok ? r.json() : { folders: [] }))
+          .then((data) => setLocalPaths(Array.isArray(data.folders) ? data.folders : []))
+          .catch(() => setLocalPaths([]));
+      }
+    };
+    loadLocalPaths();
+
     return () => {
       cancelled = true;
       clearTimeout(timeoutId);
@@ -214,6 +243,53 @@ export default function ProjectsListPage() {
           </AccordionContent>
         </AccordionItem>
       </Accordion>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <FolderOpen className="h-4 w-4" />
+            Local projects
+          </CardTitle>
+          <CardDescription>
+            All folders in your <code className="text-xs bg-muted px-1 rounded">Documents/February</code> folder. Use a path to create a first-class project above or for runs.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {localPaths.length === 0 ? (
+            <Empty
+              icon={<FolderOpen className="h-6 w-6" />}
+              title="No February folders"
+              description="No subfolders found in your Documents/February folder, or the app is not running from a project inside it."
+            />
+          ) : (
+            <ScrollArea className="h-[240px] rounded-md border p-3">
+              <ul className="space-y-2 text-sm">
+                {localPaths.map((path, i) => (
+                  <li
+                    key={i}
+                    className="flex items-center gap-2 rounded-md py-1.5 px-2 hover:bg-muted/50 group"
+                  >
+                    <span className="flex-1 min-w-0 truncate font-mono text-muted-foreground" title={path}>
+                      {path}
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="shrink-0"
+                      asChild
+                    >
+                      <Link href={`/projects/new?repoPath=${encodeURIComponent(path)}`}>
+                        <Plus className="h-3.5 w-3 mr-1" />
+                        Create project
+                      </Link>
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </ScrollArea>
+          )}
+        </CardContent>
+      </Card>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">

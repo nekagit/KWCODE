@@ -35,24 +35,55 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   return text ? (JSON.parse(text) as T) : (undefined as T);
 }
 
-/** List all projects */
+const INVOKE_TIMEOUT_MS = 4000;
+
+/** List all projects. In Tauri: try invoke first with timeout; fallback to fetch so we never hang (e.g. IPC or permissions). */
 export async function listProjects(): Promise<Project[]> {
   if (isTauri()) {
-    const json = await invoke<string>("list_projects");
-    const data = JSON.parse(json) as unknown;
-    return Array.isArray(data) ? (data as Project[]) : [];
+    const fromInvoke = invoke<string>("list_projects").then((json) => {
+      const data = JSON.parse(json) as unknown;
+      return Array.isArray(data) ? (data as Project[]) : [];
+    });
+    const timeout = new Promise<Project[]>((_, reject) =>
+      setTimeout(() => reject(new Error("Tauri invoke timed out")), INVOKE_TIMEOUT_MS)
+    );
+    try {
+      return await Promise.race([fromInvoke, timeout]);
+    } catch {
+      // Fallback to HTTP API (same origin in Tauri dev: app is served by Next at 127.0.0.1:4000)
+      const data = await fetchJson<Project[]>(API).catch(() => []);
+      return Array.isArray(data) ? data : [];
+    }
   }
   const data = await fetchJson<Project[]>(API);
   return Array.isArray(data) ? data : [];
 }
 
-/** Get one project by id */
+/** Get one project by id (raw, no resolved entities) */
 export async function getProject(id: string): Promise<Project> {
   if (isTauri()) {
     const json = await invoke<string>("get_project", { id });
     return JSON.parse(json) as Project;
   }
   return fetchJson<Project>(`${API}/${encodeURIComponent(id)}`);
+}
+
+export type ResolvedProject = Project & {
+  prompts: unknown[];
+  tickets: unknown[];
+  features: unknown[];
+  ideas: unknown[];
+  designs: unknown[];
+  architectures: unknown[];
+};
+
+/** Get one project with resolved prompts, tickets, features, ideas, designs, architectures. In Tauri uses same sources as dashboard (SQLite + JSON) so counts match "All data". */
+export async function getProjectResolved(id: string): Promise<ResolvedProject> {
+  if (isTauri()) {
+    const json = await invoke<string>("get_project_resolved", { id });
+    return JSON.parse(json) as ResolvedProject;
+  }
+  return fetchJson<ResolvedProject>(`${API}/${encodeURIComponent(id)}`);
 }
 
 /** Create a new project */

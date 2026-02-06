@@ -231,7 +231,6 @@ export default function ArchitecturePage() {
 
   const handleDelete = useCallback(
     async (id: string) => {
-      if (!confirm("Delete this architecture definition?")) return;
       try {
         const res = await fetch(`/api/data/architectures/${id}`, { method: "DELETE" });
         if (!res.ok) {

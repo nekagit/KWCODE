@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -17,10 +17,17 @@ import {
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useRunState } from "@/context/run-state";
 import { Plus, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 
 type PromptRecord = {
   id: number;
@@ -35,7 +42,6 @@ type PromptRecord = {
 export default function PromptsPage() {
   const {
     error,
-    prompts,
     selectedPromptIds,
     setSelectedPromptIds,
     refreshData,
@@ -54,6 +60,28 @@ export default function PromptsPage() {
   const [generateResult, setGenerateResult] = useState<{ title: string; content: string } | null>(null);
   const [generateLoading, setGenerateLoading] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
+
+  const [fullPrompts, setFullPrompts] = useState<PromptRecord[]>([]);
+  const [tableLoading, setTableLoading] = useState(true);
+
+  const fetchFullPrompts = useCallback(async () => {
+    setTableLoading(true);
+    try {
+      const res = await fetch("/api/data/prompts");
+      if (res.ok) {
+        const list: PromptRecord[] = await res.json();
+        setFullPrompts(Array.isArray(list) ? list : []);
+      }
+    } catch {
+      setFullPrompts([]);
+    } finally {
+      setTableLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchFullPrompts();
+  }, [fetchFullPrompts]);
 
   const openCreate = useCallback(() => {
     setFormId(undefined);
@@ -103,6 +131,7 @@ export default function PromptsPage() {
         throw new Error(err.error || res.statusText);
       }
       await refreshData();
+      fetchFullPrompts();
       setCreateOpen(false);
       setFormTitle("");
       setFormContent("");
@@ -111,7 +140,7 @@ export default function PromptsPage() {
     } finally {
       setSaveLoading(false);
     }
-  }, [formTitle, formContent, refreshData, setError]);
+  }, [formTitle, formContent, refreshData, setError, fetchFullPrompts]);
 
   const handleSaveEdit = useCallback(async () => {
     if (formId === undefined || !formTitle.trim()) return;
@@ -132,6 +161,7 @@ export default function PromptsPage() {
         throw new Error(err.error || res.statusText);
       }
       await refreshData();
+      fetchFullPrompts();
       setEditOpen(false);
       setFormId(undefined);
       setFormTitle("");
@@ -141,7 +171,7 @@ export default function PromptsPage() {
     } finally {
       setSaveLoading(false);
     }
-  }, [formId, formTitle, formContent, refreshData, setError]);
+  }, [formId, formTitle, formContent, refreshData, setError, fetchFullPrompts]);
 
   const handleGenerate = useCallback(async () => {
     if (!generateDescription.trim()) return;
@@ -197,6 +227,7 @@ export default function PromptsPage() {
         throw new Error(err.error || res.statusText);
       }
       await refreshData();
+      fetchFullPrompts();
       setGenerateOpen(false);
       setGenerateResult(null);
       setGenerateDescription("");
@@ -205,13 +236,12 @@ export default function PromptsPage() {
     } finally {
       setSaveLoading(false);
     }
-  }, [generateResult, refreshData, setError]);
+  }, [generateResult, refreshData, setError, fetchFullPrompts]);
 
   const canEdit = selectedPromptIds.length === 1;
 
   const handleDelete = useCallback(
     async (promptId: number) => {
-      if (!confirm("Delete this prompt?")) return;
       setError(null);
       try {
         const res = await fetch(`/api/data/prompts/${promptId}`, { method: "DELETE" });
@@ -220,6 +250,7 @@ export default function PromptsPage() {
           throw new Error(err.error || res.statusText);
         }
         await refreshData();
+        fetchFullPrompts();
         setSelectedPromptIds((prev) => prev.filter((id) => id !== promptId));
         toast.success("Prompt removed");
       } catch (e) {
@@ -228,7 +259,7 @@ export default function PromptsPage() {
         toast.error(msg);
       }
     },
-    [refreshData, setSelectedPromptIds, setError]
+    [refreshData, fetchFullPrompts, setSelectedPromptIds, setError]
   );
 
   return (
@@ -242,14 +273,15 @@ export default function PromptsPage() {
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <CardTitle className="text-base">Prompts</CardTitle>
+              <CardTitle className="text-base">All prompts data</CardTitle>
               <CardDescription className="mt-1">
-                Select prompt IDs to run (script <code className="text-xs">-p ID ...</code>). To
-                start the script, go to the{" "}
+                Full list of prompts with id, title, category, tags, dates, and content preview.
+                Select in the table for run (script <code className="text-xs">-p ID ...</code>); go
+                to the{" "}
                 <Link href="/run" className="underline hover:text-foreground">
                   Run
                 </Link>{" "}
-                page where you can set prompts, projects, and run. Configure timing on the{" "}
+                page to set prompts and run. Edit or delete from the table. Configure timing on the{" "}
                 <Link href="/configuration" className="underline hover:text-foreground">
                   Configuration
                 </Link>{" "}
@@ -279,44 +311,101 @@ export default function PromptsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {prompts.map((p) => (
-              <div
-                key={p.id}
-                className={cn(
-                  "flex items-center gap-2 rounded-md border px-3 py-2 hover:bg-muted/50",
-                  selectedPromptIds.includes(p.id) && "bg-muted/50"
-                )}
-              >
-                <label className="flex cursor-pointer flex-1 min-w-0 items-center gap-2">
-                  <Checkbox
-                    checked={selectedPromptIds.includes(p.id)}
-                    onCheckedChange={(checked) => {
-                      setSelectedPromptIds((prev) =>
-                        checked ? [...prev, p.id] : prev.filter((id) => id !== p.id)
-                      );
-                    }}
-                  />
-                  <span className="text-sm truncate">
-                    {p.id}: {p.title}
-                  </span>
-                </label>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 w-8 p-0 shrink-0 text-destructive hover:text-destructive"
-                  title="Delete prompt"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleDelete(p.id);
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-          </div>
+          {tableLoading ? (
+            <p className="text-sm text-muted-foreground py-4">Loading prompts…</p>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-10">Select</TableHead>
+                    <TableHead className="w-16">ID</TableHead>
+                    <TableHead>Title</TableHead>
+                    <TableHead className="hidden sm:table-cell">Category</TableHead>
+                    <TableHead className="hidden md:table-cell">Tags</TableHead>
+                    <TableHead className="hidden lg:table-cell">Created</TableHead>
+                    <TableHead className="hidden lg:table-cell">Updated</TableHead>
+                    <TableHead className="max-w-[200px]">Content</TableHead>
+                    <TableHead className="w-24 text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {fullPrompts.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                        No prompts. Create one above.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    fullPrompts.map((p) => (
+                      <TableRow key={p.id}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedPromptIds.includes(p.id)}
+                            onCheckedChange={(checked) => {
+                              setSelectedPromptIds((prev) =>
+                                checked ? [...prev, p.id] : prev.filter((id) => id !== p.id)
+                              );
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell className="font-mono text-xs">{p.id}</TableCell>
+                        <TableCell className="font-medium max-w-[180px] truncate" title={p.title}>
+                          {p.title}
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell text-muted-foreground">
+                          {p.category ?? "—"}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-muted-foreground max-w-[120px] truncate">
+                          {Array.isArray(p.tags) && p.tags.length > 0 ? p.tags.join(", ") : "—"}
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell text-muted-foreground text-xs whitespace-nowrap">
+                          {p.created_at ?? "—"}
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell text-muted-foreground text-xs whitespace-nowrap">
+                          {p.updated_at ?? "—"}
+                        </TableCell>
+                        <TableCell className="max-w-[200px] text-muted-foreground text-xs truncate" title={p.content ?? ""}>
+                          {(p.content ?? "").replace(/\s+/g, " ").slice(0, 60)}
+                          {(p.content ?? "").length > 60 ? "…" : ""}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0"
+                              title="Edit prompt"
+                              onClick={() => {
+                                setSelectedPromptIds([p.id]);
+                                setEditOpen(true);
+                                setFormId(p.id);
+                                setFormTitle(p.title);
+                                setFormContent(p.content ?? "");
+                              }}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                              title="Delete prompt"
+                              onClick={() => handleDelete(p.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
 

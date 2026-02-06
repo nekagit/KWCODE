@@ -53,10 +53,12 @@ interface TicketRecord {
   updated_at?: string;
 }
 
+/** Feature = milestone; must have at least one ticket. */
 interface FeatureRecord {
   id: string;
   title: string;
-  ticket_ids?: string[];
+  /** At least one ticket; a feature groups work items for this milestone. */
+  ticket_ids: string[];
   prompt_ids: number[];
   project_paths: string[];
   created_at?: string;
@@ -97,7 +99,26 @@ const RECURRING_PROMPT_TITLES = [
 const RECURRING_PROMPT_CONTENT =
   "Follow the project's established patterns. Read .cursor/* and FEATURES.md first. Break work into small steps. Commit after each logical unit. Run tests and build before pushing.";
 
-/** POST: seed one template project with 10 prompts, 100 tickets, 100 features, 1 idea, 1 design, 1 architecture */
+/** Major features for the template (1 idea, 1 design, 1 architecture). Each maps to a slice of multiphased tickets. */
+const MAJOR_FEATURE_TITLES = [
+  "User authentication & authorization",
+  "Landing page & marketing",
+  "Core API & data layer",
+  "Dashboard & analytics",
+  "Settings & configuration",
+  "Documentation & onboarding",
+  "Testing & quality",
+  "Deployment & DevOps",
+  "Security & compliance",
+  "Performance & monitoring",
+  "Notifications & messaging",
+  "Integration & extensibility",
+];
+
+const PHASES = ["Discovery", "Design", "Build", "Launch", "Review"] as const;
+const TICKET_CATEGORIZERS = ["backlog", "task", "spike", "bug", "review"] as const;
+
+/** POST: seed one template project with 10 prompts, categorized multiphased tickets, major features (for 1 idea, 1 design, 1 architecture) */
 export async function POST() {
   try {
     const now = new Date().toISOString();
@@ -139,15 +160,20 @@ export async function POST() {
       updated_at: now,
     }));
 
+    const ticketsPerPhase = 6;
+    const totalTickets = PHASES.length * ticketsPerPhase;
     const newTicketIds: string[] = [];
-    const newTickets: TicketRecord[] = Array.from({ length: 100 }, (_, i) => {
+    const newTickets: TicketRecord[] = Array.from({ length: totalTickets }, (_, i) => {
       const id = crypto.randomUUID();
       newTicketIds.push(id);
+      const phase = PHASES[i % PHASES.length];
       const statuses = ["backlog", "in_progress", "done", "blocked"] as const;
+      const categorizer = TICKET_CATEGORIZERS[i % TICKET_CATEGORIZERS.length];
+      const step = String((i % 3) + 1);
       return {
         id,
-        title: `Task ${i + 1}`,
-        description: `Template task ${i + 1} for demo or seed data.`,
+        title: `${phase} – ${categorizer} ${(i % ticketsPerPhase) + 1}`,
+        description: `Template task for ${phase}, categorizer ${categorizer}. Part of seed data.`,
         status: statuses[i % statuses.length],
         priority: i % 5,
         created_at: now,
@@ -156,21 +182,30 @@ export async function POST() {
     });
 
     const newFeatureIds: string[] = [];
-    const newFeatures: FeatureRecord[] = Array.from({ length: 100 }, (_, i) => {
+    const features: FeatureRecord[] = [];
+    let ticketOffset = 0;
+    const numFeatures = MAJOR_FEATURE_TITLES.length;
+    const ticketsPerFeatureBase = Math.floor(totalTickets / numFeatures);
+    const remainder = totalTickets % numFeatures;
+    for (let f = 0; f < numFeatures; f++) {
       const id = crypto.randomUUID();
       newFeatureIds.push(id);
-      const promptIndex = i % newPrompts.length;
-      const promptId = newPrompts[promptIndex].id;
-      return {
+      const ticketsForThisFeature = Math.max(1, ticketsPerFeatureBase + (f < remainder ? 1 : 0));
+      const slice = newTicketIds.slice(ticketOffset, ticketOffset + ticketsForThisFeature);
+      ticketOffset += slice.length;
+      if (slice.length === 0) continue; // feature must have at least one ticket
+      const promptIndex = f % newPrompts.length;
+      features.push({
         id,
-        title: `Feature ${i + 1}`,
-        ticket_ids: [newTicketIds[i]],
-        prompt_ids: [promptId],
+        title: MAJOR_FEATURE_TITLES[f],
+        ticket_ids: slice,
+        prompt_ids: [newPrompts[promptIndex].id],
         project_paths: [],
         created_at: now,
         updated_at: now,
-      };
-    });
+      });
+    }
+    const newFeatures = features;
 
     const newIdea: IdeaRecord = {
       id: nextIdeaId,
@@ -248,7 +283,6 @@ export async function POST() {
       updated_at: now,
     };
 
-    const PHASES = ["Discovery", "Design", "Build", "Launch", "Review"] as const;
     const buildEntityCategories = (): ProjectEntityCategories => {
       const promptsMap: Record<string, EntityCategory> = {};
       newPrompts.forEach((p) => {
@@ -256,15 +290,17 @@ export async function POST() {
       });
       const ticketsMap: Record<string, EntityCategory> = {};
       newTicketIds.forEach((tid, i) => {
-        const phase = PHASES[i % PHASES.length];
-        const step = String((i % 5) + 1);
-        ticketsMap[tid] = { phase, step, organization: "Team", categorizer: "backlog", other: "task" };
+        const phase = PHASES[Math.floor(i / ticketsPerPhase)];
+        const step = String((i % 3) + 1);
+        const categorizer = TICKET_CATEGORIZERS[i % TICKET_CATEGORIZERS.length];
+        ticketsMap[tid] = { phase, step, organization: "Team", categorizer, other: "task" };
       });
       const featuresMap: Record<string, EntityCategory> = {};
-      newFeatureIds.forEach((fid, i) => {
-        const phase = PHASES[i % PHASES.length];
-        const step = String((i % 5) + 1);
-        featuresMap[fid] = { phase, step, organization: "Product", categorizer: "feature", other: "scope" };
+      newFeatures.forEach((feat, i) => {
+        const firstTicketIndex = newTicketIds.indexOf(feat.ticket_ids?.[0] ?? "");
+        const phase = firstTicketIndex >= 0 ? PHASES[Math.floor(firstTicketIndex / ticketsPerPhase)] : PHASES[i % PHASES.length];
+        const step = String((i % 3) + 1);
+        featuresMap[feat.id] = { phase, step, organization: "Product", categorizer: "feature", other: "scope" };
       });
       const ideasMap: Record<string, EntityCategory> = {};
       ideasMap[String(newIdea.id)] = { phase: "Discovery", step: "1", organization: "Product", categorizer: "idea", other: "concept" };
@@ -279,7 +315,7 @@ export async function POST() {
     const newProject: Project = {
       id: projectId,
       name: "Template project",
-      description: "Seed project with 10 prompts, 100 tickets, 100 features, 1 idea, 1 design, 1 architecture.",
+      description: "Seed project with 10 prompts, categorized multiphased tickets, major features for 1 idea, 1 design, 1 architecture.",
       promptIds: newPrompts.map((p) => p.id),
       ticketIds: newTicketIds,
       featureIds: newFeatureIds,

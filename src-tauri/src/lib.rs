@@ -84,10 +84,12 @@ pub struct Ticket {
     pub project_paths: Option<Vec<String>>,
 }
 
+/// A milestone that has to be done in an application. One feature has many tickets and must have at least one.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Feature {
     pub id: String,
     pub title: String, // label for run / display
+    /// At least one ticket; a feature groups work items (tickets) for this milestone.
     #[serde(default)]
     pub ticket_ids: Vec<String>,
     #[serde(default)]
@@ -112,6 +114,89 @@ pub struct TimingParams {
     pub sleep_between_rounds: f64,
 }
 
+/// Git repository info for the project details Git tab.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct GitInfo {
+    pub current_branch: String,
+    pub branches: Vec<String>,
+    pub remotes: String,
+    pub status_short: String,
+    pub last_commits: Vec<String>,
+    pub head_ref: String,
+    pub config_preview: String,
+}
+
+fn run_git(project_path: &PathBuf, args: &[&str]) -> Result<String, String> {
+    let out = Command::new("git")
+        .args(args)
+        .current_dir(project_path)
+        .output()
+        .map_err(|e| e.to_string())?;
+    let text = String::from_utf8_lossy(if out.status.success() { &out.stdout } else { &out.stderr });
+    Ok(text.trim().to_string())
+}
+
+#[tauri::command]
+fn get_git_info(project_path: String) -> Result<GitInfo, String> {
+    let path_buf = PathBuf::from(project_path.trim());
+    if path_buf.as_os_str().is_empty() {
+        return Err("Project path is empty".to_string());
+    }
+    if !path_buf.exists() || !path_buf.is_dir() {
+        return Err("Project path does not exist or is not a directory".to_string());
+    }
+    let git_dir = path_buf.join(".git");
+    if !git_dir.exists() {
+        return Err("Not a git repository (no .git)".to_string());
+    }
+
+    let mut info = GitInfo::default();
+
+    // HEAD ref (e.g. ref: refs/heads/main)
+    let head_path = git_dir.join("HEAD");
+    if head_path.is_file() {
+        info.head_ref = std::fs::read_to_string(&head_path).unwrap_or_default().trim().to_string();
+        if info.head_ref.starts_with("ref: ") {
+            info.current_branch = info.head_ref.trim_start_matches("ref: refs/heads/").to_string();
+        }
+    }
+
+    // git status -sb
+    if let Ok(s) = run_git(&path_buf, &["status", "-sb"]) {
+        info.status_short = s;
+    }
+
+    // git branch -a
+    if let Ok(s) = run_git(&path_buf, &["branch", "-a"]) {
+        info.branches = s.lines().map(|l| l.trim().to_string()).filter(|l| !l.is_empty()).collect();
+    }
+
+    // git remote -v
+    if let Ok(s) = run_git(&path_buf, &["remote", "-v"]) {
+        info.remotes = s;
+    }
+
+    // git log -n 30 --oneline
+    if let Ok(s) = run_git(&path_buf, &["log", "-n", "30", "--oneline"]) {
+        info.last_commits = s.lines().map(|l| l.to_string()).filter(|l| !l.is_empty()).collect();
+    }
+
+    // .git/config preview (first 4KB, sanitized)
+    let config_path = git_dir.join("config");
+    if config_path.is_file() {
+        if let Ok(content) = std::fs::read_to_string(&config_path) {
+            let max_len = 4096;
+            info.config_preview = if content.len() > max_len {
+                format!("{}...", &content[..max_len])
+            } else {
+                content
+            };
+        }
+    }
+
+    Ok(info)
+}
+
 fn is_valid_workspace(p: &PathBuf) -> bool {
     p.join("script").join("run_prompts_all_projects.sh").exists() && p.join("data").is_dir()
 }
@@ -127,6 +212,10 @@ fn data_dir(ws: &PathBuf) -> PathBuf {
 
 fn script_path(ws: &PathBuf) -> PathBuf {
     ws.join("script").join("run_prompts_all_projects.sh")
+}
+
+fn analysis_script_path(ws: &PathBuf) -> PathBuf {
+    ws.join("script").join("run_analysis_single_project.sh")
 }
 
 /// Resolve project root (contains script/ and data/). Tries current working directory first,
@@ -202,6 +291,27 @@ fn read_file_text(path: String) -> Result<String, String> {
     Ok(content)
 }
 
+/// Read a text file under a given root (e.g. project repo path). Use for project spec files from .cursor in another repo.
+#[tauri::command]
+fn read_file_text_under_root(root: String, path: String) -> Result<String, String> {
+    let root_buf = PathBuf::from(root.trim());
+    let root_canonical = root_buf.canonicalize().map_err(|e| e.to_string())?;
+    let path_buf = PathBuf::from(path.trim());
+    let canonical = if path_buf.is_absolute() {
+        path_buf.canonicalize().map_err(|e| e.to_string())?
+    } else {
+        root_canonical.join(path_buf).canonicalize().map_err(|e| e.to_string())?
+    };
+    if !canonical.starts_with(&root_canonical) {
+        return Err("Path must be under project root".to_string());
+    }
+    if !canonical.is_file() {
+        return Err("Path is not a file".to_string());
+    }
+    let content = std::fs::read_to_string(&canonical).map_err(|e| e.to_string())?;
+    Ok(content)
+}
+
 /// List files in script/ directory.
 #[tauri::command]
 fn list_scripts() -> Result<Vec<FileEntry>, String> {
@@ -227,8 +337,7 @@ fn list_scripts() -> Result<Vec<FileEntry>, String> {
 const PROJECTS_JSON: &str = "projects.json";
 
 fn projects_path() -> Result<PathBuf, String> {
-    let ws = project_root()?;
-    Ok(data_dir(&ws).join(PROJECTS_JSON))
+    Ok(resolve_data_dir()?.join(PROJECTS_JSON))
 }
 
 fn read_projects_json() -> Result<Vec<serde_json::Value>, String> {
@@ -270,6 +379,200 @@ fn get_project(id: String) -> Result<String, String> {
         Some(p) => serde_json::to_string(p).map_err(|e| e.to_string()),
         None => Err("Project not found".to_string()),
     }
+}
+
+/// Read JSON array from data/<filename>. Returns empty array if file missing or invalid.
+fn read_data_json_array(path: &std::path::Path, filename: &str) -> Vec<serde_json::Value> {
+    let file_path = path.join(filename);
+    if !file_path.exists() {
+        return vec![];
+    }
+    let content = match std::fs::read_to_string(&file_path) {
+        Ok(c) => c,
+        Err(_) => return vec![],
+    };
+    let arr: Vec<serde_json::Value> = serde_json::from_str(&content).unwrap_or_default();
+    arr
+}
+
+/// Get a single project with resolved prompts, tickets, features, ideas, designs, architectures.
+/// Uses the same data sources as the dashboard (SQLite for tickets, get_features for features, JSON for rest)
+/// so that "All data" and project details show consistent counts.
+#[tauri::command]
+fn get_project_resolved(id: String) -> Result<String, String> {
+    let projects = read_projects_json()?;
+    let id_trim = id.trim();
+    let project = projects
+        .iter()
+        .find(|p| p.get("id").and_then(|v| v.as_str()) == Some(id_trim))
+        .ok_or_else(|| "Project not found".to_string())?
+        .clone();
+
+    let data_path = resolve_data_dir()?;
+
+    let ticket_ids: Vec<String> = project
+        .get("ticketIds")
+        .and_then(|v| v.as_array())
+        .map(|a| {
+            a.iter()
+                .filter_map(|v| v.as_str().map(String::from))
+                .collect()
+        })
+        .unwrap_or_default();
+    let feature_ids: Vec<String> = project
+        .get("featureIds")
+        .and_then(|v| v.as_array())
+        .map(|a| {
+            a.iter()
+                .filter_map(|v| v.as_str().map(String::from))
+                .collect()
+        })
+        .unwrap_or_default();
+    let prompt_ids: Vec<u32> = project
+        .get("promptIds")
+        .and_then(|v| v.as_array())
+        .map(|a| a.iter().filter_map(|v| v.as_u64().map(|n| n as u32)).collect())
+        .unwrap_or_default();
+    let idea_ids: Vec<u64> = project
+        .get("ideaIds")
+        .and_then(|v| v.as_array())
+        .map(|a| a.iter().filter_map(|v| v.as_u64()).collect())
+        .unwrap_or_default();
+    let design_ids: Vec<String> = project
+        .get("designIds")
+        .and_then(|v| v.as_array())
+        .map(|a| {
+            a.iter()
+                .filter_map(|v| v.as_str().map(String::from))
+                .collect()
+        })
+        .unwrap_or_default();
+    let architecture_ids: Vec<String> = project
+        .get("architectureIds")
+        .and_then(|v| v.as_array())
+        .map(|a| {
+            a.iter()
+                .filter_map(|v| v.as_str().map(String::from))
+                .collect()
+        })
+        .unwrap_or_default();
+
+    let tickets = get_tickets()?;
+    let features = get_features()?;
+    let prompts_list = read_data_json_array(&data_path, "prompts-export.json");
+    let ideas_list = read_data_json_array(&data_path, "ideas.json");
+    let designs_list = read_data_json_array(&data_path, "designs.json");
+    let architectures_list = read_data_json_array(&data_path, "architectures.json");
+
+    let entity_categories = project.get("entityCategories").cloned().unwrap_or(serde_json::Value::Object(serde_json::Map::new()));
+    let get_cat = |kind: &str, entity_id: &str| -> serde_json::Value {
+        entity_categories
+            .get(kind)
+            .and_then(|m| m.get(entity_id))
+            .cloned()
+            .unwrap_or(serde_json::Value::Object(serde_json::Map::new()))
+    };
+
+    let resolved_tickets: Vec<serde_json::Value> = ticket_ids
+        .iter()
+        .filter_map(|tid| {
+            let t = tickets.iter().find(|x| x.id == *tid)?;
+            let mut obj = serde_json::to_value(t).ok()?;
+            let cat = get_cat("tickets", tid);
+            if let (Some(obj_map), Some(cat_map)) = (obj.as_object_mut(), cat.as_object()) {
+                for (k, v) in cat_map {
+                    obj_map.insert(k.clone(), v.clone());
+                }
+            }
+            Some(obj)
+        })
+        .collect();
+
+    let resolved_features: Vec<serde_json::Value> = feature_ids
+        .iter()
+        .filter_map(|fid| {
+            let f = features.iter().find(|x| x.id == *fid)?;
+            let mut obj = serde_json::to_value(f).ok()?;
+            let cat = get_cat("features", fid);
+            if let (Some(obj_map), Some(cat_map)) = (obj.as_object_mut(), cat.as_object()) {
+                for (k, v) in cat_map {
+                    obj_map.insert(k.clone(), v.clone());
+                }
+            }
+            Some(obj)
+        })
+        .collect();
+
+    let resolved_prompts: Vec<serde_json::Value> = prompt_ids
+        .iter()
+        .filter_map(|pid| {
+            let p = prompts_list.iter().find(|v| v.get("id").and_then(|x| x.as_u64()) == Some(*pid as u64))?;
+            let mut obj = p.clone();
+            let cat = get_cat("prompts", &pid.to_string());
+            if let (Some(obj_map), Some(cat_map)) = (obj.as_object_mut(), cat.as_object()) {
+                for (k, v) in cat_map {
+                    obj_map.insert(k.clone(), v.clone());
+                }
+            }
+            Some(obj)
+        })
+        .collect();
+
+    let resolved_ideas: Vec<serde_json::Value> = idea_ids
+        .iter()
+        .filter_map(|iid| {
+            let i = ideas_list.iter().find(|v| v.get("id").and_then(|x| x.as_u64()) == Some(*iid))?;
+            let mut obj = i.clone();
+            let cat = get_cat("ideas", &iid.to_string());
+            if let (Some(obj_map), Some(cat_map)) = (obj.as_object_mut(), cat.as_object()) {
+                for (k, v) in cat_map {
+                    obj_map.insert(k.clone(), v.clone());
+                }
+            }
+            Some(obj)
+        })
+        .collect();
+
+    let resolved_designs: Vec<serde_json::Value> = design_ids
+        .iter()
+        .filter_map(|did| {
+            let d = designs_list.iter().find(|v| v.get("id").and_then(|x| x.as_str()) == Some(did.as_str()))?;
+            let mut obj = d.clone();
+            let cat = get_cat("designs", did);
+            if let (Some(obj_map), Some(cat_map)) = (obj.as_object_mut(), cat.as_object()) {
+                for (k, v) in cat_map {
+                    obj_map.insert(k.clone(), v.clone());
+                }
+            }
+            Some(obj)
+        })
+        .collect();
+
+    let resolved_architectures: Vec<serde_json::Value> = architecture_ids
+        .iter()
+        .filter_map(|aid| {
+            let a = architectures_list.iter().find(|v| v.get("id").and_then(|x| x.as_str()) == Some(aid.as_str()))?;
+            let mut obj = a.clone();
+            let cat = get_cat("architectures", aid);
+            if let (Some(obj_map), Some(cat_map)) = (obj.as_object_mut(), cat.as_object()) {
+                for (k, v) in cat_map {
+                    obj_map.insert(k.clone(), v.clone());
+                }
+            }
+            Some(obj)
+        })
+        .collect();
+
+    let mut out = serde_json::to_value(&project).map_err(|e| e.to_string())?;
+    let obj = out.as_object_mut().ok_or("Invalid project")?;
+    obj.insert("prompts".to_string(), serde_json::Value::Array(resolved_prompts));
+    obj.insert("tickets".to_string(), serde_json::Value::Array(resolved_tickets));
+    obj.insert("features".to_string(), serde_json::Value::Array(resolved_features));
+    obj.insert("ideas".to_string(), serde_json::Value::Array(resolved_ideas));
+    obj.insert("designs".to_string(), serde_json::Value::Array(resolved_designs));
+    obj.insert("architectures".to_string(), serde_json::Value::Array(resolved_architectures));
+
+    serde_json::to_string(&out).map_err(|e| e.to_string())
 }
 
 /// Create a new project. Body is JSON object with at least "name". Id and timestamps are set if missing.
@@ -328,11 +631,53 @@ fn delete_project(id: String) -> Result<(), String> {
     write_projects_json(&projects)
 }
 
+/// List all files under project_path/.cursor (recursive). Returns empty vec if .cursor does not exist or is not a directory.
+#[tauri::command]
+fn list_cursor_folder(project_path: String) -> Result<Vec<FileEntry>, String> {
+    let base = PathBuf::from(project_path.trim()).join(".cursor");
+    if !base.exists() || !base.is_dir() {
+        return Ok(vec![]);
+    }
+    let mut entries = vec![];
+    fn collect_files(dir: &std::path::Path, out: &mut Vec<FileEntry>) -> Result<(), String> {
+        for e in std::fs::read_dir(dir).map_err(|e| e.to_string())? {
+            let e = e.map_err(|e| e.to_string())?;
+            let path = e.path();
+            if path.is_file() {
+                let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("").to_string();
+                let path_str = path.to_string_lossy().to_string();
+                out.push(FileEntry { name, path: path_str });
+            } else if path.is_dir() {
+                collect_files(&path, out)?;
+            }
+        }
+        Ok(())
+    }
+    collect_files(&base, &mut entries)?;
+    entries.sort_by(|a, b| a.path.cmp(&b.path));
+    Ok(entries)
+}
+
+/// Write a spec file into the project directory (e.g. project_path + "/.cursor/design-x.md").
+/// Creates parent directories if needed. relative_path should be like ".cursor/design-abc.md".
+#[tauri::command]
+fn write_spec_file(project_path: String, relative_path: String, content: String) -> Result<(), String> {
+    let base = PathBuf::from(project_path.trim());
+    if !base.exists() || !base.is_dir() {
+        return Err("Project path does not exist or is not a directory".to_string());
+    }
+    let full = base.join(relative_path.trim().trim_start_matches('/'));
+    if let Some(parent) = full.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    std::fs::write(&full, content).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 /// List JSON files in data/ directory.
 #[tauri::command]
 fn list_data_files() -> Result<Vec<FileEntry>, String> {
-    let ws = project_root()?;
-    let data = data_dir(&ws);
+    let data = resolve_data_dir()?;
     if !data.is_dir() {
         return Ok(vec![]);
     }
@@ -462,9 +807,42 @@ where
     f(&conn)
 }
 
+/// Resolve data directory from DB (ADR 069). Uses path stored in kv_store, or fallback from project root, and persists it.
+fn resolve_data_dir() -> Result<PathBuf, String> {
+    let ws = project_root()?;
+    let fallback = data_dir(&ws);
+    with_db(|conn| Ok(db::get_data_dir(conn, &fallback)))
+}
+
 #[tauri::command]
 fn get_all_projects() -> Result<Vec<String>, String> {
     with_db(db::get_all_projects)
+}
+
+/// List all subdirectories of the parent of project root (Documents/February). Used by Projects page Local projects card.
+#[tauri::command]
+fn list_february_folders() -> Result<Vec<String>, String> {
+    let ws = project_root()?;
+    let february_dir = ws
+        .parent()
+        .ok_or_else(|| "Project root has no parent (February folder)".to_string())?;
+    if !february_dir.is_dir() {
+        return Ok(vec![]);
+    }
+    let mut paths = vec![];
+    for entry in std::fs::read_dir(february_dir).map_err(|e| e.to_string())? {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let path = entry.path();
+        if path.is_dir() {
+            if let Ok(canonical) = path.canonicalize() {
+                if let Some(s) = canonical.to_str() {
+                    paths.push(s.to_string());
+                }
+            }
+        }
+    }
+    paths.sort();
+    Ok(paths)
 }
 
 #[tauri::command]
@@ -474,8 +852,7 @@ fn get_active_projects() -> Result<Vec<String>, String> {
 
 #[tauri::command]
 fn get_prompts() -> Result<Vec<PromptItem>, String> {
-    let ws = project_root()?;
-    let path = data_dir(&ws).join("prompts-export.json");
+    let path = resolve_data_dir()?.join("prompts-export.json");
     let content = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
     let arr: Vec<serde_json::Value> = serde_json::from_str(&content).map_err(|e| e.to_string())?;
     let items: Vec<PromptItem> = arr
@@ -492,8 +869,7 @@ fn get_prompts() -> Result<Vec<PromptItem>, String> {
 #[tauri::command]
 fn save_active_projects(projects: Vec<String>) -> Result<(), String> {
     with_db(|conn| db::save_active_projects(conn, &projects))?;
-    let ws = project_root()?;
-    let dir = data_dir(&ws);
+    let dir = resolve_data_dir()?;
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     let path = dir.join("cursor_projects.json");
     let content = serde_json::to_string_pretty(&projects).map_err(|e| e.to_string())?;
@@ -513,17 +889,35 @@ fn save_tickets(tickets: Vec<Ticket>) -> Result<(), String> {
 
 #[tauri::command]
 fn get_features() -> Result<Vec<Feature>, String> {
+    let path = resolve_data_dir()?.join("features.json");
+    if path.exists() {
+        let content = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
+        let features: Vec<Feature> = serde_json::from_str(&content).map_err(|e| e.to_string())?;
+        return Ok(features);
+    }
     with_db(db::get_features)
 }
 
 #[tauri::command]
 fn save_features(features: Vec<Feature>) -> Result<(), String> {
-    with_db(|conn| db::save_features(conn, &features))
+    with_db(|conn| db::save_features(conn, &features))?;
+    let dir = resolve_data_dir()?;
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let path = dir.join("features.json");
+    let content = serde_json::to_string_pretty(&features).map_err(|e| e.to_string())?;
+    std::fs::write(path, content).map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 #[tauri::command]
 fn get_kv_store_entries() -> Result<Vec<db::KvEntry>, String> {
     with_db(db::get_kv_store_entries)
+}
+
+/// Return the data directory path (from DB, ADR 069). Used by UI to show where data is stored.
+#[tauri::command]
+fn get_data_dir() -> Result<String, String> {
+    resolve_data_dir().map(|p| p.to_string_lossy().to_string())
 }
 
 fn run_script_inner(
@@ -539,8 +933,9 @@ fn run_script_inner(
     let script = script_path(&ws);
     let prompt_ids_str: Vec<String> = prompt_ids.iter().map(|n| n.to_string()).collect();
 
+    let data = resolve_data_dir()?;
     let projects_file: PathBuf = if active_projects.is_empty() {
-        data_dir(&ws).join("cursor_projects.json")
+        data.join("cursor_projects.json")
     } else {
         let tmp = std::env::temp_dir().join(format!("run_prompts_{}.json", run_id));
         let content =
@@ -649,6 +1044,123 @@ fn run_script_inner(
     Ok(())
 }
 
+fn run_analysis_script_inner(
+    app: AppHandle,
+    state: State<'_, RunningState>,
+    ws: PathBuf,
+    run_id: String,
+    run_label: String,
+    project_path: String,
+) -> Result<(), String> {
+    let script = analysis_script_path(&ws);
+    if !script.exists() {
+        return Err(format!(
+            "Analysis script not found: {}",
+            script.to_string_lossy()
+        ));
+    }
+    let mut cmd = Command::new("bash");
+    cmd.arg(script.as_os_str())
+        .arg("-P")
+        .arg(project_path.as_str())
+        .current_dir(&ws)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    #[cfg(unix)]
+    cmd.process_group(0);
+
+    let mut child = cmd.spawn().map_err(|e| e.to_string())?;
+    let stdout = child.stdout.take().ok_or("no stdout")?;
+    let stderr = child.stderr.take().ok_or("no stderr")?;
+
+    {
+        let mut guard = state.runs.lock().map_err(|e| e.to_string())?;
+        guard.insert(
+            run_id.clone(),
+            RunEntry {
+                child,
+                label: run_label.clone(),
+            },
+        );
+    }
+
+    let app_stdout = app.clone();
+    let app_stderr = app.clone();
+    let app_exited = app.clone();
+    let runs_handle = Arc::clone(&state.runs);
+    let run_id_stdout = run_id.clone();
+    let run_id_stderr = run_id.clone();
+    let run_id_exited = run_id.clone();
+    thread::spawn(move || {
+        let reader = BufReader::new(stdout);
+        for line in reader.lines() {
+            if let Ok(line) = line {
+                let _ = app_stdout.emit(
+                    "script-log",
+                    ScriptLogPayload {
+                        run_id: run_id_stdout.clone(),
+                        line,
+                    },
+                );
+            }
+        }
+    });
+    thread::spawn(move || {
+        let reader = BufReader::new(stderr);
+        for line in reader.lines() {
+            if let Ok(line) = line {
+                let _ = app_stderr.emit(
+                    "script-log",
+                    ScriptLogPayload {
+                        run_id: run_id_stderr.clone(),
+                        line: format!("[stderr] {}", line),
+                    },
+                );
+            }
+        }
+    });
+    thread::spawn(move || {
+        loop {
+            let exited = {
+                let mut guard = match runs_handle.lock() {
+                    Ok(g) => g,
+                    Err(_) => break,
+                };
+                if let Some(entry) = guard.get_mut(&run_id_exited) {
+                    if entry.child.try_wait().ok().flatten().is_some() {
+                        guard.remove(&run_id_exited);
+                        true
+                    } else {
+                        false
+                    }
+                } else {
+                    break;
+                }
+            };
+            if exited {
+                let _ = app_exited.emit("script-exited", ScriptExitedPayload { run_id: run_id_exited });
+                break;
+            }
+            thread::sleep(std::time::Duration::from_millis(500));
+        }
+    });
+
+    Ok(())
+}
+
+#[tauri::command]
+async fn run_analysis_script(
+    app: AppHandle,
+    state: State<'_, RunningState>,
+    project_path: String,
+) -> Result<RunIdResponse, String> {
+    let ws = project_root()?;
+    let run_id = gen_run_id();
+    let label = format!("Analysis: {}", std::path::Path::new(&project_path).file_name().and_then(|n| n.to_str()).unwrap_or("project"));
+    run_analysis_script_inner(app, state, ws, run_id.clone(), label, project_path)?;
+    Ok(RunIdResponse { run_id })
+}
+
 #[tauri::command]
 async fn run_script(
     app: AppHandle,
@@ -753,15 +1265,21 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             read_file_as_base64,
             read_file_text,
+            read_file_text_under_root,
             list_scripts,
             list_data_files,
+            list_cursor_folder,
+            write_spec_file,
+            get_git_info,
             list_projects,
             get_project,
+            get_project_resolved,
             create_project,
             update_project,
             delete_project,
             analyze_project_for_tickets,
             get_all_projects,
+            list_february_folders,
             get_active_projects,
             get_prompts,
             save_active_projects,
@@ -770,10 +1288,12 @@ pub fn run() {
             get_features,
             save_features,
             run_script,
+            run_analysis_script,
             list_running_runs,
             stop_run,
             stop_script,
             get_kv_store_entries,
+            get_data_dir,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

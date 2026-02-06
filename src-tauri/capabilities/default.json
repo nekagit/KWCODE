@@ -5,6 +5,7 @@
   "windows": ["main", "Run Prompts Control"],
   "permissions": [
     "core:default",
-    "dialog:allow-open"
+    "dialog:allow-open",
+    "dialog:allow-confirm"
   ]
 }

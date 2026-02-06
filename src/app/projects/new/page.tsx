@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,11 +13,23 @@ import { createProject } from "@/lib/api-projects";
 
 export default function NewProjectPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [repoPath, setRepoPath] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const repoPathFromQuery = searchParams.get("repoPath");
+    if (repoPathFromQuery) {
+      setRepoPath(decodeURIComponent(repoPathFromQuery));
+      if (!name) {
+        const segment = repoPathFromQuery.split("/").filter(Boolean).pop() ?? "";
+        if (segment) setName(decodeURIComponent(segment));
+      }
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

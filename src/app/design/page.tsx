@@ -18,7 +18,10 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { PAGE_TEMPLATES, createDefaultDesignConfig } from "@/data/design-templates";
 import { designConfigToMarkdown } from "@/lib/design-to-markdown";
+import { designConfigToSampleHtml } from "@/lib/design-config-to-html";
 import type { DesignConfig, DesignSection } from "@/types/design";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   Palette,
   Type,
@@ -63,7 +66,6 @@ export default function DesignPage() {
   }, [loadDesignsLibrary]);
   const handleDeleteDesign = useCallback(
     async (id: string) => {
-      if (!confirm("Delete this design from the library?")) return;
       try {
         const res = await fetch(`/api/data/designs/${id}`, { method: "DELETE" });
         if (!res.ok) {
@@ -107,6 +109,7 @@ export default function DesignPage() {
   }, []);
 
   const mdOutput = useMemo(() => designConfigToMarkdown(config), [config]);
+  const sampleHtml = useMemo(() => designConfigToSampleHtml(config), [config]);
 
   const generateMd = useCallback(() => {
     setGeneratedMd(mdOutput);
@@ -505,50 +508,20 @@ export default function DesignPage() {
             <TabsContent value="preview" className="mt-3">
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Live preview</CardTitle>
-                  <CardDescription>Structure and colors applied</CardDescription>
+                  <CardTitle className="text-base">Sample HTML preview</CardTitle>
+                  <CardDescription>
+                    Full page sample using your colors, typography, layout, and sections. Rendered in an isolated frame.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div
-                    className="rounded-lg border overflow-hidden text-left"
-                    style={{
-                      maxWidth: config.layout.maxWidth,
-                      fontFamily: config.typography.bodyFont,
-                      fontSize: config.typography.baseSize,
-                      color: config.colors.text,
-                      background: config.colors.background,
-                    }}
-                  >
-                    {[...config.sections]
-                      .filter((s) => s.enabled)
-                      .sort((a, b) => a.order - b.order)
-                      .map((s) => (
-                        <div
-                          key={s.id}
-                          className="border-b last:border-b-0 p-4"
-                          style={{
-                            background: s.kind === "nav" || s.kind === "footer" ? config.colors.surface : undefined,
-                            padding: config.layout.spacing,
-                          }}
-                        >
-                          <div
-                            className="font-semibold mb-1"
-                            style={{
-                              fontFamily: config.typography.headingFont,
-                              color: s.kind === "hero" ? config.colors.primary : config.colors.text,
-                            }}
-                          >
-                            {s.title}
-                          </div>
-                          <div
-                            className="text-sm"
-                            style={{ color: config.colors.textMuted }}
-                          >
-                            Section type: {s.kind}
-                            {s.copy && ` · ${s.copy}`}
-                          </div>
-                        </div>
-                      ))}
+                  <div className="rounded-lg border overflow-hidden bg-muted/30" style={{ minHeight: 420 }}>
+                    <iframe
+                      title="Design config sample HTML"
+                      srcDoc={sampleHtml}
+                      className="w-full border-0 rounded-lg"
+                      style={{ minHeight: 420, height: 520 }}
+                      sandbox="allow-same-origin"
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -558,7 +531,7 @@ export default function DesignPage() {
                 <CardHeader className="pb-2 flex flex-row items-center justify-between">
                   <div>
                     <CardTitle className="text-base">Design spec (.md)</CardTitle>
-                    <CardDescription>Generate, copy, or download</CardDescription>
+                    <CardDescription>Generate, copy, or download. View as raw markdown or rendered.</CardDescription>
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" variant="outline" onClick={generateMd}>
@@ -573,12 +546,29 @@ export default function DesignPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <Textarea
-                    className="font-mono text-xs min-h-[320px] resize-y"
-                    value={generatedMd || mdOutput}
-                    onChange={(e) => setGeneratedMd(e.target.value)}
-                    placeholder="Click Generate or use AI to produce design spec..."
-                  />
+                  <Tabs defaultValue="rendered" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 mb-3">
+                      <TabsTrigger value="rendered">Rendered</TabsTrigger>
+                      <TabsTrigger value="raw">Raw</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="rendered" className="mt-0">
+                      <ScrollArea className="rounded-md border bg-muted/20 p-4 min-h-[320px] max-h-[480px]">
+                        <div className="markdown-viewer text-sm space-y-3 [&_h1]:text-xl [&_h1]:font-semibold [&_h2]:text-lg [&_h2]:font-semibold [&_h3]:text-base [&_h3]:font-medium [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_table]:border-collapse [&_th]:border [&_th]:px-2 [&_th]:py-1 [&_td]:border [&_td]:px-2 [&_td]:py-1 [&_pre]:bg-muted [&_pre]:p-2 [&_pre]:rounded [&_code]:bg-muted [&_code]:px-1 [&_code]:rounded text-foreground">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {generatedMd || mdOutput || "*No content yet. Click Generate or use AI.*"}
+                          </ReactMarkdown>
+                        </div>
+                      </ScrollArea>
+                    </TabsContent>
+                    <TabsContent value="raw" className="mt-0">
+                      <Textarea
+                        className="font-mono text-xs min-h-[320px] resize-y"
+                        value={generatedMd || mdOutput}
+                        onChange={(e) => setGeneratedMd(e.target.value)}
+                        placeholder="Click Generate or use AI to produce design spec..."
+                      />
+                    </TabsContent>
+                  </Tabs>
                 </CardContent>
               </Card>
             </TabsContent>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { invoke, isTauri } from "@/lib/tauri";
 import { Button } from "@/components/ui/button";
@@ -33,11 +33,14 @@ import {
 } from "@/components/ui/tooltip";
 import { Empty } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Play, Loader2, Ticket as TicketIcon, Plus, Trash2, Layers, Folders, MessageSquare, ScrollText, Sparkles, Upload, FileText, LayoutDashboard, Zap, Database, FileCode, Braces, Lightbulb, Palette } from "lucide-react";
+import { TicketsDataTable, type TicketRow } from "@/components/tickets-data-table";
+import { Play, Loader2, Ticket as TicketIcon, Plus, Trash2, Layers, Folders, MessageSquare, ScrollText, Sparkles, Upload, FileText, LayoutDashboard, Zap, Database, FileCode, Braces, Lightbulb, Palette, ListOrdered, Minus } from "lucide-react";
 import Link from "next/link";
 import { useRunState } from "@/context/run-state";
 import { toast } from "sonner";
 import { FEBRUARY_REPOS_OVERVIEW, FEBRUARY_REPOS_SUMMARY } from "@/data/february-repos-overview";
+import { listProjects } from "@/lib/api-projects";
+import type { Project } from "@/types/project";
 
 export type TicketStatus = "backlog" | "in_progress" | "done" | "blocked";
 
@@ -73,7 +76,7 @@ interface IdeaRecord {
   source?: string;
 }
 
-const VALID_TABS = ["dashboard", "projects", "tickets", "feature", "ai-generate", "all", "data", "log"] as const;
+const VALID_TABS = ["dashboard", "projects", "tickets", "feature", "all", "data", "log"] as const;
 type TabValue = (typeof VALID_TABS)[number];
 
 function tabFromParams(searchParams: ReturnType<typeof useSearchParams>): TabValue {
@@ -103,6 +106,11 @@ export default function Home() {
     setSelectedRunId,
     runWithParams,
     isTauriEnv,
+    featureQueue,
+    addFeatureToQueue,
+    removeFeatureFromQueue,
+    clearFeatureQueue,
+    runFeatureQueue,
   } = useRunState();
 
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -162,7 +170,16 @@ export default function Home() {
   const [dataError, setDataError] = useState<string | null>(null);
   const [ideas, setIdeas] = useState<IdeaRecord[]>([]);
   const [ideasLoading, setIdeasLoading] = useState(false);
+  const [projectsList, setProjectsList] = useState<Project[]>([]);
+  const [featureProjectFilter, setFeatureProjectFilter] = useState<string>("");
   const running = runningRuns.some((r) => r.status === "running");
+
+  const filteredFeatures = useMemo(() => {
+    if (!featureProjectFilter) return features;
+    const project = projectsList.find((p) => p.id === featureProjectFilter);
+    const ids = project?.featureIds ?? [];
+    return features.filter((f) => ids.includes(f.id));
+  }, [features, featureProjectFilter, projectsList]);
 
   const loadTicketsAndFeatures = useCallback(async () => {
     if (!isTauri()) return;
@@ -204,6 +221,22 @@ export default function Home() {
   useEffect(() => {
     if (isTauri()) loadTicketsAndFeatures();
   }, [loadTicketsAndFeatures]);
+
+  // Load projects list for Feature tab filter
+  useEffect(() => {
+    if (tab !== "feature") return;
+    let cancelled = false;
+    listProjects()
+      .then((list) => {
+        if (!cancelled) setProjectsList(list);
+      })
+      .catch(() => {
+        if (!cancelled) setProjectsList([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [tab]);
 
   // Browser: load tickets, features, and kv entries from /api/data (reads data/*.json)
   useEffect(() => {
@@ -358,6 +391,10 @@ export default function Home() {
       setError("Feature title is required");
       return;
     }
+    if (featureForm.ticket_ids.length === 0) {
+      setError("A feature is a milestone and must have at least one ticket");
+      return;
+    }
     if (featureForm.prompt_ids.length === 0) {
       setError("Select at least one prompt for the feature");
       return;
@@ -378,6 +415,10 @@ export default function Home() {
   };
 
   const updateFeature = async (id: string, updates: Partial<Feature>) => {
+    if (updates.ticket_ids !== undefined && updates.ticket_ids.length === 0) {
+      setError("A feature must have at least one ticket");
+      return;
+    }
     const next = features.map((f) =>
       f.id === id ? { ...f, ...updates, updated_at: new Date().toISOString() } : f
     );
@@ -386,6 +427,13 @@ export default function Home() {
 
   const deleteFeature = async (id: string) => {
     await saveFeatures(features.filter((f) => f.id !== id));
+  };
+
+  const deleteAllFeatures = async () => {
+    if (features.length === 0) return;
+    await saveFeatures([]);
+    clearFeatureQueue();
+    toast.success("All features deleted");
   };
 
   const updateTicket = async (id: string, updates: Partial<Ticket>) => {
@@ -658,10 +706,6 @@ Suggest actionable work items: setup, dependencies, features, tests, and documen
                   <Layers className="h-4 w-4 mr-2" />
                   Features
                 </Button>
-                <Button variant="outline" onClick={() => navigateToTab("ai-generate")}>
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  AI Generate tickets
-                </Button>
                 <Button variant="outline" onClick={() => { setSelectedRunId(runningRuns[runningRuns.length - 1]?.runId ?? null); navigateToTab("log"); }}>
                   <ScrollText className="h-4 w-4 mr-2" />
                   View log
@@ -789,59 +833,70 @@ Suggest actionable work items: setup, dependencies, features, tests, and documen
               </CardTitle>
               <CardDescription>
                 Define work items: title, description, status. Combine them with prompts and projects in the Feature tab.
+                {tickets.length > 0 && (
+                  <span className="block mt-1 font-medium text-foreground">
+                    {tickets.length} ticket{tickets.length !== 1 ? "s" : ""} total
+                  </span>
+                )}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
-                <p className="text-sm font-medium">Add ticket</p>
-                <div className="grid gap-2">
-                  <Label>Title</Label>
-                  <Input
-                    value={ticketForm.title}
-                    onChange={(e) => setTicketForm((f) => ({ ...f, title: e.target.value }))}
-                    placeholder="e.g. Add user dashboard"
-                  />
-                  <Label>Description (optional)</Label>
-                  <Textarea
-                    className="min-h-[60px]"
-                    value={ticketForm.description}
-                    onChange={(e) => setTicketForm((f) => ({ ...f, description: e.target.value }))}
-                    placeholder="What should be built..."
-                  />
-                  <div className="flex items-center gap-4">
-                    <div className="space-y-2">
-                      <Label>Status</Label>
-                      <Select
-                        value={ticketForm.status}
-                        onValueChange={(v) => setTicketForm((f) => ({ ...f, status: v as TicketStatus }))}
-                      >
-                        <SelectTrigger className="w-[120px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="backlog">Backlog</SelectItem>
-                          <SelectItem value="in_progress">In progress</SelectItem>
-                          <SelectItem value="done">Done</SelectItem>
-                          <SelectItem value="blocked">Blocked</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Priority</Label>
-                      <Input
-                        type="number"
-                        value={ticketForm.priority}
-                        onChange={(e) => setTicketForm((f) => ({ ...f, priority: Number(e.target.value) || 0 }))}
-                        className="w-20"
-                      />
-                    </div>
-                  </div>
-                  <Button onClick={addTicket}>
-                    <Plus className="h-4 w-4 mr-2" />
+              <Accordion type="single" collapsible className="w-full rounded-lg border bg-muted/30">
+                <AccordionItem value="add-ticket" className="border-none">
+                  <AccordionTrigger className="px-4 py-3 hover:no-underline [&[data-state=open]]:border-b">
                     Add ticket
-                  </Button>
-                </div>
-              </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4 pt-2">
+                    <div className="grid gap-2">
+                      <Label>Title</Label>
+                      <Input
+                        value={ticketForm.title}
+                        onChange={(e) => setTicketForm((f) => ({ ...f, title: e.target.value }))}
+                        placeholder="e.g. Add user dashboard"
+                      />
+                      <Label>Description (optional)</Label>
+                      <Textarea
+                        className="min-h-[60px]"
+                        value={ticketForm.description}
+                        onChange={(e) => setTicketForm((f) => ({ ...f, description: e.target.value }))}
+                        placeholder="What should be built..."
+                      />
+                      <div className="flex items-center gap-4">
+                        <div className="space-y-2">
+                          <Label>Status</Label>
+                          <Select
+                            value={ticketForm.status}
+                            onValueChange={(v) => setTicketForm((f) => ({ ...f, status: v as TicketStatus }))}
+                          >
+                            <SelectTrigger className="w-[120px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="backlog">Backlog</SelectItem>
+                              <SelectItem value="in_progress">In progress</SelectItem>
+                              <SelectItem value="done">Done</SelectItem>
+                              <SelectItem value="blocked">Blocked</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Priority</Label>
+                          <Input
+                            type="number"
+                            value={ticketForm.priority}
+                            onChange={(e) => setTicketForm((f) => ({ ...f, priority: Number(e.target.value) || 0 }))}
+                            className="w-20"
+                          />
+                        </div>
+                      </div>
+                      <Button onClick={addTicket}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add ticket
+                      </Button>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
 
               <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
                 <p className="text-sm font-medium flex items-center gap-2">
@@ -926,47 +981,13 @@ Suggest actionable work items: setup, dependencies, features, tests, and documen
                 )}
               </div>
 
-              <ScrollArea className="h-[280px] rounded-md border p-3">
-                <div className="space-y-2">
-                  {tickets.length === 0 && (
-                    <Empty
-                      title="No tickets yet"
-                      description="Add a ticket using the form above."
-                      icon={<TicketIcon className="h-6 w-6" />}
-                    />
-                  )}
-                  {tickets.map((t) => (
-                    <div
-                      key={t.id}
-                      className="flex flex-wrap items-center gap-2 rounded-lg border p-3 bg-card"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{t.title}</p>
-                        {t.description && (
-                          <p className="text-xs text-muted-foreground line-clamp-2">{t.description}</p>
-                        )}
-                      </div>
-                      <Select
-                        value={t.status}
-                        onValueChange={(value) => updateTicket(t.id, { status: value as TicketStatus })}
-                      >
-                        <SelectTrigger className="w-[120px] h-8 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="backlog">Backlog</SelectItem>
-                          <SelectItem value="in_progress">In progress</SelectItem>
-                          <SelectItem value="done">Done</SelectItem>
-                          <SelectItem value="blocked">Blocked</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button size="sm" variant="outline" onClick={() => deleteTicket(t.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
+              <TicketsDataTable
+                tickets={tickets as TicketRow[]}
+                onUpdateStatus={(id, status) => updateTicket(id, { status })}
+                onDelete={deleteTicket}
+                emptyTitle="No tickets yet"
+                emptyDescription="Add a ticket using the form above."
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -976,109 +997,162 @@ Suggest actionable work items: setup, dependencies, features, tests, and documen
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <Layers className="h-4 w-4" />
-                Feature
+                Feature {features.length > 0 && (featureProjectFilter ? `(${filteredFeatures.length} of ${features.length})` : `(${features.length})`)}
               </CardTitle>
               <CardDescription>
-                Combine tickets with prompts and projects; run automation or use in run.
+                Combine tickets with prompts and projects; run automation or use in run. Filter by project below. Scroll to see all.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
-                <p className="text-sm font-medium">Add feature</p>
-                <div className="grid gap-2">
-                  <Label>Title</Label>
-                  <Input
-                    value={featureForm.title}
-                    onChange={(e) => setFeatureForm((f) => ({ ...f, title: e.target.value }))}
-                    placeholder="e.g. Calendar event adding"
-                  />
-                  <Label>Tickets (optional)</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {tickets.map((t) => (
-                      <label
-                        key={t.id}
-                        className="flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1 text-sm hover:bg-muted/50"
-                      >
-                        <Checkbox
-                          checked={featureForm.ticket_ids.includes(t.id)}
-                          onCheckedChange={(c) =>
-                            setFeatureForm((f) => ({
-                              ...f,
-                              ticket_ids: c
-                                ? [...f.ticket_ids, t.id]
-                                : f.ticket_ids.filter((id) => id !== t.id),
-                            }))
-                          }
-                        />
-                        {t.title}
-                      </label>
-                    ))}
-                  </div>
-                  <Label>Prompts (required)</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {prompts.map((p) => (
-                      <label
-                        key={p.id}
-                        className="flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1 text-sm hover:bg-muted/50"
-                      >
-                        <Checkbox
-                          checked={featureForm.prompt_ids.includes(p.id)}
-                          onCheckedChange={(c) =>
-                            setFeatureForm((f) => ({
-                              ...f,
-                              prompt_ids: c
-                                ? [...f.prompt_ids, p.id]
-                                : f.prompt_ids.filter((id) => id !== p.id),
-                            }))
-                          }
-                        />
-                        {p.id}: {p.title}
-                      </label>
-                    ))}
-                  </div>
-                  <Label>Projects (optional — leave empty to use active list)</Label>
-                  <ScrollArea className="h-[100px] rounded border p-2">
-                    <div className="space-y-1">
-                      {allProjects.map((path) => {
-                        const name = path.split("/").pop() ?? path;
-                        return (
+              <Accordion type="single" collapsible className="w-full rounded-lg border bg-muted/30">
+                <AccordionItem value="add-feature" className="border-none">
+                  <AccordionTrigger className="px-4 py-3 hover:no-underline [&[data-state=open]]:border-b">
+                    <span className="text-sm font-medium">Add feature</span>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="px-4 pb-4 pt-1 grid gap-2">
+                      <Label>Title</Label>
+                      <Input
+                        value={featureForm.title}
+                        onChange={(e) => setFeatureForm((f) => ({ ...f, title: e.target.value }))}
+                        placeholder="e.g. Calendar event adding"
+                      />
+                      <Label>Tickets (required, at least one)</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {tickets.map((t) => (
                           <label
-                            key={path}
-                            className="flex cursor-pointer items-center gap-2 text-sm"
+                            key={t.id}
+                            className="flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1 text-sm hover:bg-muted/50"
                           >
                             <Checkbox
-                              checked={featureForm.project_paths.includes(path)}
+                              checked={featureForm.ticket_ids.includes(t.id)}
                               onCheckedChange={(c) =>
                                 setFeatureForm((f) => ({
                                   ...f,
-                                  project_paths: c
-                                    ? [...f.project_paths, path]
-                                    : f.project_paths.filter((p) => p !== path),
+                                  ticket_ids: c
+                                    ? [...f.ticket_ids, t.id]
+                                    : f.ticket_ids.filter((id) => id !== t.id),
                                 }))
                               }
                             />
-                            {name}
+                            {t.title}
                           </label>
-                        );
-                      })}
+                        ))}
+                      </div>
+                      <Label>Prompts (required)</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {prompts.map((p) => (
+                          <label
+                            key={p.id}
+                            className="flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1 text-sm hover:bg-muted/50"
+                          >
+                            <Checkbox
+                              checked={featureForm.prompt_ids.includes(p.id)}
+                              onCheckedChange={(c) =>
+                                setFeatureForm((f) => ({
+                                  ...f,
+                                  prompt_ids: c
+                                    ? [...f.prompt_ids, p.id]
+                                    : f.prompt_ids.filter((id) => id !== p.id),
+                                }))
+                              }
+                            />
+                            {p.id}: {p.title}
+                          </label>
+                        ))}
+                      </div>
+                      <Label>Projects (optional — leave empty to use active list)</Label>
+                      <ScrollArea className="h-[100px] rounded border p-2">
+                        <div className="space-y-1">
+                          {allProjects.map((path) => {
+                            const name = path.split("/").pop() ?? path;
+                            return (
+                              <label
+                                key={path}
+                                className="flex cursor-pointer items-center gap-2 text-sm"
+                              >
+                                <Checkbox
+                                  checked={featureForm.project_paths.includes(path)}
+                                  onCheckedChange={(c) =>
+                                    setFeatureForm((f) => ({
+                                      ...f,
+                                      project_paths: c
+                                        ? [...f.project_paths, path]
+                                        : f.project_paths.filter((p) => p !== path),
+                                    }))
+                                  }
+                                />
+                                {name}
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </ScrollArea>
+                      <Button onClick={addFeature}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add feature
+                      </Button>
                     </div>
-                  </ScrollArea>
-                  <Button onClick={addFeature}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add feature
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Label className="text-sm text-muted-foreground shrink-0">Filter by project</Label>
+                <Select value={featureProjectFilter || "all"} onValueChange={(v) => setFeatureProjectFilter(v === "all" ? "" : v)}>
+                  <SelectTrigger className="w-[220px]">
+                    <SelectValue placeholder="All projects" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All projects</SelectItem>
+                    {projectsList.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {features.length > 0 && (
+                  <Button type="button" variant="destructive" size="sm" onClick={deleteAllFeatures}>
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Delete all
                   </Button>
-                </div>
+                )}
+                {featureQueue.length > 0 && (
+                  <div className="flex items-center gap-2 ml-4 pl-4 border-l">
+                    <span className="text-sm text-muted-foreground flex items-center gap-1">
+                      <ListOrdered className="h-4 w-4" />
+                      Queue ({featureQueue.length})
+                    </span>
+                    <Button
+                      size="sm"
+                      onClick={() => runFeatureQueue(activeProjects)}
+                      disabled={runningRuns.some((r) => r.status === "running")}
+                    >
+                      {runningRuns.some((r) => r.status === "running") ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      ) : (
+                        <Play className="h-4 w-4 mr-1" />
+                      )}
+                      Run queue
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => clearFeatureQueue()}>
+                      Clear queue
+                    </Button>
+                  </div>
+                )}
               </div>
-              <ScrollArea className="h-[280px] rounded-md border p-3">
+              <ScrollArea className="min-h-[280px] h-[60vh] rounded-md border p-3">
                 <div className="space-y-2">
-                  {features.length === 0 && (
+                  {filteredFeatures.length === 0 ? (
                     <Empty
-                      title="No features yet"
-                      description="Add a feature above (tickets + prompts + projects)."
+                      title={featureProjectFilter ? "No features in this project" : "No features yet"}
+                      description={featureProjectFilter ? "Select another project or add features to this project from its edit page." : "Add a feature above (tickets + prompts + projects)."}
                       icon={<Layers className="h-6 w-6" />}
                     />
-                  )}
-                  {features.map((f) => (
+                  ) : (
+                    filteredFeatures.map((f) => {
+                      const inQueue = featureQueue.some((q) => q.id === f.id);
+                      return (
                     <div
                       key={f.id}
                       className="flex flex-wrap items-center gap-2 rounded-lg border p-3 bg-card"
@@ -1093,6 +1167,41 @@ Suggest actionable work items: setup, dependencies, features, tests, and documen
                         </p>
                       </div>
                       <div className="flex gap-1">
+                        {inQueue ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => removeFeatureFromQueue(f.id)}
+                              >
+                                <Minus className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Remove from queue</TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  addFeatureToQueue({
+                                    id: f.id,
+                                    title: f.title,
+                                    prompt_ids: f.prompt_ids,
+                                    project_paths: f.project_paths,
+                                  })
+                                }
+                                disabled={f.prompt_ids.length === 0}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Add to run queue</TooltipContent>
+                          </Tooltip>
+                        )}
                         <Button
                           size="sm"
                           onClick={() => runForFeature(f)}
@@ -1120,7 +1229,9 @@ Suggest actionable work items: setup, dependencies, features, tests, and documen
                         </Button>
                       </div>
                     </div>
-                  ))}
+                      );
+                    })
+                  )}
                 </div>
               </ScrollArea>
             </CardContent>
@@ -1333,189 +1444,6 @@ Suggest actionable work items: setup, dependencies, features, tests, and documen
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
-
-        <TabsContent value="ai-generate" className="mt-0">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Sparkles className="h-4 w-4" />
-                AI Ticket Generator
-              </CardTitle>
-              <CardDescription>
-                Upload design PDFs, infrastructure, tech stack, project structure and more. Set options and generate tickets with OpenAI.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label>Project / feature description</Label>
-                <textarea
-                  className="min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  value={aiDescription}
-                  onChange={(e) => setAiDescription(e.target.value)}
-                  placeholder="Describe the project, feature, or scope for which you want tickets..."
-                />
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Ticket granularity</Label>
-                  <Select
-                    value={aiOptions.granularity}
-                    onValueChange={(v) => setAiOptions((o) => ({ ...o, granularity: v as "epic" | "medium" | "small" }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="epic">Epic / high-level</SelectItem>
-                      <SelectItem value="medium">Medium tasks</SelectItem>
-                      <SelectItem value="small">Small subtasks</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Default priority</Label>
-                  <Select
-                    value={aiOptions.defaultPriority}
-                    onValueChange={(v) => setAiOptions((o) => ({ ...o, defaultPriority: v as "low" | "medium" | "high" }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-4">
-                <label className="flex cursor-pointer items-center gap-2">
-                  <Checkbox
-                    checked={aiOptions.includeAcceptanceCriteria}
-                    onCheckedChange={(c) => setAiOptions((o) => ({ ...o, includeAcceptanceCriteria: !!c }))}
-                  />
-                  <span className="text-sm">Include acceptance criteria</span>
-                </label>
-                <label className="flex cursor-pointer items-center gap-2">
-                  <Checkbox
-                    checked={aiOptions.includeTechnicalNotes}
-                    onCheckedChange={(c) => setAiOptions((o) => ({ ...o, includeTechnicalNotes: !!c }))}
-                  />
-                  <span className="text-sm">Include technical notes</span>
-                </label>
-                <label className="flex cursor-pointer items-center gap-2">
-                  <Checkbox
-                    checked={aiOptions.splitByComponent}
-                    onCheckedChange={(c) => setAiOptions((o) => ({ ...o, splitByComponent: !!c }))}
-                  />
-                  <span className="text-sm">Split by component</span>
-                </label>
-              </div>
-
-              <div className="space-y-3">
-                <Label className="flex items-center gap-2">
-                  <Upload className="h-4 w-4" />
-                  Upload files or paste text
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  Design PDF, infrastructure, tech stack, project structure. Pick a file or paste content below.
-                </p>
-                <div className="space-y-4">
-                  {AI_FILE_LABELS.map((label, i) => (
-                    <div key={label} className="rounded-lg border bg-muted/20 p-3 space-y-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-medium">{label}</span>
-                        <div className="flex gap-1">
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => pickAiFile(i)}
-                            disabled={!isTauriEnv}
-                          >
-                            <FileText className="h-3.5 w-3.5 mr-1" />
-                            Pick file
-                          </Button>
-                          {aiFileSlots[i].name && (
-                            <Button type="button" size="sm" variant="ghost" onClick={() => clearAiFileSlot(i)}>
-                              Clear
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                      {aiFileSlots[i].name && (
-                        <p className="text-xs text-muted-foreground truncate" title={aiFileSlots[i].name}>
-                          File: {aiFileSlots[i].name}
-                        </p>
-                      )}
-                      <textarea
-                        className="min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        value={aiPastedTexts[i]}
-                        onChange={(e) => setAiPastedTexts((prev) => prev.map((t, j) => (j === i ? e.target.value : t)))}
-                        placeholder={`Or paste ${label.toLowerCase()} content here...`}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {aiError && (
-                <Alert variant="destructive">
-                  <AlertDescription>{aiError}</AlertDescription>
-                </Alert>
-              )}
-
-              <Button
-                onClick={generateAiTickets}
-                disabled={aiGenerating || (!aiDescription.trim() && aiFileSlots.every((s) => !s.contentBase64) && aiPastedTexts.every((t) => !t.trim()))}
-              >
-                {aiGenerating ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating…
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Generate tickets
-                  </>
-                )}
-              </Button>
-
-              {aiGeneratedTickets.length > 0 && (
-                <div className="rounded-lg border p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium">Generated tickets ({aiGeneratedTickets.length})</p>
-                    <Button size="sm" onClick={addGeneratedTicketsToBacklog}>
-                      <Plus className="h-4 w-4 mr-1" />
-                      Add all to backlog
-                    </Button>
-                  </div>
-                  <ScrollArea className="h-[280px] rounded-md border p-3">
-                    <div className="space-y-2">
-                      {aiGeneratedTickets.map((t, idx) => (
-                        <div key={idx} className="flex flex-wrap items-start gap-2 rounded-lg border p-3 bg-card">
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm">{t.title}</p>
-                            {t.description && (
-                              <p className="text-xs text-muted-foreground line-clamp-3 mt-1">{t.description}</p>
-                            )}
-                          </div>
-                          <Button size="sm" variant="outline" onClick={() => addSingleGeneratedTicket(t)}>
-                            Add
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                </div>
-              )}
-            </CardContent>
-          </Card>
         </TabsContent>
 
         <TabsContent value="data" className="mt-0 space-y-6">

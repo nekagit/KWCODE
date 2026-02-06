@@ -3,10 +3,11 @@
 
 use rusqlite::{Connection, params};
 use serde::{Deserialize, Serialize};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 const KV_ALL_PROJECTS: &str = "all_projects";
 const KV_CURSOR_PROJECTS: &str = "cursor_projects";
+const KV_DATA_DIR: &str = "data_dir";
 
 pub fn open_db(db_path: &Path) -> Result<Connection, String> {
     if let Some(parent) = db_path.parent() {
@@ -140,6 +141,52 @@ pub fn migrate_from_json(data_dir: &Path, conn: &Connection) -> Result<(), Strin
         }
     }
 
+    // Persist data dir so all access uses path from DB (ADR 069).
+    let data_dir_value = data_dir.to_string_lossy().to_string();
+    conn.execute(
+        "INSERT OR REPLACE INTO kv_store (key, value) VALUES (?1, ?2)",
+        params![KV_DATA_DIR, data_dir_value],
+    )
+    .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+/// Get data directory path from DB; if missing or invalid, use fallback and persist it.
+pub fn get_data_dir(conn: &Connection, fallback: &Path) -> PathBuf {
+    let stored: Option<String> = conn
+        .query_row(
+            "SELECT value FROM kv_store WHERE key = ?1",
+            params![KV_DATA_DIR],
+            |row| row.get(0),
+        )
+        .ok();
+    let path = stored
+        .filter(|s| !s.is_empty())
+        .map(PathBuf::from)
+        .filter(|p| p.exists() && p.is_dir());
+    match path {
+        Some(p) => p,
+        None => {
+            let fallback_buf = fallback.to_path_buf();
+            let value = fallback.to_string_lossy().to_string();
+            let _ = conn.execute(
+                "INSERT OR REPLACE INTO kv_store (key, value) VALUES (?1, ?2)",
+                params![KV_DATA_DIR, value],
+            );
+            fallback_buf
+        }
+    }
+}
+
+/// Set data directory path in DB (e.g. from settings).
+pub fn set_data_dir(conn: &Connection, path: &Path) -> Result<(), String> {
+    let value = path.to_string_lossy().to_string();
+    conn.execute(
+        "INSERT OR REPLACE INTO kv_store (key, value) VALUES (?1, ?2)",
+        params![KV_DATA_DIR, value],
+    )
+    .map_err(|e| e.to_string())?;
     Ok(())
 }
 

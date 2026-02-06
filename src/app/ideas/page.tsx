@@ -209,7 +209,6 @@ export default function IdeasPage() {
 
   const handleDelete = useCallback(
     async (ideaId: number) => {
-      if (!confirm("Delete this idea?")) return;
       try {
         const res = await fetch(`/api/data/ideas/${ideaId}`, { method: "DELETE" });
         if (!res.ok) {

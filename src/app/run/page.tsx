@@ -135,8 +135,12 @@ export default function RunPage() {
           </CardHeader>
           <CardContent>
             <Select
-              value={selectedFeatureId ?? ""}
+              value={selectedFeatureId ?? "__none__"}
               onValueChange={(id) => {
+                if (id === "__none__") {
+                  applyFeature(null);
+                  return;
+                }
                 const f = features.find((x) => x.id === id) ?? null;
                 applyFeature(f);
               }}
@@ -145,7 +149,7 @@ export default function RunPage() {
                 <SelectValue placeholder="Select a feature (optional)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">
+                <SelectItem value="__none__">
                   <span className="text-muted-foreground">None</span>
                 </SelectItem>
                 {features.map((f) => (

@@ -70,11 +70,13 @@ export function RunStoreHydration() {
     if (isTauriEnv !== true) return;
     let cancelled = false;
     listen<{ run_id: string }>("script-exited", (payload) => {
-      useRunStore.getState().setRunningRuns((prev) =>
+      const store = useRunStore.getState();
+      store.setRunningRuns((prev) =>
         prev.map((r) =>
           r.runId === payload.run_id ? { ...r, status: "done" as const } : r
         )
       );
+      store.runNextInQueue(payload.run_id);
     }).then((fn) => {
       if (!cancelled) unlistenExitedRef.current = fn;
     });

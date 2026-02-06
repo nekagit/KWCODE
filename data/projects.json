@@ -1,1739 +1,545 @@
 [
   {
-    "id": "a990b44f-a8b3-4fcc-a69d-c93ef7578fea",
-    "name": "Template project",
-    "description": "Seed project with 10 prompts, 100 tickets, 100 features, 1 idea, 1 design, 1 architecture.",
-    "promptIds": [
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34,
-      35,
-      36
-    ],
-    "ticketIds": [
-      "748a12c7-9c23-4b9e-af6a-254d4e1d0e37",
-      "29a3308c-1e4b-4191-ae43-0f945ca4eb7f",
-      "3cf08f6e-42e3-4dce-8a32-6af7789fee6f",
-      "eafb0c9a-4145-4ccd-90d8-afd726f70971",
-      "2e1c8014-5483-4098-95dc-719a6f46f7ea",
-      "43a99656-4519-4a3d-b5a3-2fda554b99c9",
-      "8755668c-e815-46e6-9646-53768d4173e2",
-      "e4597d1f-044b-42a1-a1dc-b94a89b76e4c",
-      "222f5828-4c39-4e66-af98-19911700388f",
-      "f2cc9562-341c-4940-b354-9b0d56adc7d3",
-      "dd253fb5-4ecf-49b9-9eee-ae512a6da8ad",
-      "245e61e0-4779-4fe5-ac63-4f04e810299d",
-      "17eda7a1-3271-48a3-b946-bb06a66c7d58",
-      "8ac083f9-ce7b-4b05-b409-70d70beecde8",
-      "4244761c-75e7-4a38-94df-c0b9b67043c6",
-      "ac2eb706-2f2e-4275-bf14-feeed3d9e2dd",
-      "649f0d07-8b8a-4325-ae1d-be3d3c723be7",
-      "0f7a3acd-4295-4bb4-a544-501943d2057f",
-      "5fd99330-6b57-45f6-bf3a-3ac307ee9bf8",
-      "25623129-c036-4a9e-87da-f320e3748cfb",
-      "d561e1d5-d91d-4ba5-92a6-9ec1637ed955",
-      "0dc9f8be-b4a2-495c-a209-2cbcd8b465ea",
-      "5685ff55-1610-4d4d-b9d2-fc5f52630b1e",
-      "2629b55e-ea61-497e-989a-e1eab6c1ff3b",
-      "1731b648-9925-4ee6-a3d8-8a15ba300bdc",
-      "83f8b223-4a18-426b-9a89-927d50fb3ac2",
-      "02a11c16-5b81-4d6a-adc2-20c11d0f77ff",
-      "26350480-7cc2-4371-9ee1-f30e2fa135b9",
-      "708f39c0-4e89-4da9-9563-1120cfcbf1d6",
-      "b0da30df-1f83-4437-96bd-15a7e4558268",
-      "55009562-6c5a-41fe-b91c-6eb6ec09d1e4",
-      "98f56eef-ba0c-41e8-a54b-58b6671f14b4",
-      "12fd4d26-f2ed-4d97-9e0c-683b99ec983d",
-      "d4729140-24aa-4c6c-8a37-152e7f129163",
-      "059906b6-c441-4894-a599-6c7b70485fb7",
-      "746a9865-37e5-498c-83af-bcd27f592a38",
-      "de12fefa-c1e9-4276-81c6-1ceedb785b0e",
-      "e856608a-8fb6-49c1-bfa3-d8d56177827a",
-      "d98f9ef7-42a7-4b67-a08e-28cb8a9181af",
-      "b25ea01b-08fd-4178-b2f4-9555a136b378",
-      "7ed989a5-f9cc-469f-aaa0-1d4c5c8a9c4d",
-      "b5dff657-74b9-4b32-a22e-e744fd2d9c48",
-      "631f4fe4-a9ea-444a-af74-a59974afc231",
-      "e2071e1e-9fdb-4910-b100-a97144301609",
-      "76ed3a63-2b09-4402-8c7b-b5cf1512fe8d",
-      "1f60db3e-0ea2-466f-acb8-d9c0730e7f33",
-      "5629189e-1e46-42e8-876b-04271f561c18",
-      "219cbd38-7e13-4034-950d-3f547da5dcfe",
-      "d8719fd8-7c31-4b33-8e7c-bbd2329e9b34",
-      "e5823519-99e8-4a24-8b92-e43ca381babd",
-      "fb7841fe-a1a2-45b4-9951-e3a2f42a9480",
-      "f3825a23-9e13-430e-bba7-06692484216d",
-      "95817470-46df-4036-bc05-bea53400d963",
-      "96f2cb36-b7c5-4e08-bc5a-ab4e0f766ce0",
-      "f6d54332-708a-4bf9-8741-4189194e18a3",
-      "dc690eb9-c855-4284-a20c-4024100efd39",
-      "3ac26086-cba3-4555-91d3-fc079e02329c",
-      "5a817836-891d-49f2-855a-bea5833772ba",
-      "5511ad9f-c819-4793-96d4-8373eb10d301",
-      "95f801fd-0250-4794-b323-0089f5c35d6f",
-      "bc0ff7e6-2f63-4fdc-97db-ed930b4e4d49",
-      "a10aefb6-fba9-4f90-aa9d-214cf92e73e3",
-      "f0c02cba-4228-4728-8074-ecf4b90a6295",
-      "3928c006-4cb5-4e45-91ab-13cfe2aa7540",
-      "15177746-e48a-4aa5-839c-49f6577f5064",
-      "922f69fa-cc93-445a-9349-78c73b8c5fd8",
-      "3e8353b2-cd2a-4a17-82b8-11ac31b373dd",
-      "cac416ef-4a8e-46d8-bca0-2f21f10f50cd",
-      "ea383128-a8e4-4167-8558-f4d115eec217",
-      "5e80013c-675b-4614-bb3c-8103c1cb3f79",
-      "3abc6416-2d02-45d8-8485-6b001eef529a",
-      "e06689c2-939e-449e-bad8-3c5d8a8cbeab",
-      "b42c08a5-664b-40f5-9c51-ef6431bcdbd3",
-      "060ed50a-3e10-41db-8797-1ddb75e25df3",
-      "ff493b75-122e-444f-95db-7f105bf8cde6",
-      "b24764f3-11a2-45e5-abb3-9ae9c3155bb1",
-      "0e5df97a-7c3f-4324-9efb-9df151810d46",
-      "c7432b33-16b1-4603-9786-c3ff6e3380c0",
-      "c0effd82-9e7f-47cc-88ce-1242619fe083",
-      "ad53b26d-992f-4e0e-bd4f-d81597c882e5",
-      "f219c314-fdb4-4861-815b-8f2038a2206e",
-      "ba19c250-d08c-43a1-a789-bcf52f352521",
-      "5648c614-7350-41df-97e9-412f2fa5c4bc",
-      "d651b372-0d97-4c12-8aef-90b69c7d3deb",
-      "0234424d-61c2-4f15-856c-849cee66c86f",
-      "d6f5a74a-3bfa-4030-a491-ead4c5c00ce4",
-      "b6ddb8a0-5256-4681-9f52-371144f79004",
-      "f91c36ce-cfc6-4198-8a84-3c29353fdcc7",
-      "717943c1-069d-44f0-af92-eb621d55bfb9",
-      "c39b4759-2a30-440a-adb2-84fa9fd859d1",
-      "370d5033-de58-4f74-8c3f-57d13a7e903c",
-      "4df3c8a4-4f22-40e7-9749-21cb2d957511",
-      "aa7a24f6-c9d1-4a42-96e2-a5817b0bce90",
-      "d1560e6b-9643-4a74-b835-2708e8e97cfd",
-      "587c8230-ff63-4af6-93fa-4b7cdbfd6307",
-      "c6a01f7d-a49e-477c-a30a-668de098810c",
-      "7efd44be-a5fe-4e63-a35d-4f0193bccc1c",
-      "7e2bda72-90b7-4313-9345-ac1777408184",
-      "a9ee960e-2897-41a5-9bf5-b6490c54c5ad",
-      "c5dad92c-7f19-4f6e-8b64-c0ca7afa4e6a"
-    ],
-    "featureIds": [
-      "9c3aebeb-e8c7-402f-8099-9c94a776bb40",
-      "9c7ea327-ac77-4d58-8179-3ae945956aa0",
-      "84571e44-6733-4cc3-9509-f20667852cd5",
-      "2bf766c1-5aa5-4cc9-aa37-64eef4897bc8",
-      "ce975218-12ae-43b1-bee5-48fa290db3b7",
-      "994eb087-9b87-4d3e-a6a4-c80faf258fc7",
-      "bb13227c-f618-46da-9785-d2d551f57e52",
-      "020d1149-aeaf-49f4-9262-c3922b68f423",
-      "1b3c36d0-93c5-48c0-8487-5d363c3d8a4d",
-      "4b493ad1-208d-4c52-b0b1-b48d3943ae48",
-      "b10f6e6d-da9d-4658-9cfa-47763418710c",
-      "75cb2afc-1b4a-41a3-a985-5cf815609209",
-      "a15e1a64-1164-43fb-84cb-7ff3bcaa540d",
-      "94ac0220-71f0-46e4-9982-776c1e16087e",
-      "e92f7179-21b8-4edd-9eea-5b6f93f90eb0",
-      "c89af289-2b02-446f-b6b3-868264829056",
-      "75e9fba9-e3fe-4a2c-8162-2ab67ade51f5",
-      "8ce37611-d21b-4c0f-8c40-100285e94e06",
-      "f7fd8cb1-906d-4a9b-90c4-c9099de177b0",
-      "348d2564-0cec-4e57-8139-a411d76b9aef",
-      "eb17d796-e0ba-43d4-a8c6-ad2da167b373",
-      "8418408a-9ae3-4fdc-b62a-ba3b61163b6f",
-      "eecb7af2-3bf4-4daa-99f3-48df9df9460e",
-      "282419d3-a4bb-41bd-a3c7-311274f96d42",
-      "030c6247-fd83-431f-99e9-5cdfd8528c7d",
-      "b417708c-30f6-4ae5-85d9-4fefdcb79bb9",
-      "9dbe4943-f781-49ff-8ef3-5493a7ce46a7",
-      "15825367-c054-4215-90a4-8fadb3139b21",
-      "91838f8b-d71e-4d38-aeaf-cf9f77232846",
-      "30469ba5-49d7-4f67-8119-98405d359de1",
-      "c1a92117-55cf-4303-902e-c6d94f1ea1cf",
-      "0672e611-581d-4f9b-a5da-3e7d648688c7",
-      "47424b7e-dd27-431f-aa56-c513f94e1e39",
-      "5bbe8d1f-4a95-4b41-9d82-0da171634eed",
-      "80c5627d-b5e0-4072-b8b5-6a7321a95e80",
-      "9e804ba4-cf25-4a9b-a4a5-3cbc556f4a91",
-      "ce3c158b-ae90-473a-808d-684243e591cc",
-      "011d13da-c5d7-487e-9aaa-3e26035bb3af",
-      "3601884a-c387-49ae-9326-1aa3a34442c0",
-      "68de4a86-16b6-405e-9d78-df42bb24cb2a",
-      "fc8e8dcb-5ca2-4c12-a1b5-3246b77d4eee",
-      "7cd58507-9aed-4efb-a3ea-15060602f0cd",
-      "55dad08c-25f6-4240-95c2-830088651ee3",
-      "1828441a-bdd8-495d-94d8-492d37fdd940",
-      "2bf769a6-c4f0-4234-ab78-b485edecae86",
-      "42c8d004-94c5-4c55-ba41-140a50a14755",
-      "f699e73a-7465-4759-b0e4-a2be3bd54916",
-      "22aa1270-53dc-4ea4-9558-7b4122f533fc",
-      "868732af-ba3d-42cc-b2df-e78fc83499ec",
-      "6a76294a-f62f-4777-85ac-a15fa3ef7af1",
-      "86e872bf-f175-449b-8dd2-809c6c125d4a",
-      "d1959b9a-cea4-4f6c-b8ce-5648a30abd32",
-      "121eb4ab-a6c5-4e7e-a92f-40d3d66d6427",
-      "fd3b008b-b96f-4a6c-a0b3-97037e4a0771",
-      "8932bd32-17f6-4ed2-a995-3fc5f727bf57",
-      "65b7d3af-e4f9-4fa3-9a30-a395e6d1afc2",
-      "c1d7a573-92be-45e5-8bda-a1df89b9d247",
-      "977df9d2-3c2e-42fd-939f-c276d55005a0",
-      "0dbb27e1-a497-4d07-b793-476a942ad7de",
-      "bd4d65ba-fde7-4818-acae-7d78ab1e9510",
-      "d8378592-9457-4ed9-b8a6-e7c5ccc1d2f6",
-      "bc343576-e884-46bc-8650-961e03259f8c",
-      "d15d8968-4226-4d34-a7ba-43e5e71cd109",
-      "19d3a2e0-65bc-43de-9e4a-c4754b945e34",
-      "4acc87e1-f765-43c7-aad7-437dccf79442",
-      "e031f8c8-1138-4734-8032-6f960313ae6f",
-      "de1b61b0-c696-45bd-8bb7-51f56edbf47b",
-      "e365e271-54ff-4dd5-9701-9282f63cc3bc",
-      "f962b238-f07e-4042-ab54-8944e6c0ea3d",
-      "2a78f7e7-c96b-4d32-b619-752fc4911df7",
-      "e52ff906-d867-4529-bb87-72e551663082",
-      "190e8106-c7b1-46ae-8c99-a0bf3288d939",
-      "e14b86c2-7f6f-4b18-b497-fecdafa16382",
-      "cdc47782-f04d-486d-90d7-754868b5d66a",
-      "07070fce-e77e-4758-9294-a42514e504b9",
-      "20b6d2ac-d908-4b18-a975-6158fda60521",
-      "4bbe4b9f-5ba8-49cf-9be6-4010a2ad1e92",
-      "5fcfd13c-4f29-43bd-acb6-9f836f6f20d1",
-      "67be03d1-c3a2-4d4e-872f-5dc5a1a9408d",
-      "a6596893-4eb2-4454-9a07-76ba545e394b",
-      "03059f64-764c-415e-8bff-ba2efa8f037b",
-      "5c19dc87-f840-46df-92ac-9ce065a65466",
-      "7642a88e-82ef-46a0-9a66-d85fd904f4dd",
-      "c8ae0403-544c-44ab-aeb2-c0e853dca536",
-      "422a5186-94b8-4a54-b496-85b90db957c9",
-      "aca2a9b3-0295-4317-bcc1-6f34346cb277",
-      "2fe5fa2e-5934-4003-b360-3d958e7b2066",
-      "fb26ea09-267b-4587-bdcc-f79ff1ee7a62",
-      "f0687bfb-f520-4684-93c6-a2592609991b",
-      "746373f0-17e4-4358-b5e8-72422e8c4171",
-      "98d96df4-cc16-4a7f-9334-b6acdcccd31e",
-      "73abaf2c-6408-4954-a755-2313bd3101c2",
-      "9e0df8ba-e8a9-492b-a517-5b97b05bdc3e",
-      "02a7aac1-cfb0-480b-8ac4-37d73e7d1f90",
-      "34983894-a347-4c0c-b1e7-db8cea465831",
-      "0e5c88a0-4d7d-49fc-b53d-dc76c4d17266",
-      "06451159-f94e-4943-af83-d59d335208d8",
-      "0b35836e-e6b8-4742-b32c-6c988db7f7fc",
-      "90e8973e-eb23-42f6-9ac1-526bb23df219",
-      "7355e07a-2485-4e20-9f6f-406ba8bcca00"
-    ],
-    "ideaIds": [
-      3
-    ],
-    "designIds": [
-      "d46171f0-b7c6-4384-98ff-c02eca46d567"
-    ],
     "architectureIds": [
-      "1c984ee9-78c0-4070-b104-b389116e99c7"
+      "3f2b9278-3b81-4cae-828a-8c006a7005c0"
+    ],
+    "created_at": "2026-02-06T08:22:37.276Z",
+    "description": "Seed project with 10 prompts, categorized multiphased tickets, major features for 1 idea, 1 design, 1 architecture.",
+    "designIds": [
+      "520fd099-0a32-4219-8af5-ba5e74c25c78"
     ],
     "entityCategories": {
-      "prompts": {
-        "27": {
-          "phase": "Recurring",
-          "step": "Ongoing",
-          "organization": "Shared",
-          "categorizer": "template",
-          "other": "prompt"
-        },
-        "28": {
-          "phase": "Recurring",
-          "step": "Ongoing",
-          "organization": "Shared",
-          "categorizer": "template",
-          "other": "prompt"
-        },
-        "29": {
-          "phase": "Recurring",
-          "step": "Ongoing",
-          "organization": "Shared",
-          "categorizer": "template",
-          "other": "prompt"
-        },
-        "30": {
-          "phase": "Recurring",
-          "step": "Ongoing",
-          "organization": "Shared",
-          "categorizer": "template",
-          "other": "prompt"
-        },
-        "31": {
-          "phase": "Recurring",
-          "step": "Ongoing",
-          "organization": "Shared",
-          "categorizer": "template",
-          "other": "prompt"
-        },
-        "32": {
-          "phase": "Recurring",
-          "step": "Ongoing",
-          "organization": "Shared",
-          "categorizer": "template",
-          "other": "prompt"
-        },
-        "33": {
-          "phase": "Recurring",
-          "step": "Ongoing",
-          "organization": "Shared",
-          "categorizer": "template",
-          "other": "prompt"
-        },
-        "34": {
-          "phase": "Recurring",
-          "step": "Ongoing",
-          "organization": "Shared",
-          "categorizer": "template",
-          "other": "prompt"
-        },
-        "35": {
-          "phase": "Recurring",
-          "step": "Ongoing",
-          "organization": "Shared",
-          "categorizer": "template",
-          "other": "prompt"
-        },
-        "36": {
-          "phase": "Recurring",
-          "step": "Ongoing",
-          "organization": "Shared",
-          "categorizer": "template",
-          "other": "prompt"
-        }
-      },
-      "tickets": {
-        "748a12c7-9c23-4b9e-af6a-254d4e1d0e37": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "29a3308c-1e4b-4191-ae43-0f945ca4eb7f": {
+      "architectures": {
+        "3f2b9278-3b81-4cae-828a-8c006a7005c0": {
+          "categorizer": "architecture",
+          "organization": "Tech",
+          "other": "best-practice",
           "phase": "Design",
-          "step": "2",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "3cf08f6e-42e3-4dce-8a32-6af7789fee6f": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "eafb0c9a-4145-4ccd-90d8-afd726f70971": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "2e1c8014-5483-4098-95dc-719a6f46f7ea": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "43a99656-4519-4a3d-b5a3-2fda554b99c9": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "8755668c-e815-46e6-9646-53768d4173e2": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "e4597d1f-044b-42a1-a1dc-b94a89b76e4c": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "222f5828-4c39-4e66-af98-19911700388f": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "f2cc9562-341c-4940-b354-9b0d56adc7d3": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "dd253fb5-4ecf-49b9-9eee-ae512a6da8ad": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "245e61e0-4779-4fe5-ac63-4f04e810299d": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "17eda7a1-3271-48a3-b946-bb06a66c7d58": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "8ac083f9-ce7b-4b05-b409-70d70beecde8": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "4244761c-75e7-4a38-94df-c0b9b67043c6": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "ac2eb706-2f2e-4275-bf14-feeed3d9e2dd": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "649f0d07-8b8a-4325-ae1d-be3d3c723be7": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "0f7a3acd-4295-4bb4-a544-501943d2057f": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "5fd99330-6b57-45f6-bf3a-3ac307ee9bf8": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "25623129-c036-4a9e-87da-f320e3748cfb": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "d561e1d5-d91d-4ba5-92a6-9ec1637ed955": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "0dc9f8be-b4a2-495c-a209-2cbcd8b465ea": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "5685ff55-1610-4d4d-b9d2-fc5f52630b1e": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "2629b55e-ea61-497e-989a-e1eab6c1ff3b": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "1731b648-9925-4ee6-a3d8-8a15ba300bdc": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "83f8b223-4a18-426b-9a89-927d50fb3ac2": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "02a11c16-5b81-4d6a-adc2-20c11d0f77ff": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "26350480-7cc2-4371-9ee1-f30e2fa135b9": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "708f39c0-4e89-4da9-9563-1120cfcbf1d6": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "b0da30df-1f83-4437-96bd-15a7e4558268": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "55009562-6c5a-41fe-b91c-6eb6ec09d1e4": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "98f56eef-ba0c-41e8-a54b-58b6671f14b4": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "12fd4d26-f2ed-4d97-9e0c-683b99ec983d": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "d4729140-24aa-4c6c-8a37-152e7f129163": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "059906b6-c441-4894-a599-6c7b70485fb7": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "746a9865-37e5-498c-83af-bcd27f592a38": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "de12fefa-c1e9-4276-81c6-1ceedb785b0e": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "e856608a-8fb6-49c1-bfa3-d8d56177827a": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "d98f9ef7-42a7-4b67-a08e-28cb8a9181af": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "b25ea01b-08fd-4178-b2f4-9555a136b378": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "7ed989a5-f9cc-469f-aaa0-1d4c5c8a9c4d": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "b5dff657-74b9-4b32-a22e-e744fd2d9c48": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "631f4fe4-a9ea-444a-af74-a59974afc231": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "e2071e1e-9fdb-4910-b100-a97144301609": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "76ed3a63-2b09-4402-8c7b-b5cf1512fe8d": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "1f60db3e-0ea2-466f-acb8-d9c0730e7f33": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "5629189e-1e46-42e8-876b-04271f561c18": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "219cbd38-7e13-4034-950d-3f547da5dcfe": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "d8719fd8-7c31-4b33-8e7c-bbd2329e9b34": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "e5823519-99e8-4a24-8b92-e43ca381babd": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "fb7841fe-a1a2-45b4-9951-e3a2f42a9480": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "f3825a23-9e13-430e-bba7-06692484216d": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "95817470-46df-4036-bc05-bea53400d963": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "96f2cb36-b7c5-4e08-bc5a-ab4e0f766ce0": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "f6d54332-708a-4bf9-8741-4189194e18a3": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "dc690eb9-c855-4284-a20c-4024100efd39": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "3ac26086-cba3-4555-91d3-fc079e02329c": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "5a817836-891d-49f2-855a-bea5833772ba": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "5511ad9f-c819-4793-96d4-8373eb10d301": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "95f801fd-0250-4794-b323-0089f5c35d6f": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "bc0ff7e6-2f63-4fdc-97db-ed930b4e4d49": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "a10aefb6-fba9-4f90-aa9d-214cf92e73e3": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "f0c02cba-4228-4728-8074-ecf4b90a6295": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "3928c006-4cb5-4e45-91ab-13cfe2aa7540": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "15177746-e48a-4aa5-839c-49f6577f5064": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "922f69fa-cc93-445a-9349-78c73b8c5fd8": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "3e8353b2-cd2a-4a17-82b8-11ac31b373dd": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "cac416ef-4a8e-46d8-bca0-2f21f10f50cd": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "ea383128-a8e4-4167-8558-f4d115eec217": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "5e80013c-675b-4614-bb3c-8103c1cb3f79": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "3abc6416-2d02-45d8-8485-6b001eef529a": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "e06689c2-939e-449e-bad8-3c5d8a8cbeab": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "b42c08a5-664b-40f5-9c51-ef6431bcdbd3": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "060ed50a-3e10-41db-8797-1ddb75e25df3": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "ff493b75-122e-444f-95db-7f105bf8cde6": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "b24764f3-11a2-45e5-abb3-9ae9c3155bb1": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "0e5df97a-7c3f-4324-9efb-9df151810d46": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "c7432b33-16b1-4603-9786-c3ff6e3380c0": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "c0effd82-9e7f-47cc-88ce-1242619fe083": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "ad53b26d-992f-4e0e-bd4f-d81597c882e5": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "f219c314-fdb4-4861-815b-8f2038a2206e": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "ba19c250-d08c-43a1-a789-bcf52f352521": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "5648c614-7350-41df-97e9-412f2fa5c4bc": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "d651b372-0d97-4c12-8aef-90b69c7d3deb": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "0234424d-61c2-4f15-856c-849cee66c86f": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "d6f5a74a-3bfa-4030-a491-ead4c5c00ce4": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "b6ddb8a0-5256-4681-9f52-371144f79004": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "f91c36ce-cfc6-4198-8a84-3c29353fdcc7": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "717943c1-069d-44f0-af92-eb621d55bfb9": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "c39b4759-2a30-440a-adb2-84fa9fd859d1": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "370d5033-de58-4f74-8c3f-57d13a7e903c": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "4df3c8a4-4f22-40e7-9749-21cb2d957511": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "aa7a24f6-c9d1-4a42-96e2-a5817b0bce90": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "d1560e6b-9643-4a74-b835-2708e8e97cfd": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "587c8230-ff63-4af6-93fa-4b7cdbfd6307": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "c6a01f7d-a49e-477c-a30a-668de098810c": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "7efd44be-a5fe-4e63-a35d-4f0193bccc1c": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "7e2bda72-90b7-4313-9345-ac1777408184": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "a9ee960e-2897-41a5-9bf5-b6490c54c5ad": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        },
-        "c5dad92c-7f19-4f6e-8b64-c0ca7afa4e6a": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Team",
-          "categorizer": "backlog",
-          "other": "task"
-        }
-      },
-      "features": {
-        "9c3aebeb-e8c7-402f-8099-9c94a776bb40": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "9c7ea327-ac77-4d58-8179-3ae945956aa0": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "84571e44-6733-4cc3-9509-f20667852cd5": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "2bf766c1-5aa5-4cc9-aa37-64eef4897bc8": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "ce975218-12ae-43b1-bee5-48fa290db3b7": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "994eb087-9b87-4d3e-a6a4-c80faf258fc7": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "bb13227c-f618-46da-9785-d2d551f57e52": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "020d1149-aeaf-49f4-9262-c3922b68f423": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "1b3c36d0-93c5-48c0-8487-5d363c3d8a4d": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "4b493ad1-208d-4c52-b0b1-b48d3943ae48": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "b10f6e6d-da9d-4658-9cfa-47763418710c": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "75cb2afc-1b4a-41a3-a985-5cf815609209": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "a15e1a64-1164-43fb-84cb-7ff3bcaa540d": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "94ac0220-71f0-46e4-9982-776c1e16087e": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "e92f7179-21b8-4edd-9eea-5b6f93f90eb0": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "c89af289-2b02-446f-b6b3-868264829056": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "75e9fba9-e3fe-4a2c-8162-2ab67ade51f5": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "8ce37611-d21b-4c0f-8c40-100285e94e06": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "f7fd8cb1-906d-4a9b-90c4-c9099de177b0": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "348d2564-0cec-4e57-8139-a411d76b9aef": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "eb17d796-e0ba-43d4-a8c6-ad2da167b373": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "8418408a-9ae3-4fdc-b62a-ba3b61163b6f": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "eecb7af2-3bf4-4daa-99f3-48df9df9460e": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "282419d3-a4bb-41bd-a3c7-311274f96d42": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "030c6247-fd83-431f-99e9-5cdfd8528c7d": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "b417708c-30f6-4ae5-85d9-4fefdcb79bb9": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "9dbe4943-f781-49ff-8ef3-5493a7ce46a7": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "15825367-c054-4215-90a4-8fadb3139b21": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "91838f8b-d71e-4d38-aeaf-cf9f77232846": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "30469ba5-49d7-4f67-8119-98405d359de1": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "c1a92117-55cf-4303-902e-c6d94f1ea1cf": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "0672e611-581d-4f9b-a5da-3e7d648688c7": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "47424b7e-dd27-431f-aa56-c513f94e1e39": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "5bbe8d1f-4a95-4b41-9d82-0da171634eed": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "80c5627d-b5e0-4072-b8b5-6a7321a95e80": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "9e804ba4-cf25-4a9b-a4a5-3cbc556f4a91": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "ce3c158b-ae90-473a-808d-684243e591cc": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "011d13da-c5d7-487e-9aaa-3e26035bb3af": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "3601884a-c387-49ae-9326-1aa3a34442c0": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "68de4a86-16b6-405e-9d78-df42bb24cb2a": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "fc8e8dcb-5ca2-4c12-a1b5-3246b77d4eee": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "7cd58507-9aed-4efb-a3ea-15060602f0cd": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "55dad08c-25f6-4240-95c2-830088651ee3": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "1828441a-bdd8-495d-94d8-492d37fdd940": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "2bf769a6-c4f0-4234-ab78-b485edecae86": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "42c8d004-94c5-4c55-ba41-140a50a14755": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "f699e73a-7465-4759-b0e4-a2be3bd54916": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "22aa1270-53dc-4ea4-9558-7b4122f533fc": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "868732af-ba3d-42cc-b2df-e78fc83499ec": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "6a76294a-f62f-4777-85ac-a15fa3ef7af1": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "86e872bf-f175-449b-8dd2-809c6c125d4a": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "d1959b9a-cea4-4f6c-b8ce-5648a30abd32": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "121eb4ab-a6c5-4e7e-a92f-40d3d66d6427": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "fd3b008b-b96f-4a6c-a0b3-97037e4a0771": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "8932bd32-17f6-4ed2-a995-3fc5f727bf57": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "65b7d3af-e4f9-4fa3-9a30-a395e6d1afc2": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "c1d7a573-92be-45e5-8bda-a1df89b9d247": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "977df9d2-3c2e-42fd-939f-c276d55005a0": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "0dbb27e1-a497-4d07-b793-476a942ad7de": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "bd4d65ba-fde7-4818-acae-7d78ab1e9510": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "d8378592-9457-4ed9-b8a6-e7c5ccc1d2f6": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "bc343576-e884-46bc-8650-961e03259f8c": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "d15d8968-4226-4d34-a7ba-43e5e71cd109": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "19d3a2e0-65bc-43de-9e4a-c4754b945e34": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "4acc87e1-f765-43c7-aad7-437dccf79442": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "e031f8c8-1138-4734-8032-6f960313ae6f": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "de1b61b0-c696-45bd-8bb7-51f56edbf47b": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "e365e271-54ff-4dd5-9701-9282f63cc3bc": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "f962b238-f07e-4042-ab54-8944e6c0ea3d": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "2a78f7e7-c96b-4d32-b619-752fc4911df7": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "e52ff906-d867-4529-bb87-72e551663082": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "190e8106-c7b1-46ae-8c99-a0bf3288d939": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "e14b86c2-7f6f-4b18-b497-fecdafa16382": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "cdc47782-f04d-486d-90d7-754868b5d66a": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "07070fce-e77e-4758-9294-a42514e504b9": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "20b6d2ac-d908-4b18-a975-6158fda60521": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "4bbe4b9f-5ba8-49cf-9be6-4010a2ad1e92": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "5fcfd13c-4f29-43bd-acb6-9f836f6f20d1": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "67be03d1-c3a2-4d4e-872f-5dc5a1a9408d": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "a6596893-4eb2-4454-9a07-76ba545e394b": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "03059f64-764c-415e-8bff-ba2efa8f037b": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "5c19dc87-f840-46df-92ac-9ce065a65466": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "7642a88e-82ef-46a0-9a66-d85fd904f4dd": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "c8ae0403-544c-44ab-aeb2-c0e853dca536": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "422a5186-94b8-4a54-b496-85b90db957c9": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "aca2a9b3-0295-4317-bcc1-6f34346cb277": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "2fe5fa2e-5934-4003-b360-3d958e7b2066": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "fb26ea09-267b-4587-bdcc-f79ff1ee7a62": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "f0687bfb-f520-4684-93c6-a2592609991b": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "746373f0-17e4-4358-b5e8-72422e8c4171": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "98d96df4-cc16-4a7f-9334-b6acdcccd31e": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "73abaf2c-6408-4954-a755-2313bd3101c2": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "9e0df8ba-e8a9-492b-a517-5b97b05bdc3e": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "02a7aac1-cfb0-480b-8ac4-37d73e7d1f90": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "34983894-a347-4c0c-b1e7-db8cea465831": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "0e5c88a0-4d7d-49fc-b53d-dc76c4d17266": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "06451159-f94e-4943-af83-d59d335208d8": {
-          "phase": "Design",
-          "step": "2",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "0b35836e-e6b8-4742-b32c-6c988db7f7fc": {
-          "phase": "Build",
-          "step": "3",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "90e8973e-eb23-42f6-9ac1-526bb23df219": {
-          "phase": "Launch",
-          "step": "4",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        },
-        "7355e07a-2485-4e20-9f6f-406ba8bcca00": {
-          "phase": "Review",
-          "step": "5",
-          "organization": "Product",
-          "categorizer": "feature",
-          "other": "scope"
-        }
-      },
-      "ideas": {
-        "3": {
-          "phase": "Discovery",
-          "step": "1",
-          "organization": "Product",
-          "categorizer": "idea",
-          "other": "concept"
+          "step": "1"
         }
       },
       "designs": {
-        "d46171f0-b7c6-4384-98ff-c02eca46d567": {
-          "phase": "Design",
-          "step": "1",
-          "organization": "Design",
+        "520fd099-0a32-4219-8af5-ba5e74c25c78": {
           "categorizer": "design",
-          "other": "ui-spec"
+          "organization": "Design",
+          "other": "ui-spec",
+          "phase": "Design",
+          "step": "1"
         }
       },
-      "architectures": {
-        "1c984ee9-78c0-4070-b104-b389116e99c7": {
+      "features": {
+        "25c7721d-22d2-4b2b-9220-e342da7dedff": {
+          "categorizer": "feature",
+          "organization": "Product",
+          "other": "scope",
           "phase": "Design",
-          "step": "1",
-          "organization": "Tech",
-          "categorizer": "architecture",
-          "other": "best-practice"
+          "step": "3"
+        },
+        "401e250c-0dd7-42f7-afc1-07e88f508d7b": {
+          "categorizer": "feature",
+          "organization": "Product",
+          "other": "scope",
+          "phase": "Discovery",
+          "step": "2"
+        },
+        "61659a4c-ec04-4ee9-8dd5-c9655d278e33": {
+          "categorizer": "feature",
+          "organization": "Product",
+          "other": "scope",
+          "phase": "Launch",
+          "step": "3"
+        },
+        "7acbe605-0b4c-4d73-a552-fbf1a773a405": {
+          "categorizer": "feature",
+          "organization": "Product",
+          "other": "scope",
+          "phase": "Design",
+          "step": "1"
+        },
+        "803b3e8e-19d8-4365-9679-77a504aa18d2": {
+          "categorizer": "feature",
+          "organization": "Product",
+          "other": "scope",
+          "phase": "Discovery",
+          "step": "1"
+        },
+        "9c6a3597-6798-46a6-b988-1efced3733df": {
+          "categorizer": "feature",
+          "organization": "Product",
+          "other": "scope",
+          "phase": "Review",
+          "step": "3"
+        },
+        "a9a36bc5-3334-459f-8e0f-b0c2e132fe4f": {
+          "categorizer": "feature",
+          "organization": "Product",
+          "other": "scope",
+          "phase": "Launch",
+          "step": "2"
+        },
+        "c98a8bab-a44d-4a45-8046-25b2d4af9445": {
+          "categorizer": "feature",
+          "organization": "Product",
+          "other": "scope",
+          "phase": "Build",
+          "step": "2"
+        },
+        "e5a3fda7-4e66-415c-895c-ea5e1de3110c": {
+          "categorizer": "feature",
+          "organization": "Product",
+          "other": "scope",
+          "phase": "Launch",
+          "step": "1"
+        },
+        "e5c08d45-f9e5-4eb3-b21c-1769b6414e25": {
+          "categorizer": "feature",
+          "organization": "Product",
+          "other": "scope",
+          "phase": "Review",
+          "step": "2"
+        },
+        "e8dff820-a6dc-439d-9d5c-ee44fbe5771c": {
+          "categorizer": "feature",
+          "organization": "Product",
+          "other": "scope",
+          "phase": "Build",
+          "step": "3"
+        },
+        "fc84acd2-da10-4398-bf92-2a7059973e0d": {
+          "categorizer": "feature",
+          "organization": "Product",
+          "other": "scope",
+          "phase": "Review",
+          "step": "1"
+        }
+      },
+      "ideas": {
+        "2": {
+          "categorizer": "idea",
+          "organization": "Product",
+          "other": "concept",
+          "phase": "Discovery",
+          "step": "1"
+        }
+      },
+      "prompts": {
+        "47": {
+          "categorizer": "template",
+          "organization": "Shared",
+          "other": "prompt",
+          "phase": "Recurring",
+          "step": "Ongoing"
+        },
+        "48": {
+          "categorizer": "template",
+          "organization": "Shared",
+          "other": "prompt",
+          "phase": "Recurring",
+          "step": "Ongoing"
+        },
+        "49": {
+          "categorizer": "template",
+          "organization": "Shared",
+          "other": "prompt",
+          "phase": "Recurring",
+          "step": "Ongoing"
+        },
+        "50": {
+          "categorizer": "template",
+          "organization": "Shared",
+          "other": "prompt",
+          "phase": "Recurring",
+          "step": "Ongoing"
+        },
+        "51": {
+          "categorizer": "template",
+          "organization": "Shared",
+          "other": "prompt",
+          "phase": "Recurring",
+          "step": "Ongoing"
+        },
+        "52": {
+          "categorizer": "template",
+          "organization": "Shared",
+          "other": "prompt",
+          "phase": "Recurring",
+          "step": "Ongoing"
+        },
+        "53": {
+          "categorizer": "template",
+          "organization": "Shared",
+          "other": "prompt",
+          "phase": "Recurring",
+          "step": "Ongoing"
+        },
+        "54": {
+          "categorizer": "template",
+          "organization": "Shared",
+          "other": "prompt",
+          "phase": "Recurring",
+          "step": "Ongoing"
+        },
+        "55": {
+          "categorizer": "template",
+          "organization": "Shared",
+          "other": "prompt",
+          "phase": "Recurring",
+          "step": "Ongoing"
+        },
+        "56": {
+          "categorizer": "template",
+          "organization": "Shared",
+          "other": "prompt",
+          "phase": "Recurring",
+          "step": "Ongoing"
+        }
+      },
+      "tickets": {
+        "00085668-6504-4077-939d-7ad4d11a3c39": {
+          "categorizer": "bug",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Discovery",
+          "step": "1"
+        },
+        "19a8d04e-f268-4413-ba8f-a7a352968d1c": {
+          "categorizer": "backlog",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Build",
+          "step": "1"
+        },
+        "1ba62ffe-72a7-4e0c-a707-ddf42b8f7a4f": {
+          "categorizer": "backlog",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Review",
+          "step": "2"
+        },
+        "1c9f52b6-ecbb-4d69-acf8-9ce14f8b4a13": {
+          "categorizer": "backlog",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Discovery",
+          "step": "1"
+        },
+        "2e6c85a4-895a-450f-bed3-b29b01443703": {
+          "categorizer": "bug",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Launch",
+          "step": "3"
+        },
+        "3a228528-0bb4-46ba-82d7-062c3a4d3d27": {
+          "categorizer": "bug",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Review",
+          "step": "2"
+        },
+        "3e9fc9a8-1834-47a3-a792-44c3b0fa4668": {
+          "categorizer": "backlog",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Discovery",
+          "step": "3"
+        },
+        "3edb2b94-a828-4c36-a9cc-3e961842002f": {
+          "categorizer": "bug",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Design",
+          "step": "3"
+        },
+        "45dad274-edff-4b9d-8e10-964906ed675a": {
+          "categorizer": "task",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Design",
+          "step": "3"
+        },
+        "4cae6038-274e-4e44-9c6d-4bb58ba14105": {
+          "categorizer": "bug",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Build",
+          "step": "2"
+        },
+        "57544b4b-8ea6-47dc-8d91-758ce0863689": {
+          "categorizer": "spike",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Build",
+          "step": "1"
+        },
+        "5817b49f-fb7c-4536-a4d8-f50e4ff71300": {
+          "categorizer": "spike",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Discovery",
+          "step": "3"
+        },
+        "5f20041c-b931-499e-abb6-73379639db20": {
+          "categorizer": "task",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Discovery",
+          "step": "2"
+        },
+        "6321dee2-492a-4a2c-a454-9eb72942f31b": {
+          "categorizer": "bug",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Launch",
+          "step": "1"
+        },
+        "6eebef02-8fd4-42ee-8dc1-bf194e6a1618": {
+          "categorizer": "spike",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Design",
+          "step": "2"
+        },
+        "71c58c0d-8fed-4991-85b1-abf9d04d85d9": {
+          "categorizer": "task",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Review",
+          "step": "3"
+        },
+        "896ae9d4-3734-4de7-904f-998e050af1c3": {
+          "categorizer": "review",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Launch",
+          "step": "2"
+        },
+        "91eb3e51-f5d2-4d37-9e37-bfe00368a984": {
+          "categorizer": "spike",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Build",
+          "step": "3"
+        },
+        "9bfa7619-352e-418d-bdd8-22d4d048eb91": {
+          "categorizer": "spike",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Launch",
+          "step": "2"
+        },
+        "a4339ec5-2884-4776-9880-600f40dee295": {
+          "categorizer": "task",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Launch",
+          "step": "1"
+        },
+        "a9412722-93ed-4c38-8c9a-a19d5899d9c2": {
+          "categorizer": "spike",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Review",
+          "step": "1"
+        },
+        "bd6c5cd4-34aa-4b0a-8070-e7ca87ecad6e": {
+          "categorizer": "review",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Discovery",
+          "step": "2"
+        },
+        "cbb7bda4-f907-4a6e-9c19-11c3a6143811": {
+          "categorizer": "review",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Review",
+          "step": "3"
+        },
+        "d05b70cb-e58c-4a35-b48a-d730b549be1a": {
+          "categorizer": "review",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Build",
+          "step": "3"
+        },
+        "d28c2d90-26a1-431c-9e27-21f0d38b9a8b": {
+          "categorizer": "task",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Build",
+          "step": "2"
+        },
+        "d5c68e15-bf3d-48f4-8632-30ac21a78877": {
+          "categorizer": "backlog",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Launch",
+          "step": "3"
+        },
+        "d9668c8c-b1fb-4700-89ca-ff5c70051c14": {
+          "categorizer": "task",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Design",
+          "step": "1"
+        },
+        "de1148fb-b74a-4044-ab26-20c8fad7744f": {
+          "categorizer": "review",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Design",
+          "step": "1"
+        },
+        "e7feeb96-e45b-4db3-b1d9-755f0cc490bc": {
+          "categorizer": "review",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Review",
+          "step": "1"
+        },
+        "faeeb43d-5011-4cfa-b9ec-31317eeaa430": {
+          "categorizer": "backlog",
+          "organization": "Team",
+          "other": "task",
+          "phase": "Design",
+          "step": "2"
         }
       }
     },
-    "created_at": "2026-02-06T00:09:52.252Z",
-    "updated_at": "2026-02-06T00:09:52.252Z"
+    "featureIds": [
+      "803b3e8e-19d8-4365-9679-77a504aa18d2",
+      "401e250c-0dd7-42f7-afc1-07e88f508d7b",
+      "25c7721d-22d2-4b2b-9220-e342da7dedff",
+      "7acbe605-0b4c-4d73-a552-fbf1a773a405",
+      "c98a8bab-a44d-4a45-8046-25b2d4af9445",
+      "e8dff820-a6dc-439d-9d5c-ee44fbe5771c",
+      "e5a3fda7-4e66-415c-895c-ea5e1de3110c",
+      "a9a36bc5-3334-459f-8e0f-b0c2e132fe4f",
+      "61659a4c-ec04-4ee9-8dd5-c9655d278e33",
+      "fc84acd2-da10-4398-bf92-2a7059973e0d",
+      "e5c08d45-f9e5-4eb3-b21c-1769b6414e25",
+      "9c6a3597-6798-46a6-b988-1efced3733df"
+    ],
+    "id": "bfbb49b4-53d6-4cd9-a7bc-dc1b646e026a",
+    "ideaIds": [
+      2
+    ],
+    "name": "Template project",
+    "promptIds": [
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56
+    ],
+    "ticketIds": [
+      "1c9f52b6-ecbb-4d69-acf8-9ce14f8b4a13",
+      "5f20041c-b931-499e-abb6-73379639db20",
+      "5817b49f-fb7c-4536-a4d8-f50e4ff71300",
+      "00085668-6504-4077-939d-7ad4d11a3c39",
+      "bd6c5cd4-34aa-4b0a-8070-e7ca87ecad6e",
+      "3e9fc9a8-1834-47a3-a792-44c3b0fa4668",
+      "d9668c8c-b1fb-4700-89ca-ff5c70051c14",
+      "6eebef02-8fd4-42ee-8dc1-bf194e6a1618",
+      "3edb2b94-a828-4c36-a9cc-3e961842002f",
+      "de1148fb-b74a-4044-ab26-20c8fad7744f",
+      "faeeb43d-5011-4cfa-b9ec-31317eeaa430",
+      "45dad274-edff-4b9d-8e10-964906ed675a",
+      "57544b4b-8ea6-47dc-8d91-758ce0863689",
+      "4cae6038-274e-4e44-9c6d-4bb58ba14105",
+      "d05b70cb-e58c-4a35-b48a-d730b549be1a",
+      "19a8d04e-f268-4413-ba8f-a7a352968d1c",
+      "d28c2d90-26a1-431c-9e27-21f0d38b9a8b",
+      "91eb3e51-f5d2-4d37-9e37-bfe00368a984",
+      "6321dee2-492a-4a2c-a454-9eb72942f31b",
+      "896ae9d4-3734-4de7-904f-998e050af1c3",
+      "d5c68e15-bf3d-48f4-8632-30ac21a78877",
+      "a4339ec5-2884-4776-9880-600f40dee295",
+      "9bfa7619-352e-418d-bdd8-22d4d048eb91",
+      "2e6c85a4-895a-450f-bed3-b29b01443703",
+      "e7feeb96-e45b-4db3-b1d9-755f0cc490bc",
+      "1ba62ffe-72a7-4e0c-a707-ddf42b8f7a4f",
+      "71c58c0d-8fed-4991-85b1-abf9d04d85d9",
+      "a9412722-93ed-4c38-8c9a-a19d5899d9c2",
+      "3a228528-0bb4-46ba-82d7-062c3a4d3d27",
+      "cbb7bda4-f907-4a6e-9c19-11c3a6143811"
+    ],
+    "updated_at": "2026-02-06T08:22:37.276Z"
+  },
+  {
+    "created_at": "2026-02-06T10:59:13.401Z",
+    "description": "App where i can study the bible",
+    "featureIds": [],
+    "id": "proj-1770375553401885000",
+    "ideaIds": [],
+    "name": "Gospod",
+    "promptIds": [],
+    "repoPath": "/Users/nenadkalicanin/Documents/February/Gospod",
+    "ticketIds": [],
+    "updated_at": "2026-02-06T10:59:13.401Z"
+  },
+  {
+    "architectures": [],
+    "created_at": "2026-02-06T11:22:58.201Z",
+    "description": "An Application to digitalize the process of an ISO 9001 certification",
+    "designs": [],
+    "featureIds": [],
+    "features": [],
+    "id": "proj-1770376978201045000",
+    "ideaIds": [],
+    "ideas": [],
+    "name": "KW-February-AIISO",
+    "promptIds": [],
+    "prompts": [],
+    "repoPath": "/Users/nenadkalicanin/Documents/February/KW-February-AIISO",
+    "specFiles": [
+      {
+        "name": "DESIGN.md",
+        "path": "/Users/nenadkalicanin/Documents/February/KW-February-AIISO/.cursor/DESIGN.md"
+      }
+    ],
+    "ticketIds": [],
+    "tickets": [],
+    "updated_at": "2026-02-06T13:39:17.424Z"
+  },
+  {
+    "architectureIds": [],
+    "architectures": [],
+    "created_at": "2026-02-06T14:10:48.612Z",
+    "designIds": [],
+    "designs": [],
+    "entityCategories": {},
+    "featureIds": [],
+    "features": [],
+    "id": "proj-1770387048612223000",
+    "ideaIds": [],
+    "ideas": [],
+    "name": "automated_development",
+    "promptIds": [],
+    "prompts": [],
+    "repoPath": "/Users/nenadkalicanin/Documents/February/automated_development",
+    "specFiles": [
+      {
+        "name": "ANALYSIS.md",
+        "path": "/Users/nenadkalicanin/Documents/February/automated_development/.cursor/ANALYSIS.md"
+      },
+      {
+        "name": "architecture.md",
+        "path": "/Users/nenadkalicanin/Documents/February/automated_development/.cursor/architecture.md"
+      },
+      {
+        "name": "tickets.md",
+        "path": ".cursor/tickets.md"
+      }
+    ],
+    "ticketIds": [],
+    "tickets": [],
+    "updated_at": "2026-02-06T14:34:45.035Z"
   }
 ]

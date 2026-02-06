@@ -65,6 +65,33 @@ All ADRs live in **`nenad/adr/`**; copies are kept in **`.cursor/adr/`** for Cur
 | 040 | `040-projects-page-loading-timeout-retry.md` | Projects page: loading timeout and retry |
 | 041 | `041-tauri-dev-wait-for-next-chunks.md` | Tauri dev: wait for Next.js chunks before opening |
 | 042 | `042-app-loading-timeout-projects-page.md` | App and projects page loading timeouts |
+| 043 | `043-seed-template-categorized-multiphased-major-features.md` | Seed template: categorized, multiphased tickets and major features |
+| 044 | `044-tickets-tab-pagination.md` | Tickets tab: pagination and total count |
+| 045 | `045-features-page-show-all-sync-json.md` | Features page: show all, Tauri sync with features.json |
+| 046 | `046-prompts-page-all-data-table.md` | Prompts page: table of all prompt data |
+| 047 | `047-all-data-project-details-single-source-tauri.md` | All data and project details: single source in Tauri |
+| 048 | `048-root-loading-overlay-react-owned.md` | Root loading overlay: React-owned visibility |
+| 049 | `049-tickets-tab-add-ticket-accordion.md` | Tickets tab: Add ticket in accordion |
+| 050 | `050-feature-tab-filter-by-project.md` | Feature tab: filter features by project |
+| 051 | `051-project-details-page-accordions.md` | Project details page: all sections in accordions |
+| 052 | `052-prompts-page-remove-chip-grid-section.md` | Prompts page: remove chip/grid selection section |
+| 053 | `053-feature-tab-queue-add-plus-run-later.md` | Feature tab: add to queue (+ per item), run queue later |
+| 054 | `054-feature-tab-delete-all-button.md` | Feature tab: Delete all button |
+| 055 | `055-projects-page-local-projects-section.md` | Projects page: Local projects section |
+| 056 | `056-local-projects-create-project-from-path.md` | Local projects: select path and create project |
+| 057 | `057-project-details-remove-group-by-accordion.md` | Project details page: remove Group by accordion |
+| 058 | `058-project-details-cursor-folder-files-section.md` | Project details: .cursor folder files section at bottom |
+| 059 | `059-remove-ai-generate-page.md` | Remove AI Generate page (tab) |
+| 060 | `060-remove-delete-confirmation-dialogs.md` | Remove delete confirmation dialogs |
+| 061 | `061-feature-data-milestone-at-least-one-ticket.md` | Feature data: milestones with at least one ticket |
+| 062 | `062-design-config-markdown-viewer-sample-html.md` | Design config: markdown viewer and sample HTML preview |
+| 063 | `063-project-spec-accordion-add-cursor-files.md` | Project Spec accordion: add .cursor files to project spec |
+| 064 | `064-project-details-accordion-order.md` | Project details: accordion order (cursor files top, link bottom) |
+| 065 | `065-project-spec-markdown-split-view.md` | Project spec: markdown view split next to card |
+| 066 | `066-project-spec-export-design-architecture-features-download-cursor.md` | Project spec: export Design/Architecture/Features as .md, download all to .cursor |
+| 067 | `067-project-details-best-practice-cursor-structure-button.md` | Project details: button to show best practice .cursor structure (file names + descriptions) |
+| 068 | `068-project-details-analysis-button-cursor-prompt.md` | Project details: Analysis button (Design, Architecture, Tickets) with Cursor prompt → .cursor/*.md |
+| 069 | `069-data-dir-paths-from-db-not-json.md` | Data dir and paths from DB, not hardcoded JSON |
 
 ## PDR – Project Decision Records
 

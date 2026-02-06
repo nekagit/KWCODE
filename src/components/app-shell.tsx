@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,6 @@ import {
   Folders,
   Ticket as TicketIcon,
   Layers,
-  Sparkles,
   Database,
   Play,
   Lightbulb,
@@ -29,11 +28,10 @@ import {
   Building2,
 } from "lucide-react";
 import { useRunState } from "@/context/run-state";
-import { Loader2 } from "lucide-react";
 
 type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; tab?: string };
 
-/** Main nav: dashboard tabs + Run, prompts, AI generate. */
+/** Main nav: dashboard tabs + Run, prompts. */
 const mainNavItems: NavItem[] = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard, tab: "dashboard" },
   { href: "/run", label: "Run", icon: Play },
@@ -44,7 +42,6 @@ const mainNavItems: NavItem[] = [
   { href: "/ideas", label: "Ideas", icon: Lightbulb },
   { href: "/design", label: "Design", icon: Palette },
   { href: "/architecture", label: "Architecture", icon: Building2 },
-  { href: "/?tab=ai-generate", label: "AI Generate", icon: Sparkles, tab: "ai-generate" },
 ];
 
 /** Log & Data section (separate group in sidebar). */
@@ -70,21 +67,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     stopRun,
     selectedRunId,
     isTauriEnv,
-    loading,
   } = useRunState();
 
   const running = runningRuns.some((r) => r.status === "running");
   // Treat null as false so we never block the whole app waiting for Tauri detection
   const isTauri = isTauriEnv === true;
 
-  // Show loading spinner only in Tauri while data is loading; in browser data loads in background
-  if (loading && isTauri) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
+  // No full-screen block: let the app shell and pages render. Run store data (allProjects, prompts)
+  // loads in background; pages that need it show their own loading/retry so we never get stuck.
 
   return (
     <div className="flex h-screen overflow-hidden relative">
@@ -238,9 +228,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
       </aside>
 
-      {/* Main content: scrollable, sidebar stays fixed */}
+      {/* Main content: scrollable, sidebar stays fixed. Suspense only around content so nav feels instant. */}
       <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-auto p-4 md:p-6">
-        {children}
+        <Suspense fallback={null}>{children}</Suspense>
       </main>
     </div>
   );
