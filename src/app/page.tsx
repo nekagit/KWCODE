@@ -23,8 +23,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Play, Loader2, Ticket as TicketIcon, Plus, Trash2, Layers, Folders, MessageSquare, ScrollText, Sparkles, Upload, FileText, LayoutDashboard, Zap, Database, FileCode, Braces } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Empty } from "@/components/ui/empty";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Play, Loader2, Ticket as TicketIcon, Plus, Trash2, Layers, Folders, MessageSquare, ScrollText, Sparkles, Upload, FileText, LayoutDashboard, Zap, Database, FileCode, Braces, Lightbulb, Palette } from "lucide-react";
+import Link from "next/link";
 import { useRunState } from "@/context/run-state";
+import { toast } from "sonner";
+import { FEBRUARY_REPOS_OVERVIEW, FEBRUARY_REPOS_SUMMARY } from "@/data/february-repos-overview";
 
 export type TicketStatus = "backlog" | "in_progress" | "done" | "blocked";
 
@@ -51,7 +64,16 @@ export interface Feature {
   updated_at: string;
 }
 
-const VALID_TABS = ["dashboard", "projects", "tickets", "feature", "ai-generate", "data", "log"] as const;
+/** Minimal type for ideas from /api/data/ideas (All data tab). */
+interface IdeaRecord {
+  id: number;
+  title: string;
+  description: string;
+  category: string;
+  source?: string;
+}
+
+const VALID_TABS = ["dashboard", "projects", "tickets", "feature", "ai-generate", "all", "data", "log"] as const;
 type TabValue = (typeof VALID_TABS)[number];
 
 function tabFromParams(searchParams: ReturnType<typeof useSearchParams>): TabValue {
@@ -130,6 +152,7 @@ export default function Home() {
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiGeneratedTickets, setAiGeneratedTickets] = useState<{ title: string; description: string }[]>([]);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [ticketPageAiProjectPath, setTicketPageAiProjectPath] = useState<string>("");
   const [dataScripts, setDataScripts] = useState<{ name: string; path: string }[]>([]);
   const [dataJsonFiles, setDataJsonFiles] = useState<{ name: string; path: string }[]>([]);
   const [dataFileContent, setDataFileContent] = useState<string | null>(null);
@@ -137,6 +160,8 @@ export default function Home() {
   const [dataKvEntries, setDataKvEntries] = useState<{ key: string; value: string }[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
   const [dataError, setDataError] = useState<string | null>(null);
+  const [ideas, setIdeas] = useState<IdeaRecord[]>([]);
+  const [ideasLoading, setIdeasLoading] = useState(false);
   const running = runningRuns.some((r) => r.status === "running");
 
   const loadTicketsAndFeatures = useCallback(async () => {
@@ -179,6 +204,27 @@ export default function Home() {
   useEffect(() => {
     if (isTauri()) loadTicketsAndFeatures();
   }, [loadTicketsAndFeatures]);
+
+  // Browser: load tickets, features, and kv entries from /api/data (reads data/*.json)
+  useEffect(() => {
+    if (isTauri() || isTauriEnv !== false || ticketsLoaded) return;
+    let cancelled = false;
+    fetch("/api/data")
+      .then((res) => (res.ok ? res.json() : res.text().then((t) => Promise.reject(new Error(t)))))
+      .then((data: { tickets?: Ticket[]; features?: Feature[]; kvEntries?: { key: string; value: string }[] }) => {
+        if (cancelled) return;
+        setTickets(Array.isArray(data.tickets) ? data.tickets : []);
+        setFeatures(Array.isArray(data.features) ? data.features : []);
+        if (Array.isArray(data.kvEntries)) setDataKvEntries(data.kvEntries);
+        setTicketsLoaded(true);
+      })
+      .catch(() => {
+        if (!cancelled) setTicketsLoaded(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isTauriEnv, ticketsLoaded]);
 
   // Data tab: Tauri — load scripts, JSON files, KV from backend
   useEffect(() => {
@@ -234,6 +280,27 @@ export default function Home() {
     };
   }, [tab]);
 
+  // All data tab: fetch ideas from API
+  useEffect(() => {
+    if (tab !== "all") return;
+    let cancelled = false;
+    setIdeasLoading(true);
+    fetch("/api/data/ideas")
+      .then((res) => (res.ok ? res.json() : res.text().then((t) => Promise.reject(new Error(t)))))
+      .then((data: IdeaRecord[]) => {
+        if (!cancelled) setIdeas(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (!cancelled) setIdeas([]);
+      })
+      .finally(() => {
+        if (!cancelled) setIdeasLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [tab]);
+
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [displayLogLines.length]);
@@ -244,8 +311,11 @@ export default function Home() {
       await invoke("save_tickets", { tickets: clean });
       setTickets(next);
       setError(null);
+      toast.success("Tickets saved");
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(msg);
+      toast.error("Failed to save tickets", { description: msg });
     }
   };
 
@@ -275,8 +345,11 @@ export default function Home() {
       await invoke("save_features", { features: next });
       setFeatures(next);
       setError(null);
+      toast.success("Features saved");
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(msg);
+      toast.error("Failed to save features", { description: msg });
     }
   };
 
@@ -407,6 +480,78 @@ export default function Home() {
     }
   };
 
+  const generateAiTicketsFromProject = async () => {
+    const path = ticketPageAiProjectPath?.trim();
+    if (!path) {
+      setAiError("Select a project first.");
+      return;
+    }
+    setAiError(null);
+    setAiGenerating(true);
+    try {
+      const projectName = path.split("/").pop() ?? path;
+      let project_analysis: {
+        name: string;
+        path: string;
+        package_json?: string;
+        readme_snippet?: string;
+        top_level_dirs: string[];
+        top_level_files: string[];
+        config_snippet?: string;
+      } | undefined;
+      if (isTauri()) {
+        try {
+          const analysis = await invoke<{
+            name: string;
+            path: string;
+            package_json?: string;
+            readme_snippet?: string;
+            top_level_dirs: string[];
+            top_level_files: string[];
+            config_snippet?: string;
+          }>("analyze_project_for_tickets", { projectPath: path });
+          project_analysis = {
+            name: analysis.name,
+            path: analysis.path,
+            package_json: analysis.package_json ?? undefined,
+            readme_snippet: analysis.readme_snippet ?? undefined,
+            top_level_dirs: analysis.top_level_dirs ?? [],
+            top_level_files: analysis.top_level_files ?? [],
+            config_snippet: analysis.config_snippet ?? undefined,
+          };
+        } catch {
+          // Fall back to description-only if analysis fails (e.g. path not accessible)
+        }
+      }
+      const description = project_analysis
+        ? `Generate development tickets for project "${project_analysis.name}". Use the attached project analysis to infer tech stack, existing structure, and produce a prioritized feature/todo list (no generic tickets like "create documentation" or "install X" unless clearly missing).`
+        : `Generate development tickets for the following project.
+
+Project path: ${path}
+Project name: ${projectName}
+
+Suggest actionable work items: setup, dependencies, features, tests, and documentation. Base suggestions on typical project structure and best practices.`;
+      const res = await fetch("/api/generate-tickets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description,
+          options: aiOptions,
+          files: [],
+          ...(project_analysis && { project_analysis }),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || data.detail || "Generate failed");
+      setAiGeneratedTickets(data.tickets ?? []);
+    } catch (e) {
+      setAiError(e instanceof Error ? e.message : String(e));
+      setAiGeneratedTickets([]);
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
   const addGeneratedTicketsToBacklog = async () => {
     const now = new Date().toISOString();
     const newTickets: Ticket[] = aiGeneratedTickets.map((t) => ({
@@ -462,9 +607,9 @@ export default function Home() {
       <div className="flex-1 flex flex-col min-w-0 overflow-auto">
           <div className="mb-4 flex items-center justify-between gap-4">
             {error && (
-              <p className="text-sm text-destructive" role="alert">
-                {error}
-              </p>
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
             )}
           </div>
 
@@ -504,6 +649,10 @@ export default function Home() {
                 <Button variant="outline" onClick={() => router.push("/prompts")}>
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Prompts
+                </Button>
+                <Button variant="outline" onClick={() => navigateToTab("projects")}>
+                  <Folders className="h-4 w-4 mr-2" />
+                  Active repos
                 </Button>
                 <Button variant="outline" onClick={() => navigateToTab("feature")}>
                   <Layers className="h-4 w-4 mr-2" />
@@ -545,12 +694,12 @@ export default function Home() {
                       if (id) updateTicket(id, { status });
                     }}
                   >
-                    <div className="px-3 py-2 border-b bg-muted/40 rounded-t-lg">
-                      <span className="text-sm font-medium capitalize">
+                    <div className="px-3 py-2 border-b bg-muted/40 rounded-t-lg flex items-center justify-between gap-2">
+                      <Badge variant="secondary" className="capitalize font-medium">
                         {status === "in_progress" ? "In progress" : status}
-                      </span>
-                      <span className="ml-2 text-xs text-muted-foreground">
-                        ({tickets.filter((t) => t.status === status).length})
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {tickets.filter((t) => t.status === status).length}
                       </span>
                     </div>
                     <ScrollArea className="flex-1 p-2">
@@ -572,15 +721,20 @@ export default function Home() {
                                 <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{t.description}</p>
                               )}
                               <div className="flex items-center justify-between mt-2">
-                                <span className="text-xs text-muted-foreground">P{t.priority}</span>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-                                  onClick={(ev) => { ev.stopPropagation(); deleteTicket(t.id); }}
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
+                                <Badge variant="outline" className="text-xs">P{t.priority}</Badge>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                                      onClick={(ev) => { ev.stopPropagation(); deleteTicket(t.id); }}
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Delete ticket</TooltipContent>
+                                </Tooltip>
                               </div>
                             </div>
                           ))}
@@ -648,8 +802,8 @@ export default function Home() {
                     placeholder="e.g. Add user dashboard"
                   />
                   <Label>Description (optional)</Label>
-                  <textarea
-                    className="min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  <Textarea
+                    className="min-h-[60px]"
                     value={ticketForm.description}
                     onChange={(e) => setTicketForm((f) => ({ ...f, description: e.target.value }))}
                     placeholder="What should be built..."
@@ -688,10 +842,98 @@ export default function Home() {
                   </Button>
                 </div>
               </div>
+
+              <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+                <p className="text-sm font-medium flex items-center gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  AI generate from project
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Select a project and generate tickets based on it. Uses the same options as the AI Generate tab.
+                </p>
+                <div className="flex flex-wrap items-end gap-3">
+                  <div className="space-y-2 min-w-[200px] flex-1">
+                    <Label>Project</Label>
+                    <Select
+                      value={ticketPageAiProjectPath || "__none__"}
+                      onValueChange={(v) => setTicketPageAiProjectPath(v === "__none__" ? "" : v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a project" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">Select a project</SelectItem>
+                        {allProjects.map((projectPath) => {
+                          const name = projectPath.split("/").pop() ?? projectPath;
+                          return (
+                            <SelectItem key={projectPath} value={projectPath}>
+                              {name}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button
+                    onClick={generateAiTicketsFromProject}
+                    disabled={aiGenerating || !ticketPageAiProjectPath.trim()}
+                  >
+                    {aiGenerating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Generating…
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        AI Generate tickets
+                      </>
+                    )}
+                  </Button>
+                </div>
+                {aiError && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{aiError}</AlertDescription>
+                  </Alert>
+                )}
+                {aiGeneratedTickets.length > 0 && (
+                  <div className="rounded-lg border p-4 space-y-3 mt-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium">Generated tickets ({aiGeneratedTickets.length})</p>
+                      <Button size="sm" onClick={addGeneratedTicketsToBacklog}>
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add all to backlog
+                      </Button>
+                    </div>
+                    <ScrollArea className="h-[200px] rounded-md border p-3">
+                      <div className="space-y-2">
+                        {aiGeneratedTickets.map((t, idx) => (
+                          <div key={idx} className="flex flex-wrap items-start gap-2 rounded-lg border p-3 bg-card">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm">{t.title}</p>
+                              {t.description && (
+                                <p className="text-xs text-muted-foreground line-clamp-3 mt-1">{t.description}</p>
+                              )}
+                            </div>
+                            <Button size="sm" variant="outline" onClick={() => addSingleGeneratedTicket(t)}>
+                              Add
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  </div>
+                )}
+              </div>
+
               <ScrollArea className="h-[280px] rounded-md border p-3">
                 <div className="space-y-2">
                   {tickets.length === 0 && (
-                    <p className="text-sm text-muted-foreground">No tickets yet. Add one above.</p>
+                    <Empty
+                      title="No tickets yet"
+                      description="Add a ticket using the form above."
+                      icon={<TicketIcon className="h-6 w-6" />}
+                    />
                   )}
                   {tickets.map((t) => (
                     <div
@@ -830,7 +1072,11 @@ export default function Home() {
               <ScrollArea className="h-[280px] rounded-md border p-3">
                 <div className="space-y-2">
                   {features.length === 0 && (
-                    <p className="text-sm text-muted-foreground">No features yet. Add one above.</p>
+                    <Empty
+                      title="No features yet"
+                      description="Add a feature above (tickets + prompts + projects)."
+                      icon={<Layers className="h-6 w-6" />}
+                    />
                   )}
                   {features.map((f) => (
                     <div
@@ -884,9 +1130,9 @@ export default function Home() {
         <TabsContent value="projects" className="mt-0">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Active projects (for this run)</CardTitle>
+              <CardTitle className="text-base">Active repos (for this run)</CardTitle>
               <CardDescription>
-                Check projects to include. Order is preserved. Save writes cursor_projects.json.
+                Check repo paths to include when running prompts. Order is preserved. Save writes cursor_projects.json. For project pages (design, ideas, features, tickets, prompts), use <strong>Projects</strong> in the sidebar.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -914,6 +1160,179 @@ export default function Home() {
               <Button onClick={saveActiveProjects}>Save active to cursor_projects.json</Button>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="all" className="mt-0 space-y-6">
+          <div>
+            <h2 className="text-lg font-semibold mb-1">All data</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Combined view: projects, prompts, tickets, features, ideas, and design. Use this as the big project page.
+            </p>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Folders className="h-4 w-4" />
+                  Projects
+                </CardTitle>
+                <CardDescription>All ({allProjects.length}) · Active ({activeProjects.length})</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <ScrollArea className="h-[200px] rounded border p-2">
+                  <div className="space-y-1">
+                    {allProjects.map((path) => {
+                      const name = path.split("/").pop() ?? path;
+                      const active = activeProjects.includes(path);
+                      return (
+                        <div key={path} className="flex items-center gap-2 text-sm">
+                          <Checkbox checked={active} onCheckedChange={() => toggleProject(path)} />
+                          <span className="truncate font-mono" title={path}>{name}</span>
+                          {active && <Badge variant="secondary" className="text-xs">active</Badge>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+                <Button size="sm" onClick={saveActiveProjects}>Save active</Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  Prompts
+                </CardTitle>
+                <CardDescription>{prompts.length} prompts</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[200px] rounded border p-2">
+                  <div className="space-y-1 text-sm">
+                    {prompts.map((p) => (
+                      <div key={p.id} className="flex items-center gap-2">
+                        <Checkbox
+                          checked={selectedPromptIds.includes(p.id)}
+                          onCheckedChange={() =>
+                            setSelectedPromptIds((prev) =>
+                              prev.includes(p.id) ? prev.filter((id) => id !== p.id) : [...prev, p.id]
+                            )}
+                        />
+                        <span className="truncate">{p.title || `#${p.id}`}</span>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+                <p className="text-xs text-muted-foreground mt-2">Select prompts for Run. Edit on Prompts page.</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <TicketIcon className="h-4 w-4" />
+                  Tickets
+                </CardTitle>
+                <CardDescription>{tickets.length} tickets</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[220px] rounded border p-2">
+                  <div className="space-y-2 text-sm">
+                    {tickets.slice(0, 30).map((t) => (
+                      <div key={t.id} className="flex items-start gap-2 rounded border p-2 bg-muted/20">
+                        <Badge variant="outline" className="shrink-0 text-xs">{t.status}</Badge>
+                        <span className="truncate font-medium">{t.title}</span>
+                      </div>
+                    ))}
+                    {tickets.length > 30 && (
+                      <p className="text-xs text-muted-foreground">+{tickets.length - 30} more</p>
+                    )}
+                  </div>
+                </ScrollArea>
+                <p className="text-xs text-muted-foreground mt-2">Full list on Tickets tab.</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Layers className="h-4 w-4" />
+                  Features
+                </CardTitle>
+                <CardDescription>{features.length} features (prompts + projects)</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[220px] rounded border p-2">
+                  <div className="space-y-2 text-sm">
+                    {features.map((f) => (
+                      <div key={f.id} className="rounded border p-2 bg-muted/20">
+                        <p className="font-medium truncate">{f.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {f.prompt_ids.length} prompts · {f.project_paths.length} projects
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+                <p className="text-xs text-muted-foreground mt-2">Configure on Feature tab.</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Lightbulb className="h-4 w-4" />
+                  Ideas
+                </CardTitle>
+                <CardDescription>
+                  {ideasLoading ? "Loading…" : `${ideas.length} ideas`}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {ideasLoading ? (
+                  <Skeleton className="h-[200px] w-full rounded" />
+                ) : (
+                  <ScrollArea className="h-[200px] rounded border p-2">
+                    <div className="space-y-2 text-sm">
+                      {ideas.map((i) => (
+                        <div key={i.id} className="rounded border p-2 bg-muted/20">
+                          <p className="font-medium truncate">{i.title}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-2">{i.description}</p>
+                          <Badge variant="secondary" className="mt-1 text-xs">{i.category}</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                )}
+                <p className="text-xs text-muted-foreground mt-2">
+                  <Link href="/ideas" className="text-primary hover:underline">Ideas page</Link> to create and edit.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Palette className="h-4 w-4" />
+                  Design
+                </CardTitle>
+                <CardDescription>Design config and markdown spec</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Configure page layout, colors, typography, and sections. Generate markdown for implementation.
+                </p>
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/design">Open Design page</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="ai-generate" className="mt-0">
@@ -1045,9 +1464,9 @@ export default function Home() {
               </div>
 
               {aiError && (
-                <p className="text-sm text-destructive" role="alert">
-                  {aiError}
-                </p>
+                <Alert variant="destructive">
+                  <AlertDescription>{aiError}</AlertDescription>
+                </Alert>
               )}
 
               <Button
@@ -1121,7 +1540,9 @@ export default function Home() {
             </CardHeader>
             <CardContent className="space-y-6">
               {dataError && (
-                <p className="text-sm text-destructive" role="alert">{dataError}</p>
+                <Alert variant="destructive">
+                  <AlertDescription>{dataError}</AlertDescription>
+                </Alert>
               )}
               {dataLoading && (
                 <p className="text-sm text-muted-foreground flex items-center gap-2">

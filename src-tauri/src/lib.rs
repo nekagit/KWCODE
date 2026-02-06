@@ -129,9 +129,10 @@ fn script_path(ws: &PathBuf) -> PathBuf {
     ws.join("script").join("run_prompts_all_projects.sh")
 }
 
-/// Resolve project root (contains script/ and data/) from current working directory.
-/// No config file: always use auto-detection. Run the app from repo root or from src-tauri.
+/// Resolve project root (contains script/ and data/). Tries current working directory first,
+/// then walks up from the executable path so the app finds data when launched from any cwd.
 fn project_root() -> Result<PathBuf, String> {
+    // 1) Try current working directory (e.g. when running `tauri dev` from repo root)
     let mut candidate = std::env::current_dir().map_err(|e| e.to_string())?;
     if candidate.join("src-tauri").exists() {
         candidate = candidate.parent().unwrap_or(&candidate).to_path_buf();
@@ -139,6 +140,25 @@ fn project_root() -> Result<PathBuf, String> {
     if is_valid_workspace(&candidate) {
         return Ok(candidate);
     }
+
+    // 2) Walk up from executable path (e.g. built app or dev binary in target/debug)
+    if let Ok(exe) = std::env::current_exe() {
+        let mut dir = exe.parent().map(PathBuf::from).unwrap_or_default();
+        for _ in 0..20 {
+            if dir.as_os_str().is_empty() {
+                break;
+            }
+            if is_valid_workspace(&dir) {
+                return Ok(dir);
+            }
+            if let Some(p) = dir.parent() {
+                dir = p.to_path_buf();
+            } else {
+                break;
+            }
+        }
+    }
+
     Err("Project root not found. Run the app from the repo root (contains script/run_prompts_all_projects.sh and data/).".to_string())
 }
 
@@ -204,6 +224,110 @@ fn list_scripts() -> Result<Vec<FileEntry>, String> {
     Ok(entries)
 }
 
+const PROJECTS_JSON: &str = "projects.json";
+
+fn projects_path() -> Result<PathBuf, String> {
+    let ws = project_root()?;
+    Ok(data_dir(&ws).join(PROJECTS_JSON))
+}
+
+fn read_projects_json() -> Result<Vec<serde_json::Value>, String> {
+    let path = projects_path()?;
+    if !path.exists() {
+        return Ok(vec![]);
+    }
+    let content = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    let arr: Vec<serde_json::Value> = serde_json::from_str(&content).unwrap_or_default();
+    Ok(arr)
+}
+
+fn write_projects_json(projects: &[serde_json::Value]) -> Result<(), String> {
+    let path = projects_path()?;
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    let content = serde_json::to_string_pretty(projects).map_err(|e| e.to_string())?;
+    std::fs::write(&path, content).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/// List all projects (JSON array string). Used when running in Tauri so /api/data/projects is not available.
+#[tauri::command]
+fn list_projects() -> Result<String, String> {
+    let projects = read_projects_json()?;
+    serde_json::to_string(&projects).map_err(|e| e.to_string())
+}
+
+/// Get a single project by id. Returns JSON object string or error if not found.
+#[tauri::command]
+fn get_project(id: String) -> Result<String, String> {
+    let projects = read_projects_json()?;
+    let id_trim = id.trim();
+    let found = projects
+        .iter()
+        .find(|p| p.get("id").and_then(|v| v.as_str()) == Some(id_trim));
+    match found {
+        Some(p) => serde_json::to_string(p).map_err(|e| e.to_string()),
+        None => Err("Project not found".to_string()),
+    }
+}
+
+/// Create a new project. Body is JSON object with at least "name". Id and timestamps are set if missing.
+#[tauri::command]
+fn create_project(body: String) -> Result<String, String> {
+    let mut project: serde_json::Map<String, serde_json::Value> =
+        serde_json::from_str(&body).map_err(|e| e.to_string())?;
+    let now = std::time::SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default();
+    let iso = chrono::DateTime::from_timestamp(now.as_secs() as i64, now.subsec_nanos())
+        .map(|dt| dt.to_rfc3339_opts(chrono::SecondsFormat::Millis, true))
+        .unwrap_or_else(|| format!("{}.{:03}Z", now.as_secs(), now.subsec_nanos() / 1_000_000));
+    // Simple unique id (no uuid crate)
+    let id = project.get("id").and_then(|v| v.as_str()).map(String::from).unwrap_or_else(|| {
+        format!("proj-{}", now.as_nanos())
+    });
+    project.insert("id".to_string(), serde_json::Value::String(id.clone()));
+    if !project.contains_key("created_at") {
+        project.insert("created_at".to_string(), serde_json::Value::String(iso.clone()));
+    }
+    if !project.contains_key("updated_at") {
+        project.insert("updated_at".to_string(), serde_json::Value::String(iso));
+    }
+    let project_val = serde_json::Value::Object(project.clone());
+    let mut projects = read_projects_json()?;
+    projects.push(project_val);
+    write_projects_json(&projects)?;
+    serde_json::to_string(&serde_json::Value::Object(project)).map_err(|e| e.to_string())
+}
+
+/// Update an existing project by id. Body is full project JSON.
+#[tauri::command]
+fn update_project(id: String, body: String) -> Result<(), String> {
+    let id_trim = id.trim();
+    let updated: serde_json::Value = serde_json::from_str(&body).map_err(|e| e.to_string())?;
+    let mut projects = read_projects_json()?;
+    let idx = projects
+        .iter()
+        .position(|p| p.get("id").and_then(|v| v.as_str()) == Some(id_trim))
+        .ok_or_else(|| "Project not found".to_string())?;
+    projects[idx] = updated;
+    write_projects_json(&projects)
+}
+
+/// Delete a project by id.
+#[tauri::command]
+fn delete_project(id: String) -> Result<(), String> {
+    let id_trim = id.trim();
+    let mut projects = read_projects_json()?;
+    let len_before = projects.len();
+    projects.retain(|p| p.get("id").and_then(|v| v.as_str()) != Some(id_trim));
+    if projects.len() == len_before {
+        return Err("Project not found".to_string());
+    }
+    write_projects_json(&projects)
+}
+
 /// List JSON files in data/ directory.
 #[tauri::command]
 fn list_data_files() -> Result<Vec<FileEntry>, String> {
@@ -226,6 +350,105 @@ fn list_data_files() -> Result<Vec<FileEntry>, String> {
     }
     entries.sort_by(|a, b| a.name.cmp(&b.name));
     Ok(entries)
+}
+
+/// Result of analyzing a project directory for AI ticket generation.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProjectAnalysis {
+    pub name: String,
+    pub path: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub package_json: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub readme_snippet: Option<String>,
+    pub top_level_dirs: Vec<String>,
+    pub top_level_files: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub config_snippet: Option<String>,
+}
+
+const README_MAX_CHARS: usize = 8000;
+const CONFIG_MAX_CHARS: usize = 4000;
+
+/// Analyze a project directory for AI ticket generation: read package.json, README, list top-level structure.
+/// Path must be an existing directory (e.g. from all_projects list).
+#[tauri::command]
+fn analyze_project_for_tickets(project_path: String) -> Result<ProjectAnalysis, String> {
+    let path_buf = PathBuf::from(project_path.trim());
+    if !path_buf.exists() {
+        return Err("Project path does not exist".to_string());
+    }
+    if !path_buf.is_dir() {
+        return Err("Project path is not a directory".to_string());
+    }
+    let name = path_buf
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("project")
+        .to_string();
+    let path_str = path_buf.to_string_lossy().to_string();
+
+    let package_json = path_buf
+        .join("package.json")
+        .exists()
+        .then(|| std::fs::read_to_string(path_buf.join("package.json")))
+        .and_then(Result::ok);
+
+    let readme_snippet = ["README.md", "readme.md", "README.MD"]
+        .iter()
+        .find(|f| path_buf.join(f).exists())
+        .and_then(|f| std::fs::read_to_string(path_buf.join(f)).ok())
+        .map(|s| {
+            let t = s.trim();
+            if t.len() > README_MAX_CHARS {
+                format!("{}...", &t[..README_MAX_CHARS])
+            } else {
+                t.to_string()
+            }
+        });
+
+    let mut top_level_dirs = Vec::new();
+    let mut top_level_files = Vec::new();
+    if let Ok(entries) = std::fs::read_dir(&path_buf) {
+        for e in entries.flatten() {
+            let p = e.path();
+            if let Some(n) = p.file_name().and_then(|n| n.to_str()) {
+                if n.starts_with('.') && n != ".git" {
+                    continue;
+                }
+                if p.is_dir() {
+                    top_level_dirs.push(n.to_string());
+                } else {
+                    top_level_files.push(n.to_string());
+                }
+            }
+        }
+    }
+    top_level_dirs.sort();
+    top_level_files.sort();
+
+    let config_snippet = ["tsconfig.json", "vite.config.ts", "vite.config.js", "next.config.mjs", "next.config.js", "Cargo.toml", "pyproject.toml", "requirements.txt"]
+        .iter()
+        .find(|f| path_buf.join(f).exists())
+        .and_then(|f| std::fs::read_to_string(path_buf.join(f)).ok())
+        .map(|s| {
+            let t = s.trim();
+            if t.len() > CONFIG_MAX_CHARS {
+                format!("{}...", &t[..CONFIG_MAX_CHARS])
+            } else {
+                t.to_string()
+            }
+        });
+
+    Ok(ProjectAnalysis {
+        name,
+        path: path_str,
+        package_json,
+        readme_snippet,
+        top_level_dirs,
+        top_level_files,
+        config_snippet,
+    })
 }
 
 fn with_db<F, T>(f: F) -> Result<T, String>
@@ -500,16 +723,14 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .manage(RunningState::default())
         .setup(|app| {
-            // Workaround for macOS/Tauri bug: WebView often shows white/fallback instead of devUrl.
-            // 1. devUrl points to a static splash (tauri-load.html) so something visible loads first.
-            // 2. Splash redirects to / after 1.5s. We also force-navigate from Rust at 2s, 4s, 6s
-            //    (navigate + eval fallback) in case the initial load or redirect fails.
+            // Workaround for macOS/Tauri bug: WebView sometimes shows white instead of devUrl.
+            // Force-navigate from Rust at 1s, 3s, 5s (navigate + eval fallback) if the initial load fails.
             #[cfg(debug_assertions)]
             {
                 let app_url = "http://127.0.0.1:4000/".to_string();
                 let app_handle = app.handle().clone();
                 std::thread::spawn(move || {
-                    for &delay_ms in &[2000_u64, 4000, 6000] {
+                    for &delay_ms in &[1000_u64, 3000, 5000] {
                         std::thread::sleep(std::time::Duration::from_millis(delay_ms));
                         let handle = app_handle.clone();
                         let url = app_url.clone();
@@ -534,6 +755,12 @@ pub fn run() {
             read_file_text,
             list_scripts,
             list_data_files,
+            list_projects,
+            get_project,
+            create_project,
+            update_project,
+            delete_project,
+            analyze_project_for_tickets,
             get_all_projects,
             get_active_projects,
             get_prompts,

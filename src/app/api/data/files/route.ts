@@ -2,7 +2,20 @@ import { NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 
-const ROOT = process.cwd();
+function findRoot(): string {
+  const cwd = process.cwd();
+  const scriptInCwd = path.join(cwd, "script");
+  const dataInCwd = path.join(cwd, "data");
+  if (fs.existsSync(scriptInCwd) && fs.existsSync(dataInCwd) && fs.statSync(dataInCwd).isDirectory())
+    return cwd;
+  const parent = path.join(cwd, "..");
+  const scriptInParent = path.join(parent, "script");
+  const dataInParent = path.join(parent, "data");
+  if (fs.existsSync(scriptInParent) && fs.existsSync(dataInParent) && fs.statSync(dataInParent).isDirectory())
+    return parent;
+  return cwd;
+}
+const ROOT = findRoot();
 const SCRIPT_DIR = path.join(ROOT, "script");
 const DATA_DIR = path.join(ROOT, "data");
 

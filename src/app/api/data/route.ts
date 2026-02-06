@@ -2,7 +2,15 @@ import { NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 
-const DATA_DIR = path.join(process.cwd(), "data");
+function findDataDir(): string {
+  const cwd = process.cwd();
+  const inCwd = path.join(cwd, "data");
+  if (fs.existsSync(inCwd) && fs.statSync(inCwd).isDirectory()) return inCwd;
+  const inParent = path.join(cwd, "..", "data");
+  if (fs.existsSync(inParent) && fs.statSync(inParent).isDirectory()) return inParent;
+  return inCwd;
+}
+const DATA_DIR = findDataDir();
 
 function readJson<T>(filename: string): T | null {
   const filePath = path.join(DATA_DIR, filename);

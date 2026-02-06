@@ -4,7 +4,7 @@
   "identifier": "com.runprompts.app",
   "build": {
     "beforeDevCommand": "npm run dev:tauri",
-    "devUrl": "http://127.0.0.1:4000/tauri-load.html",
+    "devUrl": "http://127.0.0.1:4000/",
     "beforeBuildCommand": "npm run build",
     "frontendDist": "../out"
   },

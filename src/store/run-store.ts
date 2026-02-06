@@ -1,0 +1,285 @@
+"use client";
+
+import { create } from "zustand";
+import { useShallow } from "zustand/react/shallow";
+import { invoke, isTauri } from "@/lib/tauri";
+import { toast } from "sonner";
+import {
+  DEFAULT_TIMING,
+  type Timing,
+  type PromptItem,
+  type RunInfo,
+} from "@/types/run";
+
+export interface RunState {
+  isTauriEnv: boolean | null;
+  loading: boolean;
+  error: string | null;
+  allProjects: string[];
+  activeProjects: string[];
+  prompts: PromptItem[];
+  selectedPromptIds: number[];
+  timing: Timing;
+  runningRuns: RunInfo[];
+  selectedRunId: string | null;
+}
+
+export interface RunActions {
+  setError: (e: string | null) => void;
+  setActiveProjects: (p: string[] | ((prev: string[]) => string[])) => void;
+  toggleProject: (path: string) => void;
+  saveActiveProjects: () => Promise<void>;
+  setSelectedPromptIds: (ids: number[] | ((prev: number[]) => number[])) => void;
+  setTiming: React.Dispatch<React.SetStateAction<Timing>>;
+  setRunningRuns: React.Dispatch<React.SetStateAction<RunInfo[]>>;
+  setSelectedRunId: (id: string | null) => void;
+  refreshData: () => Promise<void>;
+  runScript: () => Promise<void>;
+  runWithParams: (params: {
+    promptIds: number[];
+    activeProjects: string[];
+    runLabel: string | null;
+  }) => Promise<void>;
+  stopScript: () => Promise<void>;
+  stopRun: (runId: string) => Promise<void>;
+  getTimingForRun: () => Record<string, number>;
+  // Hydration/setters used by RunStoreHydration
+  setIsTauriEnv: (v: boolean | null | ((prev: boolean | null) => boolean | null)) => void;
+  setLoading: (v: boolean | ((prev: boolean) => boolean)) => void;
+  setAllProjects: (v: string[]) => void;
+  setActiveProjectsSync: (v: string[]) => void;
+  setPrompts: (v: PromptItem[]) => void;
+}
+
+export type RunStore = RunState & RunActions;
+
+const initialState: RunState = {
+  isTauriEnv: null,
+  loading: true,
+  error: null,
+  allProjects: [],
+  activeProjects: [],
+  prompts: [],
+  selectedPromptIds: [],
+  timing: DEFAULT_TIMING,
+  runningRuns: [],
+  selectedRunId: null,
+};
+
+export const useRunStore = create<RunStore>()((set, get) => ({
+  ...initialState,
+
+  setError: (e) => set({ error: e }),
+
+  setActiveProjects: (p) =>
+    set((s) => ({
+      activeProjects: typeof p === "function" ? p(s.activeProjects) : p,
+    })),
+
+  toggleProject: (path) =>
+    set((s) => ({
+      activeProjects: s.activeProjects.includes(path)
+        ? s.activeProjects.filter((x) => x !== path)
+        : [...s.activeProjects, path],
+    })),
+
+  saveActiveProjects: async () => {
+    const { activeProjects } = get();
+    try {
+      await invoke("save_active_projects", { projects: activeProjects });
+      set({ error: null });
+      toast.success("Saved active projects to cursor_projects.json");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      set({ error: msg });
+      toast.error("Failed to save projects", { description: msg });
+    }
+  },
+
+  setSelectedPromptIds: (ids) =>
+    set((s) => ({
+      selectedPromptIds:
+        typeof ids === "function" ? ids(s.selectedPromptIds) : ids,
+    })),
+
+  setTiming: (updater) =>
+    set((s) => ({
+      timing: typeof updater === "function" ? updater(s.timing) : updater,
+    })),
+
+  setRunningRuns: (updater) =>
+    set((s) => ({
+      runningRuns:
+        typeof updater === "function" ? updater(s.runningRuns) : updater,
+    })),
+
+  setSelectedRunId: (id) => set({ selectedRunId: id }),
+
+  getTimingForRun: () => {
+    const { timing } = get();
+    return {
+      sleep_after_open_project: timing.sleep_after_open_project,
+      sleep_after_window_focus: timing.sleep_after_window_focus,
+      sleep_between_shift_tabs: timing.sleep_between_shift_tabs,
+      sleep_after_all_shift_tabs: timing.sleep_after_all_shift_tabs,
+      sleep_after_cmd_n: timing.sleep_after_cmd_n,
+      sleep_before_paste: timing.sleep_before_paste,
+      sleep_after_paste: timing.sleep_after_paste,
+      sleep_after_enter: timing.sleep_after_enter,
+      sleep_between_projects: timing.sleep_between_projects,
+      sleep_between_rounds: timing.sleep_between_rounds,
+    };
+  },
+
+  refreshData: async () => {
+    set({ error: null });
+    try {
+      if (isTauri()) {
+        const [all, active, promptList] = await Promise.all([
+          invoke<string[]>("get_all_projects").catch(() => []),
+          invoke<string[]>("get_active_projects").catch(() => []),
+          invoke<PromptItem[]>("get_prompts").catch(() => []),
+        ]);
+        set({ allProjects: all, activeProjects: active, prompts: promptList });
+      } else {
+        const res = await fetch("/api/data");
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        set({
+          allProjects: Array.isArray(data.allProjects) ? data.allProjects : [],
+          activeProjects: Array.isArray(data.activeProjects) ? data.activeProjects : [],
+          prompts: Array.isArray(data.prompts) ? data.prompts : [],
+        });
+      }
+    } catch (e) {
+      set({ error: e instanceof Error ? e.message : String(e) });
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  runScript: async () => {
+    const { selectedPromptIds, activeProjects, getTimingForRun, setError, setRunningRuns, setSelectedRunId } = get();
+    if (selectedPromptIds.length === 0) {
+      set({ error: "Select at least one prompt" });
+      return;
+    }
+    if (activeProjects.length === 0) {
+      set({ error: "Select at least one project" });
+      return;
+    }
+    set({ error: null });
+    try {
+      const { run_id } = await invoke<{ run_id: string }>("run_script", {
+        promptIds: selectedPromptIds,
+        activeProjects,
+        timing: getTimingForRun(),
+        runLabel: null,
+      });
+      set((s) => ({
+        runningRuns: [
+          ...s.runningRuns,
+          { runId: run_id, label: "Manual run", logLines: [], status: "running" },
+        ],
+        selectedRunId: run_id,
+      }));
+    } catch (e) {
+      set({ error: e instanceof Error ? e.message : String(e) });
+    }
+  },
+
+  runWithParams: async (params) => {
+    const { getTimingForRun } = get();
+    set({ error: null });
+    try {
+      const { run_id } = await invoke<{ run_id: string }>("run_script", {
+        promptIds: params.promptIds,
+        activeProjects: params.activeProjects,
+        timing: getTimingForRun(),
+        runLabel: params.runLabel,
+      });
+      set((s) => ({
+        runningRuns: [
+          ...s.runningRuns,
+          {
+            runId: run_id,
+            label: params.runLabel ?? "Run",
+            logLines: [],
+            status: "running",
+          },
+        ],
+        selectedRunId: run_id,
+      }));
+    } catch (e) {
+      set({ error: e instanceof Error ? e.message : String(e) });
+    }
+  },
+
+  stopScript: async () => {
+    try {
+      await invoke("stop_script");
+      set((s) => ({
+        runningRuns: s.runningRuns.map((r) =>
+          r.status === "running" ? { ...r, status: "done" as const } : r
+        ),
+      }));
+    } catch (e) {
+      set({ error: e instanceof Error ? e.message : String(e) });
+    }
+  },
+
+  stopRun: async (runId) => {
+    try {
+      await invoke("stop_run", { runId });
+      set((s) => ({
+        runningRuns: s.runningRuns.map((r) =>
+          r.runId === runId ? { ...r, status: "done" as const } : r
+        ),
+      }));
+    } catch (e) {
+      set({ error: e instanceof Error ? e.message : String(e) });
+    }
+  },
+
+  setIsTauriEnv: (v) =>
+    set((s) => ({
+      isTauriEnv: typeof v === "function" ? v(s.isTauriEnv) : v,
+    })),
+  setLoading: (v) =>
+    set((s) => ({ loading: typeof v === "function" ? v(s.loading) : v })),
+  setAllProjects: (v) => set({ allProjects: v }),
+  setActiveProjectsSync: (v) => set({ activeProjects: v }),
+  setPrompts: (v) => set({ prompts: v }),
+}));
+
+/** Hook with same API as legacy useRunState from context. Use anywhere run state is needed. */
+export function useRunState() {
+  return useRunStore(
+    useShallow((s) => ({
+      isTauriEnv: s.isTauriEnv,
+      loading: s.loading,
+      error: s.error,
+      setError: s.setError,
+      allProjects: s.allProjects,
+      activeProjects: s.activeProjects,
+      setActiveProjects: s.setActiveProjects,
+      toggleProject: s.toggleProject,
+      saveActiveProjects: s.saveActiveProjects,
+      prompts: s.prompts,
+      selectedPromptIds: s.selectedPromptIds,
+      setSelectedPromptIds: s.setSelectedPromptIds,
+      timing: s.timing,
+      setTiming: s.setTiming,
+      runningRuns: s.runningRuns,
+      setRunningRuns: s.setRunningRuns,
+      selectedRunId: s.selectedRunId,
+      setSelectedRunId: s.setSelectedRunId,
+      refreshData: s.refreshData,
+      runScript: s.runScript,
+      runWithParams: s.runWithParams,
+      stopScript: s.stopScript,
+      stopRun: s.stopRun,
+      getTimingForRun: s.getTimingForRun,
+    }))
+  );
+}

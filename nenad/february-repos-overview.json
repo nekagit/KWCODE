@@ -1,0 +1,176 @@
+{
+  "generatedAt": "2025-02-05",
+  "sourcePath": "../",
+  "repos": [
+    {
+      "name": "automated_development",
+      "type": "desktop-app",
+      "description": "Run Prompts Control – Tauri + Next.js app to run prompts across projects (script/run_prompts_all_projects.sh). Dashboard, tickets, features, AI ticket generation.",
+      "techStack": {
+        "frontend": ["Next.js 15", "React 18", "TypeScript", "Tailwind CSS", "Radix UI", "Lucide"],
+        "desktop": ["Tauri 2", "Rust", "SQLite (rusqlite)"],
+        "api": ["Next.js API routes", "OpenAI", "pdf-parse"],
+        "packageManager": "npm"
+      },
+      "entrypoint": "npm run dev (port 4000), npm run tauri dev"
+    },
+    {
+      "name": "KW-February-AIAdventureGame",
+      "type": "fullstack-app",
+      "description": "AI-powered adventure game with Python backend (FastAPI) and frontend (React/TypeScript). RAG, embeddings, OpenAI, WebSockets.",
+      "techStack": {
+        "frontend": ["React", "TypeScript", "axios", "SWR"],
+        "backend": ["Python", "FastAPI", "Uvicorn", "SQLAlchemy", "Alembic", "Pydantic", "OpenAI", "sentence-transformers", "Redis", "Gunicorn", "python-socketio"],
+        "packageManager": "npm (root), pip (backend)"
+      },
+      "entrypoint": "Backend: FastAPI/uvicorn; Frontend: see frontend/"
+    },
+    {
+      "name": "KW-February-AIISO",
+      "type": "monorepo-multi-app",
+      "description": "Monorepo with 10 deployable apps and shared code. Single Next.js hub on port 4000; each app at /<app-name>. Apps built with React + Vite.",
+      "techStack": {
+        "frontend": ["React", "Vite", "TypeScript", "Tailwind"],
+        "tooling": ["pnpm", "Turborepo"],
+        "appsCount": 10
+      },
+      "entrypoint": "pnpm install && pnpm dev (PORT=4000)"
+    },
+    {
+      "name": "KW-February-AITrello",
+      "type": "web-app",
+      "description": "OrganizeAI – Trello-like / project management app. Next.js app in organizeai/ with boards, drag-and-drop, calendar, AI, SQLite.",
+      "techStack": {
+        "frontend": ["Next.js 16", "React 19", "TypeScript", "Tailwind 4", "Radix UI", "dnd-kit", "react-big-calendar", "recharts", "Base UI", "cmdk", "Vaul"],
+        "backend": ["Next.js API", "Drizzle ORM", "better-sqlite3", "ChromaDB", "NextAuth", "OpenAI"],
+        "packageManager": "npm"
+      },
+      "entrypoint": "cd organizeai && npm run dev"
+    },
+    {
+      "name": "KW-February-CasaPetrada",
+      "type": "ecommerce-site",
+      "description": "CASA-PETRADA MODE & ACCESSOIRES – E-commerce website. Vue 3 + Vite, Stripe.",
+      "techStack": {
+        "frontend": ["Vue 3", "Vite", "TypeScript", "Stripe (stripe-js)"],
+        "testing": ["Vitest", "Playwright", "Vue Test Utils", "Puppeteer"],
+        "packageManager": "npm"
+      },
+      "entrypoint": "npm run dev"
+    },
+    {
+      "name": "KW-February-Karaweissorg",
+      "type": "website-showcase",
+      "description": "HTMX showcase app for shared components, functions, and animations. Express server, server-rendered with Tailwind.",
+      "techStack": {
+        "frontend": ["HTMX", "Tailwind 4", "Vite (build)"],
+        "backend": ["Node.js", "Express", "tsx", "zod", "dompurify", "sanitize-html", "express-rate-limit"],
+        "packageManager": "npm"
+      },
+      "entrypoint": "Frontend in frontend/; dev: PORT=3001 tsx watch src/server/index.ts"
+    },
+    {
+      "name": "KW-February-PetraOld",
+      "type": "static-site",
+      "description": "Legacy static site – HTML, CSS, images (JPG/PNG). No framework; assets in assets/ and public/.",
+      "techStack": {
+        "frontend": ["HTML", "CSS", "static assets"]
+      },
+      "entrypoint": "Static files only; serve via any HTTP server"
+    },
+    {
+      "name": "KW-February-PetraProducts",
+      "type": "website-app",
+      "description": "Product display website – shows products from CSV (Shopify export). Search, filter, responsive; German UI. Backend with SQLite.",
+      "techStack": {
+        "frontend": ["Vite", "TypeScript", "static HTML/CSS/JS in public/"],
+        "backend": ["Node.js", "Express", "better-sqlite3", "csv-parse", "Stripe", "tsx"],
+        "packageManager": "npm"
+      },
+      "entrypoint": "npm run dev (Vite), npm run dev:server (Express); npm start"
+    },
+    {
+      "name": "KW-February-Saas",
+      "type": "saas-web-app",
+      "description": "Vereins-Manager – SaaS for German clubs: QR check-in, members, contributions. Next.js, Supabase, Clerk.",
+      "techStack": {
+        "frontend": ["Next.js 15", "React 19", "TypeScript", "Tailwind", "Radix UI", "TanStack Query", "next-themes", "sonner"],
+        "backend": ["Next.js API", "Supabase", "Clerk", "jsqr", "jszip", "qrcode", "zod"],
+        "testing": ["Vitest", "Playwright"],
+        "packageManager": "npm"
+      },
+      "entrypoint": "npm run dev (port 3003)"
+    },
+    {
+      "name": "KW-February-Soladia",
+      "type": "web-app",
+      "description": "Solana wallet / Web3 app. Next.js, Solana wallet adapters, Anchor (Solana programs), Storybook.",
+      "techStack": {
+        "frontend": ["Next.js 16", "React 19", "TypeScript", "Tailwind 4", "Solana wallet-adapter (Backpack, etc.)", "@solana/web3.js", "radix-ui", "sonner", "qrcode"],
+        "tooling": ["Anchor", "Storybook", "Vitest", "Playwright"],
+        "packageManager": "npm"
+      },
+      "entrypoint": "npm run dev (default or dev:3003); anchor build / anchor test"
+    },
+    {
+      "name": "KW-February-ThreeJS",
+      "type": "web-app",
+      "description": "React Three Fiber / Three.js – 3D Next.js app. PWA, GLSL, three-stdlib.",
+      "techStack": {
+        "frontend": ["Next.js 14", "React 18", "@react-three/fiber", "@react-three/drei", "Three.js", "three-stdlib", "Tailwind", "next-pwa"],
+        "packageManager": "npm"
+      },
+      "entrypoint": "npm run dev (port 4000)"
+    },
+    {
+      "name": "KW-February-VideoLinkTranscription",
+      "type": "fullstack-app",
+      "description": "Video link transcription – paste YouTube/Instagram/Facebook links; get transcriptions and optional AI summaries. yt-dlp + Whisper via Python FastAPI service.",
+      "techStack": {
+        "frontend": ["Next.js 16", "React 19", "TypeScript", "Tailwind 4", "Radix UI", "CVA", "clsx"],
+        "backend": ["Next.js API", "Python FastAPI (transcribe-service)", "yt-dlp", "OpenAI Whisper", "uvicorn"],
+        "packageManager": "npm"
+      },
+      "entrypoint": "Transcribe: cd transcribe-service && uvicorn main:app --port 8000; App: npm run dev"
+    },
+    {
+      "name": "viralsync.io",
+      "type": "platform-monorepo",
+      "description": "ViralSync – AI-powered social media management platform. Multi-platform (Instagram, Facebook, YouTube, TikTok), AI content creation, agents, Mastra, Drizzle, Cloudflare workers.",
+      "techStack": {
+        "frontend": ["Next.js 16", "React 19", "TypeScript", "Tailwind", "Radix UI", "TanStack Query/Table", "react-konva", "react-markdown", "Resend", "next-themes"],
+        "backend": ["Next.js API", "Drizzle", "PostgreSQL (pg)", "Mastra (AI/agents)", "AI SDK", "Cloudflare Workers (wrangler)", "Redis", "Python workers", "Stripe webhooks"],
+        "tooling": ["pnpm", "Turborepo", "Vitest", "Playwright"],
+        "packageManager": "pnpm"
+      },
+      "entrypoint": "pnpm dev; full stack: pnpm dev:full"
+    },
+    {
+      "name": "ZekiMusic",
+      "type": "multi-project",
+      "description": "Contains Audiveris (Java/Gradle – OMR, PDF to MusicXML) and KW-February-ZekiMusic (Python). Music notation / OMR tooling.",
+      "techStack": {
+        "audiveris": ["Java", "Gradle", "Audiveris OMR"],
+        "other": ["Python (in KW-February-ZekiMusic)"]
+      },
+      "entrypoint": "Audiveris: Gradle build; see PDFtoMusicXML/audiveris/"
+    }
+  ],
+  "summary": {
+    "totalRepos": 14,
+    "byType": {
+      "desktop-app": 1,
+      "fullstack-app": 2,
+      "monorepo-multi-app": 1,
+      "web-app": 3,
+      "ecommerce-site": 1,
+      "website-showcase": 1,
+      "static-site": 1,
+      "website-app": 1,
+      "saas-web-app": 1,
+      "platform-monorepo": 1,
+      "multi-project": 1
+    },
+    "commonTech": ["TypeScript", "React", "Next.js", "Tailwind", "Node.js", "npm/pnpm"]
+  }
+}
