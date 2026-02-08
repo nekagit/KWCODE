@@ -101,6 +101,19 @@ pub struct Feature {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RunScriptArgs {
+    #[serde(default)]
+    pub prompt_ids: Vec<u32>,
+    #[serde(default)]
+    pub combined_prompt: Option<String>,
+    #[serde(default)]
+    pub active_projects: Vec<String>,
+    pub timing: TimingParams,
+    pub run_label: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TimingParams {
     pub sleep_after_open_project: f64,
     pub sleep_after_window_focus: f64,
@@ -674,6 +687,43 @@ fn write_spec_file(project_path: String, relative_path: String, content: String)
     Ok(())
 }
 
+/// Archive .cursor/tickets.md or .cursor/features.md to .cursor/legacy/{file}-YYYY-MM-DD.md and create a new empty file.
+/// file_kind must be "tickets" or "features".
+#[tauri::command]
+fn archive_cursor_file(project_path: String, file_kind: String) -> Result<(), String> {
+    let base = PathBuf::from(project_path.trim());
+    if !base.exists() || !base.is_dir() {
+        return Err("Project path does not exist or is not a directory".to_string());
+    }
+    let (cursor_file, legacy_prefix, minimal_content) = match file_kind.trim() {
+        "tickets" => (
+            ".cursor/tickets.md",
+            "tickets",
+            "# Work items (tickets) — (project name)\n\n**Project:** (set)\n**Source:** Archived and reset\n**Last updated:** (date)\n\n---\n\n## Summary: Done vs missing\n\n### Done\n\n| Area | What's implemented |\n\n### Missing or incomplete\n\n| Area | Gap |\n\n---\n\n## Prioritized work items (tickets)\n\n### P0 — Critical / foundation\n\n#### Feature: (add feature name)\n\n- [ ] #1 (add ticket)\n\n### P1 — High / quality and maintainability\n\n### P2 — Medium / polish and scale\n\n### P3 — Lower / later\n\n## Next steps\n\n1. Add tickets under features.\n",
+        ),
+        "features" => (
+            ".cursor/features.md",
+            "features",
+            "# Features roadmap\n\nFeatures below are derived from .cursor/tickets.md. Add features as checklist items with ticket refs, e.g. `- [ ] Feature name — #1, #2`.\n\n## Major features\n\n- [ ] (add feature)\n",
+        ),
+        _ => return Err("file_kind must be 'tickets' or 'features'".to_string()),
+    };
+    let cursor_path = base.join(cursor_file);
+    let content = if cursor_path.exists() {
+        std::fs::read_to_string(&cursor_path).unwrap_or_else(|_| String::new())
+    } else {
+        String::new()
+    };
+    let date = chrono::Utc::now().format("%Y-%m-%d").to_string();
+    let legacy_name = format!("{}-{}.md", legacy_prefix, date);
+    let legacy_path = base.join(".cursor").join("legacy");
+    std::fs::create_dir_all(&legacy_path).map_err(|e| e.to_string())?;
+    let legacy_full = legacy_path.join(&legacy_name);
+    std::fs::write(&legacy_full, content).map_err(|e| e.to_string())?;
+    std::fs::write(&cursor_path, minimal_content).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 /// List JSON files in data/ directory.
 #[tauri::command]
 fn list_data_files() -> Result<Vec<FileEntry>, String> {
@@ -927,6 +977,7 @@ fn run_script_inner(
     run_id: String,
     run_label: String,
     prompt_ids: Vec<u32>,
+    combined_prompt: Option<String>,
     active_projects: Vec<String>,
     timing: TimingParams,
 ) -> Result<(), String> {
@@ -944,11 +995,23 @@ fn run_script_inner(
         tmp
     };
 
+    let prompt_file_path: Option<PathBuf> = match combined_prompt {
+        Some(content) => {
+            let tmp = std::env::temp_dir().join(format!("run_combined_prompt_{}.txt", run_id));
+            std::fs::write(&tmp, content).map_err(|e| e.to_string())?;
+            Some(tmp)
+        }
+        None => None,
+    };
+
     let mut cmd = Command::new("bash");
-    cmd.arg(script.as_os_str())
-        .arg("-p")
-        .args(&prompt_ids_str)
-        .arg(projects_file.as_os_str())
+    cmd.arg(script.as_os_str());
+    if let Some(ref path) = prompt_file_path {
+        cmd.arg("-F").arg(path.as_os_str());
+    } else {
+        cmd.arg("-p").args(&prompt_ids_str);
+    }
+    cmd.arg(projects_file.as_os_str())
         .current_dir(&ws)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
@@ -1165,26 +1228,26 @@ async fn run_analysis_script(
 async fn run_script(
     app: AppHandle,
     state: State<'_, RunningState>,
-    prompt_ids: Vec<u32>,
-    active_projects: Vec<String>,
-    timing: TimingParams,
-    run_label: Option<String>,
+    args: RunScriptArgs,
 ) -> Result<RunIdResponse, String> {
     let ws = project_root()?;
-    if run_label.is_none() {
-        save_active_projects(active_projects.clone())?;
+    if args.run_label.is_none() {
+        save_active_projects(args.active_projects.clone())?;
     }
     let run_id = gen_run_id();
-    let label = run_label.unwrap_or_else(|| "Manual run".to_string());
+    let label = args
+        .run_label
+        .unwrap_or_else(|| "Manual run".to_string());
     run_script_inner(
         app,
         state,
         ws,
         run_id.clone(),
         label,
-        prompt_ids,
-        active_projects,
-        timing,
+        args.prompt_ids,
+        args.combined_prompt,
+        args.active_projects,
+        args.timing,
     )?;
     Ok(RunIdResponse { run_id })
 }
@@ -1270,6 +1333,7 @@ pub fn run() {
             list_data_files,
             list_cursor_folder,
             write_spec_file,
+            archive_cursor_file,
             get_git_info,
             list_projects,
             get_project,

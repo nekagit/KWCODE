@@ -36,6 +36,10 @@ export interface Project {
   entityCategories?: ProjectEntityCategories;
   /** Files in the project spec: from .cursor (path only) or exported from Design/Architecture/Features (path + content). */
   specFiles?: { name: string; path: string; content?: string }[];
+  /** Spec .md file paths linked to the Tickets card (e.g. .cursor/tickets.md). Shown in Tickets card; drag from Project Spec to add. */
+  specFilesTickets?: string[];
+  /** Spec .md file paths linked to the Features card (e.g. .cursor/features.md, .cursor/feature-<id>.md). Shown in Features card; drag from Project Spec to add. */
+  specFilesFeatures?: string[];
   created_at?: string;
   updated_at?: string;
 }

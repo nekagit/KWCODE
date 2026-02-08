@@ -184,6 +184,12 @@ export async function PUT(
       )
         ? (body.specFiles as { name: string; path: string; content?: string }[])
         : undefined;
+    const specFilesTicketsValid = Array.isArray(body.specFilesTickets)
+      ? (body.specFilesTickets as unknown[]).filter((s): s is string => typeof s === "string")
+      : undefined;
+    const specFilesFeaturesValid = Array.isArray(body.specFilesFeatures)
+      ? (body.specFilesFeatures as unknown[]).filter((s): s is string => typeof s === "string")
+      : undefined;
     const updated: Project = {
       ...projects[idx],
       ...(typeof body.name === "string" && { name: body.name.trim() }),
@@ -197,6 +203,8 @@ export async function PUT(
       ...(Array.isArray(body.architectureIds) && { architectureIds: body.architectureIds.filter((s: unknown) => typeof s === "string") }),
       ...(body.entityCategories !== undefined && typeof body.entityCategories === "object" && body.entityCategories !== null && { entityCategories: body.entityCategories as ProjectEntityCategories }),
       ...(specFilesValid !== undefined && { specFiles: specFilesValid }),
+      ...(specFilesTicketsValid !== undefined && { specFilesTickets: specFilesTicketsValid }),
+      ...(specFilesFeaturesValid !== undefined && { specFilesFeatures: specFilesFeaturesValid }),
       updated_at: now,
     };
     projects[idx] = updated;

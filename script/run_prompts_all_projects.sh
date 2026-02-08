@@ -34,6 +34,10 @@ log_warn() { echo "  ⚠️  $*" >&2; }
 
 usage() {
     echo "Usage: $0 -p ID [ID ...] [projects.json]"
+    echo "   or: $0 -F /path/to/prompt.txt [projects.json]"
+    echo ""
+    echo "  -p ID [ID ...]  Prompt IDs from prompts-export.json"
+    echo "  -F /path        Use this file as the full prompt content (e.g. combined prompt + features + tickets)"
     echo ""
     echo "RELIABLE VERSION - Longer delays for consistency"
 }
@@ -290,6 +294,7 @@ run_project() {
 # ============================================================================
 
 PROMPT_IDS=()
+PROMPT_FILE=""
 JSON_FILE=""
 USE_IDS_FILE=""
 
@@ -304,6 +309,10 @@ while [ $# -gt 0 ]; do
                 done < <(parse_prompt_ids "$1")
                 shift
             done
+            ;;
+        -F)
+            shift
+            [ $# -gt 0 ] && PROMPT_FILE="$1" && shift
             ;;
         -f)
             shift
@@ -325,8 +334,8 @@ if [ -n "$USE_IDS_FILE" ]; then
     done < "$USE_IDS_FILE"
 fi
 
-if [ ${#PROMPT_IDS[@]} -eq 0 ]; then
-    echo "No prompt IDs specified"
+if [ -z "$PROMPT_FILE" ] && [ ${#PROMPT_IDS[@]} -eq 0 ]; then
+    echo "No prompt IDs specified (-p) and no prompt file (-F)"
     usage
     exit 1
 fi
@@ -340,10 +349,16 @@ if [ -f "$JSON_FILE" ]; then
 fi
 [ ${#PROJECTS[@]} -eq 0 ] && PROJECTS=("${DEFAULT_PROJECTS[@]}")
 
-TMP_PROMPT=$(mktemp)
-trap 'rm -f "$TMP_PROMPT"' EXIT
-get_combined_prompt_content "$PROMPTS_JSON" "${PROMPT_IDS[@]}" > "$TMP_PROMPT"
-[ ! -s "$TMP_PROMPT" ] && { echo "No prompt content"; exit 1; }
+if [ -n "$PROMPT_FILE" ]; then
+    [ -f "$PROMPT_FILE" ] || { echo "Prompt file not found: $PROMPT_FILE"; exit 1; }
+    [ -s "$PROMPT_FILE" ] || { echo "Prompt file is empty: $PROMPT_FILE"; exit 1; }
+    TMP_PROMPT="$PROMPT_FILE"
+else
+    TMP_PROMPT=$(mktemp)
+    trap 'rm -f "$TMP_PROMPT"' EXIT
+    get_combined_prompt_content "$PROMPTS_JSON" "${PROMPT_IDS[@]}" > "$TMP_PROMPT"
+    [ ! -s "$TMP_PROMPT" ] && { echo "No prompt content"; exit 1; }
+fi
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "🐢 RELIABLE VERSION - SLOW & STEADY"
@@ -351,7 +366,11 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "Longer delays between operations for consistency"
 echo "Navigation: Shift+Tab x3 → Cmd+N → Paste → Enter"
 echo ""
-echo "Prompt IDs: ${PROMPT_IDS[*]}"
+if [ -n "$PROMPT_FILE" ]; then
+    echo "Prompt file: $PROMPT_FILE"
+else
+    echo "Prompt IDs: ${PROMPT_IDS[*]}"
+fi
 echo "Projects: ${#PROJECTS[@]}"
 echo ""
 echo "Timing settings (seconds):"

@@ -18,7 +18,7 @@ export function RootLoadingOverlay() {
     <div
       id="root-loading"
       className="fixed inset-0 flex items-center justify-center bg-background text-foreground z-[9999] transition-opacity duration-300 data-[loaded=true]:opacity-0 data-[loaded=true]:pointer-events-none"
-      style={{ background: "#fafafa", color: "#171717" }}
+      style={{ background: "hsl(var(--background))", color: "hsl(var(--foreground))" }}
       data-loaded={loaded ? "true" : undefined}
       suppressHydrationWarning
     >

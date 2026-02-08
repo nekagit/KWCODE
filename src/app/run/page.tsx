@@ -19,6 +19,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Play, Square, Layers, MessageSquare, Folders } from "lucide-react";
 import { useRunState } from "@/context/run-state";
+import { getApiErrorMessage } from "@/lib/utils";
 
 interface Feature {
   id: string;
@@ -57,11 +58,14 @@ export default function RunPage() {
       setFeatures(list);
     } else {
       const res = await fetch("/api/data");
-      if (!res.ok) return;
+      if (!res.ok) {
+        setError(await getApiErrorMessage(res.clone()));
+        return;
+      }
       const data = await res.json();
       setFeatures(Array.isArray(data.features) ? data.features : []);
     }
-  }, []);
+  }, [setError]);
 
   useEffect(() => {
     loadFeatures();

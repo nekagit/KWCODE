@@ -8,12 +8,30 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useRunState } from "@/context/run-state";
-import { FileCode } from "lucide-react";
+import { FileCode, Palette } from "lucide-react";
 import type { FileEntry } from "@/types/run";
+import {
+  UI_THEME_TEMPLATES,
+  applyUITheme,
+  getStoredUITheme,
+  isValidUIThemeId,
+  type UIThemeId,
+} from "@/data/ui-theme-templates";
 
 export default function ConfigurationPage() {
   const { error, timing, setTiming } = useRunState();
   const [scripts, setScripts] = useState<FileEntry[]>([]);
+  const [uiTheme, setUITheme] = useState<UIThemeId | undefined>(undefined);
+
+  useEffect(() => {
+    const stored = getStoredUITheme();
+    setUITheme(stored ?? "light");
+  }, []);
+
+  const handleThemeSelect = useCallback((id: UIThemeId) => {
+    applyUITheme(id);
+    setUITheme(id);
+  }, []);
 
   const loadScripts = useCallback(async () => {
     if (!isTauri()) return;
@@ -29,6 +47,8 @@ export default function ConfigurationPage() {
     loadScripts();
   }, [loadScripts]);
 
+  const effectiveTheme = uiTheme && isValidUIThemeId(uiTheme) ? uiTheme : "light";
+
   return (
     <div className="space-y-6">
       {error && (
@@ -36,6 +56,74 @@ export default function ConfigurationPage() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Palette className="h-4 w-4" />
+            Design templates
+          </CardTitle>
+          <CardDescription>
+            Choose a theme to change the app background, accents, and UI component colors. Your choice is saved and applied on next load.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {UI_THEME_TEMPLATES.map((theme) => {
+              const isSelected = effectiveTheme === theme.id;
+              return (
+                <button
+                  key={theme.id}
+                  type="button"
+                  onClick={() => handleThemeSelect(theme.id)}
+                  className={`flex flex-col items-stretch rounded-lg border p-3 text-left transition-colors hover:bg-accent/50 ${
+                    isSelected ? "ring-2 ring-primary border-primary bg-accent/30" : "border-border"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="h-8 w-8 shrink-0 rounded-md border border-border"
+                      style={{
+                        background: `hsl(${theme.variables.background})`,
+                        boxShadow: `inset 0 0 0 1px hsl(${theme.variables.border})`,
+                      }}
+                    />
+                    <div className="flex shrink-0 gap-0.5">
+                      <div
+                        className="h-5 w-3 rounded border border-border"
+                        style={{ background: `hsl(${theme.variables.primary})` }}
+                        title="Primary"
+                      />
+                      <div
+                        className="h-5 w-3 rounded border border-border"
+                        style={{ background: `hsl(${theme.variables.success})` }}
+                        title="Success"
+                      />
+                      <div
+                        className="h-5 w-3 rounded border border-border"
+                        style={{ background: `hsl(${theme.variables.warning})` }}
+                        title="Warning"
+                      />
+                      <div
+                        className="h-5 w-3 rounded border border-border"
+                        style={{ background: `hsl(${theme.variables.info})` }}
+                        title="Info"
+                      />
+                      <div
+                        className="h-5 w-3 rounded border border-border"
+                        style={{ background: `hsl(${theme.variables.destructive})` }}
+                        title="Destructive"
+                      />
+                    </div>
+                    <span className="font-medium text-sm truncate min-w-0">{theme.name}</span>
+                  </div>
+                  <p className="mt-1.5 text-xs text-muted-foreground line-clamp-2">{theme.description}</p>
+                </button>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

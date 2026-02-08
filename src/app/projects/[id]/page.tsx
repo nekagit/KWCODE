@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,10 +17,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -53,6 +55,7 @@ import {
   FileSearch,
   Play,
   ListTodo,
+  Sparkles,
   GitBranch,
   Settings,
   CheckCircle2,
@@ -61,12 +64,13 @@ import {
   GitCommit,
   RefreshCw,
   ChevronRight,
+  Archive,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Project, EntityCategory, ProjectEntityCategories } from "@/types/project";
 import { getProject, getProjectResolved, updateProject, getProjectExport } from "@/lib/api-projects";
-import { isTauri, invoke } from "@/lib/tauri";
+import { isTauri, invoke, listen } from "@/lib/tauri";
 import { designRecordToMarkdown } from "@/lib/design-to-markdown";
 import { architectureRecordToMarkdown } from "@/lib/architecture-to-markdown";
 import { featureToMarkdown } from "@/lib/feature-to-markdown";
@@ -78,11 +82,22 @@ import {
   buildDesignAnalysisPrompt,
   buildArchitectureAnalysisPrompt,
   buildTicketsAnalysisPrompt,
+  buildFeaturesAnalysisPrompt,
+  buildKanbanContextBlock,
+  combinePromptWithKanban,
 } from "@/lib/analysis-prompt";
 import { createDefaultDesignConfig } from "@/data/design-templates";
+import {
+  parseTodosToKanban,
+  markTicketsDone,
+  markFeatureDoneByTicketRefs,
+  type TodosKanbanData,
+  type ParsedFeature,
+} from "@/lib/todos-kanban";
 import { toast } from "sonner";
 import type { GitInfo } from "@/types/git";
 import { useRunState } from "@/context/run-state";
+import { useRunStore } from "@/store/run-store";
 
 type WithCategory<T> = T & EntityCategory;
 
@@ -149,6 +164,7 @@ export default function ProjectDetailsPage() {
   const [featureExportingId, setFeatureExportingId] = useState<string | null>(null);
   const [downloadAllToCursorLoading, setDownloadAllToCursorLoading] = useState(false);
   const [analysisDialogPrompt, setAnalysisDialogPrompt] = useState<string | null>(null);
+  const [analysisDialogPrompts, setAnalysisDialogPrompts] = useState<string[] | null>(null);
   const [analysisDialogTitle, setAnalysisDialogTitle] = useState<string>("");
   const [analysisCopied, setAnalysisCopied] = useState(false);
   const [savingPromptToCursor, setSavingPromptToCursor] = useState(false);
@@ -157,8 +173,47 @@ export default function ProjectDetailsPage() {
   const [gitInfo, setGitInfo] = useState<GitInfo | null>(null);
   const [gitInfoLoading, setGitInfoLoading] = useState(false);
   const [gitInfoError, setGitInfoError] = useState<string | null>(null);
+  const [cursorTicketsMd, setCursorTicketsMd] = useState<string | null>(null);
+  const [cursorTicketsMdLoading, setCursorTicketsMdLoading] = useState(false);
+  const [cursorTicketsMdError, setCursorTicketsMdError] = useState<string | null>(null);
+  const [cursorFeaturesMd, setCursorFeaturesMd] = useState<string | null>(null);
+  const [cursorFeaturesMdLoading, setCursorFeaturesMdLoading] = useState(false);
+  const [cursorFeaturesMdError, setCursorFeaturesMdError] = useState<string | null>(null);
+  const [syncStatus, setSyncStatus] = useState<{ ok: boolean; message: string; details: string[] } | null>(null);
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [archiveLoading, setArchiveLoading] = useState<"tickets" | "features" | "both" | null>(null);
 
-  const { runWithParams, addFeatureToQueue } = useRunState();
+  const { runWithParams, addFeatureToQueue, runningRuns, error: runStoreError } = useRunState();
+
+  /** Implement Features loop: run script for top To-do feature, on exit mark feature and tickets done, then next. Uses repo path of the project details that's open. */
+  const [implementFeaturesRunning, setImplementFeaturesRunning] = useState(false);
+  const [implementFeaturesRunId, setImplementFeaturesRunId] = useState<string | null>(null);
+  const implementingFeatureRef = useRef<ParsedFeature | null>(null);
+  /** Repo path and combined prompt text when Implement Features was started; used for the whole loop. */
+  const implementRepoPathRef = useRef<string | null>(null);
+  const implementActivePromptRef = useRef<string>("");
+
+  /** Todos tab — Prompt card: choose existing prompt or write custom; always combined with Kanban features & tickets. */
+  const [todosPromptSelectedId, setTodosPromptSelectedId] = useState<number | "custom" | "">("custom");
+  const [todosPromptBody, setTodosPromptBody] = useState("");
+  const [todosPromptContentLoading, setTodosPromptContentLoading] = useState(false);
+  const [todosPromptCopied, setTodosPromptCopied] = useState(false);
+  const [todosPromptSaving, setTodosPromptSaving] = useState(false);
+  /** When true, the current prompt in this card is used by Implement Features. Set via "Active" button. */
+  const [todosPromptIsActive, setTodosPromptIsActive] = useState(false);
+  /** Add custom prompt dialog: save current prompt text as a new prompt. */
+  const [addPromptDialogOpen, setAddPromptDialogOpen] = useState(false);
+  const [addPromptTitle, setAddPromptTitle] = useState("");
+  const [addPromptSaving, setAddPromptSaving] = useState(false);
+  /** Generate AI prompt from current Kanban (features + tickets). */
+  const [generatePromptLoading, setGeneratePromptLoading] = useState(false);
+
+  /** Inline edit project name / repo path in header */
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [editingPath, setEditingPath] = useState(false);
+  const [savingField, setSavingField] = useState<"title" | "path" | null>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
+  const pathInputRef = useRef<HTMLInputElement>(null);
 
   const setProjectFromData = useCallback((data: Project | ResolvedProject) => {
     const r = data as ResolvedProject;
@@ -227,6 +282,15 @@ export default function ProjectDetailsPage() {
       cancelled = true;
     };
   }, [id, setProjectFromData]);
+
+  const refetchPromptsList = useCallback(() => {
+    fetch("/api/data/prompts")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((pList: { id: number; title: string }[]) => {
+        setPromptsList(Array.isArray(pList) ? pList.map((x) => ({ id: Number(x.id), title: x.title ?? "" })) : []);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!id || !project) return;
@@ -306,6 +370,508 @@ export default function ProjectDetailsPage() {
       .finally(() => setGitInfoLoading(false));
   }, [project?.repoPath]);
 
+  const loadCursorTicketsMd = useCallback(() => {
+    if (!project || !id) return;
+    setCursorTicketsMdLoading(true);
+    setCursorTicketsMdError(null);
+    const path = ".cursor/tickets.md";
+    if (isTauri() && project.repoPath?.trim()) {
+      invoke<string>("read_file_text_under_root", { root: project.repoPath.trim(), path })
+        .then((content) => {
+          setCursorTicketsMd(content ?? "");
+          setCursorTicketsMdError(null);
+        })
+        .catch(() => {
+          setCursorTicketsMd("");
+          setCursorTicketsMdError(null);
+        })
+        .finally(() => setCursorTicketsMdLoading(false));
+    } else {
+      fetch(`/api/data/projects/${id}/file?path=${encodeURIComponent(path)}`)
+        .then((res) => {
+          if (res.ok) return res.text().then((text) => ({ text, ok: true }));
+          if (res.status === 404) return { text: "", ok: false };
+          return res.json().then((j) => Promise.reject(new Error((j as { error?: string }).error ?? res.statusText)));
+        })
+        .then((result) => {
+          setCursorTicketsMd(result.ok ? result.text : "");
+          setCursorTicketsMdError(null);
+        })
+        .catch((e) => {
+          setCursorTicketsMd(null);
+          setCursorTicketsMdError(e instanceof Error ? e.message : String(e));
+        })
+        .finally(() => setCursorTicketsMdLoading(false));
+    }
+  }, [project, id]);
+
+  useEffect(() => {
+    loadCursorTicketsMd();
+  }, [loadCursorTicketsMd]);
+
+  const loadCursorFeaturesMd = useCallback(() => {
+    if (!project || !id) return;
+    setCursorFeaturesMdLoading(true);
+    setCursorFeaturesMdError(null);
+    const path = ".cursor/features.md";
+    if (isTauri() && project.repoPath?.trim()) {
+      invoke<string>("read_file_text_under_root", { root: project.repoPath.trim(), path })
+        .then((content) => {
+          setCursorFeaturesMd(content ?? "");
+          setCursorFeaturesMdError(null);
+        })
+        .catch(() => {
+          setCursorFeaturesMd("");
+          setCursorFeaturesMdError(null);
+        })
+        .finally(() => setCursorFeaturesMdLoading(false));
+    } else {
+      fetch(`/api/data/projects/${id}/file?path=${encodeURIComponent(path)}`)
+        .then((res) => {
+          if (res.ok) return res.text().then((text) => ({ text, ok: true }));
+          if (res.status === 404) return { text: "", ok: false };
+          return res.json().then((j) => Promise.reject(new Error((j as { error?: string }).error ?? res.statusText)));
+        })
+        .then((result) => {
+          setCursorFeaturesMd(result.ok ? result.text : "");
+          setCursorFeaturesMdError(null);
+        })
+        .catch((e) => {
+          setCursorFeaturesMd(null);
+          setCursorFeaturesMdError(e instanceof Error ? e.message : String(e));
+        })
+        .finally(() => setCursorFeaturesMdLoading(false));
+    }
+  }, [project, id]);
+
+  useEffect(() => {
+    loadCursorFeaturesMd();
+  }, [loadCursorFeaturesMd]);
+
+  /** Parsed JSON from features.md + tickets.md for Kanban and export. Always an object so the board structure is always visible. */
+  const kanbanData = useMemo((): TodosKanbanData => {
+    const f = cursorFeaturesMd ?? "";
+    const t = cursorTicketsMd ?? "";
+    return parseTodosToKanban(f, t);
+  }, [cursorFeaturesMd, cursorTicketsMd]);
+
+  /** Todos tab Prompt card: combined prompt = Kanban context (features + tickets) + user prompt body. Always includes Kanban. */
+  const todosCombinedPrompt = useMemo(() => {
+    const block = buildKanbanContextBlock(kanbanData);
+    return combinePromptWithKanban(block, todosPromptBody);
+  }, [kanbanData, todosPromptBody]);
+
+  /** Load prompt content when user selects an existing prompt from dropdown. */
+  const onTodosPromptSelect = useCallback((value: string) => {
+    if (value === "custom" || value === "") {
+      setTodosPromptSelectedId("custom");
+      return;
+    }
+    const numId = Number(value);
+    if (!Number.isInteger(numId)) return;
+    setTodosPromptSelectedId(numId);
+    setTodosPromptContentLoading(true);
+    fetch(`/api/data/prompts/${numId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((record: { content?: string } | null) => {
+        setTodosPromptBody(record?.content ?? "");
+      })
+      .catch(() => setTodosPromptBody(""))
+      .finally(() => setTodosPromptContentLoading(false));
+  }, []);
+
+  const copyTodosPrompt = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(todosCombinedPrompt);
+      setTodosPromptCopied(true);
+      toast.success("Prompt (with Kanban context) copied to clipboard.");
+      setTimeout(() => setTodosPromptCopied(false), 2000);
+    } catch {
+      toast.error("Could not copy.");
+    }
+  }, [todosCombinedPrompt]);
+
+  const saveTodosPromptToCursor = useCallback(async () => {
+    if (!project?.repoPath?.trim() || !isTauri()) return;
+    setTodosPromptSaving(true);
+    try {
+      await invoke("write_spec_file", {
+        projectPath: project.repoPath.trim(),
+        relativePath: `.cursor/${ANALYSIS_PROMPT_FILENAME}`,
+        content: todosCombinedPrompt,
+      });
+      toast.success("Prompt saved to .cursor/analysis-prompt.md (includes Kanban features & tickets).");
+      refetchProject();
+    } finally {
+      setTodosPromptSaving(false);
+    }
+  }, [project?.repoPath, todosCombinedPrompt, refetchProject]);
+
+  const runTodosPromptInCursor = useCallback(async () => {
+    if (!project?.repoPath?.trim() || !isTauri()) return;
+    setTodosPromptSaving(true);
+    try {
+      await invoke("write_spec_file", {
+        projectPath: project.repoPath.trim(),
+        relativePath: `.cursor/${ANALYSIS_PROMPT_FILENAME}`,
+        content: todosCombinedPrompt,
+      });
+      await invoke("run_analysis_script", { projectPath: project.repoPath.trim() });
+      toast.success("Prompt saved and analysis script started. Cursor will run the prompt; results in .cursor/");
+      refetchProject();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to run analysis script");
+    } finally {
+      setTodosPromptSaving(false);
+    }
+  }, [project?.repoPath, todosCombinedPrompt, refetchProject]);
+
+  /** Save current prompt text as a new prompt (Add custom prompt). */
+  const handleAddPromptSave = useCallback(async () => {
+    const title = addPromptTitle.trim();
+    if (!title) {
+      toast.error("Enter a title for the prompt.");
+      return;
+    }
+    setAddPromptSaving(true);
+    try {
+      const res = await fetch("/api/data/prompts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, content: todosPromptBody }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || res.statusText);
+      }
+      refetchPromptsList();
+      setAddPromptDialogOpen(false);
+      setAddPromptTitle("");
+      toast.success("Prompt added. Select it from Source or continue editing.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to save prompt");
+    } finally {
+      setAddPromptSaving(false);
+    }
+  }, [addPromptTitle, todosPromptBody, refetchPromptsList]);
+
+  /** Generate Cursor prompt from current Kanban (features + tickets) via AI. */
+  const handleGeneratePromptFromKanban = useCallback(async () => {
+    const pendingFeatures = kanbanData.features.filter((f) => !f.done);
+    const pendingTickets = kanbanData.tickets.filter((t) => !t.done);
+    if (pendingFeatures.length === 0 && pendingTickets.length === 0) {
+      toast.error("No pending features or tickets. Run Sync or add items in features.md and tickets.md.");
+      return;
+    }
+    setGeneratePromptLoading(true);
+    try {
+      const res = await fetch("/api/generate-prompt-from-kanban", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          features: kanbanData.features,
+          tickets: kanbanData.tickets,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || res.statusText);
+      }
+      const data = await res.json();
+      setTodosPromptBody(data.content ?? "");
+      const title = data.title ?? "Generated prompt";
+      toast.success(`Generated: "${title}". Edit as needed and set Active.`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to generate prompt");
+    } finally {
+      setGeneratePromptLoading(false);
+    }
+  }, [kanbanData.features, kanbanData.tickets]);
+
+  /** Check if .cursor/features.md and .cursor/tickets.md are correlating and up to date (see .cursor/sync.md). */
+  const runSync = useCallback(() => {
+    if (!id || !project) return;
+    setSyncLoading(true);
+    setSyncStatus(null);
+    const pathTickets = ".cursor/tickets.md";
+    const pathFeatures = ".cursor/features.md";
+    const fetchFile = (path: string): Promise<string> => {
+      if (isTauri() && project.repoPath?.trim()) {
+        return invoke<string>("read_file_text_under_root", { root: project.repoPath!.trim(), path })
+          .then((c) => c ?? "");
+      }
+      return fetch(`/api/data/projects/${id}/file?path=${encodeURIComponent(path)}`)
+        .then((res) => {
+          if (res.ok) return res.text();
+          if (res.status === 404) return "";
+          return res.json().then((j) => Promise.reject(new Error((j as { error?: string }).error ?? res.statusText)));
+        });
+    };
+    Promise.all([fetchFile(pathFeatures), fetchFile(pathTickets)])
+      .then(([featuresContent, ticketsContent]) => {
+        const data = parseTodosToKanban(featuresContent, ticketsContent);
+        // If any feature is done, mark its ticket refs as done in tickets.md so the two files stay in sync.
+        const ticketNumbersFromDoneFeatures = data.features
+          .filter((f) => f.done)
+          .flatMap((f) => f.ticketRefs);
+        let finalTicketsContent = ticketsContent;
+        if (ticketNumbersFromDoneFeatures.length > 0) {
+          const updatedTickets = markTicketsDone(ticketsContent, ticketNumbersFromDoneFeatures);
+          if (updatedTickets !== ticketsContent && isTauri() && project.repoPath?.trim()) {
+            finalTicketsContent = updatedTickets;
+            invoke("write_spec_file", {
+              projectPath: project.repoPath!.trim(),
+              relativePath: pathTickets,
+              content: updatedTickets,
+            }).catch(() => {});
+          } else if (updatedTickets !== ticketsContent) {
+            finalTicketsContent = updatedTickets;
+          }
+        }
+        setCursorFeaturesMd(featuresContent);
+        setCursorTicketsMd(finalTicketsContent);
+        if (isTauri() && project.repoPath?.trim()) {
+          const json = JSON.stringify(
+            parseTodosToKanban(featuresContent, finalTicketsContent),
+            null,
+            2
+          );
+          invoke("write_spec_file", {
+            projectPath: project.repoPath!.trim(),
+            relativePath: ".cursor/todos-kanban.json",
+            content: json,
+          }).catch(() => {});
+        }
+        const details: string[] = [];
+        // Ticket numbers in tickets.md: - [ ] #N or - [x] #N
+        const ticketNumberRe = /#(\d+)/g;
+        const ticketNumbers = new Set<number>();
+        let m: RegExpExecArray | null;
+        while ((m = ticketNumberRe.exec(finalTicketsContent)) !== null) ticketNumbers.add(parseInt(m[1], 10));
+        // Feature names in tickets.md: #### Feature: X
+        const featureNameRe = /####\s*Feature:\s*(.+?)(?:\n|$)/g;
+        const ticketsFeatureNames = new Set<string>();
+        while ((m = featureNameRe.exec(finalTicketsContent)) !== null) ticketsFeatureNames.add(m[1].trim().toLowerCase());
+        if (finalTicketsContent.trim() === "" && featuresContent.trim() === "") {
+          setSyncStatus({ ok: true, message: "No features.md or tickets.md yet; nothing to sync.", details: [] });
+          return;
+        }
+        if (finalTicketsContent.trim() === "") {
+          setSyncStatus({ ok: false, message: "tickets.md is missing or empty.", details: ["Create .cursor/tickets.md (e.g. via Analysis: Tickets) then add features.md to match."] });
+          return;
+        }
+        if (featuresContent.trim() === "") {
+          setSyncStatus({ ok: false, message: "features.md is missing or empty.", details: ["Create .cursor/features.md derived from tickets.md (e.g. run Analysis: Tickets to generate both)."] });
+          return;
+        }
+        // Feature lines in features.md: - [ ] ... #1, #2 or - [x] ... #1
+        const featureLineRe = /^-\s*\[[ x]\]\s+.+$/gm;
+        let featureLine: RegExpExecArray | null;
+        const refsInFeatures = new Set<number>();
+        const featureLinesWithRefs: string[] = [];
+        while ((featureLine = featureLineRe.exec(featuresContent)) !== null) {
+          const line = featureLine[0];
+          const refRe = /#(\d+)/g;
+          let refM: RegExpExecArray | null;
+          const inLine: number[] = [];
+          while ((refM = refRe.exec(line)) !== null) inLine.push(parseInt(refM[1], 10));
+          inLine.forEach((n) => refsInFeatures.add(n));
+          if (inLine.length > 0) featureLinesWithRefs.push(line);
+        }
+        const refsOnlyInFeatures = [...refsInFeatures].filter((n) => !ticketNumbers.has(n));
+        const ticketsNotInFeatures = [...ticketNumbers].filter((n) => !refsInFeatures.has(n));
+        if (refsOnlyInFeatures.length > 0) {
+          details.push(`Ticket number(s) in features.md not found in tickets.md: #${refsOnlyInFeatures.sort((a, b) => a - b).join(", #")}.`);
+        }
+        if (featureLinesWithRefs.length === 0 && featuresContent.includes("- [")) {
+          details.push("features.md has checklist items but none reference a ticket (#N). Each feature should reference at least one ticket from tickets.md.");
+        }
+        if (finalTicketsContent !== ticketsContent && ticketNumbersFromDoneFeatures.length > 0) {
+          details.unshift(
+            `Updated tickets.md: marked #${[...new Set(ticketNumbersFromDoneFeatures)].sort((a, b) => a - b).join(", #")} as done to match done features.`
+          );
+        }
+        const ok = details.length === 0 || (details.length === 1 && details[0].startsWith("Updated tickets.md:"));
+        if (ok) {
+          setSyncStatus({
+            ok: true,
+            message:
+              finalTicketsContent !== ticketsContent
+                ? "features.md and tickets.md synced; tickets updated to match done features."
+                : "features.md and tickets.md are in sync (correlation and format check passed).",
+            details: finalTicketsContent !== ticketsContent ? details : [],
+          });
+        } else {
+          setSyncStatus({
+            ok: false,
+            message: "features.md and tickets.md need to be aligned.",
+            details,
+          });
+        }
+      })
+      .catch((e) => {
+        setSyncStatus({
+          ok: false,
+          message: "Could not read repo files.",
+          details: [e instanceof Error ? e.message : String(e)],
+        });
+      })
+      .finally(() => setSyncLoading(false));
+  }, [id, project]);
+
+  /** Archive .cursor/tickets.md or .cursor/features.md to .cursor/legacy/{file}-YYYY-MM-DD.md and create new file (Tauri only). */
+  const archiveCursorFile = useCallback(
+    async (kind: "tickets" | "features") => {
+      if (!isTauri() || !project?.repoPath?.trim()) return;
+      setArchiveLoading(kind);
+      try {
+        await invoke("archive_cursor_file", {
+          projectPath: project.repoPath!.trim(),
+          fileKind: kind,
+        });
+        loadCursorTicketsMd();
+        loadCursorFeaturesMd();
+        toast.success(`Archived to .cursor/legacy/${kind}-YYYY-MM-DD.md and created new .cursor/${kind}.md`);
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Archive failed");
+      } finally {
+        setArchiveLoading(null);
+      }
+    },
+    [project?.repoPath, loadCursorTicketsMd, loadCursorFeaturesMd]
+  );
+
+  /** Archive both .cursor/tickets.md and .cursor/features.md (Tauri only). */
+  const archiveBothCursorFiles = useCallback(async () => {
+    if (!isTauri() || !project?.repoPath?.trim()) return;
+    setArchiveLoading("both");
+    try {
+      await invoke("archive_cursor_file", {
+        projectPath: project.repoPath!.trim(),
+        fileKind: "tickets",
+      });
+      await invoke("archive_cursor_file", {
+        projectPath: project.repoPath!.trim(),
+        fileKind: "features",
+      });
+      loadCursorTicketsMd();
+      loadCursorFeaturesMd();
+      toast.success("Archived both tickets.md and features.md to .cursor/legacy/ and created new files.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Archive failed");
+    } finally {
+      setArchiveLoading(null);
+    }
+  }, [project?.repoPath, loadCursorTicketsMd, loadCursorFeaturesMd]);
+
+  /** When the Implement Features run exits: mark feature and its tickets done in .cursor files, then run next or stop. Uses repo path of the project details that was open when Implement Features started. */
+  useEffect(() => {
+    if (!implementFeaturesRunId || !isTauri()) return;
+    const repoPath = implementRepoPathRef.current?.trim();
+    if (!repoPath) return;
+    const run = runningRuns.find((r) => r.runId === implementFeaturesRunId);
+    if (!run || run.status !== "done") return;
+    setImplementFeaturesRunId(null);
+    const feature = implementingFeatureRef.current;
+    if (!feature) return;
+    const ticketsMd = cursorTicketsMd ?? "";
+    const featuresMd = cursorFeaturesMd ?? "";
+    const updatedTickets = markTicketsDone(ticketsMd, feature.ticketRefs);
+    const updatedFeatures = markFeatureDoneByTicketRefs(featuresMd, feature.ticketRefs);
+    invoke("write_spec_file", {
+      projectPath: repoPath,
+      relativePath: ".cursor/tickets.md",
+      content: updatedTickets,
+    })
+      .then(() =>
+        invoke("write_spec_file", {
+          projectPath: repoPath,
+          relativePath: ".cursor/features.md",
+          content: updatedFeatures,
+        })
+      )
+      .then(() => {
+        setCursorTicketsMd(updatedTickets);
+        setCursorFeaturesMd(updatedFeatures);
+        implementingFeatureRef.current = null;
+        toast.success(`Implemented: ${feature.title}`);
+        const nextData = parseTodosToKanban(updatedFeatures, updatedTickets);
+        const nextFeature = nextData.features.find((f) => !f.done);
+        if (nextFeature) {
+          implementingFeatureRef.current = nextFeature;
+          const combinedPrompt = implementActivePromptRef.current;
+          if (!combinedPrompt.trim()) {
+            setImplementFeaturesRunning(false);
+            implementRepoPathRef.current = null;
+            implementActivePromptRef.current = "";
+            toast.error("No active prompt; stopping Implement Features.");
+            return;
+          }
+          runWithParams({
+            combinedPrompt,
+            activeProjects: [repoPath],
+            runLabel: `Implement: ${nextFeature.title}`,
+          }).then((rid) => {
+            if (rid) setImplementFeaturesRunId(rid);
+            else setImplementFeaturesRunning(false);
+          });
+        } else {
+          setImplementFeaturesRunning(false);
+          implementRepoPathRef.current = null;
+          implementActivePromptRef.current = "";
+          toast.success("All features implemented.");
+        }
+      })
+      .catch((e) => {
+        implementingFeatureRef.current = null;
+        setImplementFeaturesRunId(null);
+        setImplementFeaturesRunning(false);
+        implementRepoPathRef.current = null;
+        implementActivePromptRef.current = "";
+        toast.error(e instanceof Error ? e.message : "Failed to update tickets/features");
+      });
+  }, [implementFeaturesRunId, runningRuns, cursorTicketsMd, cursorFeaturesMd, runWithParams]);
+
+  /** Start Implement Features: run script for top To-do feature using the active prompt (Todo tab). Combines prompt + Kanban features & tickets. */
+  const startImplementFeatures = useCallback(() => {
+    const repoPath = project?.repoPath?.trim();
+    if (!repoPath || !isTauri()) {
+      toast.error("Implement Features requires Tauri and a project repo path.");
+      return;
+    }
+    const todoFeatures = kanbanData.features.filter((f) => !f.done);
+    const first = todoFeatures[0];
+    if (!first) {
+      toast.success("All features already done.");
+      return;
+    }
+    if (!todosPromptIsActive) {
+      toast.error("Set a prompt as active first (Todos tab → Prompt card → Active).");
+      return;
+    }
+    const combined = todosCombinedPrompt.trim();
+    if (!combined) {
+      toast.error("Active prompt is empty. Add prompt text or select a prompt, then click Active.");
+      return;
+    }
+    setImplementFeaturesRunning(true);
+    implementingFeatureRef.current = first;
+    implementRepoPathRef.current = repoPath;
+    implementActivePromptRef.current = combined;
+    runWithParams({
+      combinedPrompt: combined,
+      activeProjects: [repoPath],
+      runLabel: `Implement: ${first.title}`,
+    }).then((rid) => {
+      if (rid) setImplementFeaturesRunId(rid);
+      else {
+        setImplementFeaturesRunning(false);
+        const err = useRunStore.getState().error;
+        if (err) toast.error("Implement Features failed: " + err);
+      }
+    });
+  }, [project?.repoPath, kanbanData.features, todosPromptIsActive, todosCombinedPrompt, runWithParams]);
+
   const togglePrompt = useCallback((pid: number) => {
     setPromptIds((prev) => (prev.includes(pid) ? prev.filter((id) => id !== pid) : [...prev, pid]));
   }, []);
@@ -326,6 +892,8 @@ export default function ProjectDetailsPage() {
   }, []);
 
   const specFiles = Array.isArray(project?.specFiles) ? project.specFiles : [];
+  const specFilesTickets = Array.isArray(project?.specFilesTickets) ? project.specFilesTickets : [];
+  const specFilesFeatures = Array.isArray(project?.specFilesFeatures) ? project.specFilesFeatures : [];
   const addToSpec = useCallback(
     async (file: { name: string; path: string }) => {
       if (!id || !project || specFiles.some((f) => f.path === file.path)) return;
@@ -527,9 +1095,22 @@ export default function ProjectDetailsPage() {
     setDetailModalItem(item);
   }, []);
 
+  const openPromptById = useCallback(
+    (promptId: number) => {
+      fetch(`/api/data/prompts/${promptId}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((full) => {
+          if (full) openDetailModal({ kind: "prompt", data: { ...full, id: Number(full.id), title: full.title ?? "", content: full.content } });
+        })
+        .catch(() => {});
+    },
+    [openDetailModal]
+  );
+
   const openAnalysisDialog = useCallback(
-    (kind: "design" | "architecture" | "tickets" | "full") => {
+    (kind: "design" | "architecture" | "tickets" | "features" | "tickets-and-features" | "full") => {
       const projectName = project?.name ?? "This project";
+      setAnalysisDialogPrompts(null);
       if (kind === "full") {
         setAnalysisDialogTitle("Analysis");
         setAnalysisDialogPrompt(ANALYSIS_PROMPT);
@@ -549,7 +1130,7 @@ export default function ProjectDetailsPage() {
             architectureNames: (project?.architectures ?? []).map((a) => a.name),
           })
         );
-      } else {
+      } else if (kind === "tickets") {
         setAnalysisDialogTitle("Analysis: Tickets");
         setAnalysisDialogPrompt(
           buildTicketsAnalysisPrompt({
@@ -557,48 +1138,109 @@ export default function ProjectDetailsPage() {
             ticketSummaries: (project?.tickets ?? []).map((t) => ({ title: t.title, status: t.status })),
           })
         );
+      } else if (kind === "features") {
+        setAnalysisDialogTitle("Analysis: Features");
+        setAnalysisDialogPrompt(
+          buildFeaturesAnalysisPrompt({
+            projectName,
+            featureTitles: (project?.features ?? []).map((f) => f.title),
+            ticketsMdContent: cursorTicketsMd ?? undefined,
+          })
+        );
+      } else if (kind === "tickets-and-features") {
+        setAnalysisDialogTitle("Analysis: Tickets & Features");
+        setAnalysisDialogPrompt(null);
+        setAnalysisDialogPrompts([
+          buildTicketsAnalysisPrompt({
+            projectName,
+            ticketSummaries: (project?.tickets ?? []).map((t) => ({ title: t.title, status: t.status })),
+          }),
+          buildFeaturesAnalysisPrompt({
+            projectName,
+            featureTitles: (project?.features ?? []).map((f) => f.title),
+            ticketsMdContent: cursorTicketsMd ?? undefined,
+          }),
+        ]);
       }
       setAnalysisCopied(false);
     },
-    [project]
+    [project, cursorTicketsMd]
   );
 
   const saveAnalysisPromptToCursor = useCallback(async () => {
     if (!project?.repoPath?.trim() || !isTauri()) return;
+    const content =
+      analysisDialogPrompts?.length ? analysisDialogPrompts[0] : (analysisDialogPrompt ?? ANALYSIS_PROMPT);
     setSavingPromptToCursor(true);
     try {
       await invoke("write_spec_file", {
         projectPath: project.repoPath.trim(),
         relativePath: `.cursor/${ANALYSIS_PROMPT_FILENAME}`,
-        content: analysisDialogPrompt ?? ANALYSIS_PROMPT,
+        content,
       });
       refetchProject();
+      if (analysisDialogPrompts?.length && analysisDialogPrompts.length > 1) {
+        toast.success("First prompt (tickets) saved. Use Run in Cursor to run both prompts in sequence.");
+      }
     } finally {
       setSavingPromptToCursor(false);
     }
-  }, [project?.repoPath, analysisDialogPrompt, refetchProject]);
+  }, [project?.repoPath, analysisDialogPrompt, analysisDialogPrompts, refetchProject]);
 
   const runAnalysisInCursor = useCallback(async () => {
     if (!project?.repoPath?.trim() || !isTauri()) return;
+    const prompts =
+      analysisDialogPrompts?.length >= 2
+        ? analysisDialogPrompts
+        : [analysisDialogPrompt ?? ANALYSIS_PROMPT];
     setSavingPromptToCursor(true);
     try {
-      await invoke("write_spec_file", {
-        projectPath: project.repoPath.trim(),
-        relativePath: `.cursor/${ANALYSIS_PROMPT_FILENAME}`,
-        content: analysisDialogPrompt ?? ANALYSIS_PROMPT,
-      });
-      await invoke("run_analysis_script", { projectPath: project.repoPath.trim() });
-      toast.success("Analysis script started. Cursor will open and run the prompt; results will be saved in .cursor/");
+      const projectPath = project.repoPath.trim();
+      for (let i = 0; i < prompts.length; i++) {
+        await invoke("write_spec_file", {
+          projectPath,
+          relativePath: `.cursor/${ANALYSIS_PROMPT_FILENAME}`,
+          content: prompts[i],
+        });
+        const res = await invoke<{ run_id: string }>("run_analysis_script", { projectPath });
+        if (i < prompts.length - 1) {
+          const ref = {
+            runId: null as string | null,
+            resolve: null as (() => void) | null,
+            unlisten: null as (() => void) | null,
+          };
+          const waitPromise = new Promise<void>((resolve) => {
+            ref.resolve = resolve;
+          });
+          const unlisten = await listen<{ run_id: string }>("script-exited", (payload) => {
+            if (ref.runId && payload.run_id === ref.runId && ref.resolve) {
+              ref.unlisten?.();
+              ref.resolve();
+              ref.runId = null;
+              ref.resolve = null;
+            }
+          });
+          ref.unlisten = unlisten;
+          ref.runId = res.run_id;
+          await waitPromise;
+        }
+      }
+      toast.success(
+        prompts.length > 1
+          ? "Both analysis runs started. Cursor will run tickets then features in sequence; results in .cursor/"
+          : "Analysis script started. Cursor will open and run the prompt; results will be saved in .cursor/"
+      );
       refetchProject();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to run analysis script");
     } finally {
       setSavingPromptToCursor(false);
     }
-  }, [project?.repoPath, analysisDialogPrompt, refetchProject]);
+  }, [project?.repoPath, analysisDialogPrompt, analysisDialogPrompts, refetchProject]);
 
   const closeAnalysisDialog = useCallback(() => {
     setAnalysisDialogPrompt(null);
+    setAnalysisDialogPrompts(null);
     setAnalysisDialogTitle("");
     setAnalysisCopied(false);
   }, []);
@@ -738,6 +1380,75 @@ export default function ProjectDetailsPage() {
     ]
   );
 
+  /** Link a spec file (by path) to the Tickets or Features card. Adds to specFiles if not already there. */
+  const handleSpecFileLinkToCard = useCallback(
+    async (target: "tickets-spec" | "features-spec", path: string, name: string) => {
+      if (!id || !project) return;
+      setSpecDropLoading(true);
+      try {
+        let nextSpecFiles = specFiles;
+        if (!specFiles.some((f) => f.path === path)) {
+          nextSpecFiles = [...specFiles, { name, path }];
+        }
+        if (target === "tickets-spec") {
+          const next = specFilesTickets.includes(path) ? specFilesTickets : [...specFilesTickets, path];
+          await updateProject(id, { ...project, specFiles: nextSpecFiles, specFilesTickets: next });
+          setProject((p) => (p ? { ...p, specFiles: nextSpecFiles, specFilesTickets: next } : null));
+          toast.success(`"${name}" linked to Tickets card.`);
+        } else {
+          const next = specFilesFeatures.includes(path) ? specFilesFeatures : [...specFilesFeatures, path];
+          await updateProject(id, { ...project, specFiles: nextSpecFiles, specFilesFeatures: next });
+          setProject((p) => (p ? { ...p, specFiles: nextSpecFiles, specFilesFeatures: next } : null));
+          toast.success(`"${name}" linked to Features card.`);
+        }
+        refetchProject();
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Failed to link spec file");
+      } finally {
+        setSpecDropLoading(false);
+      }
+    },
+    [id, project, specFiles, specFilesTickets, specFilesFeatures, refetchProject]
+  );
+
+  const removeSpecFileFromTickets = useCallback(
+    async (path: string) => {
+      if (!id || !project) return;
+      const next = specFilesTickets.filter((p) => p !== path);
+      setSpecDropLoading(true);
+      try {
+        await updateProject(id, { ...project, specFilesTickets: next });
+        setProject((p) => (p ? { ...p, specFilesTickets: next } : null));
+        refetchProject();
+        toast.success("Removed from Tickets card.");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Failed to update");
+      } finally {
+        setSpecDropLoading(false);
+      }
+    },
+    [id, project, specFilesTickets, refetchProject]
+  );
+
+  const removeSpecFileFromFeatures = useCallback(
+    async (path: string) => {
+      if (!id || !project) return;
+      const next = specFilesFeatures.filter((p) => p !== path);
+      setSpecDropLoading(true);
+      try {
+        await updateProject(id, { ...project, specFilesFeatures: next });
+        setProject((p) => (p ? { ...p, specFilesFeatures: next } : null));
+        refetchProject();
+        toast.success("Removed from Features card.");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Failed to update");
+      } finally {
+        setSpecDropLoading(false);
+      }
+    },
+    [id, project, specFilesFeatures, refetchProject]
+  );
+
   const categoryBadges = (e: EntityCategory) => (
     <span className="flex flex-wrap gap-1 mt-1">
       {CATEGORY_FIELDS.map(
@@ -774,6 +1485,65 @@ export default function ProjectDetailsPage() {
       setLinksSaving(false);
     }
   };
+
+  const saveProjectName = useCallback(
+    async (value: string) => {
+      if (!id || !project || value.trim() === "" || value === project.name) {
+        setEditingTitle(false);
+        setSavingField(null);
+        return;
+      }
+      setSavingField("title");
+      try {
+        await updateProject(id, { ...project, name: value.trim() });
+        setProject((p) => (p ? { ...p, name: value.trim() } : null));
+        refetchProject();
+        toast.success("Project name updated.");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Failed to update name");
+      } finally {
+        setSavingField(null);
+        setEditingTitle(false);
+      }
+    },
+    [id, project, refetchProject]
+  );
+
+  const saveProjectPath = useCallback(
+    async (value: string) => {
+      if (!id || !project) {
+        setEditingPath(false);
+        setSavingField(null);
+        return;
+      }
+      const trimmed = value.trim();
+      if (trimmed === (project.repoPath ?? "")) {
+        setEditingPath(false);
+        setSavingField(null);
+        return;
+      }
+      setSavingField("path");
+      try {
+        await updateProject(id, { ...project, repoPath: trimmed || undefined });
+        setProject((p) => (p ? { ...p, repoPath: trimmed || undefined } : null));
+        refetchProject();
+        toast.success("Repo path updated.");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Failed to update path");
+      } finally {
+        setSavingField(null);
+        setEditingPath(false);
+      }
+    },
+    [id, project, refetchProject]
+  );
+
+  useEffect(() => {
+    if (editingTitle) titleInputRef.current?.focus();
+  }, [editingTitle]);
+  useEffect(() => {
+    if (editingPath) pathInputRef.current?.focus();
+  }, [editingPath]);
 
   const exportAsJson = async () => {
     if (!id) return;
@@ -1006,20 +1776,42 @@ export default function ProjectDetailsPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!analysisDialogPrompt} onOpenChange={onAnalysisDialogOpenChange}>
+      <Dialog
+        open={!!(analysisDialogPrompt || (analysisDialogPrompts && analysisDialogPrompts.length > 0))}
+        onOpenChange={onAnalysisDialogOpenChange}
+      >
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>{analysisDialogTitle}</DialogTitle>
             <DialogDescription>
-              Copy this prompt and run it in Cursor (in this project&apos;s repo). The AI will generate documents (e.g. <code className="text-xs bg-muted px-1 rounded">.cursor/ANALYSIS.md</code>, <code className="text-xs bg-muted px-1 rounded">.cursor/architecture.md</code>, <code className="text-xs bg-muted px-1 rounded">.cursor/design.md</code>) in the project&apos;s <code className="text-xs bg-muted px-1 rounded">.cursor</code> folder.
+              {analysisDialogPrompts?.length >= 2
+                ? "Run both prompts in Cursor one after the other (tickets first, then features). Copy saves both with a separator."
+                : "Copy this prompt and run it in Cursor (in this project's repo). The AI will generate documents in the project's .cursor folder."}
             </DialogDescription>
           </DialogHeader>
-          <ScrollArea className="flex-1 min-h-0 rounded border p-3 text-sm font-mono whitespace-pre-wrap">
-            {analysisDialogPrompt ?? ""}
+          <ScrollArea className="flex-1 min-h-0 rounded border p-3 text-sm font-mono whitespace-pre-wrap space-y-4">
+            {analysisDialogPrompts?.length >= 2 ? (
+              <>
+                <div>
+                  <p className="font-semibold text-foreground mb-1">1. Tickets (creates .cursor/tickets.md &amp; .cursor/features.md)</p>
+                  <pre className="whitespace-pre-wrap text-xs">{analysisDialogPrompts[0]}</pre>
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground mb-1">2. Features (updates .cursor/features.md)</p>
+                  <pre className="whitespace-pre-wrap text-xs">{analysisDialogPrompts[1]}</pre>
+                </div>
+              </>
+            ) : (
+              (analysisDialogPrompt ?? "")
+            )}
           </ScrollArea>
           <div className="flex justify-end gap-2 pt-2 shrink-0 flex-wrap">
             <Button variant="outline" size="sm" onClick={closeAnalysisDialog}>
               Close
+            </Button>
+            <Button variant="outline" size="sm" onClick={copyAnalysisPrompt}>
+              <ClipboardCopy className="h-3.5 w-3.5 mr-1.5" />
+              {analysisCopied ? "Copied" : "Copy to clipboard"}
             </Button>
             {isTauri() && project?.repoPath?.trim() && (
               <>
@@ -1044,10 +1836,6 @@ export default function ProjectDetailsPage() {
                 </Button>
               </>
             )}
-            <Button variant="outline" size="sm" onClick={copyAnalysisPrompt}>
-              <ClipboardCopy className="h-3.5 w-3.5 mr-1.5" />
-              {analysisCopied ? "Copied" : "Copy to clipboard"}
-            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -1060,34 +1848,86 @@ export default function ProjectDetailsPage() {
         </Button>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-semibold tracking-tight truncate">{project.name}</h1>
-            <Button variant="outline" size="sm" asChild>
-              <Link href={`/projects/${project.id}/edit`}>Edit</Link>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => openAnalysisDialog("full")}
-            >
-              <FileText className="h-4 w-4 mr-1.5" />
-              Analysis
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={exportAsJson}
-              disabled={exporting}
-            >
-              {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-              <span className="ml-1.5">Export as JSON</span>
-            </Button>
+            {editingTitle ? (
+              <Input
+                ref={titleInputRef}
+                className="text-2xl font-semibold tracking-tight h-9 max-w-md"
+                defaultValue={project.name}
+                disabled={savingField === "title"}
+                onBlur={(e) => saveProjectName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.currentTarget.blur();
+                  }
+                  if (e.key === "Escape") {
+                    setEditingTitle(false);
+                  }
+                }}
+              />
+            ) : (
+              <h1
+                className="text-2xl font-semibold tracking-tight truncate cursor-pointer hover:underline focus:outline-none focus:ring-2 focus:ring-ring rounded"
+                tabIndex={0}
+                role="button"
+                onClick={() => setEditingTitle(true)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setEditingTitle(true);
+                  }
+                }}
+              >
+                {savingField === "title" ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {project.name}
+                  </span>
+                ) : (
+                  project.name
+                )}
+              </h1>
+            )}
           </div>
           {project.description && (
             <p className="text-muted-foreground text-sm mt-0.5">{project.description}</p>
           )}
-          {project.repoPath && (
-            <p className="text-xs text-muted-foreground font-mono mt-1 truncate" title={project.repoPath}>
-              {project.repoPath}
+          {editingPath ? (
+            <Input
+              ref={pathInputRef}
+              className="text-xs font-mono mt-1 max-w-full h-7"
+              defaultValue={project.repoPath ?? ""}
+              placeholder="Repo path"
+              disabled={savingField === "path"}
+              onBlur={(e) => saveProjectPath(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") e.currentTarget.blur();
+                if (e.key === "Escape") setEditingPath(false);
+              }}
+            />
+          ) : (
+            <p
+              className="text-xs text-muted-foreground font-mono mt-1 truncate cursor-pointer hover:underline focus:outline-none focus:ring-2 focus:ring-ring rounded"
+              title={project.repoPath ?? "Click to set repo path"}
+              tabIndex={0}
+              role="button"
+              onClick={() => setEditingPath(true)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setEditingPath(true);
+                }
+              }}
+            >
+              {savingField === "path" && project.repoPath ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  {project.repoPath}
+                </span>
+              ) : project.repoPath ? (
+                project.repoPath
+              ) : (
+                <span className="text-muted-foreground/70">Click to set repo path</span>
+              )}
             </p>
           )}
         </div>
@@ -1222,6 +2062,39 @@ export default function ProjectDetailsPage() {
                     </Card>
                   </div>
 
+                  {statusLines.length > 0 ? (
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-muted-foreground" />
+                          Changed files (git status)
+                        </CardTitle>
+                        <CardDescription>Files with uncommitted changes</CardDescription>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <ScrollArea className="h-[200px] rounded-lg border bg-muted/20 font-mono text-sm">
+                          <ul className="p-2 space-y-1">
+                            {statusLines.map((line, i) => {
+                              const staged = line.startsWith("M ") || line.startsWith("A ") || line.startsWith("D ") || line.startsWith("R ") || line.startsWith("C ") || line.startsWith("U ");
+                              const unstaged = line.startsWith(" M") || line.startsWith(" A") || line.startsWith(" D") || line.startsWith(" R") || line.startsWith(" C") || line.startsWith(" U");
+                              const untracked = line.startsWith("??");
+                              const path = untracked ? line.slice(2).trim() : line.slice(2).trim();
+                              const code = line.slice(0, 2).trim() || (untracked ? "??" : "");
+                              return (
+                                <li key={`${i}-${path}`} className="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-muted/50">
+                                  <span className={`shrink-0 w-6 text-xs ${untracked ? "text-slate-500" : staged ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`} title={line.slice(0, 2)}>
+                                    {code || "  "}
+                                  </span>
+                                  <span className="text-foreground truncate" title={path}>{path}</span>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </ScrollArea>
+                      </CardContent>
+                    </Card>
+                  ) : null}
+
                   <Card>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -1341,120 +2214,368 @@ export default function ProjectDetailsPage() {
           ) : null}
         </TabsContent>
         <TabsContent value="todos" className="mt-0">
-          <Accordion type="multiple" className="w-full" defaultValue={["spec", "cursor-files"]}>
-        <AccordionItem value="spec" className="border rounded-lg px-4 mt-2 bg-primary/5 border-primary/30">
+          <Accordion type="multiple" className="w-full" defaultValue={["todos-kanban"]}>
+        <AccordionItem value="todos-kanban" className="border rounded-lg px-4 mt-2">
           <AccordionTrigger className="hover:no-underline py-4">
             <span className="flex items-center gap-2 text-base font-medium">
-              <FileText className="h-4 w-4" />
-              Project Spec ({specFiles.length} files)
+              <Layers className="h-4 w-4" />
+              Kanban (from features.md &amp; tickets.md)
             </span>
           </AccordionTrigger>
           <AccordionContent className="pb-4">
-            <div className={specPreview ? "grid grid-cols-1 md:grid-cols-2 gap-4" : undefined}>
-              <div className="min-w-0">
-                <p className="text-sm text-muted-foreground mb-4">
-                  Files from this project&apos;s .cursor folder or exported from Design / Architecture / Features. Add from &quot;Files in .cursor&quot; or use + Add on the Design, Architecture, and Features cards to export .md here. Click a file to preview.
-                </p>
-                {specFiles.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    No files in the project spec yet. Set a repo path, add from &quot;Files in .cursor&quot;, or use + Add on Design / Architecture / Features cards to export .md files.
-                  </p>
-                ) : (
-                  <ScrollArea className="h-[240px] rounded border p-2">
-                    <ul className="space-y-2 text-sm">
-                      {specFiles.map((f) => (
-                        <li
-                          key={f.path}
-                          role="button"
-                          tabIndex={0}
-                          draggable
-                          className="flex items-center gap-2 rounded px-2 py-1.5 hover:bg-muted/50 group cursor-grab active:cursor-grabbing focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-                          onClick={() => openSpecFilePreview(f)}
-                          onKeyDown={(e) => e.key === "Enter" && openSpecFilePreview(f)}
-                          onDragStart={(e) => {
-                            e.dataTransfer.setData(SPEC_FILE_DRAG_TYPE, JSON.stringify({ path: f.path, name: f.name }));
-                            e.dataTransfer.effectAllowed = "copy";
-                          }}
-                        >
-                          <span className="font-mono truncate flex-1 min-w-0" title={f.path}>
-                            {f.name}
-                          </span>
-                          {f.content != null && (
-                            <span className="text-xs text-muted-foreground shrink-0">(exported)</span>
-                          )}
-                          <span className="text-muted-foreground text-xs truncate max-w-[180px]" title={f.path}>
-                            {f.path}
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 shrink-0 opacity-70 hover:opacity-100"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeFromSpec(f.path);
-                            }}
-                            disabled={specFilesSaving}
-                            title="Remove from project spec"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </li>
-                      ))}
-                    </ul>
-                  </ScrollArea>
-                )}
-                {isTauri() && project.repoPath?.trim() && specFiles.some((f) => f.content) && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-3"
-                    onClick={downloadAllSpecFilesToCursor}
-                    disabled={downloadAllToCursorLoading}
-                    title="Write all exported spec files to the project's .cursor folder"
-                  >
-                    {downloadAllToCursorLoading ? (
-                      <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
-                    ) : (
-                      <Download className="h-3.5 w-3.5 mr-1.5" />
-                    )}
-                    Download all to .cursor
-                  </Button>
-                )}
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <p className="text-sm text-muted-foreground">
+                Check that .cursor/features.md and .cursor/tickets.md exist, have correct format, and can be parsed to JSON for the board (see .cursor/sync.md). Click Sync to load and validate.
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                {(() => {
+                  const hasRepo = !!project?.repoPath?.trim();
+                  const hasActivePrompt = todosPromptIsActive && todosCombinedPrompt.trim().length > 0;
+                  const todoCount = kanbanData.features.filter((f) => !f.done).length;
+                  const implementDisabled =
+                    implementFeaturesRunning ||
+                    !isTauri() ||
+                    !hasRepo ||
+                    !hasActivePrompt ||
+                    todoCount === 0;
+                  const whyDisabled = !implementDisabled
+                    ? null
+                    : !isTauri()
+                      ? "Requires desktop (Tauri) app."
+                      : !hasRepo
+                        ? "Set project repo path (Edit project)."
+                        : !todosPromptIsActive
+                          ? "Set a prompt as active (Todos tab → Prompt card → Active)."
+                          : !todosCombinedPrompt.trim()
+                            ? "Active prompt is empty. Add text or select a prompt, then click Active."
+                            : todoCount === 0
+                              ? "No features in To do. Run Sync or add features in features.md."
+                              : null;
+                  return (
+                    <>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={startImplementFeatures}
+                        disabled={implementDisabled}
+                        className="gap-1.5"
+                        title={whyDisabled ?? "Run script for the top To-do feature and its tickets; when done, mark done and repeat until all are done."}
+                      >
+                        {implementFeaturesRunning ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Play className="h-3.5 w-3.5" />
+                        )}
+                        Implement Features
+                      </Button>
+                      {whyDisabled && (
+                        <span className="text-xs text-muted-foreground" title={whyDisabled}>
+                          {whyDisabled}
+                        </span>
+                      )}
+                    </>
+                  );
+                })()}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={runSync}
+                  disabled={syncLoading || !project?.repoPath?.trim()}
+                  className="gap-1.5"
+                  title="Load .md files, check format and correlation, and refresh Kanban data"
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${syncLoading ? "animate-spin" : ""}`} />
+                  Sync
+                </Button>
               </div>
-              {specPreview && (
-                <div className="min-w-0 flex flex-col rounded-lg border bg-muted/30 border-primary/20">
-                  <div className="flex items-center justify-between px-3 py-2 border-b shrink-0">
-                    <span className="text-sm font-medium truncate" title={specPreview.path}>
-                      {specPreview.name}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 shrink-0"
-                      onClick={closeSpecPreview}
-                      title="Close preview"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                  <ScrollArea className="flex-1 min-h-0 h-[240px] p-3">
-                    {specPreviewLoading ? (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Loading…
-                      </div>
-                    ) : specPreviewError ? (
-                      <p className="text-sm text-destructive">{specPreviewError}</p>
+            </div>
+            {runStoreError && (
+              <div className="mb-3 rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                <p className="font-medium">Run error</p>
+                <p className="mt-0.5">{runStoreError}</p>
+              </div>
+            )}
+            {implementFeaturesRunId != null && (() => {
+              const run = runningRuns.find((r) => r.runId === implementFeaturesRunId);
+              const logLines = run?.logLines ?? [];
+              return (
+                <div className="mb-3 rounded-lg border bg-muted/20 px-3 py-2">
+                  <p className="text-xs font-medium text-muted-foreground mb-1.5">
+                    Implement Features run log {run?.status === "running" ? "(running…)" : "(finished)"}
+                  </p>
+                  <ScrollArea className="h-[180px] rounded border bg-background/80 font-mono text-xs p-2">
+                    {logLines.length === 0 ? (
+                      <span className="text-muted-foreground">Waiting for script output…</span>
                     ) : (
-                      <div className="markdown-viewer text-sm space-y-3 [&_h1]:text-xl [&_h1]:font-semibold [&_h2]:text-lg [&_h2]:font-semibold [&_h3]:text-base [&_h3]:font-medium [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_table]:border-collapse [&_th]:border [&_th]:px-2 [&_th]:py-1 [&_td]:border [&_td]:px-2 [&_td]:py-1 [&_pre]:bg-muted [&_pre]:p-2 [&_pre]:rounded [&_code]:bg-muted [&_code]:px-1 [&_code]:rounded text-foreground">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {specPreview.content}
-                        </ReactMarkdown>
-                      </div>
+                      <pre className="whitespace-pre-wrap break-words">
+                        {logLines.join("\n")}
+                      </pre>
                     )}
                   </ScrollArea>
                 </div>
+              );
+            })()}
+            {syncStatus && (
+              <div
+                className={`mb-3 rounded-lg border px-3 py-2 text-sm ${
+                  syncStatus.ok
+                    ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-800 dark:text-emerald-200"
+                    : "border-amber-500/30 bg-amber-500/5 text-amber-800 dark:text-amber-200"
+                }`}
+              >
+                <p className="font-medium">{syncStatus.message}</p>
+                {syncStatus.details.length > 0 && (
+                  <ul className="list-disc pl-4 mt-1 space-y-0.5">
+                    {syncStatus.details.map((d, i) => (
+                      <li key={i}>{d}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+            {(kanbanData.features.length === 0 && kanbanData.tickets.length === 0) && (
+              <p className="text-sm text-muted-foreground mb-3">
+                No features or tickets. Run Sync to load from .cursor/features.md and .cursor/tickets.md, or use Analysis / Create to generate them.
+              </p>
+            )}
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const json = JSON.stringify(kanbanData, null, 2);
+                  navigator.clipboard.writeText(json).then(() => toast.success("Kanban JSON copied to clipboard.")).catch(() => toast.error("Could not copy."));
+                }}
+                title="Copy Kanban data as JSON"
+              >
+                Copy JSON
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">Features (To do / Done)</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["To do", "Done"] as const).map((col) => (
+                    <div key={col} className="rounded-lg border bg-muted/20 min-h-[200px] flex flex-col">
+                      <div className="px-3 py-2 border-b bg-muted/40 rounded-t-lg flex items-center justify-between gap-2">
+                        <Badge variant="secondary" className="capitalize font-medium">{col}</Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {kanbanData.features.filter((f) => (col === "Done" ? f.done : !f.done)).length}
+                        </span>
+                      </div>
+                      <ScrollArea className="flex-1 p-2">
+                        <div className="space-y-2">
+                          {kanbanData.features
+                            .filter((f) => (col === "Done" ? f.done : !f.done))
+                            .map((f) => (
+                              <div
+                                key={f.id}
+                                draggable
+                                onDragStart={(e) => {
+                                  e.dataTransfer.setData("application/x-feature-id", f.id);
+                                  e.dataTransfer.effectAllowed = "move";
+                                }}
+                                className="rounded border bg-background px-2 py-1.5 text-sm cursor-grab active:cursor-grabbing"
+                              >
+                                <span className="font-medium">{f.title}</span>
+                                {f.ticketRefs.length > 0 && (
+                                  <span className="text-muted-foreground ml-1">#{f.ticketRefs.join(", #")}</span>
+                                )}
+                              </div>
+                            ))}
+                        </div>
+                      </ScrollArea>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">Tickets by priority</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["P0", "P1", "P2"] as const).map((priority) => (
+                    <div key={priority} className="rounded-lg border bg-muted/20 min-h-[200px] flex flex-col">
+                      <div className="px-3 py-2 border-b bg-muted/40 rounded-t-lg flex items-center justify-between gap-2">
+                        <Badge variant="secondary" className="font-medium">{priority}</Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {kanbanData.tickets.filter((t) => t.priority === priority).length}
+                        </span>
+                      </div>
+                      <ScrollArea className="flex-1 p-2">
+                        <div className="space-y-2">
+                          {kanbanData.tickets
+                            .filter((t) => t.priority === priority)
+                            .map((t) => (
+                              <div
+                                key={t.id}
+                                className="rounded border bg-background px-2 py-1.5 text-sm"
+                              >
+                                <span className="font-medium">#{t.id}</span> {t.title}
+                              </div>
+                            ))}
+                        </div>
+                      </ScrollArea>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="todos-prompt" className="border rounded-lg px-4 mt-2">
+          <AccordionTrigger className="hover:no-underline py-4">
+            <span className="flex items-center gap-2 text-base font-medium">
+              <MessageSquare className="h-4 w-4" />
+              Prompt
+              {todosPromptIsActive && (
+                <Badge variant="default" className="text-xs">active</Badge>
               )}
+            </span>
+          </AccordionTrigger>
+          <AccordionContent className="pb-4">
+            <p className="text-sm text-muted-foreground mb-3">
+              Choose an existing prompt or write your own. The prompt is always combined with the Kanban board (features and tickets from .cursor/features.md and .cursor/tickets.md) so the model has full context.
+            </p>
+            <div className="space-y-3">
+              <div className="flex flex-col gap-2">
+                <Label className="text-xs">Source</Label>
+                <Select
+                  value={todosPromptSelectedId === "custom" || todosPromptSelectedId === "" ? "custom" : String(todosPromptSelectedId)}
+                  onValueChange={onTodosPromptSelect}
+                >
+                  <SelectTrigger className="w-full max-w-sm">
+                    <SelectValue placeholder="Custom (write your own)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="custom">Custom (write your own)</SelectItem>
+                    {promptsList.map((p) => (
+                      <SelectItem key={p.id} value={String(p.id)}>
+                        {p.title || `#${p.id}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label className="text-xs">Prompt text (combined with Kanban features &amp; tickets above)</Label>
+                <Textarea
+                  placeholder="Write your prompt here, or select an existing prompt to load its content. Kanban context is always prepended when you copy, save, or run."
+                  value={todosPromptBody}
+                  onChange={(e) => setTodosPromptBody(e.target.value)}
+                  rows={8}
+                  className="resize-y font-mono text-sm"
+                />
+                {todosPromptContentLoading && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Loading prompt…
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setAddPromptTitle("");
+                    setAddPromptDialogOpen(true);
+                  }}
+                  className="gap-1.5"
+                  title="Save current prompt text as a new prompt in the library"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGeneratePromptFromKanban}
+                  disabled={generatePromptLoading}
+                  className="gap-1.5"
+                  title="Analyse current tickets and features and generate a Cursor prompt to finish them"
+                >
+                  {generatePromptLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                  Generate AI
+                </Button>
+                <Button
+                  variant={todosPromptIsActive ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    if (todosCombinedPrompt.trim()) {
+                      setTodosPromptIsActive(true);
+                      toast.success("This prompt is now active for Implement Features.");
+                    } else {
+                      toast.error("Add prompt text or select a prompt first.");
+                    }
+                  }}
+                  className="gap-1.5"
+                  title="Use this prompt (with features & tickets) when you click Implement Features"
+                >
+                  {todosPromptIsActive ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                  Active
+                </Button>
+                <Button variant="outline" size="sm" onClick={copyTodosPrompt} className="gap-1.5">
+                  {todosPromptCopied ? (
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                  ) : (
+                    <ClipboardCopy className="h-3.5 w-3.5" />
+                  )}
+                  {todosPromptCopied ? "Copied" : "Copy to clipboard"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={saveTodosPromptToCursor}
+                  disabled={todosPromptSaving || !project?.repoPath?.trim() || !isTauri()}
+                  className="gap-1.5"
+                  title="Save combined prompt (Kanban + your text) to .cursor/analysis-prompt.md"
+                >
+                  {todosPromptSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+                  Save to .cursor
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={runTodosPromptInCursor}
+                  disabled={todosPromptSaving || !project?.repoPath?.trim() || !isTauri()}
+                  className="gap-1.5"
+                  title="Save to .cursor and run analysis script in Cursor"
+                >
+                  {todosPromptSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileSearch className="h-3.5 w-3.5" />}
+                  Run in Cursor
+                </Button>
+              </div>
+              <Dialog open={addPromptDialogOpen} onOpenChange={setAddPromptDialogOpen}>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Add custom prompt</DialogTitle>
+                    <DialogDescription>
+                      Save the current prompt text as a new prompt. It will appear in the Source dropdown and on the Prompts page.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-2 py-2">
+                    <Label className="text-xs">Title</Label>
+                    <Input
+                      placeholder="e.g. Complete P0 tickets"
+                      value={addPromptTitle}
+                      onChange={(e) => setAddPromptTitle(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleAddPromptSave()}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Content: current prompt text ({todosPromptBody.length} chars) will be saved.
+                    </p>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" size="sm" onClick={() => setAddPromptDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button size="sm" onClick={handleAddPromptSave} disabled={addPromptSaving || !addPromptTitle.trim()} className="gap-1.5">
+                      {addPromptSaving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                      Save prompt
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           </AccordionContent>
         </AccordionItem>
@@ -1511,92 +2632,207 @@ export default function ProjectDetailsPage() {
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="todos-features" className="border rounded-lg px-4 mt-2">
+        <AccordionItem value="todos-features-tickets" className="border rounded-lg px-4 mt-2">
           <AccordionTrigger className="hover:no-underline py-4">
             <span className="flex items-center gap-2 text-base font-medium">
               <Layers className="h-4 w-4" />
-              Features ({project.features.length} linked) — Run / Queue
-            </span>
-          </AccordionTrigger>
-          <AccordionContent className="pb-4">
-            {project.features.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No features linked. Link features in the Setup tab.</p>
-            ) : (
-              <ScrollArea className="h-[200px] rounded border p-2">
-                <ul className="space-y-2 text-sm">
-                  {project.features.map((f) => {
-                    const projectsForRun = (f.project_paths?.length ? f.project_paths : (project.repoPath ? [project.repoPath] : [])) as string[];
-                    return (
-                      <li key={f.id} className="flex items-center gap-2 rounded px-2 py-1.5 hover:bg-muted/50 group">
-                        <span className="flex-1 min-w-0 font-medium truncate">{f.title}</span>
-                        {categoryBadges(f)}
-                        <div className="flex gap-1 shrink-0">
-                          <Button variant="outline" size="sm" className="h-7" onClick={() => runWithParams({ promptIds: f.prompt_ids ?? [], activeProjects: projectsForRun, runLabel: f.title })} disabled={!projectsForRun.length || !(f.prompt_ids?.length)} title="Run now">
-                            <Play className="h-3.5 w-3.5 mr-1" />
-                            Run
-                          </Button>
-                          <Button variant="outline" size="sm" className="h-7" onClick={() => addFeatureToQueue({ id: f.id, title: f.title, prompt_ids: f.prompt_ids ?? [], project_paths: projectsForRun })} title="Add to run queue">
-                            <ListTodo className="h-3.5 w-3.5 mr-1" />
-                            Queue
-                          </Button>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </ScrollArea>
-            )}
-            <Button variant="outline" size="sm" className="mt-2" asChild>
-              <Link href="/?tab=feature">
-                <ExternalLink className="h-3.5 w-3.5 mr-1" />
-                Feature tab
-              </Link>
-            </Button>
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="todos-tickets" className="border rounded-lg px-4 mt-2">
-          <AccordionTrigger className="hover:no-underline py-4">
-            <span className="flex items-center gap-2 text-base font-medium">
               <TicketIcon className="h-4 w-4" />
-              Tickets ({project.tickets.length} linked) — Run
+              Features &amp; Tickets ({project.features.length} linked features, {project.tickets.length} linked tickets)
             </span>
           </AccordionTrigger>
           <AccordionContent className="pb-4">
-            {project.tickets.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No tickets linked. Link tickets in the Setup tab.</p>
-            ) : (
-              <ScrollArea className="h-[200px] rounded border p-2">
-                <ul className="space-y-2 text-sm">
-                  {project.tickets.map((t) => {
-                    const promptIds = (t as { prompt_ids?: number[] }).prompt_ids ?? [];
-                    const projectsForRun = project.repoPath ? [project.repoPath] : [];
-                    return (
-                      <li key={t.id} className="flex items-center gap-2 rounded px-2 py-1.5 hover:bg-muted/50 group">
-                        <Badge variant="outline" className="text-xs shrink-0">{t.status}</Badge>
-                        <span className="flex-1 min-w-0 truncate">{t.title}</span>
-                        {categoryBadges(t)}
-                        <Button variant="outline" size="sm" className="h-7 shrink-0" onClick={() => runWithParams({ promptIds, activeProjects: projectsForRun, runLabel: t.title })} disabled={!projectsForRun.length} title="Run with this project and ticket prompts">
-                          <Play className="h-3.5 w-3.5 mr-1" />
-                          Run
-                        </Button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </ScrollArea>
-            )}
-            <div className="flex flex-wrap gap-2 mt-2">
-              <Button variant="outline" size="sm" onClick={() => openAnalysisDialog("tickets")}>
+            <p className="text-sm text-muted-foreground mb-3">
+              .cursor/features.md and .cursor/tickets.md are shown together. Analysis creates both; Archive archives both. Sync (in Kanban card above) loads and validates both.
+            </p>
+            {/* .cursor/features.md */}
+            <div className="mb-4">
+              <p className="text-xs font-medium text-muted-foreground mb-2">.cursor/features.md — features roadmap</p>
+              {cursorFeaturesMdLoading ? (
+                <p className="text-sm text-muted-foreground">Loading…</p>
+              ) : cursorFeaturesMdError ? (
+                <p className="text-sm text-destructive">{cursorFeaturesMdError}</p>
+              ) : cursorFeaturesMd !== null && cursorFeaturesMd !== "" ? (
+                <ScrollArea className="h-[240px] rounded border bg-muted/30 p-3">
+                  <div className="prose prose-sm dark:prose-invert max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{cursorFeaturesMd}</ReactMarkdown>
+                  </div>
+                </ScrollArea>
+              ) : (
+                <p className="text-sm text-muted-foreground">No .cursor/features.md in this repo.</p>
+              )}
+            </div>
+            {/* .cursor/tickets.md */}
+            <div className="mb-4">
+              <p className="text-xs font-medium text-muted-foreground mb-2">.cursor/tickets.md — work items checklist by feature</p>
+              {cursorTicketsMdLoading ? (
+                <p className="text-sm text-muted-foreground">Loading…</p>
+              ) : cursorTicketsMdError ? (
+                <p className="text-sm text-destructive">{cursorTicketsMdError}</p>
+              ) : cursorTicketsMd !== null && cursorTicketsMd !== "" ? (
+                <ScrollArea className="h-[240px] rounded border bg-muted/30 p-3">
+                  <div className="prose prose-sm dark:prose-invert max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{cursorTicketsMd}</ReactMarkdown>
+                  </div>
+                </ScrollArea>
+              ) : (
+                <p className="text-sm text-muted-foreground">No .cursor/tickets.md in this repo.</p>
+              )}
+            </div>
+            {/* Spec files: features & tickets together */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <div
+                className={`rounded-md transition-colors min-h-[40px] p-2 ${dragOverCard === "features-spec" ? "ring-2 ring-primary bg-primary/5" : ""} ${specDropLoading ? "pointer-events-none opacity-70" : ""}`}
+                onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; setDragOverCard("features-spec"); }}
+                onDragLeave={() => setDragOverCard(null)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragOverCard(null);
+                  const raw = e.dataTransfer.getData(SPEC_FILE_DRAG_TYPE);
+                  if (!raw) return;
+                  try {
+                    const { path, name } = JSON.parse(raw) as { path: string; name: string };
+                    handleSpecFileLinkToCard("features-spec", path, name);
+                  } catch { /* ignore */ }
+                }}
+              >
+                <p className="text-xs font-medium text-muted-foreground mb-1">Spec files for features</p>
+                {specFilesFeatures.length > 0 ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    {specFilesFeatures.map((path) => {
+                      const f = specFiles.find((s) => s.path === path);
+                      const label = f?.name ?? path.split("/").pop() ?? path;
+                      return (
+                        <span key={path} className="inline-flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-xs font-mono">
+                          {label}
+                          <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0" onClick={() => removeSpecFileFromFeatures(path)} disabled={specDropLoading} title="Remove">
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Drag a file here or use Analysis.</p>
+                )}
+              </div>
+              <div
+                className={`rounded-md transition-colors min-h-[40px] p-2 ${dragOverCard === "tickets-spec" ? "ring-2 ring-primary bg-primary/5" : ""} ${specDropLoading ? "pointer-events-none opacity-70" : ""}`}
+                onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; setDragOverCard("tickets-spec"); }}
+                onDragLeave={() => setDragOverCard(null)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragOverCard(null);
+                  const raw = e.dataTransfer.getData(SPEC_FILE_DRAG_TYPE);
+                  if (!raw) return;
+                  try {
+                    const { path, name } = JSON.parse(raw) as { path: string; name: string };
+                    handleSpecFileLinkToCard("tickets-spec", path, name);
+                  } catch { /* ignore */ }
+                }}
+              >
+                <p className="text-xs font-medium text-muted-foreground mb-1">Spec files for tickets</p>
+                {specFilesTickets.length > 0 ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    {specFilesTickets.map((path) => {
+                      const f = specFiles.find((s) => s.path === path);
+                      const label = f?.name ?? path.split("/").pop() ?? path;
+                      return (
+                        <span key={path} className="inline-flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-xs font-mono">
+                          {label}
+                          <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0" onClick={() => removeSpecFileFromTickets(path)} disabled={specDropLoading} title="Remove">
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Drag a file here or use Analysis.</p>
+                )}
+              </div>
+            </div>
+            {/* Linked features and tickets */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <div>
+                <h4 className="text-xs font-semibold text-foreground mb-2">Linked features — Run / Queue</h4>
+                {project.features.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No features linked. Link in Setup tab.</p>
+                ) : (
+                  <ScrollArea className="h-[160px] rounded border p-2">
+                    <ul className="space-y-2 text-sm">
+                      {project.features.map((f) => {
+                        const projectsForRun = (f.project_paths?.length ? f.project_paths : (project.repoPath ? [project.repoPath] : [])) as string[];
+                        return (
+                          <li key={f.id} className="flex items-center gap-2 rounded px-2 py-1.5 hover:bg-muted/50 group">
+                            <span className="flex-1 min-w-0 font-medium truncate">{f.title}</span>
+                            {categoryBadges(f)}
+                            <div className="flex gap-1 shrink-0">
+                              <Button variant="outline" size="sm" className="h-7" onClick={() => runWithParams({ promptIds: f.prompt_ids ?? [], activeProjects: projectsForRun, runLabel: f.title })} disabled={!projectsForRun.length || !(f.prompt_ids?.length)} title="Run now">
+                                <Play className="h-3.5 w-3.5 mr-1" />
+                                Run
+                              </Button>
+                              <Button variant="outline" size="sm" className="h-7" onClick={() => addFeatureToQueue({ id: f.id, title: f.title, prompt_ids: f.prompt_ids ?? [], project_paths: projectsForRun })} title="Add to queue">
+                                <ListTodo className="h-3.5 w-3.5 mr-1" />
+                                Queue
+                              </Button>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </ScrollArea>
+                )}
+              </div>
+              <div>
+                <h4 className="text-xs font-semibold text-foreground mb-2">Linked tickets — Run</h4>
+                {project.tickets.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No tickets linked. Link in Setup tab.</p>
+                ) : (
+                  <ScrollArea className="h-[160px] rounded border p-2">
+                    <ul className="space-y-2 text-sm">
+                      {project.tickets.map((t) => {
+                        const promptIds = (t as { prompt_ids?: number[] }).prompt_ids ?? [];
+                        const projectsForRun = project.repoPath ? [project.repoPath] : [];
+                        return (
+                          <li key={t.id} className="flex items-center gap-2 rounded px-2 py-1.5 hover:bg-muted/50 group">
+                            <Badge variant="outline" className="text-xs shrink-0">{t.status}</Badge>
+                            <span className="flex-1 min-w-0 truncate">{t.title}</span>
+                            {categoryBadges(t)}
+                            <Button variant="outline" size="sm" className="h-7 shrink-0" onClick={() => runWithParams({ promptIds, activeProjects: projectsForRun, runLabel: t.title })} disabled={!projectsForRun.length} title="Run">
+                              <Play className="h-3.5 w-3.5 mr-1" />
+                              Run
+                            </Button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </ScrollArea>
+                )}
+              </div>
+            </div>
+            {/* Buttons: Analysis (both) and Archive (both) */}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => openAnalysisDialog("tickets-and-features")}
+                title="Run tickets then features prompts in Cursor (one after the other) to create/update .cursor/tickets.md and .cursor/features.md"
+              >
                 <FileSearch className="h-3.5 w-3.5 mr-1" />
-                Analysis
+                Analysis (tickets &amp; features)
               </Button>
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/?tab=tickets">
-                  <ExternalLink className="h-3.5 w-3.5 mr-1" />
-                  Tickets tab
-                </Link>
-              </Button>
+              {isTauri() && project.repoPath?.trim() && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={archiveBothCursorFiles}
+                  disabled={archiveLoading !== null}
+                  title="Archive both .cursor/tickets.md and .cursor/features.md to .cursor/legacy/ and create new files"
+                >
+                  {archiveLoading === "both" ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Archive className="h-3.5 w-3.5 mr-1" />}
+                  Archive both
+                </Button>
+              )}
             </div>
           </AccordionContent>
         </AccordionItem>
@@ -1803,44 +3039,6 @@ export default function ProjectDetailsPage() {
               </Button>
             </div>
             </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="prompts" className="border rounded-lg px-4 mt-2">
-          <AccordionTrigger className="hover:no-underline py-4">
-            <span className="flex items-center gap-2 text-base font-medium">
-              <MessageSquare className="h-4 w-4" />
-              Prompts ({project.prompts.length} linked)
-            </span>
-          </AccordionTrigger>
-          <AccordionContent className="pb-4">
-            {project.prompts.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No prompts linked. Edit project to add prompt IDs.</p>
-            ) : (
-              <ScrollArea className="h-[200px] rounded border p-2">
-                <ul className="space-y-2 text-sm">
-                  {project.prompts.map((p) => (
-                    <li
-                      key={p.id}
-                      role="button"
-                      tabIndex={0}
-                      className="cursor-pointer rounded px-2 py-1 hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-                      onClick={() => openDetailModal({ kind: "prompt", data: p })}
-                      onKeyDown={(e) => e.key === "Enter" && openDetailModal({ kind: "prompt", data: p })}
-                    >
-                      <span className="font-medium">{p.title || `#${p.id}`}</span>
-                      {categoryBadges(p)}
-                    </li>
-                  ))}
-                </ul>
-              </ScrollArea>
-            )}
-            <Button variant="outline" size="sm" className="mt-2" asChild>
-              <Link href="/prompts">
-                <ExternalLink className="h-3.5 w-3.5 mr-1" />
-                Prompts page
-              </Link>
-            </Button>
           </AccordionContent>
         </AccordionItem>
 

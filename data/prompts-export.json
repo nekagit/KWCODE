@@ -502,5 +502,14 @@
     "tags": null,
     "created_at": "2026-02-06T08:22:37.276Z",
     "updated_at": "2026-02-06T08:22:37.276Z"
+  },
+  {
+    "id": 57,
+    "title": "Asdf",
+    "content": "Please complete the following features and tickets in order of priority, implementing one feature at a time and marking items done as you go. Start with the P0 tickets, followed by P1, P2, and P3. Reference ticket numbers for clarity. 1. Implement ticket #1 [P0] to populate tickets.md with work items from the codebase. 2. Mark ticket #1 as done. 3. Implement ticket #2 [P0] to populate features.md from tickets.md. 4. Mark ticket #2 as done. 5. Implement ticket #3 [P0] to keep the Sync button validating features.md and tickets.md correlation. 6. Mark ticket #3 as done. 7. Implement ticket #4 [P0] to ensure Analysis: Tickets creates both tickets.md and features.md in one run. 8. Mark ticket #4 as done. 9. Move to ticket #5 [P1] and add request validation (e.g., Zod) to API routes. 10. Mark ticket #5 as done. 11. Implement ticket #6 [P1] to add API auth for /api/* when deployed beyond localhost. 12. Mark ticket #6 as done. 13. Implement ticket #7 [P1] to surface OPENAI_API_KEY missing state in UI. 14. Mark ticket #7 as done. 15. Implement ticket #8 [P1] to persist run history (metadata + log snippets). 16. Mark ticket #8 as done. 17. Implement ticket #9 [P1] to add unit/integration tests for lib and store. 18. Mark ticket #9 as done. 19. Implement ticket #10 [P1] to add E2E tests for critical flows. 20. Mark ticket #10 as done. 21. Implement ticket #11 [P1] to add React error boundaries at layout or route level. 22. Mark ticket #11 as done. 23. Implement ticket #12 [P1] for accessibility audit and fixes. 24. Mark ticket #12 as done. 25. Implement ticket #13 [P2] for project sync / Reload from disk. 26. Mark ticket #13 as done. 27. Implement ticket #14 [P2] for i18n / locale layer. 28. Mark ticket #14 as done. 29. Implement ticket #15 [P2] for offline / PWA support for browser mode. 30. Mark ticket #15 as done. 31. Finally, implement ticket #16 [P3] to copy Kanban JSON to file in browser mode. 32. Mark ticket #16 as done. 33. Implement ticket #17 [P3] to export run log to file from Run page. 34. Mark ticket #17 as done.",
+    "category": null,
+    "tags": null,
+    "created_at": "2026-02-08T22:16:46.919Z",
+    "updated_at": "2026-02-08T22:16:46.919Z"
   }
 ]

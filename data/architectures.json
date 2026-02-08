@@ -1,1 +1,12 @@
-[]
+[
+  {
+    "id": "9548ebc2-763a-46db-a2c9-ba45b31eb082",
+    "name": "Domain-Driven Design (DDD)",
+    "category": "ddd",
+    "description": "Design software around the business domain; use ubiquitous language, bounded contexts, and aggregates.",
+    "practices": "- Ubiquitous language: same terms in code and domain\n- Bounded contexts: explicit boundaries per subdomain\n- Entities, value objects, aggregates, domain events\n- Anti-corruption layer at context boundaries\n- Domain experts and devs collaborate",
+    "scenarios": "Complex business logic; multiple subdomains; long-lived projects; when domain clarity matters more than tech flexibility.",
+    "created_at": "2026-02-06T18:21:34.088Z",
+    "updated_at": "2026-02-06T18:21:34.088Z"
+  }
+]

@@ -20,13 +20,20 @@ import {
   Folders,
   Ticket as TicketIcon,
   Layers,
-  Database,
   Play,
   Lightbulb,
   Palette,
   LayoutGrid,
   Building2,
+  PanelLeftClose,
+  PanelLeftOpen,
+  TestTube2,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useRunState } from "@/context/run-state";
 
 type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; tab?: string };
@@ -42,12 +49,12 @@ const mainNavItems: NavItem[] = [
   { href: "/ideas", label: "Ideas", icon: Lightbulb },
   { href: "/design", label: "Design", icon: Palette },
   { href: "/architecture", label: "Architecture", icon: Building2 },
+  { href: "/testing", label: "Testing", icon: TestTube2 },
 ];
 
-/** Log & Data section (separate group in sidebar). */
+/** Log & DB Data section (separate group in sidebar). */
 const logDataNavItems: NavItem[] = [
-  { href: "/?tab=all", label: "All data", icon: LayoutGrid, tab: "all" },
-  { href: "/?tab=data", label: "Data", icon: Database, tab: "data" },
+  { href: "/?tab=all", label: "Database", icon: LayoutGrid, tab: "all" },
   { href: "/?tab=log", label: "Log", icon: ScrollText, tab: "log" },
 ];
 
@@ -61,6 +68,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams();
   const currentTab = pathname === "/" ? searchParams.get("tab") || "dashboard" : null;
   const [runningTerminalsOpen, setRunningTerminalsOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const {
     runningRuns,
     setSelectedRunId,
@@ -149,83 +157,160 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </PopoverContent>
       </Popover>
 
-      {/* Sidebar: fixed 100vh, does not scroll */}
-      <aside className="flex shrink-0 flex-col border-r bg-muted/30 w-48 py-4 h-screen">
-        <div className="px-3 pb-3 border-b border-border/50 mb-3">
-          <h1 className="text-sm font-semibold">Run Prompts Control</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Dashboard · Prompts · Projects · Tickets · Feature
-          </p>
+      {/* Sidebar: collapsible, fixed height */}
+      <aside
+        className={`flex shrink-0 flex-col border-r bg-muted/30 py-4 h-screen overflow-hidden transition-[width] duration-200 ease-in-out ${
+          sidebarCollapsed ? "w-[3.25rem]" : "w-48"
+        }`}
+      >
+        <div
+          className={`px-3 pb-3 border-b border-border/50 mb-3 overflow-hidden ${
+            sidebarCollapsed ? "px-2" : ""
+          }`}
+        >
+          {!sidebarCollapsed && (
+            <>
+              <h1 className="text-sm font-semibold whitespace-nowrap">Run Prompts Control</h1>
+              <p className="text-xs text-muted-foreground mt-0.5 whitespace-nowrap">
+                Dashboard · Prompts · Projects · Tickets · Feature
+              </p>
+            </>
+          )}
         </div>
-        <nav className="flex flex-col gap-0.5 mx-2 flex-1">
+        <nav className="flex flex-col gap-0.5 mx-2 flex-1 min-w-0">
           {mainNavItems.map(({ href, label, icon: Icon, tab }) => {
             const isActive = tab != null
               ? pathname === "/" && currentTab === tab
               : pathname === href || (href !== "/" && pathname.startsWith(href));
-            return (
+            const linkEl = (
               <Link
-                key={href}
                 href={href}
-                className={`flex items-center gap-2 rounded-md px-3 py-2 w-full text-sm font-medium transition-colors ${
+                className={`flex items-center gap-2 rounded-md py-2 w-full text-sm font-medium transition-colors ${
+                  sidebarCollapsed ? "justify-center px-0" : "px-3"
+                } ${
                   isActive
                     ? "bg-background shadow-sm text-foreground"
                     : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                 }`}
               >
                 <Icon className="h-4 w-4 shrink-0" />
-                {label}
+                {!sidebarCollapsed && <span className="truncate">{label}</span>}
               </Link>
+            );
+            return (
+              <span key={href}>
+                {sidebarCollapsed ? (
+                  <Tooltip delayDuration={0}>
+                    <TooltipTrigger asChild>{linkEl}</TooltipTrigger>
+                    <TooltipContent side="right">{label}</TooltipContent>
+                  </Tooltip>
+                ) : (
+                  linkEl
+                )}
+              </span>
             );
           })}
           <div className="my-2 border-t border-border/50 pt-2">
-            <p className="px-3 mb-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80">
-              Log & Data
+            {!sidebarCollapsed && (
+<p className="px-3 mb-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80">
+              Log & DB Data
             </p>
+            )}
             {logDataNavItems.map(({ href, label, icon: Icon, tab }) => {
               const isActive = tab != null
                 ? pathname === "/" && currentTab === tab
                 : pathname === href || (href !== "/" && pathname.startsWith(href));
-              return (
+              const linkEl = (
                 <Link
-                  key={href}
                   href={href}
-                  className={`flex items-center gap-2 rounded-md px-3 py-2 w-full text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 rounded-md py-2 w-full text-sm font-medium transition-colors ${
+                    sidebarCollapsed ? "justify-center px-0" : "px-3"
+                  } ${
                     isActive
                       ? "bg-background shadow-sm text-foreground"
                       : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                   }`}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
-                  {label}
+                  {!sidebarCollapsed && <span className="truncate">{label}</span>}
                 </Link>
+              );
+              return (
+                <span key={href}>
+                  {sidebarCollapsed ? (
+                    <Tooltip delayDuration={0}>
+                      <TooltipTrigger asChild>{linkEl}</TooltipTrigger>
+                      <TooltipContent side="right">{label}</TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    linkEl
+                  )}
+                </span>
               );
             })}
           </div>
           <div className="mt-auto border-t border-border/50 pt-2">
-            <p className="px-3 mb-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80">
-              Settings
-            </p>
+            {!sidebarCollapsed && (
+              <p className="px-3 mb-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80">
+                Settings
+              </p>
+            )}
             {configNavItems.map(({ href, label, icon: Icon, tab }) => {
               const isActive = tab != null
                 ? pathname === "/" && currentTab === tab
                 : pathname === href || (href !== "/" && pathname.startsWith(href));
-              return (
+              const linkEl = (
                 <Link
-                  key={href}
                   href={href}
-                  className={`flex items-center gap-2 rounded-md px-3 py-2 w-full text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 rounded-md py-2 w-full text-sm font-medium transition-colors ${
+                    sidebarCollapsed ? "justify-center px-0" : "px-3"
+                  } ${
                     isActive
                       ? "bg-background shadow-sm text-foreground"
                       : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                   }`}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
-                  {label}
+                  {!sidebarCollapsed && <span className="truncate">{label}</span>}
                 </Link>
+              );
+              return (
+                <span key={href}>
+                  {sidebarCollapsed ? (
+                    <Tooltip delayDuration={0}>
+                      <TooltipTrigger asChild>{linkEl}</TooltipTrigger>
+                      <TooltipContent side="right">{label}</TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    linkEl
+                  )}
+                </span>
               );
             })}
           </div>
         </nav>
+        <div className={`mt-2 mx-2 border-t border-border/50 pt-2 ${sidebarCollapsed ? "flex justify-center" : ""}`}>
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={sidebarCollapsed ? "h-8 w-8" : "h-8 w-8"}
+                onClick={() => setSidebarCollapsed((c) => !c)}
+                aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              >
+                {sidebarCollapsed ? (
+                  <PanelLeftOpen className="h-4 w-4" />
+                ) : (
+                  <PanelLeftClose className="h-4 w-4" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              {sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            </TooltipContent>
+          </Tooltip>
+        </div>
       </aside>
 
       {/* Main content: scrollable, sidebar stays fixed. Suspense only around content so nav feels instant. */}

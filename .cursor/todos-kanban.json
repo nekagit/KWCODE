@@ -1,0 +1,226 @@
+{
+  "features": [
+    {
+      "id": "feature-1-Tickets-and-features-format",
+      "title": "Tickets and features format",
+      "ticketRefs": [
+        1,
+        2
+      ],
+      "done": true
+    },
+    {
+      "id": "feature-2-Project-details-—-Todos-tab-an",
+      "title": "Project details — Todos tab and Kanban",
+      "ticketRefs": [
+        3,
+        4
+      ],
+      "done": true
+    },
+    {
+      "id": "feature-3-API-and-error-handling",
+      "title": "API and error handling",
+      "ticketRefs": [
+        5,
+        6,
+        7
+      ],
+      "done": true
+    },
+    {
+      "id": "feature-4-Run-and-scripts",
+      "title": "Run and scripts",
+      "ticketRefs": [
+        8
+      ],
+      "done": true
+    },
+    {
+      "id": "feature-5-Quality-and-maintainability",
+      "title": "Quality and maintainability",
+      "ticketRefs": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "done": true
+    },
+    {
+      "id": "feature-6-Polish-and-scale",
+      "title": "Polish and scale",
+      "ticketRefs": [
+        13,
+        14,
+        15
+      ],
+      "done": true
+    },
+    {
+      "id": "feature-7-Later",
+      "title": "Later",
+      "ticketRefs": [
+        16,
+        17
+      ],
+      "done": true
+    }
+  ],
+  "tickets": [
+    {
+      "id": "ticket-1",
+      "number": 1,
+      "title": "Populate tickets.md with work items from codebase",
+      "description": "Checklist by feature (P0–P3) so Kanban and Tickets card have real content.",
+      "priority": "P0",
+      "featureName": "Tickets and features format",
+      "done": true
+    },
+    {
+      "id": "ticket-2",
+      "number": 2,
+      "title": "Populate features.md from tickets.md",
+      "description": "Features roadmap with ticket refs so correlation and Kanban parse correctly.",
+      "priority": "P0",
+      "featureName": "Tickets and features format",
+      "done": true
+    },
+    {
+      "id": "ticket-3",
+      "number": 3,
+      "title": "Keep Sync button validating features.md and tickets.md correlation",
+      "description": "Per .cursor/sync.md; show clear sync status and details.",
+      "priority": "P0",
+      "featureName": "Project details — Todos tab and Kanban",
+      "done": true
+    },
+    {
+      "id": "ticket-4",
+      "number": 4,
+      "title": "Ensure Analysis: Tickets creates both tickets.md and features.md in one run",
+      "description": "So feature names and ticket numbers stay aligned.",
+      "priority": "P0",
+      "featureName": "Project details — Todos tab and Kanban",
+      "done": true
+    },
+    {
+      "id": "ticket-5",
+      "number": 5,
+      "title": "Add request validation (e.g. Zod) to API routes",
+      "description": "Return 400 with clear errors instead of 500 on invalid input.",
+      "priority": "P1",
+      "featureName": "API and error handling",
+      "done": true
+    },
+    {
+      "id": "ticket-6",
+      "number": 6,
+      "title": "Add API auth for /api/* when deployed beyond localhost",
+      "description": "API key header or session.",
+      "priority": "P1",
+      "featureName": "API and error handling",
+      "done": true
+    },
+    {
+      "id": "ticket-7",
+      "number": 7,
+      "title": "Surface OPENAI_API_KEY missing state in UI",
+      "description": "Clear message on generate buttons or after first failure.",
+      "priority": "P1",
+      "featureName": "API and error handling",
+      "done": true
+    },
+    {
+      "id": "ticket-8",
+      "number": 8,
+      "title": "Persist run history (metadata + log snippets)",
+      "description": "SQLite or JSON; add History view on Run or dedicated page.",
+      "priority": "P1",
+      "featureName": "Run and scripts",
+      "done": true
+    },
+    {
+      "id": "ticket-9",
+      "number": 9,
+      "title": "Add unit/integration tests for lib and store",
+      "description": "Jest or Vitest.",
+      "priority": "P1",
+      "featureName": "Quality and maintainability",
+      "done": true
+    },
+    {
+      "id": "ticket-10",
+      "number": 10,
+      "title": "Add E2E tests for critical flows",
+      "description": "Playwright or Cypress (e.g. run, create project).",
+      "priority": "P1",
+      "featureName": "Quality and maintainability",
+      "done": true
+    },
+    {
+      "id": "ticket-11",
+      "number": 11,
+      "title": "Add React error boundaries at layout or route level",
+      "description": "Avoid full white screen on uncaught errors.",
+      "priority": "P1",
+      "featureName": "Quality and maintainability",
+      "done": true
+    },
+    {
+      "id": "ticket-12",
+      "number": 12,
+      "title": "Accessibility audit and fixes",
+      "description": "Focus, keyboard nav, ARIA for custom tables and Kanban.",
+      "priority": "P1",
+      "featureName": "Quality and maintainability",
+      "done": true
+    },
+    {
+      "id": "ticket-13",
+      "number": 13,
+      "title": "Project sync / Reload from disk",
+      "description": "Explicit reload for local projects vs projects.json.",
+      "priority": "P2",
+      "featureName": "Polish and scale",
+      "done": true
+    },
+    {
+      "id": "ticket-14",
+      "number": 14,
+      "title": "i18n / locale layer",
+      "description": "If app will be used in multiple languages.",
+      "priority": "P2",
+      "featureName": "Polish and scale",
+      "done": true
+    },
+    {
+      "id": "ticket-15",
+      "number": 15,
+      "title": "Offline / PWA support for browser mode",
+      "description": "Service worker; consider sync when online.",
+      "priority": "P2",
+      "featureName": "Polish and scale",
+      "done": true
+    },
+    {
+      "id": "ticket-16",
+      "number": 16,
+      "title": "Copy Kanban JSON to file in browser mode",
+      "description": "When Tauri not available, allow saving JSON to a file (e.g. download).",
+      "priority": "P3",
+      "featureName": "Later",
+      "done": true
+    },
+    {
+      "id": "ticket-17",
+      "number": 17,
+      "title": "Export run log to file from Run page",
+      "description": "Download log for current or past run.",
+      "priority": "P3",
+      "featureName": "Later",
+      "done": true
+    }
+  ],
+  "parsedAt": "2026-02-08T22:30:35.760Z"
+}

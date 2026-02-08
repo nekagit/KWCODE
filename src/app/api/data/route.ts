@@ -25,6 +25,12 @@ function readJson<T>(filename: string): T | null {
 
 export async function GET() {
   try {
+    if (!fs.existsSync(DATA_DIR) || !fs.statSync(DATA_DIR).isDirectory()) {
+      return NextResponse.json(
+        { error: `Data directory not found: ${DATA_DIR}` },
+        { status: 500 }
+      );
+    }
     const allProjects = readJson<string[]>("all_projects.json") ?? [];
     const activeProjects = readJson<string[]>("cursor_projects.json") ?? [];
     const tickets = readJson<unknown[]>("tickets.json") ?? [];
@@ -50,10 +56,8 @@ export async function GET() {
       kvEntries,
     });
   } catch (e) {
-    console.error("API data load error:", e);
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Failed to load data" },
-      { status: 500 }
-    );
+    const message = e instanceof Error ? e.message : "Failed to load data";
+    console.error("API data load error:", message, e);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

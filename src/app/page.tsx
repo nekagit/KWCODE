@@ -1275,7 +1275,7 @@ Suggest actionable work items: setup, dependencies, features, tests, and documen
 
         <TabsContent value="all" className="mt-0 space-y-6">
           <div>
-            <h2 className="text-lg font-semibold mb-1">All data</h2>
+            <h2 className="text-lg font-semibold mb-1">Database</h2>
             <p className="text-sm text-muted-foreground mb-4">
               Combined view: projects, prompts, tickets, features, ideas, and design. Use this as the big project page.
             </p>
@@ -1451,10 +1451,10 @@ Suggest actionable work items: setup, dependencies, features, tests, and documen
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <Database className="h-4 w-4" />
-                Data
+                DB Data
               </CardTitle>
               <CardDescription className="space-y-1">
-                <span className="block">Scripts in script/, JSON files in data/, and database (kv_store, tickets, features).</span>
+                <span className="block">Scripts in script/, JSON files in data/, and DB data (kv_store, tickets, features).</span>
                 {isTauriEnv ? (
                   <span className="block text-muted-foreground text-xs mt-1">
                     SQLite: data/app.db (created on first run; migrated from data/*.json). All app data is read/written via the DB.
@@ -1582,7 +1582,7 @@ Suggest actionable work items: setup, dependencies, features, tests, and documen
                 <AccordionItem value="db">
                   <AccordionTrigger className="flex items-center gap-2">
                     <Database className="h-4 w-4" />
-                    Database (kv_store, tickets, features)
+                    DB Data (kv_store, tickets, features)
                   </AccordionTrigger>
                   <AccordionContent className="space-y-4">
                     <div>

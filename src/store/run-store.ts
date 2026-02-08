@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { invoke, isTauri } from "@/lib/tauri";
+import { getApiErrorMessage } from "@/lib/utils";
 import { toast } from "sonner";
 import {
   DEFAULT_TIMING,
@@ -41,7 +42,8 @@ export interface RunActions {
   refreshData: () => Promise<void>;
   runScript: () => Promise<void>;
   runWithParams: (params: {
-    promptIds: number[];
+    promptIds?: number[];
+    combinedPrompt?: string;
     activeProjects: string[];
     runLabel: string | null;
   }) => Promise<string | null>;
@@ -163,7 +165,7 @@ export const useRunStore = create<RunStore>()((set, get) => ({
         set({ allProjects: all, activeProjects: active, prompts: promptList });
       } else {
         const res = await fetch("/api/data");
-        if (!res.ok) throw new Error(await res.text());
+        if (!res.ok) throw new Error(await getApiErrorMessage(res));
         const data = await res.json();
         set({
           allProjects: Array.isArray(data.allProjects) ? data.allProjects : [],
@@ -191,10 +193,13 @@ export const useRunStore = create<RunStore>()((set, get) => ({
     set({ error: null });
     try {
       const { run_id } = await invoke<{ run_id: string }>("run_script", {
-        promptIds: selectedPromptIds,
-        activeProjects,
-        timing: getTimingForRun(),
-        runLabel: null,
+        args: {
+          promptIds: selectedPromptIds,
+          combinedPrompt: null,
+          activeProjects,
+          timing: getTimingForRun(),
+          runLabel: null,
+        },
       });
       set((s) => ({
         runningRuns: [
@@ -211,12 +216,21 @@ export const useRunStore = create<RunStore>()((set, get) => ({
   runWithParams: async (params) => {
     const { getTimingForRun } = get();
     set({ error: null });
+    const hasCombined = params.combinedPrompt != null && params.combinedPrompt.trim() !== "";
+    const hasIds = Array.isArray(params.promptIds) && params.promptIds.length > 0;
+    if (!hasCombined && !hasIds) {
+      set({ error: "Provide either combinedPrompt or promptIds" });
+      return null;
+    }
     try {
       const { run_id } = await invoke<{ run_id: string }>("run_script", {
-        promptIds: params.promptIds,
-        activeProjects: params.activeProjects,
-        timing: getTimingForRun(),
-        runLabel: params.runLabel,
+        args: {
+          promptIds: hasIds ? params.promptIds : [],
+          combinedPrompt: hasCombined ? params.combinedPrompt : null,
+          activeProjects: params.activeProjects,
+          timing: getTimingForRun(),
+          runLabel: params.runLabel,
+        },
       });
       set((s) => ({
         runningRuns: [

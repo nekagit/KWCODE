@@ -526,12 +526,8 @@
     "repoPath": "/Users/nenadkalicanin/Documents/February/automated_development",
     "specFiles": [
       {
-        "name": "ANALYSIS.md",
-        "path": "/Users/nenadkalicanin/Documents/February/automated_development/.cursor/ANALYSIS.md"
-      },
-      {
-        "name": "architecture.md",
-        "path": "/Users/nenadkalicanin/Documents/February/automated_development/.cursor/architecture.md"
+        "name": "features.md",
+        "path": ".cursor/features.md"
       },
       {
         "name": "tickets.md",
@@ -540,6 +536,6 @@
     ],
     "ticketIds": [],
     "tickets": [],
-    "updated_at": "2026-02-06T14:34:45.035Z"
+    "updated_at": "2026-02-08T21:07:13.313Z"
   }
 ]
