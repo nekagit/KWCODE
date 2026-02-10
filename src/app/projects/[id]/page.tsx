@@ -91,6 +91,7 @@ import {
   parseTodosToKanban,
   markTicketsDone,
   markFeatureDoneByTicketRefs,
+  validateFeaturesTicketsCorrelation,
   type TodosKanbanData,
   type ParsedFeature,
 } from "@/lib/todos-kanban";
@@ -455,6 +456,29 @@ export default function ProjectDetailsPage() {
     return parseTodosToKanban(f, t);
   }, [cursorFeaturesMd, cursorTicketsMd]);
 
+  /** When both .md files are loaded (Tauri), write .cursor/todos-kanban.json so Kanban JSON is immediately available. */
+  useEffect(() => {
+    if (
+      !isTauri() ||
+      !project?.repoPath?.trim() ||
+      cursorTicketsMd === null ||
+      cursorFeaturesMd === null
+    )
+      return;
+    const data = parseTodosToKanban(cursorFeaturesMd, cursorTicketsMd);
+    const json = JSON.stringify(data, null, 2);
+    invoke("write_spec_file", {
+      projectPath: project.repoPath!.trim(),
+      relativePath: ".cursor/todos-kanban.json",
+      content: json,
+    }).catch(() => {});
+  }, [
+    isTauri,
+    project?.repoPath,
+    cursorTicketsMd,
+    cursorFeaturesMd,
+  ]);
+
   /** Todos tab Prompt card: combined prompt = Kanban context (features + tickets) + user prompt body. Always includes Kanban. */
   const todosCombinedPrompt = useMemo(() => {
     const block = buildKanbanContextBlock(kanbanData);
@@ -642,16 +666,6 @@ export default function ProjectDetailsPage() {
             content: json,
           }).catch(() => {});
         }
-        const details: string[] = [];
-        // Ticket numbers in tickets.md: - [ ] #N or - [x] #N
-        const ticketNumberRe = /#(\d+)/g;
-        const ticketNumbers = new Set<number>();
-        let m: RegExpExecArray | null;
-        while ((m = ticketNumberRe.exec(finalTicketsContent)) !== null) ticketNumbers.add(parseInt(m[1], 10));
-        // Feature names in tickets.md: #### Feature: X
-        const featureNameRe = /####\s*Feature:\s*(.+?)(?:\n|$)/g;
-        const ticketsFeatureNames = new Set<string>();
-        while ((m = featureNameRe.exec(finalTicketsContent)) !== null) ticketsFeatureNames.add(m[1].trim().toLowerCase());
         if (finalTicketsContent.trim() === "" && featuresContent.trim() === "") {
           setSyncStatus({ ok: true, message: "No features.md or tickets.md yet; nothing to sync.", details: [] });
           return;
@@ -664,50 +678,23 @@ export default function ProjectDetailsPage() {
           setSyncStatus({ ok: false, message: "features.md is missing or empty.", details: ["Create .cursor/features.md derived from tickets.md (e.g. run Analysis: Tickets to generate both)."] });
           return;
         }
-        // Feature lines in features.md: - [ ] ... #1, #2 or - [x] ... #1
-        const featureLineRe = /^-\s*\[[ x]\]\s+.+$/gm;
-        let featureLine: RegExpExecArray | null;
-        const refsInFeatures = new Set<number>();
-        const featureLinesWithRefs: string[] = [];
-        while ((featureLine = featureLineRe.exec(featuresContent)) !== null) {
-          const line = featureLine[0];
-          const refRe = /#(\d+)/g;
-          let refM: RegExpExecArray | null;
-          const inLine: number[] = [];
-          while ((refM = refRe.exec(line)) !== null) inLine.push(parseInt(refM[1], 10));
-          inLine.forEach((n) => refsInFeatures.add(n));
-          if (inLine.length > 0) featureLinesWithRefs.push(line);
-        }
-        const refsOnlyInFeatures = [...refsInFeatures].filter((n) => !ticketNumbers.has(n));
-        const ticketsNotInFeatures = [...ticketNumbers].filter((n) => !refsInFeatures.has(n));
-        if (refsOnlyInFeatures.length > 0) {
-          details.push(`Ticket number(s) in features.md not found in tickets.md: #${refsOnlyInFeatures.sort((a, b) => a - b).join(", #")}.`);
-        }
-        if (featureLinesWithRefs.length === 0 && featuresContent.includes("- [")) {
-          details.push("features.md has checklist items but none reference a ticket (#N). Each feature should reference at least one ticket from tickets.md.");
-        }
+        const validation = validateFeaturesTicketsCorrelation(featuresContent, finalTicketsContent);
+        const details = [...validation.details];
         if (finalTicketsContent !== ticketsContent && ticketNumbersFromDoneFeatures.length > 0) {
           details.unshift(
             `Updated tickets.md: marked #${[...new Set(ticketNumbersFromDoneFeatures)].sort((a, b) => a - b).join(", #")} as done to match done features.`
           );
         }
-        const ok = details.length === 0 || (details.length === 1 && details[0].startsWith("Updated tickets.md:"));
-        if (ok) {
-          setSyncStatus({
-            ok: true,
-            message:
-              finalTicketsContent !== ticketsContent
-                ? "features.md and tickets.md synced; tickets updated to match done features."
-                : "features.md and tickets.md are in sync (correlation and format check passed).",
-            details: finalTicketsContent !== ticketsContent ? details : [],
-          });
-        } else {
-          setSyncStatus({
-            ok: false,
-            message: "features.md and tickets.md need to be aligned.",
-            details,
-          });
-        }
+        const ok = validation.ok;
+        setSyncStatus({
+          ok,
+          message: ok
+            ? finalTicketsContent !== ticketsContent
+              ? "features.md and tickets.md synced; tickets updated to match done features."
+              : validation.message
+            : validation.message,
+          details,
+        });
       })
       .catch((e) => {
         setSyncStatus({
@@ -1149,18 +1136,13 @@ export default function ProjectDetailsPage() {
         );
       } else if (kind === "tickets-and-features") {
         setAnalysisDialogTitle("Analysis: Tickets & Features");
-        setAnalysisDialogPrompt(null);
-        setAnalysisDialogPrompts([
+        setAnalysisDialogPrompts(null);
+        setAnalysisDialogPrompt(
           buildTicketsAnalysisPrompt({
             projectName,
             ticketSummaries: (project?.tickets ?? []).map((t) => ({ title: t.title, status: t.status })),
-          }),
-          buildFeaturesAnalysisPrompt({
-            projectName,
-            featureTitles: (project?.features ?? []).map((f) => f.title),
-            ticketsMdContent: cursorTicketsMd ?? undefined,
-          }),
-        ]);
+          })
+        );
       }
       setAnalysisCopied(false);
     },
@@ -1179,9 +1161,7 @@ export default function ProjectDetailsPage() {
         content,
       });
       refetchProject();
-      if (analysisDialogPrompts?.length && analysisDialogPrompts.length > 1) {
-        toast.success("First prompt (tickets) saved. Use Run in Cursor to run both prompts in sequence.");
-      }
+      toast.success("Prompt saved to .cursor/analysis-prompt.md");
     } finally {
       setSavingPromptToCursor(false);
     }
@@ -1189,46 +1169,18 @@ export default function ProjectDetailsPage() {
 
   const runAnalysisInCursor = useCallback(async () => {
     if (!project?.repoPath?.trim() || !isTauri()) return;
-    const prompts =
-      analysisDialogPrompts?.length >= 2
-        ? analysisDialogPrompts
-        : [analysisDialogPrompt ?? ANALYSIS_PROMPT];
+    const prompt = analysisDialogPrompt ?? ANALYSIS_PROMPT;
     setSavingPromptToCursor(true);
     try {
       const projectPath = project.repoPath.trim();
-      for (let i = 0; i < prompts.length; i++) {
-        await invoke("write_spec_file", {
-          projectPath,
-          relativePath: `.cursor/${ANALYSIS_PROMPT_FILENAME}`,
-          content: prompts[i],
-        });
-        const res = await invoke<{ run_id: string }>("run_analysis_script", { projectPath });
-        if (i < prompts.length - 1) {
-          const ref = {
-            runId: null as string | null,
-            resolve: null as (() => void) | null,
-            unlisten: null as (() => void) | null,
-          };
-          const waitPromise = new Promise<void>((resolve) => {
-            ref.resolve = resolve;
-          });
-          const unlisten = await listen<{ run_id: string }>("script-exited", (payload) => {
-            if (ref.runId && payload.run_id === ref.runId && ref.resolve) {
-              ref.unlisten?.();
-              ref.resolve();
-              ref.runId = null;
-              ref.resolve = null;
-            }
-          });
-          ref.unlisten = unlisten;
-          ref.runId = res.run_id;
-          await waitPromise;
-        }
-      }
+      await invoke("write_spec_file", {
+        projectPath,
+        relativePath: `.cursor/${ANALYSIS_PROMPT_FILENAME}`,
+        content: prompt,
+      });
+      await invoke<{ run_id: string }>("run_analysis_script", { projectPath });
       toast.success(
-        prompts.length > 1
-          ? "Both analysis runs started. Cursor will run tickets then features in sequence; results in .cursor/"
-          : "Analysis script started. Cursor will open and run the prompt; results will be saved in .cursor/"
+        "Analysis script started. Cursor will open once and create both .cursor/tickets.md and .cursor/features.md. When done, click Sync to load the Kanban."
       );
       refetchProject();
     } catch (e) {
@@ -1236,7 +1188,7 @@ export default function ProjectDetailsPage() {
     } finally {
       setSavingPromptToCursor(false);
     }
-  }, [project?.repoPath, analysisDialogPrompt, analysisDialogPrompts, refetchProject]);
+  }, [project?.repoPath, analysisDialogPrompt, refetchProject]);
 
   const closeAnalysisDialog = useCallback(() => {
     setAnalysisDialogPrompt(null);
@@ -1784,13 +1736,13 @@ export default function ProjectDetailsPage() {
           <DialogHeader>
             <DialogTitle>{analysisDialogTitle}</DialogTitle>
             <DialogDescription>
-              {analysisDialogPrompts?.length >= 2
+              {(analysisDialogPrompts?.length ?? 0) >= 2
                 ? "Run both prompts in Cursor one after the other (tickets first, then features). Copy saves both with a separator."
                 : "Copy this prompt and run it in Cursor (in this project's repo). The AI will generate documents in the project's .cursor folder."}
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="flex-1 min-h-0 rounded border p-3 text-sm font-mono whitespace-pre-wrap space-y-4">
-            {analysisDialogPrompts?.length >= 2 ? (
+            {(analysisDialogPrompts?.length ?? 0) >= 2 && analysisDialogPrompts ? (
               <>
                 <div>
                   <p className="font-semibold text-foreground mb-1">1. Tickets (creates .cursor/tickets.md &amp; .cursor/features.md)</p>
@@ -2810,16 +2762,26 @@ export default function ProjectDetailsPage() {
                 )}
               </div>
             </div>
-            {/* Buttons: Analysis (both) and Archive (both) */}
+            {/* Buttons: Analysis (both), Analysis: Features from tickets, and Archive (both) */}
             <div className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => openAnalysisDialog("tickets-and-features")}
-                title="Run tickets then features prompts in Cursor (one after the other) to create/update .cursor/tickets.md and .cursor/features.md"
+                title="Analyze codebase and create both .cursor/tickets.md and .cursor/features.md in one run"
               >
                 <FileSearch className="h-3.5 w-3.5 mr-1" />
                 Analysis (tickets &amp; features)
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => openAnalysisDialog("features")}
+                disabled={!cursorTicketsMd?.trim()}
+                title="Populate features.md from existing tickets.md (requires tickets.md loaded)"
+              >
+                <FileSearch className="h-3.5 w-3.5 mr-1" />
+                Analysis: Features (from tickets)
               </Button>
               {isTauri() && project.repoPath?.trim() && (
                 <Button

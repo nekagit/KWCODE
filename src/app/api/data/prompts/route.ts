@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
+import { parseAndValidate, createPromptSchema } from "@/lib/api-validation";
 
 function findDataDir(): string {
   const cwd = process.cwd();
@@ -57,20 +58,16 @@ export async function GET() {
 /** POST: create or update a prompt. Body: { id?: number, title: string, content: string, category?: string } */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const title = typeof body.title === "string" ? body.title.trim() : "";
-    const content = typeof body.content === "string" ? body.content : "";
-    const category =
-      body.category === undefined || body.category === null
-        ? null
-        : String(body.category).trim() || null;
+    const parsed = await parseAndValidate(request, createPromptSchema);
+    if (!parsed.success) return parsed.response;
+    const body = parsed.data;
 
-    if (!title) {
-      return NextResponse.json({ error: "title is required" }, { status: 400 });
-    }
+    const title = body.title.trim();
+    const content = body.content;
+    const category = body.category ?? null;
 
     const prompts = readPrompts();
-    const existingId = typeof body.id === "number" ? body.id : undefined;
+    const existingId = body.id;
     const now = new Date().toISOString();
 
     if (existingId !== undefined) {

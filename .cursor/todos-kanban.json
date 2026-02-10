@@ -1,226 +1,243 @@
 {
   "features": [
     {
-      "id": "feature-1-Tickets-and-features-format",
-      "title": "Tickets and features format",
+      "id": "feature-1-Testing-&-quality",
+      "title": "Testing & quality",
       "ticketRefs": [
         1,
         2
       ],
-      "done": true
+      "done": false
     },
     {
-      "id": "feature-2-Project-details-—-Todos-tab-an",
-      "title": "Project details — Todos tab and Kanban",
+      "id": "feature-2-API-security-&-validation",
+      "title": "API security & validation",
       "ticketRefs": [
         3,
         4
       ],
-      "done": true
+      "done": false
     },
     {
-      "id": "feature-3-API-and-error-handling",
-      "title": "API and error handling",
+      "id": "feature-3-Resilience",
+      "title": "Resilience",
       "ticketRefs": [
         5,
         6,
-        7
+        18
       ],
-      "done": true
+      "done": false
     },
     {
-      "id": "feature-4-Run-and-scripts",
-      "title": "Run and scripts",
+      "id": "feature-4-Project-details-&-Kanban",
+      "title": "Project details & Kanban",
       "ticketRefs": [
+        7,
         8
       ],
-      "done": true
+      "done": false
     },
     {
-      "id": "feature-5-Quality-and-maintainability",
-      "title": "Quality and maintainability",
+      "id": "feature-5-Data-&-configuration",
+      "title": "Data & configuration",
       "ticketRefs": [
         9,
         10,
-        11,
-        12
+        16
       ],
-      "done": true
+      "done": false
     },
     {
-      "id": "feature-6-Polish-and-scale",
-      "title": "Polish and scale",
+      "id": "feature-6-UX-&-accessibility",
+      "title": "UX & accessibility",
       "ticketRefs": [
-        13,
-        14,
+        11,
+        12,
         15
       ],
-      "done": true
+      "done": false
     },
     {
-      "id": "feature-7-Later",
-      "title": "Later",
+      "id": "feature-7-Run-&-automation",
+      "title": "Run & automation",
       "ticketRefs": [
-        16,
+        13,
+        14
+      ],
+      "done": false
+    },
+    {
+      "id": "feature-8-Internationalization",
+      "title": "Internationalization",
+      "ticketRefs": [
         17
       ],
-      "done": true
+      "done": false
     }
   ],
   "tickets": [
     {
       "id": "ticket-1",
       "number": 1,
-      "title": "Populate tickets.md with work items from codebase",
-      "description": "Checklist by feature (P0–P3) so Kanban and Tickets card have real content.",
+      "title": "Add unit test suite",
+      "description": "Set up Vitest or Jest; add tests for lib (e.g. todos-kanban, analysis-prompt) and store",
       "priority": "P0",
-      "featureName": "Tickets and features format",
-      "done": true
+      "featureName": "Testing & quality",
+      "done": false
     },
     {
       "id": "ticket-2",
       "number": 2,
-      "title": "Populate features.md from tickets.md",
-      "description": "Features roadmap with ticket refs so correlation and Kanban parse correctly.",
+      "title": "Add E2E tests for critical flows",
+      "description": "Playwright for project detail, run script, Kanban load/sync",
       "priority": "P0",
-      "featureName": "Tickets and features format",
-      "done": true
+      "featureName": "Testing & quality",
+      "done": false
     },
     {
       "id": "ticket-3",
       "number": 3,
-      "title": "Keep Sync button validating features.md and tickets.md correlation",
-      "description": "Per .cursor/sync.md; show clear sync status and details.",
+      "title": "Add request validation to API routes",
+      "description": "Zod (or similar) for generate and data endpoints to avoid 500s on malformed input",
       "priority": "P0",
-      "featureName": "Project details — Todos tab and Kanban",
-      "done": true
+      "featureName": "API security & validation",
+      "done": false
     },
     {
       "id": "ticket-4",
       "number": 4,
-      "title": "Ensure Analysis: Tickets creates both tickets.md and features.md in one run",
-      "description": "So feature names and ticket numbers stay aligned.",
+      "title": "Document or add API authentication",
+      "description": "Either document local-only usage or add auth for generate/data routes",
       "priority": "P0",
-      "featureName": "Project details — Todos tab and Kanban",
-      "done": true
+      "featureName": "API security & validation",
+      "done": false
     },
     {
       "id": "ticket-5",
       "number": 5,
-      "title": "Add request validation (e.g. Zod) to API routes",
-      "description": "Return 400 with clear errors instead of 500 on invalid input.",
+      "title": "Add React error boundaries",
+      "description": "Catch component errors and show fallback UI so one throw does not blank the app",
       "priority": "P1",
-      "featureName": "API and error handling",
-      "done": true
+      "featureName": "Resilience",
+      "done": false
     },
     {
       "id": "ticket-6",
       "number": 6,
-      "title": "Add API auth for /api/* when deployed beyond localhost",
-      "description": "API key header or session.",
+      "title": "Add run history persistence",
+      "description": "Persist run log/history (e.g. SQLite in Tauri; optional browser storage)",
       "priority": "P1",
-      "featureName": "API and error handling",
-      "done": true
+      "featureName": "Resilience",
+      "done": false
     },
     {
       "id": "ticket-7",
       "number": 7,
-      "title": "Surface OPENAI_API_KEY missing state in UI",
-      "description": "Clear message on generate buttons or after first failure.",
+      "title": "Harden Kanban/JSON parsing for edge cases",
+      "description": "Empty sections, malformed checklist lines, ensure parser matches prompt format",
       "priority": "P1",
-      "featureName": "API and error handling",
-      "done": true
+      "featureName": "Project details & Kanban",
+      "done": false
     },
     {
       "id": "ticket-8",
       "number": 8,
-      "title": "Persist run history (metadata + log snippets)",
-      "description": "SQLite or JSON; add History view on Run or dedicated page.",
+      "title": "Ensure tickets.md/features.md load correctly on project detail",
+      "description": "Reliable read from repo path; clear errors when missing",
       "priority": "P1",
-      "featureName": "Run and scripts",
-      "done": true
+      "featureName": "Project details & Kanban",
+      "done": false
     },
     {
       "id": "ticket-9",
       "number": 9,
-      "title": "Add unit/integration tests for lib and store",
-      "description": "Jest or Vitest.",
+      "title": "Show in-app warning when OPENAI_API_KEY is missing",
+      "description": "On Configuration or before calling generate endpoints",
       "priority": "P1",
-      "featureName": "Quality and maintainability",
-      "done": true
+      "featureName": "Data & configuration",
+      "done": false
     },
     {
       "id": "ticket-10",
       "number": 10,
-      "title": "Add E2E tests for critical flows",
-      "description": "Playwright or Cypress (e.g. run, create project).",
+      "title": "Add project sync-from-disk or clarify source of truth",
+      "description": "Sync local projects with projects.json/DB or document single source",
       "priority": "P1",
-      "featureName": "Quality and maintainability",
-      "done": true
+      "featureName": "Data & configuration",
+      "done": false
     },
     {
       "id": "ticket-11",
       "number": 11,
-      "title": "Add React error boundaries at layout or route level",
-      "description": "Avoid full white screen on uncaught errors.",
+      "title": "Refactor project details page into smaller components",
+      "description": "Split [id]/page.tsx for maintainability and testability",
       "priority": "P1",
-      "featureName": "Quality and maintainability",
-      "done": true
+      "featureName": "UX & accessibility",
+      "done": false
     },
     {
       "id": "ticket-12",
       "number": 12,
-      "title": "Accessibility audit and fixes",
-      "description": "Focus, keyboard nav, ARIA for custom tables and Kanban.",
+      "title": "Add systematic accessibility (a11y)",
+      "description": "ARIA, focus, keyboard beyond what Radix provides",
       "priority": "P1",
-      "featureName": "Quality and maintainability",
-      "done": true
+      "featureName": "UX & accessibility",
+      "done": false
     },
     {
       "id": "ticket-13",
       "number": 13,
-      "title": "Project sync / Reload from disk",
-      "description": "Explicit reload for local projects vs projects.json.",
+      "title": "Add rate limiting or quota UI for generate endpoints",
+      "description": "Throttle OpenAI calls or display usage",
       "priority": "P2",
-      "featureName": "Polish and scale",
-      "done": true
+      "featureName": "Run & automation",
+      "done": false
     },
     {
       "id": "ticket-14",
       "number": 14,
-      "title": "i18n / locale layer",
-      "description": "If app will be used in multiple languages.",
+      "title": "Improve feature queue UX",
+      "description": "Clear feedback when queue advances or fails; optional retry",
       "priority": "P2",
-      "featureName": "Polish and scale",
-      "done": true
+      "featureName": "Run & automation",
+      "done": false
     },
     {
       "id": "ticket-15",
       "number": 15,
-      "title": "Offline / PWA support for browser mode",
-      "description": "Service worker; consider sync when online.",
+      "title": "Refactor home page into smaller components",
+      "description": "Split page.tsx to reduce size and improve testability",
       "priority": "P2",
-      "featureName": "Polish and scale",
-      "done": true
+      "featureName": "UX & accessibility",
+      "done": false
     },
     {
       "id": "ticket-16",
       "number": 16,
-      "title": "Copy Kanban JSON to file in browser mode",
-      "description": "When Tauri not available, allow saving JSON to a file (e.g. download).",
-      "priority": "P3",
-      "featureName": "Later",
-      "done": true
+      "title": "Add seed-template UX improvements",
+      "description": "Smoother flow for seeding from template (ideas, designs, architectures, features)",
+      "priority": "P2",
+      "featureName": "Data & configuration",
+      "done": false
     },
     {
       "id": "ticket-17",
       "number": 17,
-      "title": "Export run log to file from Run page",
-      "description": "Download log for current or past run.",
+      "title": "Add i18n/locale layer",
+      "description": "English + optional locales; translation keys for UI copy",
       "priority": "P3",
-      "featureName": "Later",
-      "done": true
+      "featureName": "Internationalization",
+      "done": false
+    },
+    {
+      "id": "ticket-18",
+      "number": 18,
+      "title": "Add offline persistence story for browser mode",
+      "description": "Service worker or local storage for data when dev server unavailable",
+      "priority": "P3",
+      "featureName": "Resilience",
+      "done": false
     }
   ],
-  "parsedAt": "2026-02-08T22:30:35.760Z"
+  "parsedAt": "2026-02-10T06:31:40.432Z"
 }

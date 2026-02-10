@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useRunState } from "@/context/run-state";
-import { FileCode, Palette } from "lucide-react";
+import { FileCode, Palette, KeyRound } from "lucide-react";
 import type { FileEntry } from "@/types/run";
 import {
   UI_THEME_TEMPLATES,
@@ -22,10 +22,18 @@ export default function ConfigurationPage() {
   const { error, timing, setTiming } = useRunState();
   const [scripts, setScripts] = useState<FileEntry[]>([]);
   const [uiTheme, setUITheme] = useState<UIThemeId | undefined>(undefined);
+  const [openaiConfigured, setOpenaiConfigured] = useState<boolean | null>(null);
 
   useEffect(() => {
     const stored = getStoredUITheme();
     setUITheme(stored ?? "light");
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/check-openai")
+      .then((res) => res.json())
+      .then((data: { configured?: boolean }) => setOpenaiConfigured(data.configured ?? false))
+      .catch(() => setOpenaiConfigured(false));
   }, []);
 
   const handleThemeSelect = useCallback((id: UIThemeId) => {
@@ -54,6 +62,16 @@ export default function ConfigurationPage() {
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {openaiConfigured === false && (
+        <Alert variant="destructive" className="border-amber-500/50 bg-amber-500/10">
+          <KeyRound className="h-4 w-4 shrink-0" />
+          <AlertDescription>
+            <strong>OPENAI_API_KEY is not set.</strong> Add it in <code className="rounded bg-muted px-1">.env.local</code> to use AI
+            generate (prompts, tickets, ideas, designs, architectures). Generate endpoints will return 500 until configured.
+          </AlertDescription>
         </Alert>
       )}
 

@@ -82,6 +82,10 @@ export function buildTicketsAnalysisPrompt(opts: {
    - Checklist of **major features** in priority order: \`- [ ] Feature name (optional description) — #1, #2\` using the same feature names and ticket numbers as in \`tickets.md\`. Each feature must reference at least one ticket number.
    - Every feature must map to one or more tickets from \`tickets.md\`; no standalone features. See \`.cursor/features-tickets-correlation.md\` if present.
 
+**Exact format for Kanban/JSON parsing (use these patterns so the project details page can display the board):**
+- **tickets.md** — Each ticket line must be exactly: \`- [ ] #N Title — description\` or \`- [x] #N Title — description\` (space inside brackets; em dash before description; \`#### Feature: Name\` on the line above the ticket list).
+- **features.md** — Each feature line must be exactly: \`- [ ] Feature name (optional description) — #1, #2\` or \`- [x] Feature name — #1\` (space inside brackets; em dash — before ticket refs; ticket numbers as #N).
+
 Create the \`.cursor\` folder if needed. Write both files in one run so feature names and ticket numbers match. This keeps tickets (checklist) and features (grouping) aligned and ensures the Kanban/JSON view on the project details page parses correctly. Base everything on the actual codebase.`;
 }
 

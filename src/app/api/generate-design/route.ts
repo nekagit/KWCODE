@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { parseAndValidate, generateDesignSchema } from "@/lib/api-validation";
 
 export async function POST(request: NextRequest) {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -10,27 +11,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let body: {
-    description?: string;
-    templateId?: string;
-    projectName?: string;
-  };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
-
-  const description = typeof body.description === "string" ? body.description.trim() : "";
-  if (!description) {
-    return NextResponse.json(
-      { error: "description is required" },
-      { status: 400 }
-    );
-  }
-
-  const templateId = typeof body.templateId === "string" ? body.templateId : "landing";
-  const projectName = typeof body.projectName === "string" ? body.projectName : "My Product";
+  const parsed = await parseAndValidate(request, generateDesignSchema);
+  if (!parsed.success) return parsed.response;
+  const { description, templateId, projectName } = parsed.data;
 
   const openai = new OpenAI({ apiKey });
   const userPrompt = `You are a web product designer. Generate a design specification in Markdown for a web page based on this description.

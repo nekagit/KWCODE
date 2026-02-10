@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 import type { Project } from "@/types/project";
+import { parseAndValidate, createProjectSchema } from "@/lib/api-validation";
 
 function findDataDir(): string {
   const cwd = process.cwd();
@@ -48,24 +49,22 @@ export async function GET() {
 /** POST: create a new project. Body: { name, description?, repoPath?, promptIds?, ticketIds?, featureIds?, ideaIds? } */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const name = typeof body.name === "string" ? body.name.trim() : "";
-    if (!name) {
-      return NextResponse.json({ error: "name is required" }, { status: 400 });
-    }
+    const parsed = await parseAndValidate(request, createProjectSchema);
+    if (!parsed.success) return parsed.response;
+    const body = parsed.data;
     const projects = readProjects();
     const now = new Date().toISOString();
     const newProject: Project = {
       id: crypto.randomUUID(),
-      name,
-      description: typeof body.description === "string" ? body.description.trim() : undefined,
-      repoPath: typeof body.repoPath === "string" ? body.repoPath.trim() || undefined : undefined,
-      promptIds: Array.isArray(body.promptIds) ? body.promptIds.filter((n: unknown) => typeof n === "number") : [],
-      ticketIds: Array.isArray(body.ticketIds) ? body.ticketIds.filter((s: unknown) => typeof s === "string") : [],
-      featureIds: Array.isArray(body.featureIds) ? body.featureIds.filter((s: unknown) => typeof s === "string") : [],
-      ideaIds: Array.isArray(body.ideaIds) ? body.ideaIds.filter((n: unknown) => typeof n === "number") : [],
-      designIds: Array.isArray(body.designIds) ? body.designIds.filter((s: unknown) => typeof s === "string") : [],
-      architectureIds: Array.isArray(body.architectureIds) ? body.architectureIds.filter((s: unknown) => typeof s === "string") : [],
+      name: body.name.trim(),
+      description: body.description?.trim() || undefined,
+      repoPath: body.repoPath?.trim() || undefined,
+      promptIds: body.promptIds ?? [],
+      ticketIds: body.ticketIds ?? [],
+      featureIds: body.featureIds ?? [],
+      ideaIds: body.ideaIds ?? [],
+      designIds: body.designIds ?? [],
+      architectureIds: body.architectureIds ?? [],
       created_at: now,
       updated_at: now,
     };

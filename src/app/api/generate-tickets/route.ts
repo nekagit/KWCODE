@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { parseAndValidate, generateTicketsSchema } from "@/lib/api-validation";
 
 export interface GenerateTicketsOptions {
   granularity: "epic" | "medium" | "small";
@@ -153,23 +154,35 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let body: GenerateTicketsBody;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
+  const parsed = await parseAndValidate(request, generateTicketsSchema);
+  if (!parsed.success) return parsed.response;
+  const body = parsed.data;
 
-  const options = body.options ?? {
-    granularity: "medium",
-    defaultPriority: "medium",
-    includeAcceptanceCriteria: true,
-    includeTechnicalNotes: false,
-    splitByComponent: false,
+  const options: GenerateTicketsOptions = {
+    granularity: body.options?.granularity ?? "medium",
+    defaultPriority: body.options?.defaultPriority ?? "medium",
+    includeAcceptanceCriteria: body.options?.includeAcceptanceCriteria ?? true,
+    includeTechnicalNotes: body.options?.includeTechnicalNotes ?? false,
+    splitByComponent: body.options?.splitByComponent ?? false,
   };
-  const files = Array.isArray(body.files) ? body.files : [];
+  const files: UploadedFileInput[] = (Array.isArray(body.files) ? body.files : []).map((f) => ({
+    name: f.name,
+    label: f.label,
+    contentBase64: f.contentBase64,
+    mimeType: f.mimeType ?? "application/octet-stream",
+  }));
   const description = typeof body.description === "string" ? body.description : "";
-  const project_analysis = body.project_analysis ?? undefined;
+  const project_analysis: ProjectAnalysisInput | undefined = body.project_analysis
+    ? {
+        name: body.project_analysis.name,
+        path: body.project_analysis.path,
+        package_json: body.project_analysis.package_json,
+        readme_snippet: body.project_analysis.readme_snippet,
+        top_level_dirs: body.project_analysis.top_level_dirs ?? [],
+        top_level_files: body.project_analysis.top_level_files ?? [],
+        config_snippet: body.project_analysis.config_snippet,
+      }
+    : undefined;
 
   const fileTexts: { label: string; text: string }[] = [];
   for (const file of files) {

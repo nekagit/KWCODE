@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { parseAndValidate, generateIdeasSchema } from "@/lib/api-validation";
 
 const CATEGORIES = ["saas", "iaas", "paas", "website", "webapp", "webshop", "other"] as const;
 
@@ -12,24 +13,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let body: { topic?: string; count?: number };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
-
-  const topic = typeof body.topic === "string" ? body.topic.trim() : "";
-  const count = typeof body.count === "number" && body.count >= 1 && body.count <= 10
-    ? body.count
-    : 5;
-
-  if (!topic) {
-    return NextResponse.json(
-      { error: "topic is required" },
-      { status: 400 }
-    );
-  }
+  const parsed = await parseAndValidate(request, generateIdeasSchema);
+  if (!parsed.success) return parsed.response;
+  const { topic, count } = parsed.data;
 
   const openai = new OpenAI({ apiKey });
   const userPrompt = `Generate ${count} short business/product ideas for the internet or computer space based on this topic or niche: "${topic}"

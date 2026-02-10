@@ -136,6 +136,75 @@ export function markTicketsDone(ticketsMd: string, ticketNumbers: number[]): str
 }
 
 /**
+ * Validation result for features.md and tickets.md correlation (per .cursor/sync.md).
+ */
+export type CorrelationValidation = {
+  ok: boolean;
+  /** Human-readable summary message. */
+  message: string;
+  /** Detailed issues (errors) and info (e.g. tickets not in features). */
+  details: string[];
+};
+
+/**
+ * Validate features.md and tickets.md correlation per .cursor/sync.md.
+ * Errors (cause ok=false): refs in features that don't exist in tickets; features without ticket refs;
+ * feature names in tickets without matching feature in features.
+ * Info (in details but ok=true): tickets not referenced in any feature.
+ */
+export function validateFeaturesTicketsCorrelation(
+  featuresMd: string,
+  ticketsMd: string
+): CorrelationValidation {
+  const details: string[] = [];
+  const features = parseFeaturesMd(featuresMd);
+  const tickets = parseTicketsMd(ticketsMd);
+
+  const ticketNumbers = new Set(tickets.map((t) => t.number));
+  const refsInFeatures = new Set(features.flatMap((f) => f.ticketRefs));
+  const ticketsFeatureNames = new Set(tickets.map((t) => t.featureName.toLowerCase().trim()).filter(Boolean));
+
+  const refsOnlyInFeatures = [...refsInFeatures].filter((n) => !ticketNumbers.has(n));
+  const ticketsNotInFeatures = [...ticketNumbers].filter((n) => !refsInFeatures.has(n));
+
+  if (refsOnlyInFeatures.length > 0) {
+    details.push(
+      `Ticket number(s) in features.md not found in tickets.md: #${refsOnlyInFeatures.sort((a, b) => a - b).join(", #")}.`
+    );
+  }
+  if (features.some((f) => f.ticketRefs.length === 0)) {
+    const withoutRefs = features.filter((f) => f.ticketRefs.length === 0).map((f) => f.title);
+    details.push(
+      `features.md has checklist items without ticket refs (#N): ${withoutRefs.join("; ")}. Each feature should reference at least one ticket.`
+    );
+  }
+  const featureTitlesLower = new Set(features.map((f) => f.title.toLowerCase().trim()));
+  const missingFeatures = [...ticketsFeatureNames].filter(
+    (fn) => ![...featureTitlesLower].some((ft) => ft.includes(fn) || fn.includes(ft))
+  );
+  if (missingFeatures.length > 0 && ticketsFeatureNames.size > 0) {
+    details.push(
+      `Feature name(s) in tickets.md without matching feature in features.md: ${missingFeatures.join(", ")}. Add a feature line for each.`
+    );
+  }
+  const errorCount = details.length;
+  if (ticketsNotInFeatures.length > 0) {
+    details.push(
+      `Ticket(s) in tickets.md not referenced in any feature: #${ticketsNotInFeatures.sort((a, b) => a - b).join(", #")}. Add to a feature for full correlation.`
+    );
+  }
+
+  const ok = errorCount === 0;
+  return {
+    ok,
+    message: ok
+      ? "features.md and tickets.md are in sync (correlation and format check passed)."
+      : "features.md and tickets.md need to be aligned.",
+    details,
+  };
+}
+
+/**
  * Mark the feature checklist line that has the given ticket refs as done in .cursor/features.md.
  * Finds a line like `- [ ] Feature name — #1, #2` where the set of #N equals ticketRefs and sets [x].
  */

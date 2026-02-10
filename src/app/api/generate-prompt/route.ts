@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { parseAndValidate, generatePromptSchema } from "@/lib/api-validation";
 
 export async function POST(request: NextRequest) {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -10,21 +11,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let body: { description?: string };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
-
-  const description =
-    typeof body.description === "string" ? body.description.trim() : "";
-  if (!description) {
-    return NextResponse.json(
-      { error: "description is required" },
-      { status: 400 }
-    );
-  }
+  const parsed = await parseAndValidate(request, generatePromptSchema);
+  if (!parsed.success) return parsed.response;
+  const { description } = parsed.data;
 
   const openai = new OpenAI({ apiKey });
   const userPrompt = `Generate a single Cursor/IDE prompt based on this description. The prompt will be used to instruct an AI assistant when working in a codebase.
