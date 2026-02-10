@@ -5,9 +5,6 @@
 import { invoke, isTauri } from "@/lib/tauri";
 import type { Project } from "@/types/project";
 
-import { invoke, isTauri } from "@/lib/tauri";
-import type { Project } from "@/types/project";
-
 export type CreateProjectBody = {
   name: string;
   description?: string;
@@ -47,7 +44,33 @@ export type ResolvedProject = Project & {
 
 /** Get one project with resolved prompts, tickets, features, ideas, designs, architectures. In Tauri uses same sources as dashboard (SQLite + JSON) so counts match "All data". */
 export async function getProjectResolved(id: string): Promise<ResolvedProject> {
-  // In the new setup, the /api/data endpoint handles all resolutions.
-  return fetchJson<ResolvedProject>("/api/data");
+  if (isTauri()) {
+    return invoke("get_project_resolved", { id });
+  } else {
+    return fetchJson<ResolvedProject>(`/api/data/projects/${id}?resolve=1`);
+  }
 }
 
+export async function listProjects(): Promise<Project[]> {
+  if (isTauri()) {
+    return invoke("list_projects");
+  } else {
+    return fetchJson<Project[]>("/api/data/projects");
+  }
+}
+
+export async function deleteProject(id: string): Promise<void> {
+  if (isTauri()) {
+    return invoke("delete_project", { id });
+  } else {
+    return fetchJson<void>(`/api/data/projects/${id}`, { method: "DELETE" });
+  }
+}
+
+export async function getProjectExport(id: string, category: keyof ResolvedProject): Promise<string> {
+  if (isTauri()) {
+    return invoke("get_project_export", { id, category });
+  } else {
+    return fetchJson<string>(`/api/data/projects/${id}/export/${category}`);
+  }
+}

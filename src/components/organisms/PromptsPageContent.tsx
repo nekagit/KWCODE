@@ -1,33 +1,13 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/shadcn/card";
+import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { useRunState } from "@/context/run-state";
-import { Plus, Pencil, Sparkles, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { PromptActionButtons } from "@/components/molecules/PromptActionButtons/PromptActionButtons";
+import { PromptTable } from "@/components/molecules/PromptTable/PromptTable";
+import { PromptFormDialog } from "@/components/molecules/PromptFormDialog/PromptFormDialog";
+import { GeneratePromptDialog } from "@/components/molecules/FormsAndDialogs/GeneratePromptDialog/GeneratePromptDialog";
 
 type PromptRecord = {
   id: number;
@@ -288,283 +268,71 @@ export function PromptsPageContent() {
                 page.
               </CardDescription>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" size="sm" onClick={openCreate}>
-                <Plus className="h-4 w-4" />
-                Create prompt
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={openEdit}
-                disabled={!canEdit}
-                title={canEdit ? "Edit selected prompt" : "Select exactly one prompt to edit"}
-              >
-                <Pencil className="h-4 w-4" />
-                Edit prompt
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setGenerateOpen(true)}>
-                <Sparkles className="h-4 w-4" />
-                Generate with AI
-              </Button>
-            </div>
+            <PromptActionButtons
+              openCreate={openCreate}
+              openEdit={openEdit}
+              setGenerateOpen={setGenerateOpen}
+              canEdit={canEdit}
+            />
           </div>
         </CardHeader>
         <CardContent>
           {tableLoading ? (
             <p className="text-sm text-muted-foreground py-4">Loading prompts…</p>
           ) : (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-10">Select</TableHead>
-                    <TableHead className="w-16">ID</TableHead>
-                    <TableHead>Title</TableHead>
-                    <TableHead className="hidden sm:table-cell">Category</TableHead>
-                    <TableHead className="hidden md:table-cell">Tags</TableHead>
-                    <TableHead className="hidden lg:table-cell">Created</TableHead>
-                    <TableHead className="hidden lg:table-cell">Updated</TableHead>
-                    <TableHead className="max-w-[200px]">Content</TableHead>
-                    <TableHead className="w-24 text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {fullPrompts.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
-                        No prompts. Create one above.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    fullPrompts.map((p) => (
-                      <TableRow key={p.id}>
-                        <TableCell>
-                          <Checkbox
-                            checked={selectedPromptIds.includes(p.id)}
-                            onCheckedChange={(checked) => {
-                              setSelectedPromptIds((prev) =>
-                                checked ? [...prev, p.id] : prev.filter((id) => id !== p.id)
-                              );
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell className="font-mono text-xs">{p.id}</TableCell>
-                        <TableCell className="font-medium max-w-[180px] truncate" title={p.title}>
-                          {p.title}
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell text-muted-foreground">
-                          {p.category ?? "—"}
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell text-muted-foreground max-w-[120px] truncate">
-                          {Array.isArray(p.tags) && p.tags.length > 0 ? p.tags.join(", ") : "—"}
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell text-muted-foreground text-xs whitespace-nowrap">
-                          {p.created_at ?? "—"}
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell text-muted-foreground text-xs whitespace-nowrap">
-                          {p.updated_at ?? "—"}
-                        </TableCell>
-                        <TableCell className="max-w-[200px] text-muted-foreground text-xs truncate" title={p.content ?? ""}>
-                          {(p.content ?? "").replace(/\s+/g, " ").slice(0, 60)}
-                          {(p.content ?? "").length > 60 ? "…" : ""}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 w-8 p-0"
-                              title="Edit prompt"
-                              onClick={() => {
-                                setSelectedPromptIds([p.id]);
-                                setEditOpen(true);
-                                setFormId(p.id);
-                                setFormTitle(p.title);
-                                setFormContent(p.content ?? "");
-                              }}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                              title="Delete prompt"
-                              onClick={() => handleDelete(p.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+            <PromptTable
+              fullPrompts={fullPrompts}
+              selectedPromptIds={selectedPromptIds}
+              setSelectedPromptIds={setSelectedPromptIds}
+              handleDelete={handleDelete}
+              setEditOpen={setEditOpen}
+              setFormId={setFormId}
+              setFormTitle={setFormTitle}
+              setFormContent={setFormContent}
+            />
           )}
         </CardContent>
       </Card>
 
-      {/* Create prompt dialog */}
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Create prompt</DialogTitle>
-            <DialogDescription>Add a new prompt. Title and content are required.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-2">
-            <div className="grid gap-2">
-              <Label htmlFor="create-title">Title</Label>
-              <Input
-                id="create-title"
-                value={formTitle}
-                onChange={(e) => setFormTitle(e.target.value)}
-                placeholder="e.g. Run 3000"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="create-content">Content</Label>
-              <Textarea
-                id="create-content"
-                value={formContent}
-                onChange={(e) => setFormContent(e.target.value)}
-                placeholder="Instructions for the AI..."
-                rows={12}
-                className="min-h-[200px]"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveCreate} disabled={!formTitle.trim() || saveLoading}>
-              {saveLoading ? "Saving..." : "Create"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <PromptFormDialog
+        open={createOpen}
+        setOpen={setCreateOpen}
+        title="Create prompt"
+        description="Add a new prompt. Title and content are required."
+        formTitle={formTitle}
+        setFormTitle={setFormTitle}
+        formContent={formContent}
+        setFormContent={setFormContent}
+        handleSave={handleSaveCreate}
+        saveLoading={saveLoading}
+      />
 
-      {/* Edit prompt dialog */}
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Edit prompt</DialogTitle>
-            <DialogDescription>Update title and content. Changes are saved to the data file.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-2">
-            <div className="grid gap-2">
-              <Label htmlFor="edit-title">Title</Label>
-              <Input
-                id="edit-title"
-                value={formTitle}
-                onChange={(e) => setFormTitle(e.target.value)}
-                placeholder="Title"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-content">Content</Label>
-              <Textarea
-                id="edit-content"
-                value={formContent}
-                onChange={(e) => setFormContent(e.target.value)}
-                placeholder="Content"
-                rows={12}
-                className="min-h-[200px]"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveEdit} disabled={!formTitle.trim() || saveLoading}>
-              {saveLoading ? "Saving..." : "Save"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <PromptFormDialog
+        open={editOpen}
+        setOpen={setEditOpen}
+        title="Edit prompt"
+        description="Update title and content. Changes are saved to the data file."
+        formTitle={formTitle}
+        setFormTitle={setFormTitle}
+        formContent={formContent}
+        setFormContent={setFormContent}
+        handleSave={handleSaveEdit}
+        saveLoading={saveLoading}
+      />
 
-      {/* Generate with AI dialog */}
-      <Dialog open={generateOpen} onOpenChange={setGenerateOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Generate prompt with AI</DialogTitle>
-            <DialogDescription>
-              Describe what you want the prompt to do. We&apos;ll generate a title and full prompt
-              text you can edit and save.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-2">
-            {!generateResult ? (
-              <>
-                <div className="grid gap-2">
-                  <Label htmlFor="generate-desc">Description</Label>
-                  <Textarea
-                    id="generate-desc"
-                    value={generateDescription}
-                    onChange={(e) => setGenerateDescription(e.target.value)}
-                    placeholder="e.g. A prompt that refactors React components to use TypeScript and strict typing"
-                    rows={4}
-                  />
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setGenerateOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleGenerate}
-                    disabled={!generateDescription.trim() || generateLoading}
-                  >
-                    {generateLoading ? "Generating..." : "Generate"}
-                  </Button>
-                </DialogFooter>
-              </>
-            ) : (
-              <>
-                <div className="grid gap-2">
-                  <Label>Generated title</Label>
-                  <Input
-                    value={generateResult.title}
-                    onChange={(e) =>
-                      setGenerateResult((r) => (r ? { ...r, title: e.target.value } : null))
-                    }
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label>Generated content</Label>
-                  <Textarea
-                    value={generateResult.content}
-                    onChange={(e) =>
-                      setGenerateResult((r) => (r ? { ...r, content: e.target.value } : null))
-                    }
-                    rows={10}
-                    className="min-h-[200px]"
-                  />
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setGenerateResult(null)}>
-                    Back
-                  </Button>
-                  <Button variant="outline" onClick={useGeneratedAndCreate}>
-                    Edit & create
-                  </Button>
-                  <Button
-                    onClick={saveGeneratedAsNew}
-                    disabled={!generateResult.title.trim() || saveLoading}
-                  >
-                    {saveLoading ? "Saving..." : "Save as new prompt"}
-                  </Button>
-                </DialogFooter>
-              </>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <GeneratePromptDialog
+        open={generateOpen}
+        setOpen={setGenerateOpen}
+        generateDescription={generateDescription}
+        setGenerateDescription={setGenerateDescription}
+        handleGenerate={handleGenerate}
+        generateLoading={generateLoading}
+        generateResult={generateResult}
+        setGenerateResult={setGenerateResult}
+        useGeneratedAndCreate={useGeneratedAndCreate}
+        saveGeneratedAsNew={saveGeneratedAsNew}
+        saveLoading={saveLoading}
+      />
     </div>
   );
 }

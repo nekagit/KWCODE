@@ -1,58 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { invoke, isTauri } from "@/lib/tauri";
-import { QuickActions } from "@/components/organisms/QuickActions";
-import { TicketBoard } from "@/components/organisms/TicketBoard";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shadcn/card";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/shadcn/accordion";
-import { Label } from "@/components/shadcn/label";
-import { Input } from "@/components/shadcn/input";
-import { Checkbox } from "@/components/shadcn/checkbox";
-import { ScrollArea } from "@/components/shadcn/scroll-area";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/shadcn/select";
-import { Button } from "@/components/shadcn/button";
 import { Tabs, TabsContent } from "@/components/shadcn/tabs";
-import { Badge } from "@/components/shadcn/badge";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/shadcn/tooltip";
-import { Empty } from "@/components/shadcn/empty";
-import { Skeleton } from "@/components/shadcn/skeleton";
-import { GlassCard } from "@/components/atoms/GlassCard";
-import { PromptsAndTiming } from "@/components/organisms/PromptsAndTiming";
-import { TicketManagement } from "@/components/organisms/TicketManagement";
-import { LayoutDashboard, Database, FileCode, Braces, Lightbulb, Palette, ListOrdered, Minus, Play, Loader2, Plus, MessageSquare, Folders, Layers, ScrollText, Zap, Trash2, TicketIcon } from "lucide-react";
-import Link from "next/link";
 import { useRunState } from "@/context/run-state";
 import { toast } from "sonner";
 import type { Project } from "@/types/project";
+import { NavigationTabs, TabValue } from "@/components/molecules/NavigationTabs/NavigationTabs";
+import { ProjectsTabContent } from "@/components/molecules/ProjectsTabContent/ProjectsTabContent";
+import { AllDataTabContent } from "@/components/molecules/AllDataTabContent/AllDataTabContent";
+import { DbDataTabContent } from "@/components/molecules/DbDataTabContent/DbDataTabContent";
+import { LogTabContent } from "@/components/molecules/LogTabContent/LogTabContent";
+import { ScrollArea, ScrollBar } from "@/components/shadcn/scroll-area";
+import { DashboardTabContent } from "@/components/molecules/DashboardTabContent/DashboardTabContent";
+import { PromptsTabContent } from "@/components/molecules/PromptsTabContent/PromptsTabContent";
+import { TicketsTabContent } from "@/components/molecules/TicketsTabContent/TicketsTabContent";
+import { FeatureTabContent } from "@/components/molecules/FeatureTabContent/FeatureTabContent";
 
-export type TicketStatus = "backlog" | "in_progress" | "done" | "blocked";
-
-export interface Ticket {
-  id: string;
-  title: string;
-  description: string;
-  status: TicketStatus;
-  priority: number;
-  created_at: string;
-  updated_at: string;
-  /** Legacy: present when loading old tickets.json; stripped when saving */
-  prompt_ids?: number[];
-  project_paths?: string[];
-}
-
-export interface Feature {
-  id: string;
-  title: string;
-  ticket_ids: string[];
-  prompt_ids: number[];
-  project_paths: string[];
-  created_at: string;
-  updated_at: string;
-}
-
+import type { Ticket, TicketStatus } from "@/types/ticket";
+import type { Feature } from "@/types/project";
 /** Minimal type for ideas from /api/data/ideas (All data tab). */
 interface IdeaRecord {
   id: number;
@@ -63,7 +31,6 @@ interface IdeaRecord {
 }
 
 const VALID_TABS = ["dashboard", "projects", "tickets", "feature", "all", "data", "log", "prompts"] as const;
-type TabValue = (typeof VALID_TABS)[number];
 
 function tabFromParams(searchParams: ReturnType<typeof useSearchParams>): TabValue {
   const t = searchParams.get("tab");
@@ -86,7 +53,6 @@ export function HomePageContent() {
     prompts,
     selectedPromptIds,
     setSelectedPromptIds,
-    getTimingForRun,
     runningRuns,
     selectedRunId,
     setSelectedRunId,
@@ -102,42 +68,11 @@ export function HomePageContent() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [features, setFeatures] = useState<Feature[]>([]);
   const [ticketsLoaded, setTicketsLoaded] = useState(false);
-  const logEndRef = useRef<HTMLDivElement>(null);
-  const displayLogLines =
-    selectedRunId != null
-      ? runningRuns.find((r) => r.runId === selectedRunId)?.logLines ?? []
-      : runningRuns[runningRuns.length - 1]?.logLines ?? [];
 
-  const [featureForm, setFeatureForm] = useState<{
-    title: string;
-    ticket_ids: string[];
-    prompt_ids: number[];
-    project_paths: string[];
-  }>({
-    title: "",
-    ticket_ids: [],
-    prompt_ids: [],
-    project_paths: [],
-  });
-  const [dataScripts, setDataScripts] = useState<{ name: string; path: string }[]>([]);
-  const [dataJsonFiles, setDataJsonFiles] = useState<{ name: string; path: string }[]>([]);
-  const [dataFileContent, setDataFileContent] = useState<string | null>(null);
-  const [dataSelectedPath, setDataSelectedPath] = useState<string | null>(null);
   const [dataKvEntries, setDataKvEntries] = useState<{ key: string; value: string }[]>([]);
-  const [dataLoading, setDataLoading] = useState(false);
-  const [dataError, setDataError] = useState<string | null>(null);
   const [ideas, setIdeas] = useState<IdeaRecord[]>([]);
   const [ideasLoading, setIdeasLoading] = useState(false);
-  const [projectsList, setProjectsList] = useState<Project[]>([]);
-  const [featureProjectFilter, setFeatureProjectFilter] = useState<string>("");
   const running = runningRuns.some((r) => r.status === "running");
-
-  const filteredFeatures = useMemo(() => {
-    if (!featureProjectFilter) return features;
-    const project = projectsList.find((p) => p.id === featureProjectFilter);
-    const ids = project?.featureIds ?? [];
-    return features.filter((f) => ids.includes(f.id));
-  }, [features, featureProjectFilter, projectsList]);
 
   const loadTicketsAndFeatures = useCallback(async () => {
     if (!isTauri()) return;
@@ -171,15 +106,12 @@ export function HomePageContent() {
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setTicketsLoaded(true);
     }
-  }, []);
+  }, [setError]);
 
   useEffect(() => {
     if (isTauri()) loadTicketsAndFeatures();
   }, [loadTicketsAndFeatures]);
-
 
   // Browser: load tickets, features, and kv entries from /api/data (reads data/*.json)
   useEffect(() => {
@@ -187,7 +119,6 @@ export function HomePageContent() {
     let cancelled = false;
     fetch("/api/data")
       .then((res) => (res.ok ? res.json() : res.text().then((t) => Promise.reject(new Error(t)))))
-
       .then((data: { tickets?: Ticket[]; features?: Feature[]; kvEntries?: { key: string; value: string }[] }) => {
         if (cancelled) return;
         setTickets(Array.isArray(data.tickets) ? data.tickets : []);
@@ -203,61 +134,6 @@ export function HomePageContent() {
     };
   }, [isTauriEnv, ticketsLoaded]);
 
-  // Data tab: Tauri — load scripts, JSON files, KV from backend
-  useEffect(() => {
-    if (isTauriEnv !== true || tab !== "data") return;
-    let cancelled = false;
-    setDataLoading(true);
-    setDataError(null);
-    Promise.all([
-      invoke<{ name: string; path: string }[]>("list_scripts"),
-      invoke<{ name: string; path: string }[]>("list_data_files"),
-      invoke<{ key: string; value: string }[]>("get_kv_store_entries"),
-    ])
-      .then(([scripts, jsonFiles, kvEntries]) => {
-        if (!cancelled) {
-          setDataScripts(scripts);
-          setDataJsonFiles(jsonFiles);
-          setDataKvEntries(kvEntries);
-        }
-      })
-      .catch((e: Error) => {
-        if (!cancelled) setDataError(e instanceof Error ? e.message : String(e));
-      })
-      .finally(() => {
-        if (!cancelled) setDataLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [isTauriEnv, tab]);
-
-  // Data tab: browser — load scripts and JSON file list from API (kvEntries set from loadData)
-  useEffect(() => {
-    if (isTauriEnv !== false || tab !== "data") return;
-    let cancelled = false;
-    setDataLoading(true);
-    setDataError(null);
-    fetch("/api/data/files")
-      .then((res) => (res.ok ? res.json() : res.text().then((t) => Promise.reject(new Error(t)))))
-
-      .then((data: { scripts?: { name: string; path: string }[]; jsonFiles?: { name: string; path: string }[] }) => {
-        if (!cancelled) {
-          setDataScripts(data.scripts ?? []);
-          setDataJsonFiles(data.jsonFiles ?? []);
-        }
-      })
-      .catch((e: Error) => {
-        if (!cancelled) setDataError(e instanceof Error ? e.message : String(e));
-      })
-      .finally(() => {
-        if (!cancelled) setDataLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [tab]);
-
   // All data tab: fetch ideas from API
   useEffect(() => {
     if (tab !== "all") return;
@@ -265,7 +141,6 @@ export function HomePageContent() {
     setIdeasLoading(true);
     fetch("/api/data/ideas")
       .then((res) => (res.ok ? res.json() : res.text().then((t) => Promise.reject(new Error(t)))))
-
       .then((data: IdeaRecord[]) => {
         if (!cancelled) setIdeas(Array.isArray(data) ? data : []);
       })
@@ -279,101 +154,6 @@ export function HomePageContent() {
       cancelled = true;
     };
   }, [tab]);
-
-  useEffect(() => {
-    logEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [displayLogLines.length]);
-
-  const saveTickets = async (next: Ticket[]) => {
-    try {
-      const clean = next.map(({ prompt_ids, project_paths, ...t }) => t);
-      await invoke("save_tickets", { tickets: clean });
-      setTickets(next);
-      setError(null);
-      toast.success("Tickets saved");
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      setError(msg);
-      toast.error("Failed to save tickets", { description: msg });
-    }
-  };
-
-
-  const saveFeatures = async (next: Feature[]) => {
-    try {
-      await invoke("save_features", { features: next });
-      setFeatures(next);
-      setError(null);
-      toast.success("Features saved");
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      setError(msg);
-      toast.error("Failed to save features", { description: msg });
-    }
-  };
-
-  const addFeature = async () => {
-    if (!featureForm.title.trim()) {
-      setError("Feature title is required");
-      return;
-    }
-    if (featureForm.ticket_ids.length === 0) {
-      setError("A feature is a milestone and must have at least one ticket");
-      return;
-    }
-    if (featureForm.prompt_ids.length === 0) {
-      setError("Select at least one prompt for the feature");
-      return;
-    }
-    setError(null);
-    const now = new Date().toISOString();
-    const newFeature: Feature = {
-      id: crypto.randomUUID(),
-      title: featureForm.title.trim(),
-      ticket_ids: [...featureForm.ticket_ids],
-      prompt_ids: [...featureForm.prompt_ids],
-      project_paths: [...featureForm.project_paths],
-      created_at: now,
-      updated_at: now,
-    };
-    await saveFeatures([...features, newFeature]);
-    setFeatureForm({ title: "", ticket_ids: [], prompt_ids: [], project_paths: [] });
-  };
-
-  const updateFeature = async (id: string, updates: Partial<Feature>) => {
-    if (updates.ticket_ids !== undefined && updates.ticket_ids.length === 0) {
-      setError("A feature must have at least one ticket");
-      return;
-    }
-    const next = features.map((f) =>
-      f.id === id ? { ...f, ...updates, updated_at: new Date().toISOString() } : f
-    );
-    await saveFeatures(next);
-  };
-
-  const deleteFeature = async (id: string) => {
-    await saveFeatures(features.filter((f) => f.id !== id));
-  };
-
-  const deleteAllFeatures = async () => {
-    if (features.length === 0) return;
-    await saveFeatures([]);
-    clearFeatureQueue();
-    toast.success("All features deleted");
-  };
-
-  const updateTicket = async (id: string, updates: Partial<Ticket>) => {
-    const next = tickets.map((t) =>
-      t.id === id ? { ...t, ...updates, updated_at: new Date().toISOString() } : t
-    );
-    await saveTickets(next);
-  };
-
-  const deleteTicket = async (id: string) => {
-    await saveTickets(tickets.filter((t) => t.id !== id));
-  };
-
-
 
   const runForFeature = async (feature: Feature) => {
     if (feature.prompt_ids.length === 0) {
@@ -394,6 +174,53 @@ export function HomePageContent() {
     navigateToTab("log");
   };
 
+  const saveFeatures = async (next: Feature[]) => {
+    try {
+      await invoke("save_features", { features: next });
+      setFeatures(next);
+      setError(null);
+      toast.success("Features saved");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(msg);
+      toast.error("Failed to save features", { description: msg });
+    }
+  };
+
+  const saveTickets = async (next: Ticket[]) => {
+    try {
+      const clean = next.map(({ prompt_ids, project_paths, ...t }) => t);
+      await invoke("save_tickets", { tickets: clean });
+      setTickets(next);
+      setError(null);
+      toast.success("Tickets saved");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(msg);
+      toast.error("Failed to save tickets", { description: msg });
+    }
+  };
+
+  const deleteFeature = async (id: string) => {
+    await saveFeatures(features.filter((f) => f.id !== id));
+  };
+
+  const updateTicket = async (id: string, updates: Partial<Ticket>) => {
+    const next = tickets.map((t) =>
+      t.id === id ? { ...t, ...updates, updated_at: new Date().toISOString() } : t
+    );
+    await saveTickets(next);
+  };
+
+  const deleteTicket = async (id: string) => {
+    await saveTickets(tickets.filter((t) => t.id !== id));
+  };
+
+  const displayLogLines =
+    selectedRunId != null
+      ? runningRuns.find((r) => r.runId === selectedRunId)?.logLines ?? []
+      : runningRuns[runningRuns.length - 1]?.logLines ?? [];
+
   return (
     <Tabs value={tab} onValueChange={(v) => navigateToTab(v as TabValue)} className="flex flex-1 flex-col">
       <div className="flex-1 flex flex-col min-w-0 overflow-auto">
@@ -405,30 +232,35 @@ export function HomePageContent() {
           )}
         </div>
 
+        <ScrollArea className="w-full whitespace-nowrap pb-2">
+          <NavigationTabs activeTab={tab} navigateToTab={navigateToTab} />
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+
         <TabsContent value="dashboard" className="mt-0 space-y-6">
-          <QuickActions
+          <DashboardTabContent
             features={features}
             runningRuns={runningRuns}
             navigateToTab={navigateToTab}
             runForFeature={runForFeature}
             setSelectedRunId={setSelectedRunId}
+            tickets={tickets}
+            updateTicket={updateTicket}
+            deleteTicket={deleteTicket}
             router={router}
           />
-
-          <TicketBoard tickets={tickets} updateTicket={updateTicket} deleteTicket={deleteTicket} />
         </TabsContent>
 
         <TabsContent value="prompts" className="mt-0 space-y-6">
-          <PromptsAndTiming
+          <PromptsTabContent
             prompts={prompts}
             selectedPromptIds={selectedPromptIds}
             setSelectedPromptIds={setSelectedPromptIds}
           />
         </TabsContent>
 
-
         <TabsContent value="tickets" className="mt-0">
-          <TicketManagement
+          <TicketsTabContent
             tickets={tickets}
             saveTickets={saveTickets}
             updateTicket={updateTicket}
@@ -437,667 +269,67 @@ export function HomePageContent() {
           />
         </TabsContent>
 
-
         <TabsContent value="feature" className="mt-0">
-          <GlassCard>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Layers className="h-5 w-5" />
-                Feature {features.length > 0 && (featureProjectFilter ? `(${filteredFeatures.length} of ${features.length})` : `(${features.length})`)}
-              </CardTitle>
-              <CardDescription className="text-base">
-                Combine tickets with prompts and projects; run automation or use in run. Filter by project below. Scroll to see all.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Accordion type="single" collapsible className="w-full rounded-lg border bg-muted/30 glasgmorphism">
-                <AccordionItem value="add-feature" className="border-none">
-                  <AccordionTrigger className="px-4 py-3 hover:no-underline [&[data-state=open]]:border-b">
-                    <span className="text-sm font-medium">Add feature</span>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="px-4 pb-4 pt-1 grid gap-2">
-                      <Label>Title</Label>
-                      <Input
-                        value={featureForm.title}
-                        onChange={(e) => setFeatureForm((f) => ({ ...f, title: e.target.value }))}
-                        placeholder="e.g. Calendar event adding"
-                      />
-                      <Label>Tickets (required, at least one)</Label>
-                      <div className="flex flex-wrap gap-2">
-                        {tickets.map((t) => (
-                          <label
-                            key={t.id}
-                            className="flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1 text-sm hover:bg-muted/50"
-                          >
-                            <Checkbox
-                              checked={featureForm.ticket_ids.includes(t.id)}
-                              onCheckedChange={(c) =>
-                                setFeatureForm((f) => ({
-                                  ...f,
-                                  ticket_ids: c
-                                    ? [...f.ticket_ids, t.id]
-                                    : f.ticket_ids.filter((id) => id !== t.id),
-                                }))
-                              }
-                            />
-                            {t.title}
-                          </label>
-                        ))}
-                      </div>
-                      <Label>Prompts (required)</Label>
-                      <div className="flex flex-wrap gap-2">
-                        {prompts.map((p) => (
-                          <label
-                            key={p.id}
-                            className="flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1 text-sm hover:bg-muted/50"
-                          >
-                            <Checkbox
-                              checked={featureForm.prompt_ids.includes(p.id)}
-                              onCheckedChange={(c) =>
-                                setFeatureForm((f) => ({
-                                  ...f,
-                                  prompt_ids: c
-                                    ? [...f.prompt_ids, p.id]
-                                    : f.prompt_ids.filter((id) => id !== p.id),
-                                }))
-                              }
-                            />
-                            {p.id}: {p.title}
-                          </label>
-                        ))}
-                      </div>
-                      <Label>Projects (optional — leave empty to use active list)</Label>
-                      <ScrollArea className="h-[100px] rounded border p-2">
-                        <div className="space-y-1">
-                          {allProjects.map((path) => {
-                            const name = path.split("/").pop() ?? path;
-                            return (
-                              <label
-                                key={path}
-                                className="flex cursor-pointer items-center gap-2 text-sm"
-                              >
-                                <Checkbox
-                                  checked={featureForm.project_paths.includes(path)}
-                                  onCheckedChange={(c) =>
-                                    setFeatureForm((f) => ({
-                                      ...f,
-                                      project_paths: c
-                                        ? [...f.project_paths, path]
-                                        : f.project_paths.filter((p) => p !== path),
-                                    }))
-                                  }
-                                />
-                                {name}
-                              </label>
-                            );
-                          })}
-                        </div>
-                      </ScrollArea>
-                      <Button onClick={addFeature}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add feature
-                      </Button>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-              <div className="flex items-center gap-2 flex-wrap">
-                <Label className="text-sm text-muted-foreground shrink-0">Filter by project</Label>
-                <Select value={featureProjectFilter || "all"} onValueChange={(v) => setFeatureProjectFilter(v === "all" ? "" : v)}>
-                  <SelectTrigger className="w-[220px]">
-                    <SelectValue placeholder="All projects" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All projects</SelectItem>
-                    {projectsList.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {features.length > 0 && (
-                  <Button type="button" variant="destructive" size="sm" onClick={deleteAllFeatures}>
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    Delete all
-                  </Button>
-                )}
-                {featureQueue.length > 0 && (
-                  <div className="flex items-center gap-2 ml-4 pl-4 border-l">
-                    <span className="text-sm text-muted-foreground flex items-center gap-1">
-   <ListOrdered className="h-4 w-4" />
-                      Queue ({featureQueue.length})
-                    </span>
-                    <Button
-                      size="sm"
-                      onClick={() => runFeatureQueue(activeProjects)}
-                      disabled={runningRuns.some((r) => r.status === "running")}
-                    >
-                      {running ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Play className="h-4 w-4 mr-1" />
-                      )}
-                      Run queue
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => clearFeatureQueue()}>
-                      Clear queue
-                    </Button>
-                  </div>
-                )}
-              </div>
-              <ScrollArea className="min-h-[280px] h-[60vh] rounded-md border p-3">
-                <div className="space-y-2">
-                  {filteredFeatures.length === 0 ? (
-                    <Empty
-                      title={featureProjectFilter ? "No features in this project" : "No features yet"}
-                      description={featureProjectFilter ? "Select another project or add features to this project from its edit page." : "Add a feature above (tickets + prompts + projects)."}
-                      icon={<Layers className="h-6 w-6" />}
-                    />
-                  ) : (
-                    filteredFeatures.map((f) => {
-                      const inQueue = featureQueue.some((q) => q.id === f.id);
-                      return (
-                      <div
-                      key={f.id}
-                      className="flex flex-wrap items-center gap-2 rounded-lg border p-3 bg-card"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{f.title}</p>
-                        <p className="text-xs text-muted-foreground">
-                          Prompts: {f.prompt_ids.join(", ")}
-                          {f.ticket_ids.length > 0 &&
-                            ` · Tickets: ${f.ticket_ids.map((id) => tickets.find((t) => t.id === id)?.title ?? id).join(", ")}`}
-                          {f.project_paths.length > 0 && ` · ${f.project_paths.length} project(s)`}
-                        </p>
-                      </div>
-                      <div className="flex gap-1">
-                        {inQueue ? (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="secondary"
-                                onClick={() => removeFeatureFromQueue(f.id)}
-                              >
-                                <Minus className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Remove from queue</TooltipContent>
-                          </Tooltip>
-                        ) : (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() =>
-                                  addFeatureToQueue({
-                                    id: f.id,
-                                    title: f.title,
-                                    prompt_ids: f.prompt_ids,
-                                    project_paths: f.project_paths,
-                                  })
-                                }
-                                disabled={f.prompt_ids.length === 0}
-                              >
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Add to run queue</TooltipContent>
-                          </Tooltip>
-                        )}
-                        <Button
-                          size="sm"
-                          onClick={() => runForFeature(f)}
-                          disabled={f.prompt_ids.length === 0}
-                        >
-                          {runningRuns.some((r) => r.label === f.title && r.status === "running") ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Play className="h-4 w-4" />
-                          )}
-                          Run
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setSelectedPromptIds(f.prompt_ids);
-                            if (f.project_paths.length > 0) setActiveProjects(f.project_paths);
-                          }}
-                        >
-                          Use in run
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => deleteFeature(f.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                      );
-                    })}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </GlassCard>
+          <FeatureTabContent
+            features={features}
+            tickets={tickets}
+            prompts={prompts}
+            allProjects={allProjects}
+            activeProjects={activeProjects}
+            runningRuns={runningRuns}
+            featureQueue={featureQueue}
+            setError={setError}
+            addFeatureToQueue={addFeatureToQueue}
+            removeFeatureFromQueue={removeFeatureFromQueue}
+            clearFeatureQueue={clearFeatureQueue}
+            runFeatureQueue={runFeatureQueue(activeProjects)}
+            runForFeature={runForFeature}
+            saveFeatures={saveFeatures}
+          />
         </TabsContent>
 
         <TabsContent value="projects" className="mt-0">
-          <GlassCard>
-            <CardHeader>
-              <CardTitle className="text-lg">Active repos (for this run)</CardTitle>
-              <CardDescription className="text-base">
-                Check repo paths to include when running prompts. Order is preserved. Save writes cursor_projects.json. For project pages (design, ideas, features, tickets, prompts), use <strong>Projects</strong> in the sidebar.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <ScrollArea className="h-[280px] rounded-md border p-3">
-                <div className="space-y-2">
-                  {allProjects.map((path) => {
-                    const name = path.split("/").pop() ?? path;
-                    return (
-                      <label
-                        key={path}
-                        className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-muted/50"
-                      >
-                        <Checkbox
-                          checked={activeProjects.includes(path)}
-                          onCheckedChange={() => toggleProject(path)}
-                        />
-                        <span className="truncate text-sm font-mono" title={path}>
-                          {name}
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </ScrollArea>
-              <Button onClick={saveActiveProjects}>Save active to cursor_projects.json</Button>
-            </CardContent>
-          </GlassCard>
+          <ProjectsTabContent
+            allProjects={allProjects}
+            activeProjects={activeProjects}
+            toggleProject={toggleProject}
+            saveActiveProjects={saveActiveProjects(activeProjects)}
+          />
         </TabsContent>
 
         <TabsContent value="all" className="mt-0 space-y-6">
-          <div>
-            <h2 className="text-lg font-semibold mb-1">Database</h2>
-            <p className="text-sm text-muted-foreground mb-4">
-              Combined view: projects, prompts, tickets, features, ideas, and design. Use this as the big project page.
-            </p>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            <GlassCard>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Folders className="h-5 w-5" />
-                  Projects
-                </CardTitle>
-                <CardDescription className="text-base">All ({allProjects.length}) · Active ({activeProjects.length})</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <ScrollArea className="h-[200px] rounded border p-2">
-                  <div className="space-y-1">
-                    {allProjects.map((path) => {
-                      const name = path.split("/").pop() ?? path;
-                      const active = activeProjects.includes(path);
-                      return (
-                        <div key={path} className="flex items-center gap-2 text-sm">
-                          <Checkbox checked={active} onCheckedChange={() => toggleProject(path)} />
-                          <span className="truncate font-mono" title={path}>{name}</span>
-                          {active && <Badge variant="secondary" className="text-xs">active</Badge>}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </ScrollArea>
-                <Button size="sm" onClick={saveActiveProjects}>Save active</Button>
-              </CardContent>
-            </GlassCard>
-            <GlassCard>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5" />
-                  Prompts
-                </CardTitle>
-                <CardDescription className="text-base">{prompts.length} prompts</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-[200px] rounded border p-2">
-                  <div className="space-y-1 text-sm">
-                    {prompts.map((p) => (
-                      <div key={p.id} className="flex items-center gap-2">
-                        <Checkbox
-                          checked={selectedPromptIds.includes(p.id)}
-                          onCheckedChange={(c) =>
-                            setSelectedPromptIds((prev) =>
-                              prev.includes(p.id) ? prev.filter((id) => id !== p.id) : [...prev, p.id]
-                            )}
-                        />
-                        <span className="truncate">{p.title || `#${p.id}`}</span>
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-                <p className="text-xs text-muted-foreground mt-2">Select prompts for Run. Edit on Prompts page.</p>
-              </CardContent>
-            </GlassCard>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            <GlassCard>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <TicketIcon className="h-5 w-5" />
-                  Tickets
-                </CardTitle>
-                <CardDescription className="text-base">{tickets.length} tickets</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-[220px] rounded border p-2">
-                  <div className="space-y-2 text-sm">
-                    {tickets.slice(0, 30).map((t) => (
-                      <div key={t.id} className="flex items-start gap-2 rounded border p-2 bg-muted/20">
-                        <Badge variant="outline" className="shrink-0 text-xs">{t.status}</Badge>
-                        <span className="truncate font-medium">{t.title}</span>
-                      </div>
-                    ))}
-                    {tickets.length > 30 && (
-                      <p className="text-xs text-muted-foreground">+{tickets.length - 30} more</p>
-                    )}
-                  </div>
-                </ScrollArea>
-                <p className="text-xs text-muted-foreground mt-2">Full list on Tickets tab.</p>
-              </CardContent>
-            </GlassCard>
-            <GlassCard>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Layers className="h-5 w-5" />
-                  Features
-                </CardTitle>
-                <CardDescription className="text-base">{features.length} features (prompts + projects)</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-[220px] rounded border p-2">
-                  <div className="space-y-2 text-sm">
-                    {features.map((f) => (
-                      <div key={f.id} className="rounded border p-2 bg-muted/20">
-                        <p className="font-medium truncate">{f.title}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {f.prompt_ids.length} prompts · {f.project_paths.length} projects
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-                <p className="text-xs text-muted-foreground mt-2">Configure on Feature tab.</p>
-              </CardContent>
-            </GlassCard>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            <GlassCard>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Lightbulb className="h-5 w-5" />
-                  Ideas
-                </CardTitle>
-                <CardDescription className="text-base">
-                  {ideasLoading ? "Loading…" : `${ideas.length} ideas`}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {ideasLoading ? (
-                  <Skeleton className="h-[200px] w-full rounded" />
-                ) : (
-                  <ScrollArea className="h-[200px] rounded border p-2">
-                    <div className="space-y-2 text-sm">
-                      {ideas.map((i) => (
-                        <div key={i.id} className="rounded border p-2 bg-muted/20">
-                          <p className="font-medium truncate">{i.title}</p>
-                          <p className="text-xs text-muted-foreground line-clamp-2">{i.description}</p>
-                          <Badge variant="secondary" className="mt-1 text-xs">{i.category}</Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                )}
-                <p className="text-xs text-muted-foreground mt-2">
-                  <Link href="/ideas" className="text-primary hover:underline">Ideas page</Link> to create and edit.
-                </p>
-              </CardContent>
-            </GlassCard>
-            <GlassCard>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Palette className="h-5 w-5" />
-                  Design
-                </CardTitle>
-                <CardDescription className="text-base">Design config and markdown spec</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Configure page layout, colors, typography, and sections. Generate markdown for implementation.
-                </p>
-                <Button asChild variant="outline" size="sm">
-                  <Link href="/design">Open Design page</Link>
-                </Button>
-              </CardContent>
-            </GlassCard>
-          </div>
+          <AllDataTabContent
+            allProjects={allProjects}
+            activeProjects={activeProjects}
+            toggleProject={toggleProject}
+            saveActiveProjects={saveActiveProjects}
+            prompts={prompts}
+            selectedPromptIds={selectedPromptIds}
+            setSelectedPromptIds={setSelectedPromptIds}
+            tickets={tickets}
+            features={features}
+            ideas={ideas}
+            ideasLoading={ideasLoading}
+          />
         </TabsContent>
 
         <TabsContent value="data" className="mt-0 space-y-6">
-          <GlassCard>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Database className="h-5 w-5" />
-                DB Data
-              </CardTitle>
-              <CardDescription className="space-y-1 text-base">
-                <span className="block">Scripts in script/, JSON files in data/, and DB data (kv_store, tickets, features).</span>
-                {isTauriEnv ? (
-                  <span className="block text-muted-foreground text-xs mt-1">
-                    SQLite: data/app.db (created on first run; migrated from data/*.json). All app data is read/written via the DB.
-                  </span>
-                ) : (
-                  <span className="block text-muted-foreground text-xs mt-1">
-                    Browser: data is read from data/*.json via API. Scripts and JSON list from project root. Saves require the Tauri app.
-                  </span>
-                )}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {dataError && (
-                <Alert variant="destructive">
-                  <AlertDescription>{dataError}</AlertDescription>
-                </Alert>
-              )}
-              {dataLoading && (
-                <p className="text-sm text-muted-foreground flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Loading…
-                </p>
-              )}
-
-              <Accordion type="multiple" className="w-full glasgmorphism" defaultValue={["scripts", "json", "db"]}>
-                <AccordionItem value="scripts">
-                  <AccordionTrigger className="flex items-center gap-2">
-                    <FileCode className="h-4 w-4" />
-                    Scripts ({dataScripts.length})
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <p className="text-xs text-muted-foreground">script/</p>
-                        <ScrollArea className="h-32 rounded border bg-muted/30 p-2">
-                          {dataScripts.length === 0 && !dataLoading && (
-                            <p className="text-muted-foreground text-sm">No scripts found.</p>
-                          )}
-                          {dataScripts.map((f) => (
-                            <button
-                              key={f.path}
-                              type="button"
-                              className="block w-full text-left text-sm px-2 py-1.5 rounded hover:bg-muted truncate"
-                              onClick={async () => {
-                                setDataError(null);
-                                try {
-                                  const content = isTauriEnv
-                                    ? await invoke<string>("read_file_text", { path: f.path })
-                                    : (await (await fetch(`/api/data/file?path=${encodeURIComponent(f.path)}`)).text());
-                                  setDataFileContent(content);
-                                  setDataSelectedPath(f.path);
-                                } catch (e) {
-                                  setDataError(e instanceof Error ? e.message : String(e));
-                                }
-                              }}
-                            >
-                              {f.name}
-                            </button>
-                          ))}
-                        </ScrollArea>
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-xs text-muted-foreground">Content</p>
-                        <ScrollArea className="h-48 rounded border bg-muted/30 p-3 font-mono text-xs whitespace-pre-wrap break-all">
-                          {dataSelectedPath && dataFileContent != null ? (
-                            dataFileContent
-                          ) : (
-                            <span className="text-muted-foreground">Click a script to view content.</span>
-                          )}
-                        </ScrollArea>
-                      </div>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-
-                <AccordionItem value="json">
-                  <AccordionTrigger className="flex items-center gap-2">
-                    <Braces className="h-4 w-4" />
-                    JSON files ({dataJsonFiles.length})
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <p className="text-xs text-muted-foreground">data/*.json</p>
-                        <ScrollArea className="h-32 rounded border bg-muted/30 p-2">
-                          {dataJsonFiles.length === 0 && !dataLoading && (
-                            <p className="text-muted-foreground text-sm">No JSON files.</p>
-                          )}
-                          {dataJsonFiles.map((f) => (
-                            <button
-                              key={f.path}
-                              type="button"
-                              className="block w-full text-left text-sm px-2 py-1.5 rounded hover:bg-muted truncate"
-                              onClick={async () => {
-                                setDataError(null);
-                                try {
-                                  const content = isTauriEnv
-                                    ? await invoke<string>("read_file_text", { path: f.path })
-                                    : (await (await fetch(`/api/data/file?path=${encodeURIComponent(f.path)}`)).text());
-                                  setDataFileContent(content);
-                                  setDataSelectedPath(f.path);
-                                } catch (e) {
-                                  setDataError(e instanceof Error ? e.message : String(e));
-                                }
-                              }}
-                            >
-                              {f.name}
-                            </button>
-                          ))}
-                        </ScrollArea>
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-xs text-muted-foreground">Content</p>
-                        <ScrollArea className="h-48 rounded border bg-muted/30 p-3 font-mono text-xs whitespace-pre-wrap break-all">
-                          {dataSelectedPath && dataFileContent != null ? (
-                            dataFileContent
-                          ) : (
-                            <span className="text-muted-foreground">Click a JSON file to view content.</span>
-                          )}
-                        </ScrollArea>
-                      </div>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-
-                <AccordionItem value="db">
-                  <AccordionTrigger className="flex items-center gap-2">
-                    <Database className="h-5 w-5" />
-                    DB Data (kv_store, tickets, features)
-                  </AccordionTrigger>
-                  <AccordionContent className="space-y-4">
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-2">kv_store</p>
-                      <ScrollArea className="h-40 rounded border bg-muted/30 p-3 font-mono text-xs">
-                        {dataKvEntries.length === 0 && !dataLoading && (
-                          <p className="text-muted-foreground">No kv entries.</p>
-                        )}
-                        {dataKvEntries.map((e) => (
-                          <div key={e.key} className="mb-3">
-                            <span className="font-semibold text-foreground">{e.key}</span>
-                            <pre className="mt-1 whitespace-pre-wrap break-all text-muted-foreground">{e.value}</pre>
-                          </div>
-                        ))}
-                      </ScrollArea>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-2">tickets ({tickets.length})</p>
-                      <ScrollArea className="h-48 rounded border bg-muted/30 p-3 font-mono text-xs whitespace-pre-wrap">
-                        <pre>{JSON.stringify(tickets, null, 2)}</pre>
-                      </ScrollArea>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-2">features ({features.length})</p>
-                      <ScrollArea className="h-48 rounded border bg-muted/30 p-3 font-mono text-xs whitespace-pre-wrap">
-                        <pre>{JSON.stringify(features, null, 2)}</pre>
-                      </ScrollArea>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-2">all_projects ({allProjects.length})</p>
-                      <ScrollArea className="h-24 rounded border bg-muted/30 p-3 font-mono text-xs">
-                        <pre>{JSON.stringify(allProjects, null, 2)}</pre>
-                      </ScrollArea>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-2">cursor_projects / active ({activeProjects.length})</p>
-                      <ScrollArea className="h-24 rounded border bg-muted/30 p-3 font-mono text-xs">
-                        <pre>{JSON.stringify(activeProjects, null, 2)}</pre>
-                      </ScrollArea>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </CardContent>
-          </GlassCard>
+          <DbDataTabContent
+            isTauriEnv={isTauriEnv}
+            tickets={tickets}
+            features={features}
+            allProjects={allProjects}
+            activeProjects={activeProjects}
+          />
         </TabsContent>
 
         <TabsContent value="log" className="mt-0">
-          <GlassCard>
-            <CardHeader>
-              <CardTitle className="text-lg">Script output</CardTitle>
-              <CardDescription className="text-base">
-                {selectedRunId != null
-                  ? `Live output: ${runningRuns.find((r) => r.runId === selectedRunId)?.label ?? "Run"}`
-                  : "Select a run from the top-right to view its output, or start a run from Feature or Prompts."}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[400px] rounded border bg-muted/30 p-3 font-mono text-sm">
-                {displayLogLines.length === 0 && !running && (
-                  <p className="text-muted-foreground">
-                    No output yet. Run a feature or start from the Prompts page, then open running terminals (top-right) to view.
-                  </p>
-                )}
-                {displayLogLines.map((line, i) => (
-                  <div key={i} className="whitespace-pre-wrap break-all">
-                    {line}
-                  </div>
-                ))}
-                <div ref={logEndRef} />
-              </ScrollArea>
-            </CardContent>
-          </GlassCard>
+          <LogTabContent
+            displayLogLines={displayLogLines}
+            selectedRunId={selectedRunId}
+            runningRuns={runningRuns}
+            running={running}
+          />
         </TabsContent>
       </div>
     </Tabs>
