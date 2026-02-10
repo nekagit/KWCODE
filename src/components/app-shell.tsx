@@ -3,14 +3,14 @@
 import { useState, Suspense } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/shadcn/button";
+import { Badge } from "@/components/shadcn/badge";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { Empty } from "@/components/ui/empty";
+} from "@/components/shadcn/popover";
+import { Empty } from "@/components/shadcn/empty";
 import {
   LayoutDashboard,
   MessageSquare,
@@ -29,7 +29,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@/components/shadcn/tooltip";
 import { useRunState } from "@/context/run-state";
 import { useQuickActions, QuickActionsFAB } from "@/context/quick-actions-context";
 

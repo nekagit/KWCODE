@@ -599,6 +599,7 @@ fn list_cursor_folder(project_path: String) -> Result<Vec<FileEntry>, String> {
                 collect_files(&path, out)?;
             }
         }
+        Ok(())
     }
     collect_files(&base, &mut entries)?;
     entries.sort_by(|a, b| a.path.cmp(&b.path));
@@ -906,6 +907,7 @@ fn run_script_inner(
     active_projects: Vec<String>,
     timing: TimingParams,
 ) -> Result<(), String> {
+    let run_label_clone = run_label.clone();
     let script = script_path(&ws);
     let prompt_ids_str: Vec<String> = prompt_ids.iter().map(|n| n.to_string()).collect();
 
@@ -1022,7 +1024,7 @@ fn run_script_inner(
                 }
             };
             if exited {
-                let _ = app_exited.emit("script-exited", ScriptExitedPayload { run_id: run_id_exited, label: label.clone() });
+                let _ = app_exited.emit("script-exited", ScriptExitedPayload { run_id: run_id_exited, label: run_label_clone.clone() });
                 break;
             }
             thread::sleep(std::time::Duration::from_millis(500));
@@ -1040,6 +1042,7 @@ fn run_analysis_script_inner(
     run_label: String,
     project_path: String,
 ) -> Result<(), String> {
+    let run_label_clone = run_label.clone();
     let script = analysis_script_path(&ws);
     if !script.exists() {
         return Err(format!(
@@ -1126,7 +1129,7 @@ fn run_analysis_script_inner(
                 }
             };
             if exited {
-                let _ = app_exited.emit("script-exited", ScriptExitedPayload { run_id: run_id_exited, label: label.clone() });
+                let _ = app_exited.emit("script-exited", ScriptExitedPayload { run_id: run_id_exited, label: run_label_clone.clone() });
                 break;
             }
             thread::sleep(std::time::Duration::from_millis(500));
@@ -1284,5 +1287,7 @@ pub fn run() {
             stop_script,
             get_kv_store_entries,
             get_data_dir
-        ]))
-        .run(tauri::generate_context!());
+        ])
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
+}
