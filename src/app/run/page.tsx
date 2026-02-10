@@ -31,6 +31,7 @@ interface Feature {
 export default function RunPage() {
   const {
     error,
+    dataWarning,
     setError,
     prompts,
     selectedPromptIds,
@@ -53,17 +54,21 @@ export default function RunPage() {
   const running = runningRuns.some((r) => r.status === "running");
 
   const loadFeatures = useCallback(async () => {
-    if (isTauri()) {
-      const list = await invoke<Feature[]>("get_features").catch(() => []);
-      setFeatures(list);
-    } else {
-      const res = await fetch("/api/data");
-      if (!res.ok) {
-        setError(await getApiErrorMessage(res.clone()));
-        return;
+    try {
+      if (isTauri()) {
+        const list = await invoke<Feature[]>("get_features");
+        setFeatures(list);
+      } else {
+        const res = await fetch("/api/data");
+        if (!res.ok) {
+          setError(await getApiErrorMessage(res.clone()));
+          return;
+        }
+        const data = await res.json();
+        setFeatures(Array.isArray(data.features) ? data.features : []);
       }
-      const data = await res.json();
-      setFeatures(Array.isArray(data.features) ? data.features : []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
     }
   }, [setError]);
 
@@ -122,6 +127,12 @@ export default function RunPage() {
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {dataWarning && !error && (
+        <Alert variant="default" className="border-amber-500/50 bg-amber-500/10">
+          <AlertDescription>{dataWarning}</AlertDescription>
         </Alert>
       )}
 

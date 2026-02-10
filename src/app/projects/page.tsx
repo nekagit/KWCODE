@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,41 +48,19 @@ export default function ProjectsListPage() {
     }
   };
 
-  const timedOutRef = useRef(false);
   useEffect(() => {
     let cancelled = false;
-    timedOutRef.current = false;
     setLoading(true);
     setError(null);
-    const timeoutMs = 6_000;
-    const timeoutId = setTimeout(() => {
-      if (!cancelled) {
-        timedOutRef.current = true;
-        setLoading(false);
-        setError("Request timed out. Check that the app is connected (browser: dev server running; Tauri: data/projects.json readable).");
-      }
-    }, timeoutMs);
-    const listWithTimeout = Promise.race([
-      listProjects(),
-      new Promise<Project[]>((_, reject) =>
-        setTimeout(() => {
-          timedOutRef.current = true;
-          reject(new Error("Request timed out"));
-        }, timeoutMs - 500)
-      ),
-    ]);
-    listWithTimeout
+    listProjects()
       .then((data) => {
-        if (!cancelled && !timedOutRef.current) setProjects(Array.isArray(data) ? data : []);
+        if (!cancelled) setProjects(Array.isArray(data) ? data : []);
       })
       .catch((e) => {
-        if (!cancelled && !timedOutRef.current) setError(e instanceof Error ? e.message : String(e));
+        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
       })
       .finally(() => {
-        if (!cancelled) {
-          clearTimeout(timeoutId);
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       });
 
     const loadLocalPaths = () => {
@@ -101,7 +79,6 @@ export default function ProjectsListPage() {
 
     return () => {
       cancelled = true;
-      clearTimeout(timeoutId);
     };
   }, []);
 

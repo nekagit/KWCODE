@@ -17,13 +17,14 @@ export function RunStoreHydration() {
   const unlistenLogRef = useRef<(() => void) | null>(null);
   const unlistenExitedRef = useRef<(() => void) | null>(null);
 
+  // Resolve Tauri vs browser quickly so refreshData runs without a long delay (was 2000ms, now 400ms).
   useEffect(() => {
     const check = () => setIsTauriEnv(isTauri());
     check();
     const t1 = setTimeout(check, 150);
     const t2 = setTimeout(() => {
       setIsTauriEnv((prev) => (prev === null ? false : prev));
-    }, 2000);
+    }, 400);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
@@ -37,13 +38,6 @@ export function RunStoreHydration() {
   useEffect(() => {
     if (isTauriEnv !== null) refreshData();
   }, [isTauriEnv, refreshData]);
-
-  // Safety: stop blocking the app if initial data load hangs (browser or Tauri).
-  useEffect(() => {
-    if (isTauriEnv === null) return;
-    const t = setTimeout(() => setLoading((prev) => (prev ? false : prev)), 10_000);
-    return () => clearTimeout(t);
-  }, [isTauriEnv, setLoading]);
 
   useEffect(() => {
     if (isTauriEnv !== true) return;

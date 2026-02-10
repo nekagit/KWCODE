@@ -179,6 +179,7 @@ export default function ProjectDetailsPage() {
   const [gitOpLoading, setGitOpLoading] = useState<string | null>(null);
   const [commitDialogOpen, setCommitDialogOpen] = useState(false);
   const [commitMessage, setCommitMessage] = useState("");
+  const [generateCommitMessageLoading, setGenerateCommitMessageLoading] = useState(false);
   const [gitFileViewPath, setGitFileViewPath] = useState<string | null>(null);
   const [gitFileViewData, setGitFileViewData] = useState<{ diff: string; full_content: string | null } | null>(null);
   const [gitFileViewLoading, setGitFileViewLoading] = useState(false);
@@ -191,6 +192,8 @@ export default function ProjectDetailsPage() {
   const [syncStatus, setSyncStatus] = useState<{ ok: boolean; message: string; details: string[] } | null>(null);
   const [syncLoading, setSyncLoading] = useState(false);
   const [archiveLoading, setArchiveLoading] = useState<"tickets" | "features" | "both" | null>(null);
+  /** MD view: side-by-side .cursor/features.md and .cursor/tickets.md in a dialog. */
+  const [featuresTicketsMdViewOpen, setFeaturesTicketsMdViewOpen] = useState(false);
 
   const { runWithParams, addFeatureToQueue, runningRuns, error: runStoreError } = useRunState();
 
@@ -418,6 +421,31 @@ export default function ProjectDetailsPage() {
     }
     runGitOp("commit", msg);
   }, [commitMessage, runGitOp]);
+
+  const handleGenerateCommitMessage = useCallback(async () => {
+    if (!gitInfo?.status_short?.trim()) {
+      toast.error("No changes to generate a message from");
+      return;
+    }
+    setGenerateCommitMessageLoading(true);
+    try {
+      const res = await fetch("/api/generate-commit-message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ changes: gitInfo.status_short }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "Failed to generate commit message");
+        return;
+      }
+      if (data.message) setCommitMessage(data.message);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to generate commit message");
+    } finally {
+      setGenerateCommitMessageLoading(false);
+    }
+  }, [gitInfo?.status_short]);
 
   const openGitFileView = useCallback(
     (path: string) => {
@@ -1862,6 +1890,51 @@ export default function ProjectDetailsPage() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={featuresTicketsMdViewOpen} onOpenChange={setFeaturesTicketsMdViewOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col" aria-describedby={undefined}>
+          <DialogHeader>
+            <DialogTitle>features.md &amp; tickets.md — side by side</DialogTitle>
+            <DialogDescription>
+              Rendered markdown from this project&apos;s .cursor folder. Sync in Kanban card to refresh after edits.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-h-0">
+            <div className="flex flex-col min-h-0">
+              <p className="text-xs font-medium text-muted-foreground mb-1.5 shrink-0">.cursor/features.md</p>
+              <ScrollArea className="flex-1 rounded border bg-muted/30 p-3 min-h-[200px]">
+                {cursorFeaturesMdLoading ? (
+                  <p className="text-sm text-muted-foreground">Loading…</p>
+                ) : cursorFeaturesMdError ? (
+                  <p className="text-sm text-destructive">{cursorFeaturesMdError}</p>
+                ) : cursorFeaturesMd !== null && cursorFeaturesMd !== "" ? (
+                  <div className="prose prose-sm dark:prose-invert max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{cursorFeaturesMd}</ReactMarkdown>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No .cursor/features.md in this repo.</p>
+                )}
+              </ScrollArea>
+            </div>
+            <div className="flex flex-col min-h-0">
+              <p className="text-xs font-medium text-muted-foreground mb-1.5 shrink-0">.cursor/tickets.md</p>
+              <ScrollArea className="flex-1 rounded border bg-muted/30 p-3 min-h-[200px]">
+                {cursorTicketsMdLoading ? (
+                  <p className="text-sm text-muted-foreground">Loading…</p>
+                ) : cursorTicketsMdError ? (
+                  <p className="text-sm text-destructive">{cursorTicketsMdError}</p>
+                ) : cursorTicketsMd !== null && cursorTicketsMd !== "" ? (
+                  <div className="prose prose-sm dark:prose-invert max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{cursorTicketsMd}</ReactMarkdown>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No .cursor/tickets.md in this repo.</p>
+                )}
+              </ScrollArea>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="icon" asChild>
           <Link href="/projects">
@@ -2115,7 +2188,24 @@ export default function ProjectDetailsPage() {
                       </DialogHeader>
                       <div className="space-y-4 py-2">
                         <div className="space-y-2">
-                          <Label htmlFor="commit-message">Message</Label>
+                          <div className="flex items-center justify-between gap-2">
+                            <Label htmlFor="commit-message">Message</Label>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="gap-1.5 text-muted-foreground hover:text-foreground"
+                              onClick={handleGenerateCommitMessage}
+                              disabled={generateCommitMessageLoading || !gitInfo?.status_short?.trim()}
+                            >
+                              {generateCommitMessageLoading ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Sparkles className="h-3.5 w-3.5" />
+                              )}
+                              Generate
+                            </Button>
+                          </div>
                           <Textarea
                             id="commit-message"
                             placeholder="Commit message"
@@ -2398,17 +2488,15 @@ export default function ProjectDetailsPage() {
           <Accordion type="multiple" className="w-full" defaultValue={["todos-kanban"]}>
         <AccordionItem value="todos-kanban" className="border rounded-lg px-4 mt-2">
           <AccordionTrigger className="hover:no-underline py-4">
-            <span className="flex items-center gap-2 text-base font-medium">
-              <Layers className="h-4 w-4" />
-              Kanban (from features.md &amp; tickets.md)
-            </span>
-          </AccordionTrigger>
-          <AccordionContent className="pb-4">
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-              <p className="text-sm text-muted-foreground">
-                Check that .cursor/features.md and .cursor/tickets.md exist, have correct format, and can be parsed to JSON for the board (see .cursor/sync.md). Click Sync to load and validate.
-              </p>
-              <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-1 items-center justify-between gap-2 pr-2">
+              <span className="flex items-center gap-2 text-base font-medium">
+                <Layers className="h-4 w-4" />
+                Kanban (from features.md &amp; tickets.md)
+              </span>
+              <div
+                className="flex flex-wrap items-center gap-2"
+                onClick={(e) => e.stopPropagation()}
+              >
                 {(() => {
                   const hasRepo = !!project?.repoPath?.trim();
                   const hasActivePrompt = todosPromptIsActive && todosCombinedPrompt.trim().length > 0;
@@ -2449,27 +2537,27 @@ export default function ProjectDetailsPage() {
                         )}
                         Implement Features
                       </Button>
-                      {whyDisabled && (
-                        <span className="text-xs text-muted-foreground" title={whyDisabled}>
-                          {whyDisabled}
-                        </span>
-                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={runSync}
+                        disabled={syncLoading || !project?.repoPath?.trim()}
+                        className="gap-1.5"
+                        title="Load .md files, check format and correlation, and refresh Kanban data"
+                      >
+                        <RefreshCw className={`h-3.5 w-3.5 ${syncLoading ? "animate-spin" : ""}`} />
+                        Sync
+                      </Button>
                     </>
                   );
                 })()}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={runSync}
-                  disabled={syncLoading || !project?.repoPath?.trim()}
-                  className="gap-1.5"
-                  title="Load .md files, check format and correlation, and refresh Kanban data"
-                >
-                  <RefreshCw className={`h-3.5 w-3.5 ${syncLoading ? "animate-spin" : ""}`} />
-                  Sync
-                </Button>
               </div>
             </div>
+          </AccordionTrigger>
+          <AccordionContent className="pb-4">
+            <p className="text-sm text-muted-foreground mb-3">
+              Check that .cursor/features.md and .cursor/tickets.md exist, have correct format, and can be parsed to JSON for the board (see .cursor/sync.md). Click Sync to load and validate.
+            </p>
             {runStoreError && (
               <div className="mb-3 rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                 <p className="font-medium">Run error</p>
@@ -2519,19 +2607,6 @@ export default function ProjectDetailsPage() {
                 No features or tickets. Run Sync to load from .cursor/features.md and .cursor/tickets.md, or use Analysis / Create to generate them.
               </p>
             )}
-            <div className="flex flex-wrap items-center gap-2 mb-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const json = JSON.stringify(kanbanData, null, 2);
-                  navigator.clipboard.writeText(json).then(() => toast.success("Kanban JSON copied to clipboard.")).catch(() => toast.error("Could not copy."));
-                }}
-                title="Copy Kanban data as JSON"
-              >
-                Copy JSON
-              </Button>
-            </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <p className="text-xs font-medium text-muted-foreground">Features (To do / Done)</p>
@@ -2815,25 +2890,76 @@ export default function ProjectDetailsPage() {
 
         <AccordionItem value="todos-features-tickets" className="border rounded-lg px-4 mt-2">
           <AccordionTrigger className="hover:no-underline py-4">
-            <span className="flex items-center gap-2 text-base font-medium">
-              <Layers className="h-4 w-4" />
-              <TicketIcon className="h-4 w-4" />
-              Features &amp; Tickets ({project.features.length} linked features, {project.tickets.length} linked tickets)
-            </span>
+            <div className="flex flex-1 items-center justify-between gap-2 pr-2">
+              <span className="flex items-center gap-2 text-base font-medium">
+                <Layers className="h-4 w-4" />
+                <TicketIcon className="h-4 w-4" />
+                Features &amp; Tickets ({project.features.length} linked features, {project.tickets.length} linked tickets)
+              </span>
+              <div
+                className="flex flex-wrap items-center gap-2"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFeaturesTicketsMdViewOpen(true)}
+                  title="Open side-by-side view of .cursor/features.md and .cursor/tickets.md"
+                  className="gap-1.5"
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                  MD
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openAnalysisDialog("tickets-and-features")}
+                  title="Analyze codebase and create both .cursor/tickets.md and .cursor/features.md in one run"
+                  className="gap-1.5"
+                >
+                  <FileSearch className="h-3.5 w-3.5" />
+                  Analysis (tickets &amp; features)
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openAnalysisDialog("features")}
+                  disabled={!cursorTicketsMd?.trim()}
+                  title="Populate features.md from existing tickets.md (requires tickets.md loaded)"
+                  className="gap-1.5"
+                >
+                  <FileSearch className="h-3.5 w-3.5" />
+                  Analysis: Features
+                </Button>
+                {isTauri() && project.repoPath?.trim() && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={archiveBothCursorFiles}
+                    disabled={archiveLoading !== null}
+                    title="Archive both .cursor/tickets.md and .cursor/features.md to .cursor/legacy/ and create new files"
+                    className="gap-1.5"
+                  >
+                    {archiveLoading === "both" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Archive className="h-3.5 w-3.5" />}
+                    Archive
+                  </Button>
+                )}
+              </div>
+            </div>
           </AccordionTrigger>
           <AccordionContent className="pb-4">
             <p className="text-sm text-muted-foreground mb-3">
-              .cursor/features.md and .cursor/tickets.md are shown together. Analysis creates both; Archive archives both. Sync (in Kanban card above) loads and validates both.
+              .cursor/features.md and .cursor/tickets.md below. Use <strong>MD</strong> for side-by-side view; Analysis creates both; Archive archives both. Sync (Kanban card) loads and validates.
             </p>
-            {/* .cursor/features.md */}
-            <div className="mb-4">
-              <p className="text-xs font-medium text-muted-foreground mb-2">.cursor/features.md — features roadmap</p>
+            {/* .cursor/features.md — compact preview */}
+            <div className="mb-3">
+              <p className="text-xs font-medium text-muted-foreground mb-1.5">.cursor/features.md</p>
               {cursorFeaturesMdLoading ? (
                 <p className="text-sm text-muted-foreground">Loading…</p>
               ) : cursorFeaturesMdError ? (
                 <p className="text-sm text-destructive">{cursorFeaturesMdError}</p>
               ) : cursorFeaturesMd !== null && cursorFeaturesMd !== "" ? (
-                <ScrollArea className="h-[240px] rounded border bg-muted/30 p-3">
+                <ScrollArea className="h-[160px] rounded border bg-muted/30 p-2.5">
                   <div className="prose prose-sm dark:prose-invert max-w-none">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{cursorFeaturesMd}</ReactMarkdown>
                   </div>
@@ -2842,15 +2968,15 @@ export default function ProjectDetailsPage() {
                 <p className="text-sm text-muted-foreground">No .cursor/features.md in this repo.</p>
               )}
             </div>
-            {/* .cursor/tickets.md */}
-            <div className="mb-4">
-              <p className="text-xs font-medium text-muted-foreground mb-2">.cursor/tickets.md — work items checklist by feature</p>
+            {/* .cursor/tickets.md — compact preview */}
+            <div className="mb-3">
+              <p className="text-xs font-medium text-muted-foreground mb-1.5">.cursor/tickets.md</p>
               {cursorTicketsMdLoading ? (
                 <p className="text-sm text-muted-foreground">Loading…</p>
               ) : cursorTicketsMdError ? (
                 <p className="text-sm text-destructive">{cursorTicketsMdError}</p>
               ) : cursorTicketsMd !== null && cursorTicketsMd !== "" ? (
-                <ScrollArea className="h-[240px] rounded border bg-muted/30 p-3">
+                <ScrollArea className="h-[160px] rounded border bg-muted/30 p-2.5">
                   <div className="prose prose-sm dark:prose-invert max-w-none">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{cursorTicketsMd}</ReactMarkdown>
                   </div>
@@ -2860,7 +2986,7 @@ export default function ProjectDetailsPage() {
               )}
             </div>
             {/* Spec files: features & tickets together */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
               <div
                 className={`rounded-md transition-colors min-h-[40px] p-2 ${dragOverCard === "features-spec" ? "ring-2 ring-primary bg-primary/5" : ""} ${specDropLoading ? "pointer-events-none opacity-70" : ""}`}
                 onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; setDragOverCard("features-spec"); }}
@@ -2933,9 +3059,9 @@ export default function ProjectDetailsPage() {
               </div>
             </div>
             {/* Linked features and tickets */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
               <div>
-                <h4 className="text-xs font-semibold text-foreground mb-2">Linked features — Run / Queue</h4>
+                <h4 className="text-xs font-semibold text-foreground mb-1.5">Linked features — Run / Queue</h4>
                 {project.features.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No features linked. Link in Setup tab.</p>
                 ) : (
@@ -2965,7 +3091,7 @@ export default function ProjectDetailsPage() {
                 )}
               </div>
               <div>
-                <h4 className="text-xs font-semibold text-foreground mb-2">Linked tickets — Run</h4>
+                <h4 className="text-xs font-semibold text-foreground mb-1.5">Linked tickets — Run</h4>
                 {project.tickets.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No tickets linked. Link in Setup tab.</p>
                 ) : (
@@ -2990,40 +3116,6 @@ export default function ProjectDetailsPage() {
                   </ScrollArea>
                 )}
               </div>
-            </div>
-            {/* Buttons: Analysis (both), Analysis: Features from tickets, and Archive (both) */}
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => openAnalysisDialog("tickets-and-features")}
-                title="Analyze codebase and create both .cursor/tickets.md and .cursor/features.md in one run"
-              >
-                <FileSearch className="h-3.5 w-3.5 mr-1" />
-                Analysis (tickets &amp; features)
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => openAnalysisDialog("features")}
-                disabled={!cursorTicketsMd?.trim()}
-                title="Populate features.md from existing tickets.md (requires tickets.md loaded)"
-              >
-                <FileSearch className="h-3.5 w-3.5 mr-1" />
-                Analysis: Features (from tickets)
-              </Button>
-              {isTauri() && project.repoPath?.trim() && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={archiveBothCursorFiles}
-                  disabled={archiveLoading !== null}
-                  title="Archive both .cursor/tickets.md and .cursor/features.md to .cursor/legacy/ and create new files"
-                >
-                  {archiveLoading === "both" ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Archive className="h-3.5 w-3.5 mr-1" />}
-                  Archive both
-                </Button>
-              )}
             </div>
           </AccordionContent>
         </AccordionItem>

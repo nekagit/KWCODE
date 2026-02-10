@@ -1,50 +1,20 @@
 import { NextResponse } from "next/server";
-import path from "path";
-import fs from "fs";
-
-function findDataDir(): string {
-  const cwd = process.cwd();
-  const inCwd = path.join(cwd, "data");
-  if (fs.existsSync(inCwd) && fs.statSync(inCwd).isDirectory()) return inCwd;
-  const inParent = path.join(cwd, "..", "data");
-  if (fs.existsSync(inParent) && fs.statSync(inParent).isDirectory()) return inParent;
-  return inCwd;
-}
-const DATA_DIR = findDataDir();
-
-function readJson<T>(filename: string): T | null {
-  const filePath = path.join(DATA_DIR, filename);
-  try {
-    if (!fs.existsSync(filePath)) return null;
-    const raw = fs.readFileSync(filePath, "utf-8");
-    return JSON.parse(raw) as T;
-  } catch {
-    return null;
-  }
-}
+import { invoke } from "@tauri-apps/api/tauri";
 
 export async function GET() {
   try {
-    if (!fs.existsSync(DATA_DIR) || !fs.statSync(DATA_DIR).isDirectory()) {
-      return NextResponse.json(
-        { error: `Data directory not found: ${DATA_DIR}` },
-        { status: 500 }
-      );
-    }
-    const allProjects = readJson<string[]>("all_projects.json") ?? [];
-    const activeProjects = readJson<string[]>("cursor_projects.json") ?? [];
-    const tickets = readJson<unknown[]>("tickets.json") ?? [];
-    const features = readJson<unknown[]>("features.json") ?? [];
-
-    const promptsRaw = readJson<{ id: number; title: string }[]>("prompts-export.json");
-    const prompts = Array.isArray(promptsRaw)
-      ? promptsRaw.map((p) => ({ id: Number(p.id), title: p.title ?? "" }))
-      : [];
+    const allProjects = (await invoke("get_all_projects")) as string[];
+    const activeProjects = (await invoke("get_active_projects")) as string[];
+    const tickets = (await invoke("get_tickets")) as unknown[];
+    const features = (await invoke("get_features")) as unknown[];
+    const prompts = (await invoke("get_prompts")) as { id: number; title: string }[];
+    const designs = (await invoke("get_designs")) as unknown[]; // New designs data
 
     // KV-style entries for browser Data tab (mirrors SQLite kv_store)
     const kvEntries = [
       { key: "all_projects", value: JSON.stringify(allProjects, null, 2) },
       { key: "cursor_projects", value: JSON.stringify(activeProjects, null, 2) },
+      // Add other key-value pairs if needed, or remove if not relevant
     ];
 
     return NextResponse.json({
@@ -53,11 +23,21 @@ export async function GET() {
       prompts,
       tickets,
       features,
+      designs, // Include designs
       kvEntries,
     });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Failed to load data";
     console.error("API data load error:", message, e);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({
+      allProjects: [],
+      activeProjects: [],
+      prompts: [],
+      tickets: [],
+      features: [],
+      designs: [], // Ensure designs is included here too
+      kvEntries: [],
+      error: message,
+    });
   }
 }

@@ -1,40 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
 import { invoke, isTauri } from "@/lib/tauri";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { QuickActions } from "@/components/organisms/QuickActions";
+import { TicketBoard } from "@/components/organisms/TicketBoard";
+import { Card as ShadcnCard, ShadcnCardContent, ShadcnCardDescription, ShadcnCardHeader, ShadcnCardTitle } from "@/components/shadcn/card";
+import { GlassCard } from "@/components/atoms/GlassCard";
+import { PromptsAndTiming } from "@/components/organisms/PromptsAndTiming";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Empty } from "@/components/ui/empty";
-import { Skeleton } from "@/components/ui/skeleton";
 import { TicketsDataTable, type TicketRow } from "@/components/tickets-data-table";
-import { Play, Loader2, Ticket as TicketIcon, Plus, Trash2, Layers, Folders, MessageSquare, ScrollText, Sparkles, Upload, FileText, LayoutDashboard, Zap, Database, FileCode, Braces, Lightbulb, Palette, ListOrdered, Minus } from "lucide-react";
+import { TicketManagement } from "@/components/organisms/TicketManagement";
+import { Sparkles, Upload, FileText, LayoutDashboard, Database, FileCode, Braces, Lightbulb, Palette, ListOrdered, Minus, Play, Loader2, Plus, MessageSquare, Folders, Layers, ScrollText, Zap, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRunState } from "@/context/run-state";
 import { toast } from "sonner";
@@ -122,17 +98,6 @@ export default function Home() {
       ? runningRuns.find((r) => r.runId === selectedRunId)?.logLines ?? []
       : runningRuns[runningRuns.length - 1]?.logLines ?? [];
 
-  const [ticketForm, setTicketForm] = useState<{
-    title: string;
-    description: string;
-    status: TicketStatus;
-    priority: number;
-  }>({
-    title: "",
-    description: "",
-    status: "backlog",
-    priority: 0,
-  });
   const [featureForm, setFeatureForm] = useState<{
     title: string;
     ticket_ids: string[];
@@ -144,23 +109,6 @@ export default function Home() {
     prompt_ids: [],
     project_paths: [],
   });
-  const [aiDescription, setAiDescription] = useState("");
-  const [aiOptions, setAiOptions] = useState({
-    granularity: "medium" as "epic" | "medium" | "small",
-    defaultPriority: "medium" as "low" | "medium" | "high",
-    includeAcceptanceCriteria: true,
-    includeTechnicalNotes: false,
-    splitByComponent: false,
-  });
-  const AI_FILE_LABELS = ["Design (PDF)", "Infrastructure", "Tech stack", "Project structure"];
-  const [aiFileSlots, setAiFileSlots] = useState<
-    { label: string; name: string; contentBase64: string; mimeType: string }[]
-  >(AI_FILE_LABELS.map((label) => ({ label, name: "", contentBase64: "", mimeType: "" })));
-  const [aiPastedTexts, setAiPastedTexts] = useState<string[]>(Array(AI_FILE_LABELS.length).fill(""));
-  const [aiGenerating, setAiGenerating] = useState(false);
-  const [aiGeneratedTickets, setAiGeneratedTickets] = useState<{ title: string; description: string }[]>([]);
-  const [aiError, setAiError] = useState<string | null>(null);
-  const [ticketPageAiProjectPath, setTicketPageAiProjectPath] = useState<string>("");
   const [dataScripts, setDataScripts] = useState<{ name: string; path: string }[]>([]);
   const [dataJsonFiles, setDataJsonFiles] = useState<{ name: string; path: string }[]>([]);
   const [dataFileContent, setDataFileContent] = useState<string | null>(null);
@@ -186,8 +134,8 @@ export default function Home() {
     setError(null);
     try {
       const [ticketList, featureList] = await Promise.all([
-        invoke<Ticket[]>("get_tickets").catch(() => []),
-        invoke<Feature[]>("get_features").catch(() => []),
+        invoke<Ticket[]>("get_tickets"),
+        invoke<Feature[]>("get_features"),
       ]);
       setTickets(ticketList);
       setFeatures(featureList);
@@ -266,9 +214,9 @@ export default function Home() {
     setDataLoading(true);
     setDataError(null);
     Promise.all([
-      invoke<{ name: string; path: string }[]>("list_scripts").catch(() => []),
-      invoke<{ name: string; path: string }[]>("list_data_files").catch(() => []),
-      invoke<{ key: string; value: string }[]>("get_kv_store_entries").catch(() => []),
+      invoke<{ name: string; path: string }[]>("list_scripts"),
+      invoke<{ name: string; path: string }[]>("list_data_files"),
+      invoke<{ key: string; value: string }[]>("get_kv_store_entries"),
     ])
       .then(([scripts, jsonFiles, kvEntries]) => {
         if (!cancelled) {
@@ -352,26 +300,6 @@ export default function Home() {
     }
   };
 
-  const addTicket = async () => {
-    if (!ticketForm.title.trim()) {
-      setError("Title is required");
-      return;
-    }
-    setError(null);
-    const now = new Date().toISOString();
-    const newTicket: Ticket = {
-      id: crypto.randomUUID(),
-      title: ticketForm.title.trim(),
-      description: ticketForm.description.trim(),
-      status: ticketForm.status,
-      priority: ticketForm.priority,
-      created_at: now,
-      updated_at: now,
-    };
-    const next = [...tickets, newTicket];
-    await saveTickets(next);
-    setTicketForm({ title: "", description: "", status: "backlog", priority: 0 });
-  };
 
   const saveFeatures = async (next: Feature[]) => {
     try {
@@ -447,30 +375,6 @@ export default function Home() {
     await saveTickets(tickets.filter((t) => t.id !== id));
   };
 
-  const pickAiFile = async (slotIndex: number) => {
-    if (!isTauri()) return;
-    setAiError(null);
-    try {
-      const { open } = await import("@tauri-apps/plugin-dialog");
-      const selected = await open({
-        multiple: false,
-        title: `Select file for ${AI_FILE_LABELS[slotIndex]}`,
-        filters: slotIndex === 0 ? [{ name: "PDF", extensions: ["pdf"] }] : undefined,
-      });
-      if (selected === null || (Array.isArray(selected) && selected.length === 0)) return;
-      const path = typeof selected === "string" ? selected : selected[0];
-      const contentBase64 = await invoke<string>("read_file_as_base64", { path });
-      const name = path.split("/").pop() ?? path;
-      const mimeType = name.toLowerCase().endsWith(".pdf") ? "application/pdf" : "text/plain";
-      setAiFileSlots((prev) =>
-        prev.map((s, i) =>
-          i === slotIndex ? { ...s, name, contentBase64, mimeType } : s
-        )
-      );
-    } catch (e) {
-      setAiError(e instanceof Error ? e.message : String(e));
-    }
-  };
 
   const clearAiFileSlot = (slotIndex: number) => {
     setAiFileSlots((prev) =>
@@ -662,349 +566,53 @@ Suggest actionable work items: setup, dependencies, features, tests, and documen
           </div>
 
         <TabsContent value="dashboard" className="mt-0 space-y-6">
-          {/* Quick actions */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Zap className="h-4 w-4" />
-                Quick actions
-              </CardTitle>
-              <CardDescription>Shortcuts to common tasks</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant="default"
-                  onClick={() => navigateToTab("tickets")}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add ticket
-                </Button>
-                {features.length > 0 && (
-                  <Button
-                    variant="default"
-                    onClick={() => runForFeature(features[0])}
-                    disabled={features[0].prompt_ids.length === 0 || runningRuns.some((r) => r.status === "running")}
-                  >
-                    {runningRuns.some((r) => r.label === features[0].title && r.status === "running") ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Play className="h-4 w-4 mr-2" />
-                    )}
-                    Run &quot;{features[0].title.length > 20 ? features[0].title.slice(0, 20) + "…" : features[0].title}&quot;
-                  </Button>
-                )}
-                <Button variant="outline" onClick={() => router.push("/prompts")}>
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  Prompts
-                </Button>
-                <Button variant="outline" onClick={() => navigateToTab("projects")}>
-                  <Folders className="h-4 w-4 mr-2" />
-                  Active repos
-                </Button>
-                <Button variant="outline" onClick={() => navigateToTab("feature")}>
-                  <Layers className="h-4 w-4 mr-2" />
-                  Features
-                </Button>
-                <Button variant="outline" onClick={() => { setSelectedRunId(runningRuns[runningRuns.length - 1]?.runId ?? null); navigateToTab("log"); }}>
-                  <ScrollText className="h-4 w-4 mr-2" />
-                  View log
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <QuickActions
+            features={features}
+            runningRuns={runningRuns}
+            navigateToTab={navigateToTab}
+            runForFeature={runForFeature}
+            setSelectedRunId={setSelectedRunId}
+            router={router}
+          />
 
-          {/* Ticket kanban */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <TicketIcon className="h-4 w-4" />
-                Ticket board
-              </CardTitle>
-              <CardDescription>Drag cards between columns to change status</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {(["backlog", "in_progress", "done", "blocked"] as const).map((status) => (
-                  <div
-                    key={status}
-                    className="rounded-lg border bg-muted/20 min-h-[320px] flex flex-col"
-                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("ring-2", "ring-primary/30"); }}
-                    onDragLeave={(e) => { e.currentTarget.classList.remove("ring-2", "ring-primary/30"); }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      e.currentTarget.classList.remove("ring-2", "ring-primary/30");
-                      const id = e.dataTransfer.getData("application/x-ticket-id");
-                      if (id) updateTicket(id, { status });
-                    }}
-                  >
-                    <div className="px-3 py-2 border-b bg-muted/40 rounded-t-lg flex items-center justify-between gap-2">
-                      <Badge variant="secondary" className="capitalize font-medium">
-                        {status === "in_progress" ? "In progress" : status}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {tickets.filter((t) => t.status === status).length}
-                      </span>
-                    </div>
-                    <ScrollArea className="flex-1 p-2">
-                      <div className="space-y-2">
-                        {tickets
-                          .filter((t) => t.status === status)
-                          .map((t) => (
-                            <div
-                              key={t.id}
-                              draggable
-                              onDragStart={(e) => {
-                                e.dataTransfer.setData("application/x-ticket-id", t.id);
-                                e.dataTransfer.effectAllowed = "move";
-                              }}
-                              className="rounded-md border bg-card p-3 cursor-grab active:cursor-grabbing hover:shadow-sm transition-shadow"
-                            >
-                              <p className="font-medium text-sm truncate">{t.title}</p>
-                              {t.description && (
-                                <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{t.description}</p>
-                              )}
-                              <div className="flex items-center justify-between mt-2">
-                                <Badge variant="outline" className="text-xs">P{t.priority}</Badge>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-                                      onClick={(ev) => { ev.stopPropagation(); deleteTicket(t.id); }}
-                                    >
-                                      <Trash2 className="h-3 w-3" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Delete ticket</TooltipContent>
-                                </Tooltip>
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    </ScrollArea>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <TicketBoard tickets={tickets} updateTicket={updateTicket} deleteTicket={deleteTicket} />
         </TabsContent>
 
         <TabsContent value="prompts" className="mt-0 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Prompts &amp; timing</CardTitle>
-              <CardDescription>
-                Select which prompt IDs to run. Timing (delays, etc.) is configured on the Configuration page.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {prompts.map((p) => (
-                  <label
-                    key={p.id}
-                    className="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 hover:bg-muted/50"
-                  >
-                    <Checkbox
-                      checked={selectedPromptIds.includes(p.id)}
-                      onCheckedChange={(checked) => {
-                        setSelectedPromptIds((prev) =>
-                          checked ? [...prev, p.id] : prev.filter((id) => id !== p.id)
-                        );
-                      }}
-                    />
-                    <span className="text-sm">
-                      {p.id}: {p.title}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <PromptsAndTiming
+            prompts={prompts}
+            selectedPromptIds={selectedPromptIds}
+            setSelectedPromptIds={setSelectedPromptIds}
+          />
         </TabsContent>
+
 
         <TabsContent value="tickets" className="mt-0">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <TicketIcon className="h-4 w-4" />
-                Tickets
-              </CardTitle>
-              <CardDescription>
-                Define work items: title, description, status. Combine them with prompts and projects in the Feature tab.
-                {tickets.length > 0 && (
-                  <span className="block mt-1 font-medium text-foreground">
-                    {tickets.length} ticket{tickets.length !== 1 ? "s" : ""} total
-                  </span>
-                )}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Accordion type="single" collapsible className="w-full rounded-lg border bg-muted/30">
-                <AccordionItem value="add-ticket" className="border-none">
-                  <AccordionTrigger className="px-4 py-3 hover:no-underline [&[data-state=open]]:border-b">
-                    Add ticket
-                  </AccordionTrigger>
-                  <AccordionContent className="px-4 pb-4 pt-2">
-                    <div className="grid gap-2">
-                      <Label>Title</Label>
-                      <Input
-                        value={ticketForm.title}
-                        onChange={(e) => setTicketForm((f) => ({ ...f, title: e.target.value }))}
-                        placeholder="e.g. Add user dashboard"
-                      />
-                      <Label>Description (optional)</Label>
-                      <Textarea
-                        className="min-h-[60px]"
-                        value={ticketForm.description}
-                        onChange={(e) => setTicketForm((f) => ({ ...f, description: e.target.value }))}
-                        placeholder="What should be built..."
-                      />
-                      <div className="flex items-center gap-4">
-                        <div className="space-y-2">
-                          <Label>Status</Label>
-                          <Select
-                            value={ticketForm.status}
-                            onValueChange={(v) => setTicketForm((f) => ({ ...f, status: v as TicketStatus }))}
-                          >
-                            <SelectTrigger className="w-[120px]">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="backlog">Backlog</SelectItem>
-                              <SelectItem value="in_progress">In progress</SelectItem>
-                              <SelectItem value="done">Done</SelectItem>
-                              <SelectItem value="blocked">Blocked</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Priority</Label>
-                          <Input
-                            type="number"
-                            value={ticketForm.priority}
-                            onChange={(e) => setTicketForm((f) => ({ ...f, priority: Number(e.target.value) || 0 }))}
-                            className="w-20"
-                          />
-                        </div>
-                      </div>
-                      <Button onClick={addTicket}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add ticket
-                      </Button>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-
-              <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
-                <p className="text-sm font-medium flex items-center gap-2">
-                  <Sparkles className="h-4 w-4" />
-                  AI generate from project
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Select a project and generate tickets based on it. Uses the same options as the AI Generate tab.
-                </p>
-                <div className="flex flex-wrap items-end gap-3">
-                  <div className="space-y-2 min-w-[200px] flex-1">
-                    <Label>Project</Label>
-                    <Select
-                      value={ticketPageAiProjectPath || "__none__"}
-                      onValueChange={(v) => setTicketPageAiProjectPath(v === "__none__" ? "" : v)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a project" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none__">Select a project</SelectItem>
-                        {allProjects.map((projectPath) => {
-                          const name = projectPath.split("/").pop() ?? projectPath;
-                          return (
-                            <SelectItem key={projectPath} value={projectPath}>
-                              {name}
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button
-                    onClick={generateAiTicketsFromProject}
-                    disabled={aiGenerating || !ticketPageAiProjectPath.trim()}
-                  >
-                    {aiGenerating ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Generating…
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="h-4 w-4 mr-2" />
-                        AI Generate tickets
-                      </>
-                    )}
-                  </Button>
-                </div>
-                {aiError && (
-                  <Alert variant="destructive">
-                    <AlertDescription>{aiError}</AlertDescription>
-                  </Alert>
-                )}
-                {aiGeneratedTickets.length > 0 && (
-                  <div className="rounded-lg border p-4 space-y-3 mt-3">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium">Generated tickets ({aiGeneratedTickets.length})</p>
-                      <Button size="sm" onClick={addGeneratedTicketsToBacklog}>
-                        <Plus className="h-4 w-4 mr-1" />
-                        Add all to backlog
-                      </Button>
-                    </div>
-                    <ScrollArea className="h-[200px] rounded-md border p-3">
-                      <div className="space-y-2">
-                        {aiGeneratedTickets.map((t, idx) => (
-                          <div key={idx} className="flex flex-wrap items-start gap-2 rounded-lg border p-3 bg-card">
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm">{t.title}</p>
-                              {t.description && (
-                                <p className="text-xs text-muted-foreground line-clamp-3 mt-1">{t.description}</p>
-                              )}
-                            </div>
-                            <Button size="sm" variant="outline" onClick={() => addSingleGeneratedTicket(t)}>
-                              Add
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    </ScrollArea>
-                  </div>
-                )}
-              </div>
-
-              <TicketsDataTable
-                tickets={tickets as TicketRow[]}
-                onUpdateStatus={(id, status) => updateTicket(id, { status })}
-                onDelete={deleteTicket}
-                emptyTitle="No tickets yet"
-                emptyDescription="Add a ticket using the form above."
-              />
-            </CardContent>
-          </Card>
+          <TicketManagement
+            tickets={tickets}
+            saveTickets={saveTickets}
+            updateTicket={updateTicket}
+            deleteTicket={deleteTicket}
+            allProjects={allProjects}
+            setError={setError}
+            isTauriEnv={isTauriEnv}
+          />
         </TabsContent>
 
+
         <TabsContent value="feature" className="mt-0">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Layers className="h-4 w-4" />
+          <GlassCard>
+            <ShadcnCardHeader>
+              <ShadcnCardTitle className="text-lg flex items-center gap-2">
+                <Layers className="h-5 w-5" />
                 Feature {features.length > 0 && (featureProjectFilter ? `(${filteredFeatures.length} of ${features.length})` : `(${features.length})`)}
-              </CardTitle>
-              <CardDescription>
+              </ShadcnCardTitle>
+              <ShadcnCardDescription className="text-base">
                 Combine tickets with prompts and projects; run automation or use in run. Filter by project below. Scroll to see all.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Accordion type="single" collapsible className="w-full rounded-lg border bg-muted/30">
+              </ShadcnCardDescription>
+            </ShadcnCardHeader>
+            <ShadcnCardContent className="space-y-4">
+              <Accordion type="single" collapsible className="w-full rounded-lg border bg-muted/30 glasgmorphism">
                 <AccordionItem value="add-feature" className="border-none">
                   <AccordionTrigger className="px-4 py-3 hover:no-underline [&[data-state=open]]:border-b">
                     <span className="text-sm font-medium">Add feature</span>
@@ -1234,19 +842,19 @@ Suggest actionable work items: setup, dependencies, features, tests, and documen
                   )}
                 </div>
               </ScrollArea>
-            </CardContent>
+            </ShadcnCardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="projects" className="mt-0">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Active repos (for this run)</CardTitle>
-              <CardDescription>
+          <GlassCard>
+            <ShadcnCardHeader>
+              <ShadcnCardTitle className="text-lg">Active repos (for this run)</ShadcnCardTitle>
+              <ShadcnCardDescription className="text-base">
                 Check repo paths to include when running prompts. Order is preserved. Save writes cursor_projects.json. For project pages (design, ideas, features, tickets, prompts), use <strong>Projects</strong> in the sidebar.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+              </ShadcnCardDescription>
+            </ShadcnCardHeader>
+            <ShadcnCardContent className="space-y-4">
               <ScrollArea className="h-[280px] rounded-md border p-3">
                 <div className="space-y-2">
                   {allProjects.map((path) => {
@@ -1269,7 +877,7 @@ Suggest actionable work items: setup, dependencies, features, tests, and documen
                 </div>
               </ScrollArea>
               <Button onClick={saveActiveProjects}>Save active to cursor_projects.json</Button>
-            </CardContent>
+            </ShadcnCardContent>
           </Card>
         </TabsContent>
 
@@ -1282,15 +890,15 @@ Suggest actionable work items: setup, dependencies, features, tests, and documen
           </div>
 
           <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Folders className="h-4 w-4" />
+            <GlassCard>
+              <ShadcnCardHeader className="pb-2">
+                <ShadcnCardTitle className="text-lg flex items-center gap-2">
+                  <Folders className="h-5 w-5" />
                   Projects
-                </CardTitle>
-                <CardDescription>All ({allProjects.length}) · Active ({activeProjects.length})</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2">
+                </ShadcnCardTitle>
+                <ShadcnCardDescription className="text-base">All ({allProjects.length}) · Active ({activeProjects.length})</ShadcnCardDescription>
+              </ShadcnCardHeader>
+              <ShadcnCardContent className="space-y-2">
                 <ScrollArea className="h-[200px] rounded border p-2">
                   <div className="space-y-1">
                     {allProjects.map((path) => {
@@ -1307,18 +915,18 @@ Suggest actionable work items: setup, dependencies, features, tests, and documen
                   </div>
                 </ScrollArea>
                 <Button size="sm" onClick={saveActiveProjects}>Save active</Button>
-              </CardContent>
+              </ShadcnCardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
+            <GlassCard>
+              <ShadcnCardHeader className="pb-2">
+                <ShadcnCardTitle className="text-lg flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5" />
                   Prompts
-                </CardTitle>
-                <CardDescription>{prompts.length} prompts</CardDescription>
-              </CardHeader>
-              <CardContent>
+                </ShadcnCardTitle>
+                <ShadcnCardDescription className="text-base">{prompts.length} prompts</ShadcnCardDescription>
+              </ShadcnCardHeader>
+              <ShadcnCardContent>
                 <ScrollArea className="h-[200px] rounded border p-2">
                   <div className="space-y-1 text-sm">
                     {prompts.map((p) => (
@@ -1336,20 +944,20 @@ Suggest actionable work items: setup, dependencies, features, tests, and documen
                   </div>
                 </ScrollArea>
                 <p className="text-xs text-muted-foreground mt-2">Select prompts for Run. Edit on Prompts page.</p>
-              </CardContent>
+              </ShadcnCardContent>
             </Card>
           </div>
 
           <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <TicketIcon className="h-4 w-4" />
+            <GlassCard>
+              <ShadcnCardHeader className="pb-2">
+                <ShadcnCardTitle className="text-lg flex items-center gap-2">
+                  <TicketIcon className="h-5 w-5" />
                   Tickets
-                </CardTitle>
-                <CardDescription>{tickets.length} tickets</CardDescription>
-              </CardHeader>
-              <CardContent>
+                </ShadcnCardTitle>
+                <ShadcnCardDescription className="text-base">{tickets.length} tickets</ShadcnCardDescription>
+              </ShadcnCardHeader>
+              <ShadcnCardContent>
                 <ScrollArea className="h-[220px] rounded border p-2">
                   <div className="space-y-2 text-sm">
                     {tickets.slice(0, 30).map((t) => (
@@ -1364,18 +972,18 @@ Suggest actionable work items: setup, dependencies, features, tests, and documen
                   </div>
                 </ScrollArea>
                 <p className="text-xs text-muted-foreground mt-2">Full list on Tickets tab.</p>
-              </CardContent>
+              </ShadcnCardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Layers className="h-4 w-4" />
+            <GlassCard>
+              <ShadcnCardHeader className="pb-2">
+                <ShadcnCardTitle className="text-lg flex items-center gap-2">
+                  <Layers className="h-5 w-5" />
                   Features
-                </CardTitle>
-                <CardDescription>{features.length} features (prompts + projects)</CardDescription>
-              </CardHeader>
-              <CardContent>
+                </ShadcnCardTitle>
+                <ShadcnCardDescription className="text-base">{features.length} features (prompts + projects)</ShadcnCardDescription>
+              </ShadcnCardHeader>
+              <ShadcnCardContent>
                 <ScrollArea className="h-[220px] rounded border p-2">
                   <div className="space-y-2 text-sm">
                     {features.map((f) => (
@@ -1389,22 +997,22 @@ Suggest actionable work items: setup, dependencies, features, tests, and documen
                   </div>
                 </ScrollArea>
                 <p className="text-xs text-muted-foreground mt-2">Configure on Feature tab.</p>
-              </CardContent>
+              </ShadcnCardContent>
             </Card>
           </div>
 
           <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Lightbulb className="h-4 w-4" />
+            <GlassCard>
+              <ShadcnCardHeader className="pb-2">
+                <ShadcnCardTitle className="text-lg flex items-center gap-2">
+                  <Lightbulb className="h-5 w-5" />
                   Ideas
-                </CardTitle>
-                <CardDescription>
+                </ShadcnCardTitle>
+                <ShadcnCardDescription className="text-base">
                   {ideasLoading ? "Loading…" : `${ideas.length} ideas`}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
+                </ShadcnCardDescription>
+              </ShadcnCardHeader>
+              <ShadcnCardContent>
                 {ideasLoading ? (
                   <Skeleton className="h-[200px] w-full rounded" />
                 ) : (
@@ -1423,37 +1031,37 @@ Suggest actionable work items: setup, dependencies, features, tests, and documen
                 <p className="text-xs text-muted-foreground mt-2">
                   <Link href="/ideas" className="text-primary hover:underline">Ideas page</Link> to create and edit.
                 </p>
-              </CardContent>
+              </ShadcnCardContent>
             </Card>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Palette className="h-4 w-4" />
+            <GlassCard>
+              <ShadcnCardHeader className="pb-2">
+                <ShadcnCardTitle className="text-lg flex items-center gap-2">
+                  <Palette className="h-5 w-5" />
                   Design
-                </CardTitle>
-                <CardDescription>Design config and markdown spec</CardDescription>
-              </CardHeader>
-              <CardContent>
+                </ShadcnCardTitle>
+                <ShadcnCardDescription className="text-base">Design config and markdown spec</ShadcnCardDescription>
+              </ShadcnCardHeader>
+              <ShadcnCardContent>
                 <p className="text-sm text-muted-foreground mb-3">
                   Configure page layout, colors, typography, and sections. Generate markdown for implementation.
                 </p>
                 <Button asChild variant="outline" size="sm">
                   <Link href="/design">Open Design page</Link>
                 </Button>
-              </CardContent>
+              </ShadcnCardContent>
             </Card>
           </div>
         </TabsContent>
 
         <TabsContent value="data" className="mt-0 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Database className="h-4 w-4" />
+          <GlassCard>
+            <ShadcnCardHeader>
+              <ShadcnCardTitle className="text-lg flex items-center gap-2">
+                <Database className="h-5 w-5" />
                 DB Data
-              </CardTitle>
-              <CardDescription className="space-y-1">
+              </ShadcnCardTitle>
+              <ShadcnCardDescription className="space-y-1 text-base">
                 <span className="block">Scripts in script/, JSON files in data/, and DB data (kv_store, tickets, features).</span>
                 {isTauriEnv ? (
                   <span className="block text-muted-foreground text-xs mt-1">
@@ -1464,9 +1072,9 @@ Suggest actionable work items: setup, dependencies, features, tests, and documen
                     Browser: data is read from data/*.json via API. Scripts and JSON list from project root. Saves require the Tauri app.
                   </span>
                 )}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+              </ShadcnCardDescription>
+            </ShadcnCardHeader>
+            <ShadcnCardContent className="space-y-6">
               {dataError && (
                 <Alert variant="destructive">
                   <AlertDescription>{dataError}</AlertDescription>
@@ -1478,7 +1086,7 @@ Suggest actionable work items: setup, dependencies, features, tests, and documen
                 </p>
               )}
 
-              <Accordion type="multiple" className="w-full" defaultValue={["scripts", "json", "db"]}>
+              <Accordion type="multiple" className="w-full glasgmorphism" defaultValue={["scripts", "json", "db"]}>
                 <AccordionItem value="scripts">
                   <AccordionTrigger className="flex items-center gap-2">
                     <FileCode className="h-4 w-4" />
@@ -1581,7 +1189,7 @@ Suggest actionable work items: setup, dependencies, features, tests, and documen
 
                 <AccordionItem value="db">
                   <AccordionTrigger className="flex items-center gap-2">
-                    <Database className="h-4 w-4" />
+                    <Database className="h-5 w-5" />
                     DB Data (kv_store, tickets, features)
                   </AccordionTrigger>
                   <AccordionContent className="space-y-4">
@@ -1626,21 +1234,21 @@ Suggest actionable work items: setup, dependencies, features, tests, and documen
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
-            </CardContent>
+            </ShadcnCardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="log" className="mt-0">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Script output</CardTitle>
-              <CardDescription>
+          <GlassCard>
+            <ShadcnCardHeader>
+              <ShadcnCardTitle className="text-lg">Script output</ShadcnCardTitle>
+              <ShadcnCardDescription className="text-base">
                 {selectedRunId != null
                   ? `Live output: ${runningRuns.find((r) => r.runId === selectedRunId)?.label ?? "Run"}`
                   : "Select a run from the top-right to view its output, or start a run from Feature or Prompts."}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+              </ShadcnCardDescription>
+            </ShadcnCardHeader>
+            <ShadcnCardContent>
               <ScrollArea className="h-[400px] rounded border bg-muted/30 p-3 font-mono text-sm">
                 {displayLogLines.length === 0 && !running && (
                   <p className="text-muted-foreground">
@@ -1654,7 +1262,7 @@ Suggest actionable work items: setup, dependencies, features, tests, and documen
                 ))}
                 <div ref={logEndRef} />
               </ScrollArea>
-            </CardContent>
+            </ShadcnCardContent>
           </Card>
         </TabsContent>
       </div>

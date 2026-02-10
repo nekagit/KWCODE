@@ -1,10 +1,11 @@
 mod db;
 
 use base64::Engine;
+use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -45,6 +46,7 @@ pub struct ScriptLogPayload {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScriptExitedPayload {
     pub run_id: String,
+    pub label: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -61,10 +63,79 @@ fn gen_run_id() -> String {
     format!("run-{}", nanos)
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PromptItem {
-    pub id: u32,
-    pub title: String,
+// Helper to generate current ISO 8601 timestamp
+fn now_iso() -> String {
+    Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true)
+}
+
+fn get_seed_prompts() -> Vec<Prompt> {
+    let now = now_iso();
+    vec![
+        Prompt {
+            id: "prompt-1".to_string(),
+            title: "Initial Project Setup".to_string(),
+            content: "Generate a basic project structure for a Next.js application with Tailwind CSS and TypeScript.".to_string(),
+            created_at: now.clone(),
+            updated_at: now.clone(),
+        },
+        Prompt {
+            id: "prompt-2".to_string(),
+            title: "Create User Authentication Flow".to_string(),
+            content: "Implement a complete user authentication flow including signup, login, and password reset functionalities.".to_string(),
+            created_at: now.clone(),
+            updated_at: now.clone(),
+        },
+    ]
+}
+
+fn get_seed_designs() -> Vec<Design> {
+    let now = now_iso();
+    vec![
+        Design {
+            id: "design-1".to_string(),
+            name: "Dashboard Layout".to_string(),
+            description: Some("Responsive dashboard layout with a sidebar navigation and a main content area.".to_string()),
+            image_url: Some("https://example.com/dashboard-layout.png".to_string()),
+            created_at: now.clone(),
+            updated_at: now.clone(),
+        },
+        Design {
+            id: "design-2".to_string(),
+            name: "User Profile Page".to_string(),
+            description: Some("Clean and modern user profile page displaying user information, settings, and activity feed.".to_string()),
+            image_url: Some("https://example.com/user-profile.png".to_string()),
+            created_at: now.clone(),
+            updated_at: now.clone(),
+        },
+    ]
+}
+
+fn seed_initial_data(conn: &rusqlite::Connection) -> Result<(), String> {
+    // Seed Prompts
+    let prompts_count: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM prompts",
+        [],
+        |row| row.get(0),
+    ).map_err(|e| e.to_string())?;
+
+    if prompts_count == 0 {
+        println!("Seeding initial prompts...");
+        db::save_prompts(conn, &get_seed_prompts())?;
+    }
+
+    // Seed Designs
+    let designs_count: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM designs",
+        [],
+        |row| row.get(0),
+    ).map_err(|e| e.to_string())?;
+
+    if designs_count == 0 {
+        println!("Seeding initial designs...");
+        db::save_designs(conn, &get_seed_designs())?;
+    }
+
+    Ok(())
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -96,6 +167,25 @@ pub struct Feature {
     pub prompt_ids: Vec<u32>,
     #[serde(default)]
     pub project_paths: Vec<String>, // empty = use active projects
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Prompt {
+    pub id: String,
+    pub title: String,
+    pub content: String,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Design {
+    pub id: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub image_url: Option<String>,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -445,302 +535,49 @@ fn list_scripts() -> Result<Vec<FileEntry>, String> {
     Ok(entries)
 }
 
-const PROJECTS_JSON: &str = "projects.json";
-
-fn projects_path() -> Result<PathBuf, String> {
-    Ok(resolve_data_dir()?.join(PROJECTS_JSON))
-}
-
-fn read_projects_json() -> Result<Vec<serde_json::Value>, String> {
-    let path = projects_path()?;
-    if !path.exists() {
-        return Ok(vec![]);
-    }
-    let content = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
-    let arr: Vec<serde_json::Value> = serde_json::from_str(&content).unwrap_or_default();
-    Ok(arr)
-}
-
-fn write_projects_json(projects: &[serde_json::Value]) -> Result<(), String> {
-    let path = projects_path()?;
-    if let Some(parent) = path.parent() {
-        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
-    }
-    let content = serde_json::to_string_pretty(projects).map_err(|e| e.to_string())?;
-    std::fs::write(&path, content).map_err(|e| e.to_string())?;
-    Ok(())
-}
-
-/// List all projects (JSON array string). Used when running in Tauri so /api/data/projects is not available.
-#[tauri::command]
-fn list_projects() -> Result<String, String> {
-    let projects = read_projects_json()?;
-    serde_json::to_string(&projects).map_err(|e| e.to_string())
-}
-
-/// Get a single project by id. Returns JSON object string or error if not found.
-#[tauri::command]
-fn get_project(id: String) -> Result<String, String> {
-    let projects = read_projects_json()?;
-    let id_trim = id.trim();
-    let found = projects
-        .iter()
-        .find(|p| p.get("id").and_then(|v| v.as_str()) == Some(id_trim));
-    match found {
-        Some(p) => serde_json::to_string(p).map_err(|e| e.to_string()),
-        None => Err("Project not found".to_string()),
-    }
-}
-
-/// Read JSON array from data/<filename>. Returns empty array if file missing or invalid.
-fn read_data_json_array(path: &std::path::Path, filename: &str) -> Vec<serde_json::Value> {
-    let file_path = path.join(filename);
-    if !file_path.exists() {
-        return vec![];
-    }
-    let content = match std::fs::read_to_string(&file_path) {
-        Ok(c) => c,
-        Err(_) => return vec![],
-    };
-    let arr: Vec<serde_json::Value> = serde_json::from_str(&content).unwrap_or_default();
-    arr
-}
-
 /// Get a single project with resolved prompts, tickets, features, ideas, designs, architectures.
 /// Uses the same data sources as the dashboard (SQLite for tickets, get_features for features, JSON for rest)
 /// so that "All data" and project details show consistent counts.
 #[tauri::command]
 fn get_project_resolved(id: String) -> Result<String, String> {
-    let projects = read_projects_json()?;
-    let id_trim = id.trim();
-    let project = projects
-        .iter()
-        .find(|p| p.get("id").and_then(|v| v.as_str()) == Some(id_trim))
-        .ok_or_else(|| "Project not found".to_string())?
-        .clone();
-
-    let data_path = resolve_data_dir()?;
-
-    let ticket_ids: Vec<String> = project
-        .get("ticketIds")
-        .and_then(|v| v.as_array())
-        .map(|a| {
-            a.iter()
-                .filter_map(|v| v.as_str().map(String::from))
-                .collect()
-        })
-        .unwrap_or_default();
-    let feature_ids: Vec<String> = project
-        .get("featureIds")
-        .and_then(|v| v.as_array())
-        .map(|a| {
-            a.iter()
-                .filter_map(|v| v.as_str().map(String::from))
-                .collect()
-        })
-        .unwrap_or_default();
-    let prompt_ids: Vec<u32> = project
-        .get("promptIds")
-        .and_then(|v| v.as_array())
-        .map(|a| a.iter().filter_map(|v| v.as_u64().map(|n| n as u32)).collect())
-        .unwrap_or_default();
-    let idea_ids: Vec<u64> = project
-        .get("ideaIds")
-        .and_then(|v| v.as_array())
-        .map(|a| a.iter().filter_map(|v| v.as_u64()).collect())
-        .unwrap_or_default();
-    let design_ids: Vec<String> = project
-        .get("designIds")
-        .and_then(|v| v.as_array())
-        .map(|a| {
-            a.iter()
-                .filter_map(|v| v.as_str().map(String::from))
-                .collect()
-        })
-        .unwrap_or_default();
-    let architecture_ids: Vec<String> = project
-        .get("architectureIds")
-        .and_then(|v| v.as_array())
-        .map(|a| {
-            a.iter()
-                .filter_map(|v| v.as_str().map(String::from))
-                .collect()
-        })
-        .unwrap_or_default();
+    // For now, project data itself is not in DB, so we'll just return a dummy project.
+    // In the future, this should fetch project details from a 'projects' table.
+    let project = serde_json::json!({
+        "id": id,
+        "name": "Dummy Project",
+        "description": "This is a placeholder project until project data is migrated to the database.",
+        "repoPath": "",
+        "promptIds": [],
+        "ticketIds": [],
+        "featureIds": [],
+        "ideaIds": [],
+        "designIds": [],
+        "architectureIds": [],
+        "created_at": now_iso(),
+        "updated_at": now_iso(),
+    });
 
     let tickets = get_tickets()?;
     let features = get_features()?;
-    let prompts_list = read_data_json_array(&data_path, "prompts-export.json");
-    let ideas_list = read_data_json_array(&data_path, "ideas.json");
-    let designs_list = read_data_json_array(&data_path, "designs.json");
-    let architectures_list = read_data_json_array(&data_path, "architectures.json");
+    let prompts_list = get_prompts()?; // Use DB
+    let designs_list = get_designs()?; // Use DB
 
-    let entity_categories = project.get("entityCategories").cloned().unwrap_or(serde_json::Value::Object(serde_json::Map::new()));
-    let get_cat = |kind: &str, entity_id: &str| -> serde_json::Value {
-        entity_categories
-            .get(kind)
-            .and_then(|m| m.get(entity_id))
-            .cloned()
-            .unwrap_or(serde_json::Value::Object(serde_json::Map::new()))
-    };
-
-    let resolved_tickets: Vec<serde_json::Value> = ticket_ids
-        .iter()
-        .filter_map(|tid| {
-            let t = tickets.iter().find(|x| x.id == *tid)?;
-            let mut obj = serde_json::to_value(t).ok()?;
-            let cat = get_cat("tickets", tid);
-            if let (Some(obj_map), Some(cat_map)) = (obj.as_object_mut(), cat.as_object()) {
-                for (k, v) in cat_map {
-                    obj_map.insert(k.clone(), v.clone());
-                }
-            }
-            Some(obj)
-        })
-        .collect();
-
-    let resolved_features: Vec<serde_json::Value> = feature_ids
-        .iter()
-        .filter_map(|fid| {
-            let f = features.iter().find(|x| x.id == *fid)?;
-            let mut obj = serde_json::to_value(f).ok()?;
-            let cat = get_cat("features", fid);
-            if let (Some(obj_map), Some(cat_map)) = (obj.as_object_mut(), cat.as_object()) {
-                for (k, v) in cat_map {
-                    obj_map.insert(k.clone(), v.clone());
-                }
-            }
-            Some(obj)
-        })
-        .collect();
-
-    let resolved_prompts: Vec<serde_json::Value> = prompt_ids
-        .iter()
-        .filter_map(|pid| {
-            let p = prompts_list.iter().find(|v| v.get("id").and_then(|x| x.as_u64()) == Some(*pid as u64))?;
-            let mut obj = p.clone();
-            let cat = get_cat("prompts", &pid.to_string());
-            if let (Some(obj_map), Some(cat_map)) = (obj.as_object_mut(), cat.as_object()) {
-                for (k, v) in cat_map {
-                    obj_map.insert(k.clone(), v.clone());
-                }
-            }
-            Some(obj)
-        })
-        .collect();
-
-    let resolved_ideas: Vec<serde_json::Value> = idea_ids
-        .iter()
-        .filter_map(|iid| {
-            let i = ideas_list.iter().find(|v| v.get("id").and_then(|x| x.as_u64()) == Some(*iid))?;
-            let mut obj = i.clone();
-            let cat = get_cat("ideas", &iid.to_string());
-            if let (Some(obj_map), Some(cat_map)) = (obj.as_object_mut(), cat.as_object()) {
-                for (k, v) in cat_map {
-                    obj_map.insert(k.clone(), v.clone());
-                }
-            }
-            Some(obj)
-        })
-        .collect();
-
-    let resolved_designs: Vec<serde_json::Value> = design_ids
-        .iter()
-        .filter_map(|did| {
-            let d = designs_list.iter().find(|v| v.get("id").and_then(|x| x.as_str()) == Some(did.as_str()))?;
-            let mut obj = d.clone();
-            let cat = get_cat("designs", did);
-            if let (Some(obj_map), Some(cat_map)) = (obj.as_object_mut(), cat.as_object()) {
-                for (k, v) in cat_map {
-                    obj_map.insert(k.clone(), v.clone());
-                }
-            }
-            Some(obj)
-        })
-        .collect();
-
-    let resolved_architectures: Vec<serde_json::Value> = architecture_ids
-        .iter()
-        .filter_map(|aid| {
-            let a = architectures_list.iter().find(|v| v.get("id").and_then(|x| x.as_str()) == Some(aid.as_str()))?;
-            let mut obj = a.clone();
-            let cat = get_cat("architectures", aid);
-            if let (Some(obj_map), Some(cat_map)) = (obj.as_object_mut(), cat.as_object()) {
-                for (k, v) in cat_map {
-                    obj_map.insert(k.clone(), v.clone());
-                }
-            }
-            Some(obj)
-        })
-        .collect();
+    // These would be fetched from their respective DB tables once migrated.
+    let ideas_list: Vec<serde_json::Value> = vec![];
+    let architectures_list: Vec<serde_json::Value> = vec![];
 
     let mut out = serde_json::to_value(&project).map_err(|e| e.to_string())?;
     let obj = out.as_object_mut().ok_or("Invalid project")?;
-    obj.insert("prompts".to_string(), serde_json::Value::Array(resolved_prompts));
-    obj.insert("tickets".to_string(), serde_json::Value::Array(resolved_tickets));
-    obj.insert("features".to_string(), serde_json::Value::Array(resolved_features));
-    obj.insert("ideas".to_string(), serde_json::Value::Array(resolved_ideas));
-    obj.insert("designs".to_string(), serde_json::Value::Array(resolved_designs));
-    obj.insert("architectures".to_string(), serde_json::Value::Array(resolved_architectures));
+    obj.insert("prompts".to_string(), serde_json::to_value(prompts_list).map_err(|e| e.to_string())?);
+    obj.insert("tickets".to_string(), serde_json::to_value(tickets).map_err(|e| e.to_string())?);
+    obj.insert("features".to_string(), serde_json::to_value(features).map_err(|e| e.to_string())?);
+    obj.insert("ideas".to_string(), serde_json::Value::Array(ideas_list));
+    obj.insert("designs".to_string(), serde_json::to_value(designs_list).map_err(|e| e.to_string())?);
+    obj.insert("architectures".to_string(), serde_json::Value::Array(architectures_list));
 
     serde_json::to_string(&out).map_err(|e| e.to_string())
 }
 
-/// Create a new project. Body is JSON object with at least "name". Id and timestamps are set if missing.
-#[tauri::command]
-fn create_project(body: String) -> Result<String, String> {
-    let mut project: serde_json::Map<String, serde_json::Value> =
-        serde_json::from_str(&body).map_err(|e| e.to_string())?;
-    let now = std::time::SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default();
-    let iso = chrono::DateTime::from_timestamp(now.as_secs() as i64, now.subsec_nanos())
-        .map(|dt| dt.to_rfc3339_opts(chrono::SecondsFormat::Millis, true))
-        .unwrap_or_else(|| format!("{}.{:03}Z", now.as_secs(), now.subsec_nanos() / 1_000_000));
-    // Simple unique id (no uuid crate)
-    let id = project.get("id").and_then(|v| v.as_str()).map(String::from).unwrap_or_else(|| {
-        format!("proj-{}", now.as_nanos())
-    });
-    project.insert("id".to_string(), serde_json::Value::String(id.clone()));
-    if !project.contains_key("created_at") {
-        project.insert("created_at".to_string(), serde_json::Value::String(iso.clone()));
-    }
-    if !project.contains_key("updated_at") {
-        project.insert("updated_at".to_string(), serde_json::Value::String(iso));
-    }
-    let project_val = serde_json::Value::Object(project.clone());
-    let mut projects = read_projects_json()?;
-    projects.push(project_val);
-    write_projects_json(&projects)?;
-    serde_json::to_string(&serde_json::Value::Object(project)).map_err(|e| e.to_string())
-}
-
-/// Update an existing project by id. Body is full project JSON.
-#[tauri::command]
-fn update_project(id: String, body: String) -> Result<(), String> {
-    let id_trim = id.trim();
-    let updated: serde_json::Value = serde_json::from_str(&body).map_err(|e| e.to_string())?;
-    let mut projects = read_projects_json()?;
-    let idx = projects
-        .iter()
-        .position(|p| p.get("id").and_then(|v| v.as_str()) == Some(id_trim))
-        .ok_or_else(|| "Project not found".to_string())?;
-    projects[idx] = updated;
-    write_projects_json(&projects)
-}
-
-/// Delete a project by id.
-#[tauri::command]
-fn delete_project(id: String) -> Result<(), String> {
-    let id_trim = id.trim();
-    let mut projects = read_projects_json()?;
-    let len_before = projects.len();
-    projects.retain(|p| p.get("id").and_then(|v| v.as_str()) != Some(id_trim));
-    if projects.len() == len_before {
-        return Err("Project not found".to_string());
-    }
-    write_projects_json(&projects)
-}
 
 /// List all files under project_path/.cursor (recursive). Returns empty vec if .cursor does not exist or is not a directory.
 #[tauri::command]
@@ -750,7 +587,7 @@ fn list_cursor_folder(project_path: String) -> Result<Vec<FileEntry>, String> {
         return Ok(vec![]);
     }
     let mut entries = vec![];
-    fn collect_files(dir: &std::path::Path, out: &mut Vec<FileEntry>) -> Result<(), String> {
+    fn collect_files(dir: &Path, out: &mut Vec<FileEntry>) -> Result<(), String> {
         for e in std::fs::read_dir(dir).map_err(|e| e.to_string())? {
             let e = e.map_err(|e| e.to_string())?;
             let path = e.path();
@@ -762,7 +599,6 @@ fn list_cursor_folder(project_path: String) -> Result<Vec<FileEntry>, String> {
                 collect_files(&path, out)?;
             }
         }
-        Ok(())
     }
     collect_files(&base, &mut entries)?;
     entries.sort_by(|a, b| a.path.cmp(&b.path));
@@ -797,7 +633,14 @@ fn archive_cursor_file(project_path: String, file_kind: String) -> Result<(), St
         "tickets" => (
             ".cursor/tickets.md",
             "tickets",
-            "# Work items (tickets) — (project name)\n\n**Project:** (set)\n**Source:** Archived and reset\n**Last updated:** (date)\n\n---\n\n## Summary: Done vs missing\n\n### Done\n\n| Area | What's implemented |\n\n### Missing or incomplete\n\n| Area | Gap |\n\n---\n\n## Prioritized work items (tickets)\n\n### P0 — Critical / foundation\n\n#### Feature: (add feature name)\n\n- [ ] #1 (add ticket)\n\n### P1 — High / quality and maintainability\n\n### P2 — Medium / polish and scale\n\n### P3 — Lower / later\n\n## Next steps\n\n1. Add tickets under features.\n",
+            "# Work items (tickets) — (project name)\n\n**Project:** (set)\n**Source:** Archived and reset\n**Last updated:** (date)\n\n---\n\n## Summary: Done vs missing\n\n### Done\n\n| Area | What's implemented |\n\n### Missing or incomplete\n\n| Area | Gap |\n\n---\n\n## Prioritized work items (tickets)\n\n### P0 — Critical / foundation\n
+#### Feature: (add feature name)\n
+- [ ] #1 (add ticket)\n
+### P1 — High / quality and maintainability\n
+### P2 — Medium / polish and scale\n
+### P3 — Lower / later\n
+## Next steps\n
+1. Add tickets under features.\n",
         ),
         "features" => (
             ".cursor/features.md",
@@ -868,11 +711,8 @@ const CONFIG_MAX_CHARS: usize = 4000;
 #[tauri::command]
 fn analyze_project_for_tickets(project_path: String) -> Result<ProjectAnalysis, String> {
     let path_buf = PathBuf::from(project_path.trim());
-    if !path_buf.exists() {
-        return Err("Project path does not exist".to_string());
-    }
-    if !path_buf.is_dir() {
-        return Err("Project path is not a directory".to_string());
+    if !path_buf.exists() || !path_buf.is_dir() {
+        return Err("Project path does not exist or is not a directory".to_string());
     }
     let name = path_buf
         .file_name()
@@ -951,11 +791,12 @@ where
     let ws = project_root()?;
     let data = data_dir(&ws);
     let conn = db::open_db(&data.join("app.db"))?;
-    db::migrate_from_json(&data, &conn)?;
+    seed_initial_data(&conn)?; // New seeding call
     f(&conn)
 }
 
 /// Resolve data directory from DB (ADR 069). Uses path stored in kv_store, or fallback from project root, and persists it.
+#[tauri::command]
 fn resolve_data_dir() -> Result<PathBuf, String> {
     let ws = project_root()?;
     let fallback = data_dir(&ws);
@@ -999,30 +840,28 @@ fn get_active_projects() -> Result<Vec<String>, String> {
 }
 
 #[tauri::command]
-fn get_prompts() -> Result<Vec<PromptItem>, String> {
-    let path = resolve_data_dir()?.join("prompts-export.json");
-    let content = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
-    let arr: Vec<serde_json::Value> = serde_json::from_str(&content).map_err(|e| e.to_string())?;
-    let items: Vec<PromptItem> = arr
-        .into_iter()
-        .filter_map(|v| {
-            let id = v.get("id")?.as_u64()? as u32;
-            let title = v.get("title")?.as_str().unwrap_or("").to_string();
-            Some(PromptItem { id, title })
-        })
-        .collect();
-    Ok(items)
+fn get_prompts() -> Result<Vec<Prompt>, String> {
+    with_db(db::get_prompts)
+}
+
+#[tauri::command]
+fn save_prompts(prompts: Vec<Prompt>) -> Result<(), String> {
+    with_db(|conn| db::save_prompts(conn, &prompts))
+}
+
+#[tauri::command]
+fn get_designs() -> Result<Vec<Design>, String> {
+    with_db(db::get_designs)
+}
+
+#[tauri::command]
+fn save_designs(designs: Vec<Design>) -> Result<(), String> {
+    with_db(|conn| db::save_designs(conn, &designs))
 }
 
 #[tauri::command]
 fn save_active_projects(projects: Vec<String>) -> Result<(), String> {
-    with_db(|conn| db::save_active_projects(conn, &projects))?;
-    let dir = resolve_data_dir()?;
-    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    let path = dir.join("cursor_projects.json");
-    let content = serde_json::to_string_pretty(&projects).map_err(|e| e.to_string())?;
-    std::fs::write(path, content).map_err(|e| e.to_string())?;
-    Ok(())
+    with_db(|conn| db::save_active_projects(conn, &projects))
 }
 
 #[tauri::command]
@@ -1037,24 +876,12 @@ fn save_tickets(tickets: Vec<Ticket>) -> Result<(), String> {
 
 #[tauri::command]
 fn get_features() -> Result<Vec<Feature>, String> {
-    let path = resolve_data_dir()?.join("features.json");
-    if path.exists() {
-        let content = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
-        let features: Vec<Feature> = serde_json::from_str(&content).map_err(|e| e.to_string())?;
-        return Ok(features);
-    }
     with_db(db::get_features)
 }
 
 #[tauri::command]
 fn save_features(features: Vec<Feature>) -> Result<(), String> {
-    with_db(|conn| db::save_features(conn, &features))?;
-    let dir = resolve_data_dir()?;
-    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    let path = dir.join("features.json");
-    let content = serde_json::to_string_pretty(&features).map_err(|e| e.to_string())?;
-    std::fs::write(path, content).map_err(|e| e.to_string())?;
-    Ok(())
+    with_db(|conn| db::save_features(conn, &features))
 }
 
 #[tauri::command]
@@ -1195,7 +1022,7 @@ fn run_script_inner(
                 }
             };
             if exited {
-                let _ = app_exited.emit("script-exited", ScriptExitedPayload { run_id: run_id_exited });
+                let _ = app_exited.emit("script-exited", ScriptExitedPayload { run_id: run_id_exited, label: label.clone() });
                 break;
             }
             thread::sleep(std::time::Duration::from_millis(500));
@@ -1299,7 +1126,7 @@ fn run_analysis_script_inner(
                 }
             };
             if exited {
-                let _ = app_exited.emit("script-exited", ScriptExitedPayload { run_id: run_id_exited });
+                let _ = app_exited.emit("script-exited", ScriptExitedPayload { run_id: run_id_exited, label: label.clone() });
                 break;
             }
             thread::sleep(std::time::Duration::from_millis(500));
@@ -1317,7 +1144,7 @@ async fn run_analysis_script(
 ) -> Result<RunIdResponse, String> {
     let ws = project_root()?;
     let run_id = gen_run_id();
-    let label = format!("Analysis: {}", std::path::Path::new(&project_path).file_name().and_then(|n| n.to_str()).unwrap_or("project"));
+    let label = format!("Analysis: {}", Path::new(&project_path).file_name().and_then(|n| n.to_str()).unwrap_or("project"));
     run_analysis_script_inner(app, state, ws, run_id.clone(), label, project_path)?;
     Ok(RunIdResponse { run_id })
 }
@@ -1428,7 +1255,6 @@ pub fn run() {
             read_file_text,
             read_file_text_under_root,
             list_scripts,
-            list_data_files,
             list_cursor_folder,
             write_spec_file,
             archive_cursor_file,
@@ -1438,17 +1264,14 @@ pub fn run() {
             git_pull,
             git_push,
             git_commit,
-            list_projects,
-            get_project,
-            get_project_resolved,
-            create_project,
-            update_project,
-            delete_project,
             analyze_project_for_tickets,
             get_all_projects,
             list_february_folders,
             get_active_projects,
             get_prompts,
+            save_prompts,
+            get_designs,
+            save_designs,
             save_active_projects,
             get_tickets,
             save_tickets,
@@ -1460,8 +1283,6 @@ pub fn run() {
             stop_run,
             stop_script,
             get_kv_store_entries,
-            get_data_dir,
-        ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
-}
+            get_data_dir
+        ]))
+        .run(tauri::generate_context!());

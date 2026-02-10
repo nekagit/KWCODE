@@ -80,6 +80,10 @@ export const generatePromptFromKanbanSchema = z.object({
   })).optional().default([]),
 });
 
+export const generateCommitMessageSchema = z.object({
+  changes: z.string().min(1, "changes is required").max(50000),
+});
+
 export const createProjectSchema = z.object({
   name: z.string().min(1, "name is required").max(500),
   description: z.string().optional(),

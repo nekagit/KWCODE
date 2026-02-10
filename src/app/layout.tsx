@@ -5,10 +5,12 @@ import { RunStoreHydration } from "@/store/run-store-hydration";
 import { AppShell } from "@/components/app-shell";
 import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { UIThemeProvider } from "@/context/ui-theme";
+import { QuickActionsProvider } from "@/context/quick-actions-context";
 
 export const metadata: Metadata = {
-  title: "Run Prompts Control",
-  description: "Control run_prompts_all_projects.sh",
+  title: "KWCode",
+  description: "KWCode – development workflow and prompts",
 };
 
 export default function RootLayout({
@@ -16,13 +18,17 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const isDev = process.env.NODE_ENV === "development";
+
   return (
-    <html lang="en" style={{ background: "hsl(var(--background))" }}>
+    <html lang="en" style={{ background: "hsl(var(--background, 0 0% 98%))" }} suppressHydrationWarning>
       <head>
+        {/* In dev, base href ensures Tauri webview resolves relative asset URLs (e.g. /_next/static) against the dev server. */}
+        {isDev && <base href="http://127.0.0.1:4000/" />}
         {/* Apply stored UI theme before paint so first paint and loading overlay match Configuration choice */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){var t=localStorage.getItem("app-ui-theme");var v=["light","dark","ocean","forest","warm","red"];if(t&&v.indexOf(t)!==-1){document.documentElement.setAttribute("data-theme",t);}})();`,
+            __html: `(function(){var t=localStorage.getItem("app-ui-theme");var v=["light","dark","ocean","forest","warm","red"];var themeToApply=t&&v.indexOf(t)!==-1?t:"dark";document.documentElement.setAttribute("data-theme",themeToApply);})();`,
           }}
         />
         {/* Critical CSS: variables + base so Tauri webview has styles even if main stylesheet is delayed or blocked */}
@@ -38,6 +44,7 @@ export default function RootLayout({
             --primary: 240 5.9% 10%;
             --primary-foreground: 0 0% 98%;
             --secondary: 240 4.8% 95.9%;
+            --secondary-foreground: 240 5.9% 10%;
             --accent: 240 4.8% 95.9%;
             --ring: 240 5.9% 10%;
             --radius: 0.5rem;
@@ -45,19 +52,23 @@ export default function RootLayout({
           *,*::before,*::after { box-sizing: border-box; }
           * { border-color: hsl(var(--border)); }
           html, body { margin: 0; min-height: 100%; background: hsl(var(--background)); color: hsl(var(--foreground)); -webkit-font-smoothing: antialiased; }
-          #root-loading { position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:hsl(var(--background));color:hsl(var(--foreground));z-index:9999; }
-          #root-loading[data-loaded=true] { opacity:0;pointer-events:none;transition:opacity .3s; }
-          #root-loading .spinner { width:32px;height:32px;border:2px solid hsl(var(--border));border-top-color:hsl(var(--foreground));border-radius:50%;animation:root-load-spin .8s linear infinite; }
-          @keyframes root-load-spin { to { transform: rotate(360deg); } }
+          #root-loading { position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000;color:#fff;z-index:9999; }
+          #root-loading[data-loaded=true] { opacity:0;pointer-events:none;transition:opacity .5s ease-out; }
+          @keyframes root-loading-spin { to { transform: rotate(360deg); } }
+          @keyframes root-loading-pulse { 0%,100% { opacity: 0.4; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1); } }
         `}} />
       </head>
       <body className="min-h-screen antialiased bg-background text-foreground" style={{ background: "hsl(var(--background))", color: "hsl(var(--foreground))" }}>
         <RootLoadingOverlay />
         <RunStoreHydration />
-        <TooltipProvider>
-          <Toaster richColors position="top-center" />
-          <AppShell>{children}</AppShell>
-        </TooltipProvider>
+        <UIThemeProvider>
+          <TooltipProvider>
+            <QuickActionsProvider>
+              <Toaster richColors position="top-center" />
+              <AppShell>{children}</AppShell>
+            </QuickActionsProvider>
+          </TooltipProvider>
+        </UIThemeProvider>
       </body>
     </html>
   );

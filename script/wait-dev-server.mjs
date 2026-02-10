@@ -13,10 +13,10 @@ const devUrl = process.env.TAURI_DEV_URL || `${baseUrl}/`;
 const maxWaitMs = 90_000;
 const pollMs = 500;
 // Extra delay after first 200 so Next.js has time to compile (avoids white screen)
-const readyDelayMs = 3000;
+const readyDelayMs = 2000;
 // Max time to wait for a chunk URL to return 200 (Next compiles on first request)
-const chunkReadyMaxMs = 60_000;
-const chunkPollMs = 800;
+const chunkReadyMaxMs = 90_000;
+const chunkPollMs = 1000;
 
 function check(urlToCheck) {
   return fetch(urlToCheck, { method: "GET", signal: AbortSignal.timeout(3000) })
@@ -33,12 +33,15 @@ async function waitReady() {
   return false;
 }
 
-/** Get first script src that looks like a Next.js chunk (_next/static). */
+/** Get first script src that looks like a Next.js chunk (_next/static or _next/webpack). */
 function findChunkUrl(html) {
-  const m1 = html.match(/<script[^>]+src=["']([^"']*_next\/static[^"']+)["']/);
-  if (m1) return m1[1];
-  const m2 = html.match(/src=["']([^"']*_next\/static[^"']+)["'][^>]*>/);
-  return m2 ? m2[1] : null;
+  // A more generic regex to find any script tag with a src attribute that contains "_next/"
+  const nextScriptMatch = html.match(/<script[^>]+src=[\"\']([^\"\']*\/_next\/[^\"\']+)[\"\']/);
+  if (nextScriptMatch) {
+    console.log("Found potential Next.js chunk URL:", nextScriptMatch[1]);
+    return nextScriptMatch[1];
+  }
+  return null;
 }
 
 /** Resolve relative chunk URL against dev origin. */
@@ -53,7 +56,9 @@ async function waitForChunk() {
   const deadline = Date.now() + chunkReadyMaxMs;
   while (Date.now() < deadline) {
     try {
+      console.log("Fetching devUrl: ", devUrl);
       const res = await fetch(devUrl, { method: "GET", signal: AbortSignal.timeout(5000) });
+      console.log("DevUrl response status: ", res.status);
       if (!res.ok) {
         await new Promise((r) => setTimeout(r, chunkPollMs));
         continue;
@@ -61,16 +66,20 @@ async function waitForChunk() {
       const html = await res.text();
       const src = findChunkUrl(html);
       if (!src) {
+        console.log("No chunk URL found in HTML. Retrying...");
         await new Promise((r) => setTimeout(r, chunkPollMs));
         continue;
       }
       const chunkUrl = resolveChunkUrl(src);
+      console.log("Checking chunk URL: ", chunkUrl);
       const chunkRes = await fetch(chunkUrl, { method: "GET", signal: AbortSignal.timeout(5000) });
+      console.log("Chunk URL response status: ", chunkRes.status);
       if (chunkRes.ok) {
+        console.log("Chunk URL is ready!");
         return true;
       }
-    } catch {
-      // ignore
+    } catch (error) {
+      console.log("Error while waiting for chunk: ", error.message);
     }
     await new Promise((r) => setTimeout(r, chunkPollMs));
   }
@@ -100,6 +109,8 @@ await new Promise((r) => setTimeout(r, readyDelayMs));
 console.log("Checking that app chunks are served…");
 const chunkReady = await waitForChunk();
 if (!chunkReady) {
-  console.warn("Warning: could not confirm chunk availability; Tauri may open with 404s. Try running 'npm run dev' first, then 'tauri dev'.");
+  console.error("Chunks not ready in time. Tauri would open with 404s. Run 'npm run dev', wait for compile, then run 'tauri dev' again.");
+  process.exit(1);
 }
+console.log("Chunks OK, Tauri can open.");
 process.exit(0);

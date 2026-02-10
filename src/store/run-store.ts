@@ -17,6 +17,8 @@ export interface RunState {
   isTauriEnv: boolean | null;
   loading: boolean;
   error: string | null;
+  /** Non-fatal message when API returns 200 but data dir missing (browser). */
+  dataWarning: string | null;
   allProjects: string[];
   activeProjects: string[];
   prompts: PromptItem[];
@@ -69,6 +71,7 @@ const initialState: RunState = {
   isTauriEnv: null,
   loading: true,
   error: null,
+  dataWarning: null,
   allProjects: [],
   activeProjects: [],
   prompts: [],
@@ -146,31 +149,28 @@ export const useRunStore = create<RunStore>()((set, get) => ({
   },
 
   refreshData: async () => {
-    set({ error: null });
-    const timeoutMs = 8_000;
+    set({ error: null, dataWarning: null });
     try {
       if (isTauri()) {
-        const load = Promise.all([
-          invoke<string[]>("get_all_projects").catch(() => []),
-          invoke<string[]>("get_active_projects").catch(() => []),
-          invoke<PromptItem[]>("get_prompts").catch(() => []),
+        const [all, active, promptList] = await Promise.all([
+          invoke<string[]>("get_all_projects"),
+          invoke<string[]>("get_active_projects"),
+          invoke<PromptItem[]>("get_prompts"),
         ]);
-        const race = Promise.race([
-          load,
-          new Promise<[string[], string[], PromptItem[]]>((_, reject) =>
-            setTimeout(() => reject(new Error("Data load timed out")), timeoutMs)
-          ),
-        ]);
-        const [all, active, promptList] = await race;
         set({ allProjects: all, activeProjects: active, prompts: promptList });
       } else {
         const res = await fetch("/api/data");
         if (!res.ok) throw new Error(await getApiErrorMessage(res));
         const data = await res.json();
+        const warning =
+          typeof (data as { _warning?: string })._warning === "string"
+            ? (data as { _warning: string })._warning
+            : null;
         set({
           allProjects: Array.isArray(data.allProjects) ? data.allProjects : [],
           activeProjects: Array.isArray(data.activeProjects) ? data.activeProjects : [],
           prompts: Array.isArray(data.prompts) ? data.prompts : [],
+          dataWarning: warning ?? null,
         });
       }
     } catch (e) {
@@ -371,6 +371,7 @@ export function useRunState() {
       isTauriEnv: s.isTauriEnv,
       loading: s.loading,
       error: s.error,
+      dataWarning: s.dataWarning,
       setError: s.setError,
       allProjects: s.allProjects,
       activeProjects: s.activeProjects,

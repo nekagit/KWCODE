@@ -50,6 +50,21 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS prompts (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            content TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS designs (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            image_url TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
         ",
     )
     .map_err(|e| e.to_string())?;
@@ -352,6 +367,94 @@ pub fn save_features(conn: &Connection, features: &[super::Feature]) -> Result<(
                 project_paths,
                 f.created_at,
                 f.updated_at,
+            ],
+        )
+        .map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+pub fn get_prompts(conn: &Connection) -> Result<Vec<super::Prompt>, String> {
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, title, content, created_at, updated_at FROM prompts ORDER BY updated_at DESC",
+        )
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map([], |row| {
+            Ok(super::Prompt {
+                id: row.get(0)?,
+                title: row.get(1)?,
+                content: row.get(2)?,
+                created_at: row.get(3)?,
+                updated_at: row.get(4)?,
+            })
+        })
+        .map_err(|e| e.to_string())?;
+    let mut out = vec![];
+    for row in rows {
+        out.push(row.map_err(|e| e.to_string())?);
+    }
+    Ok(out)
+}
+
+pub fn save_prompts(conn: &Connection, prompts: &[super::Prompt]) -> Result<(), String> {
+    conn.execute("DELETE FROM prompts", []).map_err(|e| e.to_string())?;
+    for p in prompts {
+        conn.execute(
+            "INSERT INTO prompts (id, title, content, created_at, updated_at)
+             VALUES (?1, ?2, ?3, ?4, ?5)",
+            params![
+                p.id,
+                p.title,
+                p.content,
+                p.created_at,
+                p.updated_at,
+            ],
+        )
+        .map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+pub fn get_designs(conn: &Connection) -> Result<Vec<super::Design>, String> {
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, name, description, image_url, created_at, updated_at FROM designs ORDER BY updated_at DESC",
+        )
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map([], |row| {
+            Ok(super::Design {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                description: row.get(2)?,
+                image_url: row.get(3)?,
+                created_at: row.get(4)?,
+                updated_at: row.get(5)?,
+            })
+        })
+        .map_err(|e| e.to_string())?;
+    let mut out = vec![];
+    for row in rows {
+        out.push(row.map_err(|e| e.to_string())?);
+    }
+    Ok(out)
+}
+
+pub fn save_designs(conn: &Connection, designs: &[super::Design]) -> Result<(), String> {
+    conn.execute("DELETE FROM designs", []).map_err(|e| e.to_string())?;
+    for d in designs {
+        conn.execute(
+            "INSERT INTO designs (id, name, description, image_url, created_at, updated_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            params![
+                d.id,
+                d.name,
+                d.description,
+                d.image_url,
+                d.created_at,
+                d.updated_at,
             ],
         )
         .map_err(|e| e.to_string())?;
