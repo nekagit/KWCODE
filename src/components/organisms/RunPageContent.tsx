@@ -5,12 +5,12 @@ import { invoke, isTauri } from "@/lib/tauri";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { useRunState } from "@/context/run-state";
 import { getApiErrorMessage } from "@/lib/utils";
-import { RunPageHeader } from "@/components/molecules/RunPageHeader/RunPageHeader";
-import { RunFromFeatureCard } from "@/components/molecules/RunFromFeatureCard/RunFromFeatureCard";
-import { PromptSelectionCard } from "@/components/molecules/PromptSelectionCard/PromptSelectionCard";
-import { ProjectSelectionCard } from "@/components/molecules/ProjectSelectionCard/ProjectSelectionCard";
-import { RunLabelCard } from "@/components/molecules/RunLabelCard/RunLabelCard";
-import { RunControls } from "@/components/molecules/RunControls/RunControls";
+import { RunPageHeader } from "@/components/molecules/LayoutAndNavigation/RunPageHeader/RunPageHeader";
+import { RunFromFeatureCard } from "@/components/molecules/CardsAndDisplay/RunFromFeatureCard/RunFromFeatureCard";
+import { PromptSelectionCard } from "@/components/molecules/CardsAndDisplay/PromptSelectionCard/PromptSelectionCard";
+import { ProjectSelectionCard } from "@/components/molecules/CardsAndDisplay/ProjectSelectionCard/ProjectSelectionCard";
+import { RunLabelCard } from "@/components/molecules/CardsAndDisplay/RunLabelCard/RunLabelCard";
+import { RunControls } from "@/components/molecules/ControlsAndButtons/RunControls/RunControls";
 
 interface Feature {
   id: string;

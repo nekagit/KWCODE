@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
-import { TicketManagementCard } from "@/components/molecules/TicketManagementCard/TicketManagementCard";
+import { TicketManagementCard } from "@/components/molecules/CardsAndDisplay/TicketManagementCard/TicketManagementCard";
 import { AddTicketAccordion } from "@/components/molecules/FormsAndDialogs/AddTicketAccordion/AddTicketAccordion";
-import { TicketsDisplayTable } from "@/components/molecules/TicketsDisplayTable/TicketsDisplayTable";
+import { TicketsDisplayTable } from "@/components/molecules/ListsAndTables/TicketsDisplayTable/TicketsDisplayTable";
 import type { Ticket, TicketStatus } from "@/app/page";
 import { toast } from "sonner";
 

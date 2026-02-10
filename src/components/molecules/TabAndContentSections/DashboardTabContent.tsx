@@ -3,7 +3,7 @@ import { TicketBoard } from "@/components/organisms/TicketBoard";
 import type { Feature, Ticket } from "@/app/page";
 import type { RunningRun } from "@/store/run-store";
 import { useRouter } from "next/navigation";
-import { TabValue } from "./NavigationTabs";
+import { TabValue } from "@/components/molecules/LayoutAndNavigation/NavigationTabs/NavigationTabs";
 
 interface DashboardTabContentProps {
   features: Feature[];

@@ -9,8 +9,8 @@ import {
 import { useUITheme } from "@/context/ui-theme";
 import { useRunState } from "@/context/run-state";
 import { Palette } from "lucide-react";
-import { ThemedPageLayout } from "@/components/molecules/ThemedPageLayout/ThemedPageLayout";
-import { ThemeSelector } from "@/components/molecules/ThemeSelector/ThemeSelector";
+import { ThemedPageLayout } from "@/components/molecules/LayoutAndNavigation/ThemedPageLayout/ThemedPageLayout";
+import { ThemeSelector } from "@/components/molecules/UtilitiesAndHelpers/ThemeSelector/ThemeSelector";
 
 export function ConfigurationPageContent() {
   const { error } = useRunState();

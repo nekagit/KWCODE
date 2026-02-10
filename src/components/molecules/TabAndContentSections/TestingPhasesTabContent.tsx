@@ -1,4 +1,4 @@
-import { TestingPhasesCard } from "@/components/molecules/TestingPhasesCard/TestingPhasesCard";
+import { TestingPhasesCard } from "@/components/molecules/CardsAndDisplay/TestingPhasesCard/TestingPhasesCard";
 
 export function TestingPhasesTabContent() {
   return (

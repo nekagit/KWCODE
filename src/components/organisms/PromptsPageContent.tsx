@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/shadcn/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shadcn/card";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
+import Link from "next/link";
 import { useRunState } from "@/context/run-state";
-import { PromptActionButtons } from "@/components/molecules/PromptActionButtons/PromptActionButtons";
-import { PromptTable } from "@/components/molecules/PromptTable/PromptTable";
-import { PromptFormDialog } from "@/components/molecules/PromptFormDialog/PromptFormDialog";
+import { PromptActionButtons } from "@/components/molecules/ControlsAndButtons/PromptActionButtons/PromptActionButtons";
+import { PromptTable } from "@/components/molecules/ListsAndTables/PromptTable/PromptTable";
+import { PromptFormDialog } from "@/components/molecules/FormsAndDialogs/PromptFormDialog/PromptFormDialog";
 import { GeneratePromptDialog } from "@/components/molecules/FormsAndDialogs/GeneratePromptDialog/GeneratePromptDialog";
 
 type PromptRecord = {

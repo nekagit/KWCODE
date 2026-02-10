@@ -8,7 +8,7 @@ import {
   type UIThemeId,
 } from "@/data/ui-theme-templates";
 import { useUITheme } from "@/context/ui-theme";
-import { ThemePreviewCard } from "@/components/molecules/ThemePreviewCard/ThemePreviewCard";
+import { ThemePreviewCard } from "@/components/molecules/CardsAndDisplay/ThemePreviewCard/ThemePreviewCard";
 
 interface ThemeSelectorProps {
   onThemeSelect: (id: UIThemeId) => void;

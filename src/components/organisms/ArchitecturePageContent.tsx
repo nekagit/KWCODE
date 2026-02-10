@@ -3,12 +3,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/shadcn/ta
 import { Building2 } from "lucide-react";
 import { toast } from "sonner";
 import type { ArchitectureRecord, ArchitectureCategory } from "@/types/architecture";
-import { PageHeader } from "@/components/molecules/PageHeader/PageHeader";
+import { PageHeader } from "@/components/molecules/LayoutAndNavigation/PageHeader/PageHeader";
 import { ArchitectureEditDialog } from "@/components/molecules/FormsAndDialogs/ArchitectureEditDialog/ArchitectureEditDialog";
 import { ArchitectureViewDialog } from "@/components/molecules/FormsAndDialogs/ArchitectureViewDialog/ArchitectureViewDialog";
-import { ArchitectureTemplatesTabContent } from "@/components/molecules/ArchitectureTemplatesTabContent";
-import { AiGeneratedArchitecturesTabContent } from "@/components/molecules/AiGeneratedArchitecturesTabContent";
-import { MyDefinitionsTabContent } from "@/components/molecules/MyDefinitionsTabContent";
+import { ArchitectureTemplatesTabContent } from "@/components/molecules/TabAndContentSections/ArchitectureTemplatesTabContent/ArchitectureTemplatesTabContent";
+import { AiGeneratedArchitecturesTabContent } from "@/components/molecules/TabAndContentSections/AiGeneratedArchitecturesTabContent/AiGeneratedArchitecturesTabContent";
+import { MyDefinitionsTabContent } from "@/components/molecules/TabAndContentSections/MyDefinitionsTabContent/MyDefinitionsTabContent";
 
 const CATEGORY_LABELS: Record<ArchitectureCategory, string> = {
   ddd: "DDD",

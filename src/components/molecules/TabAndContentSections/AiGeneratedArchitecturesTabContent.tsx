@@ -1,5 +1,5 @@
 import { ArchitectureCategory } from "@/types/architecture";
-import { AiGeneratedArchitecturesCard } from "@/components/molecules/AiGeneratedArchitecturesCard/AiGeneratedArchitecturesCard";
+import { AiGeneratedArchitecturesCard } from "@/components/molecules/CardsAndDisplay/AiGeneratedArchitecturesCard/AiGeneratedArchitecturesCard";
 
 interface AiGeneratedArchitecturesTabContentProps {
   CATEGORY_LABELS: Record<ArchitectureCategory, string>;

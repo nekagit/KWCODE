@@ -4,14 +4,14 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { Project } from "@/types/project";
 import { listProjects, deleteProject } from "@/lib/api-projects";
-import { ProjectsHeader } from "@/components/molecules/ProjectsHeader/ProjectsHeader";
-import { ErrorDisplay } from "@/components/molecules/ErrorDisplay/ErrorDisplay";
-import { TemplateIdeaAccordion } from "@/components/molecules/TemplateIdeaAccordion/TemplateIdeaAccordion";
-import { LocalProjectsCard } from "@/components/molecules/LocalProjectsCard/LocalProjectsCard";
-import { NoProjectsFoundCard } from "@/components/molecules/NoProjectsFoundCard/NoProjectsFoundCard";
-import { ProjectListContainer } from "@/components/molecules/ProjectListContainer";
-import { ProjectLoadingState } from "@/components/molecules/ProjectLoadingState";
-import { ProjectCard } from "@/components/molecules/ProjectCard";
+import { ProjectsHeader } from "@/components/molecules/LayoutAndNavigation/ProjectsHeader/ProjectsHeader";
+import { ErrorDisplay } from "@/components/molecules/UtilitiesAndHelpers/ErrorDisplay/ErrorDisplay";
+import { TemplateIdeaAccordion } from "@/components/molecules/UtilitiesAndHelpers/TemplateIdeaAccordion/TemplateIdeaAccordion";
+import { LocalProjectsCard } from "@/components/molecules/CardsAndDisplay/LocalProjectsCard/LocalProjectsCard";
+import { NoProjectsFoundCard } from "@/components/molecules/CardsAndDisplay/NoProjectsFoundCard/NoProjectsFoundCard";
+import { ProjectListContainer } from "@/components/molecules/ListsAndTables/ProjectListContainer/ProjectListContainer";
+import { ProjectLoadingState } from "@/components/molecules/UtilitiesAndHelpers/ProjectLoadingState/ProjectLoadingState";
+import { ProjectCard } from "@/components/molecules/CardsAndDisplay/ProjectCard/ProjectCard";
 
 export function ProjectsListPageContent() {
   const router = useRouter();

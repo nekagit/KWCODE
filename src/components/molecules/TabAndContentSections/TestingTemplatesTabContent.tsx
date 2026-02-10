@@ -1,5 +1,5 @@
-import { TestGenerationCard } from "@/components/molecules/TestGenerationCard/TestGenerationCard";
-import { TestTemplateList } from "@/components/molecules/TestTemplateList/TestTemplateList";
+import { TestGenerationCard } from "@/components/molecules/CardsAndDisplay/TestGenerationCard/TestGenerationCard";
+import { TestTemplateList } from "@/components/molecules/ListsAndTables/TestTemplateList/TestTemplateList";
 
 interface TestingTemplatesTabContentProps {
   aiPrompt: string;

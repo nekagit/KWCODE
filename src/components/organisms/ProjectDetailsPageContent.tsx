@@ -7,14 +7,14 @@ import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Loader2, AlertCircle } from "lucide-react";
 import type { Project, ProjectEntityCategories } from "@/types/project";
 import { getProjectResolved, getProjectExport } from "@/lib/api-projects";
-import { ProjectHeader } from "@/components/molecules/ProjectHeader/ProjectHeader";
-import { ProjectTabs } from "@/components/molecules/ProjectTabs/ProjectTabs";
-import { ProjectDesignTab } from "@/components/molecules/ProjectDesignTab/ProjectDesignTab";
-import { ProjectIdeasTab } from "@/components/molecules/ProjectIdeasTab/ProjectIdeasTab";
-import { ProjectFeaturesTab } from "@/components/molecules/ProjectFeaturesTab/ProjectFeaturesTab";
-import { ProjectTicketsTab } from "@/components/molecules/ProjectTicketsTab/ProjectTicketsTab";
-import { ProjectPromptsTab } from "@/components/molecules/ProjectPromptsTab/ProjectPromptsTab";
-import { ProjectArchitectureTab } from "@/components/molecules/ProjectArchitectureTab/ProjectArchitectureTab";
+import { ProjectHeader } from "@/components/molecules/LayoutAndNavigation/ProjectHeader/ProjectHeader";
+import { ProjectTabs } from "@/components/molecules/LayoutAndNavigation/ProjectTabs/ProjectTabs";
+import { ProjectDesignTab } from "@/components/molecules/TabAndContentSections/ProjectDesignTab/ProjectDesignTab";
+import { ProjectIdeasTab } from "@/components/molecules/TabAndContentSections/ProjectIdeasTab/ProjectIdeasTab";
+import { ProjectFeaturesTab } from "@/components/molecules/TabAndContentSections/ProjectFeaturesTab/ProjectFeaturesTab";
+import { ProjectTicketsTab } from "@/components/molecules/TabAndContentSections/ProjectTicketsTab/ProjectTicketsTab";
+import { ProjectPromptsTab } from "@/components/molecules/TabAndContentSections/ProjectPromptsTab/ProjectPromptsTab";
+import { ProjectArchitectureTab } from "@/components/molecules/TabAndContentSections/ProjectArchitectureTab/ProjectArchitectureTab";
 import { ExportContentDialog } from "@/components/molecules/FormsAndDialogs/ExportContentDialog/ExportContentDialog";
 
 export function ProjectDetailsPageContent() {

@@ -1,7 +1,7 @@
 "use client";
 
-import { NewProjectForm } from "@/components/molecules/NewProjectForm/NewProjectForm";
-import { NewProjectHeader } from "@/components/molecules/NewProjectHeader";
+import { NewProjectForm } from "@/components/molecules/FormsAndDialogs/NewProjectForm/NewProjectForm";
+import { NewProjectHeader } from "@/components/molecules/UtilitiesAndHelpers/NewProjectHeader/NewProjectHeader";
 
 export function NewProjectPageContent() {
   return (

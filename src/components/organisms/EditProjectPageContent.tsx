@@ -5,10 +5,10 @@ import { useParams, useRouter } from "next/navigation";
 import type { Project } from "@/types/project";
 import { getProject } from "@/lib/api-projects";
 import { isTauri } from "@/lib/tauri";
-import { ProjectForm } from "@/components/molecules/ProjectForm";
-import { ProjectLoadingState } from "@/components/molecules/ProjectLoadingState";
-import { EditProjectHeader } from "@/components/molecules/EditProjectHeader";
-import { ProjectNotFoundState } from "@/components/molecules/ProjectNotFoundState";
+import { ProjectForm } from "@/components/molecules/FormsAndDialogs/ProjectForm/ProjectForm";
+import { ProjectLoadingState } from "@/components/molecules/UtilitiesAndHelpers/ProjectLoadingState/ProjectLoadingState";
+import { EditProjectHeader } from "@/components/molecules/UtilitiesAndHelpers/EditProjectHeader/EditProjectHeader";
+import { ProjectNotFoundState } from "@/components/molecules/UtilitiesAndHelpers/ProjectNotFoundState/ProjectNotFoundState";
 
 type PromptItem = { id: number; title: string };
 type TicketItem = { id: string; title: string; status?: string };

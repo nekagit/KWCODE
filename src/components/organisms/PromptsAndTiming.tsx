@@ -1,6 +1,6 @@
 import type { PromptItem as Prompt } from "@/types/run";
-import { PromptsAndTimingCard } from "@/components/molecules/PromptsAndTimingCard/PromptsAndTimingCard";
-import { PromptCheckboxList } from "@/components/molecules/PromptCheckboxList/PromptCheckboxList";
+import { PromptsAndTimingCard } from "@/components/molecules/CardsAndDisplay/PromptsAndTimingCard/PromptsAndTimingCard";
+import { PromptCheckboxList } from "@/components/molecules/ListsAndTables/PromptCheckboxList/PromptCheckboxList";
 
 interface PromptsAndTimingProps {
   prompts: Prompt[];

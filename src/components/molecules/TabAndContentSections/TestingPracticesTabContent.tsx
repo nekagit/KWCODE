@@ -1,5 +1,5 @@
-import { CuratedPracticesCard } from "@/components/molecules/CuratedPracticesCard/CuratedPracticesCard";
-import { MyTestPracticesCard } from "@/components/molecules/MyTestPracticesCard/MyTestPracticesCard";
+import { CuratedPracticesCard } from "@/components/molecules/CardsAndDisplay/CuratedPracticesCard/CuratedPracticesCard";
+import { MyTestPracticesCard } from "@/components/molecules/CardsAndDisplay/MyTestPracticesCard/MyTestPracticesCard";
 
 interface TestingPracticesTabContentProps {
   myPractices: string;

@@ -9,11 +9,11 @@ import {
   BarChart3,
   FileCode,
 } from "lucide-react";
-import { PageHeader } from "@/components/molecules/PageHeader/PageHeader";
-import { TestingTemplatesTabContent } from "@/components/molecules/TestingTemplatesTabContent";
-import { TestingPracticesTabContent } from "@/components/molecules/TestingPracticesTabContent";
-import { TestingPhasesTabContent } from "@/components/molecules/TestingPhasesTabContent";
-import { TestingCoverageTabContent } from "@/components/molecules/TestingCoverageTabContent";
+import { PageHeader } from "@/components/molecules/LayoutAndNavigation/PageHeader/PageHeader";
+import { TestingTemplatesTabContent } from "@/components/molecules/TabAndContentSections/TestingTemplatesTabContent/TestingTemplatesTabContent";
+import { TestingPracticesTabContent } from "@/components/molecules/TabAndContentSections/TestingPracticesTabContent/TestingPracticesTabContent";
+import { TestingPhasesTabContent } from "@/components/molecules/TabAndContentSections/TestingPhasesTabContent/TestingPhasesTabContent";
+import { TestingCoverageTabContent } from "@/components/molecules/TabAndContentSections/TestingCoverageTabContent/TestingCoverageTabContent";
 
 const MY_TEST_PRACTICES_KEY = "testing-my-practices";
 
