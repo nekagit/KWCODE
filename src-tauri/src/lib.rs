@@ -145,8 +145,13 @@ fn run_git(project_path: &PathBuf, args: &[&str]) -> Result<String, String> {
         .current_dir(project_path)
         .output()
         .map_err(|e| e.to_string())?;
-    let text = String::from_utf8_lossy(if out.status.success() { &out.stdout } else { &out.stderr });
-    Ok(text.trim().to_string())
+    let stdout = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    let stderr = String::from_utf8_lossy(&out.stderr).trim().to_string();
+    if out.status.success() {
+        Ok(stdout)
+    } else {
+        Err(if stderr.is_empty() { stdout } else { stderr })
+    }
 }
 
 #[tauri::command]
@@ -208,6 +213,99 @@ fn get_git_info(project_path: String) -> Result<GitInfo, String> {
     }
 
     Ok(info)
+}
+
+/// Return git diff and full file content for a changed file. Used when clicking a file in the Git tab.
+#[derive(serde::Serialize)]
+pub struct GitFileView {
+    pub diff: String,
+    pub full_content: Option<String>,
+}
+
+#[tauri::command]
+fn get_git_file_view(project_path: String, file_path: String) -> Result<GitFileView, String> {
+    let path_buf = PathBuf::from(project_path.trim());
+    if !path_buf.exists() || !path_buf.is_dir() {
+        return Err("Project path does not exist".to_string());
+    }
+    let git_dir = path_buf.join(".git");
+    if !git_dir.exists() {
+        return Err("Not a git repository".to_string());
+    }
+    let file_path = file_path.trim();
+    if file_path.is_empty() {
+        return Err("File path is empty".to_string());
+    }
+    let full_path = path_buf.join(file_path);
+    let exists = full_path.exists() && full_path.is_file();
+
+    let mut diff_parts = vec![];
+    if let Ok(staged) = run_git(&path_buf, &["diff", "--staged", "--", file_path]) {
+        if !staged.is_empty() {
+            diff_parts.push(format!("=== Staged changes ===\n{}\n", staged));
+        }
+    }
+    if let Ok(unstaged) = run_git(&path_buf, &["diff", "--", file_path]) {
+        if !unstaged.is_empty() {
+            diff_parts.push(format!("=== Unstaged changes ===\n{}\n", unstaged));
+        }
+    }
+    let diff = if diff_parts.is_empty() && exists {
+        "(no changes or untracked file)".to_string()
+    } else {
+        diff_parts.join("\n")
+    };
+
+    let full_content = if exists {
+        std::fs::read_to_string(&full_path).ok()
+    } else {
+        None
+    };
+
+    Ok(GitFileView { diff, full_content })
+}
+
+fn validate_git_repo(project_path: &str) -> Result<PathBuf, String> {
+    let path_buf = PathBuf::from(project_path.trim());
+    if path_buf.as_os_str().is_empty() {
+        return Err("Project path is empty".to_string());
+    }
+    if !path_buf.exists() || !path_buf.is_dir() {
+        return Err("Project path does not exist or is not a directory".to_string());
+    }
+    if !path_buf.join(".git").exists() {
+        return Err("Not a git repository (no .git)".to_string());
+    }
+    Ok(path_buf)
+}
+
+#[tauri::command]
+fn git_fetch(project_path: String) -> Result<String, String> {
+    let path_buf = validate_git_repo(&project_path)?;
+    run_git(&path_buf, &["fetch"])
+}
+
+#[tauri::command]
+fn git_pull(project_path: String) -> Result<String, String> {
+    let path_buf = validate_git_repo(&project_path)?;
+    run_git(&path_buf, &["pull"])
+}
+
+#[tauri::command]
+fn git_push(project_path: String) -> Result<String, String> {
+    let path_buf = validate_git_repo(&project_path)?;
+    run_git(&path_buf, &["push"])
+}
+
+#[tauri::command]
+fn git_commit(project_path: String, message: String) -> Result<String, String> {
+    let path_buf = validate_git_repo(&project_path)?;
+    let msg = message.trim();
+    if msg.is_empty() {
+        return Err("Commit message cannot be empty".to_string());
+    }
+    run_git(&path_buf, &["add", "-A"])?;
+    run_git(&path_buf, &["commit", "-m", msg])
 }
 
 fn is_valid_workspace(p: &PathBuf) -> bool {
@@ -1335,6 +1433,11 @@ pub fn run() {
             write_spec_file,
             archive_cursor_file,
             get_git_info,
+            get_git_file_view,
+            git_fetch,
+            git_pull,
+            git_push,
+            git_commit,
             list_projects,
             get_project,
             get_project_resolved,

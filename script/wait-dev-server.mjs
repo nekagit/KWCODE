@@ -84,7 +84,7 @@ if (!alreadyUp) {
     stdio: "inherit",
     shell: true,
     detached: true,
-    env: { ...process.env, FORCE_COLOR: "1" },
+    env: { ...process.env, FORCE_COLOR: "1", TAURI_DEV: "1" },
   });
   dev.unref();
 }

@@ -65,6 +65,8 @@ import {
   RefreshCw,
   ChevronRight,
   Archive,
+  ArrowDownToLine,
+  ArrowUpToLine,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -174,6 +176,12 @@ export default function ProjectDetailsPage() {
   const [gitInfo, setGitInfo] = useState<GitInfo | null>(null);
   const [gitInfoLoading, setGitInfoLoading] = useState(false);
   const [gitInfoError, setGitInfoError] = useState<string | null>(null);
+  const [gitOpLoading, setGitOpLoading] = useState<string | null>(null);
+  const [commitDialogOpen, setCommitDialogOpen] = useState(false);
+  const [commitMessage, setCommitMessage] = useState("");
+  const [gitFileViewPath, setGitFileViewPath] = useState<string | null>(null);
+  const [gitFileViewData, setGitFileViewData] = useState<{ diff: string; full_content: string | null } | null>(null);
+  const [gitFileViewLoading, setGitFileViewLoading] = useState(false);
   const [cursorTicketsMd, setCursorTicketsMd] = useState<string | null>(null);
   const [cursorTicketsMdLoading, setCursorTicketsMdLoading] = useState(false);
   const [cursorTicketsMdError, setCursorTicketsMdError] = useState<string | null>(null);
@@ -370,6 +378,68 @@ export default function ProjectDetailsPage() {
       .catch((e) => setGitInfoError(e instanceof Error ? e.message : String(e)))
       .finally(() => setGitInfoLoading(false));
   }, [project?.repoPath]);
+
+  const runGitOp = useCallback(
+    (op: "fetch" | "pull" | "push" | "commit", message?: string) => {
+      if (!project?.repoPath?.trim() || !isTauri()) return;
+      setGitOpLoading(op);
+      setGitInfoError(null);
+      const projectPath = project.repoPath!.trim();
+      const cmd =
+        op === "commit"
+          ? invoke<string>("git_commit", { projectPath, message: message ?? "" })
+          : invoke<string>(op === "fetch" ? "git_fetch" : op === "pull" ? "git_pull" : "git_push", { projectPath });
+      cmd
+        .then(() => {
+          toast.success(op === "commit" ? "Committed" : `${op.charAt(0).toUpperCase() + op.slice(1)} completed`);
+          fetchGitInfo();
+        })
+        .catch((e) => {
+          const err = e instanceof Error ? e.message : String(e);
+          setGitInfoError(err);
+          toast.error(err);
+        })
+        .finally(() => {
+          setGitOpLoading(null);
+          if (op === "commit") {
+            setCommitDialogOpen(false);
+            setCommitMessage("");
+          }
+        });
+    },
+    [project?.repoPath, fetchGitInfo]
+  );
+
+  const handleCommit = useCallback(() => {
+    const msg = commitMessage.trim();
+    if (!msg) {
+      toast.error("Commit message cannot be empty");
+      return;
+    }
+    runGitOp("commit", msg);
+  }, [commitMessage, runGitOp]);
+
+  const openGitFileView = useCallback(
+    (path: string) => {
+      if (!project?.repoPath?.trim() || !isTauri()) return;
+      setGitFileViewPath(path);
+      setGitFileViewData(null);
+      setGitFileViewLoading(true);
+      invoke<{ diff: string; full_content: string | null }>("get_git_file_view", {
+        projectPath: project.repoPath!.trim(),
+        filePath: path,
+      })
+        .then((data) => setGitFileViewData(data))
+        .catch((e) => toast.error(e instanceof Error ? e.message : String(e)))
+        .finally(() => setGitFileViewLoading(false));
+    },
+    [project?.repoPath]
+  );
+
+  const closeGitFileView = useCallback(() => {
+    setGitFileViewPath(null);
+    setGitFileViewData(null);
+  }, []);
 
   const loadCursorTicketsMd = useCallback(() => {
     if (!project || !id) return;
@@ -1956,14 +2026,129 @@ export default function ProjectDetailsPage() {
                 }
               }
               return (
+                <>
                 <div className="space-y-6">
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <h2 className="text-lg font-semibold text-foreground">Repository</h2>
-                    <Button variant="outline" size="sm" onClick={fetchGitInfo} disabled={gitInfoLoading} className="gap-1.5">
-                      <RefreshCw className={`h-3.5 w-3.5 ${gitInfoLoading ? "animate-spin" : ""}`} />
-                      Refresh
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => runGitOp("fetch")}
+                        disabled={!!gitOpLoading || !!gitInfoLoading}
+                        className="gap-1.5 rounded-r-none border-r-0"
+                        title="Fetch from remote"
+                      >
+                        {gitOpLoading === "fetch" ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Download className="h-3.5 w-3.5" />
+                        )}
+                        Fetch
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => runGitOp("pull")}
+                        disabled={!!gitOpLoading || !!gitInfoLoading}
+                        className="gap-1.5 rounded-none border-r-0"
+                        title="Pull from remote"
+                      >
+                        {gitOpLoading === "pull" ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <ArrowDownToLine className="h-3.5 w-3.5" />
+                        )}
+                        Pull
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => runGitOp("push")}
+                        disabled={!!gitOpLoading || !!gitInfoLoading}
+                        className="gap-1.5 rounded-none border-r-0"
+                        title="Push to remote"
+                      >
+                        {gitOpLoading === "push" ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <ArrowUpToLine className="h-3.5 w-3.5" />
+                        )}
+                        Push
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCommitDialogOpen(true)}
+                        disabled={!!gitOpLoading || !!gitInfoLoading}
+                        className="gap-1.5 rounded-none border-r-0"
+                        title="Commit all changes"
+                      >
+                        {gitOpLoading === "commit" ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <GitCommit className="h-3.5 w-3.5" />
+                        )}
+                        Commit
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={fetchGitInfo}
+                        disabled={!!gitOpLoading || !!gitInfoLoading}
+                        className="gap-1.5 rounded-l-none"
+                        title="Refresh git info"
+                      >
+                        <RefreshCw className={`h-3.5 w-3.5 ${gitInfoLoading ? "animate-spin" : ""}`} />
+                        Refresh
+                      </Button>
+                    </div>
                   </div>
+
+                  <Dialog open={commitDialogOpen} onOpenChange={setCommitDialogOpen}>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Commit changes</DialogTitle>
+                        <DialogDescription>
+                          Stage all changes and commit. Enter a message below.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="commit-message">Message</Label>
+                          <Textarea
+                            id="commit-message"
+                            placeholder="Commit message"
+                            value={commitMessage}
+                            onChange={(e) => setCommitMessage(e.target.value)}
+                            className="min-h-[80px] font-mono"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && !e.shiftKey) {
+                                e.preventDefault();
+                                handleCommit();
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setCommitDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={handleCommit}
+                          disabled={!commitMessage.trim() || gitOpLoading === "commit"}
+                        >
+                          {gitOpLoading === "commit" ? (
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          ) : (
+                            <GitCommit className="h-4 w-4 mr-2" />
+                          )}
+                          Commit
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Card className="overflow-hidden border-2 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
@@ -2033,7 +2218,14 @@ export default function ProjectDetailsPage() {
                               const path = untracked ? line.slice(2).trim() : line.slice(2).trim();
                               const code = line.slice(0, 2).trim() || (untracked ? "??" : "");
                               return (
-                                <li key={`${i}-${path}`} className="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-muted/50">
+                                <li
+                                  key={`${i}-${path}`}
+                                  role="button"
+                                  tabIndex={0}
+                                  className="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-muted/50 cursor-pointer"
+                                  onClick={() => openGitFileView(path)}
+                                  onKeyDown={(e) => e.key === "Enter" && openGitFileView(path)}
+                                >
                                   <span className={`shrink-0 w-6 text-xs ${untracked ? "text-slate-500" : staged ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`} title={line.slice(0, 2)}>
                                     {code || "  "}
                                   </span>
@@ -2161,6 +2353,43 @@ export default function ProjectDetailsPage() {
                     </Accordion>
                   ) : null}
                 </div>
+
+                <Dialog open={!!gitFileViewPath} onOpenChange={(open) => !open && closeGitFileView()}>
+                  <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col" aria-describedby={undefined}>
+                    <DialogHeader>
+                      <DialogTitle className="font-mono text-sm truncate pr-8" title={gitFileViewPath ?? ""}>
+                        {gitFileViewPath ?? "File"}
+                      </DialogTitle>
+                    </DialogHeader>
+                    {gitFileViewLoading ? (
+                      <div className="flex items-center justify-center py-12">
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : gitFileViewData ? (
+                      <Tabs defaultValue="changes" className="flex-1 min-h-0 flex flex-col">
+                        <TabsList className="shrink-0">
+                          <TabsTrigger value="changes">Changes (diff)</TabsTrigger>
+                          <TabsTrigger value="full">Full file</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="changes" className="mt-3 flex-1 min-h-0 overflow-hidden">
+                          <ScrollArea className="h-[400px] rounded border bg-muted/20 p-3 font-mono text-xs whitespace-pre-wrap">
+                            <pre className="text-foreground">{gitFileViewData.diff}</pre>
+                          </ScrollArea>
+                        </TabsContent>
+                        <TabsContent value="full" className="mt-3 flex-1 min-h-0 overflow-hidden">
+                          {gitFileViewData.full_content !== null ? (
+                            <ScrollArea className="h-[400px] rounded border bg-muted/20 p-3 font-mono text-xs whitespace-pre-wrap">
+                              <pre className="text-foreground">{gitFileViewData.full_content}</pre>
+                            </ScrollArea>
+                          ) : (
+                            <p className="text-sm text-muted-foreground py-4">File is deleted or binary; full content not available.</p>
+                          )}
+                        </TabsContent>
+                      </Tabs>
+                    ) : null}
+                  </DialogContent>
+                </Dialog>
+                </>
               );
             })()
           ) : null}

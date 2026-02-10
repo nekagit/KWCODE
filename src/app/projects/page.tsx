@@ -28,6 +28,7 @@ export default function ProjectsListPage() {
   const [error, setError] = useState<string | null>(null);
   const [seeding, setSeeding] = useState(false);
   const [generatingIdeaId, setGeneratingIdeaId] = useState<string | null>(null);
+  const [showLocalProjects, setShowLocalProjects] = useState(false);
 
   const refetch = () => {
     listProjects()
@@ -114,6 +115,14 @@ export default function ProjectsListPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowLocalProjects((v) => !v)}
+            className={showLocalProjects ? "bg-accent" : ""}
+          >
+            <FolderOpen className="h-4 w-4 mr-2" />
+            Local projects
+          </Button>
           <Button
             variant="outline"
             disabled={seeding}
@@ -244,6 +253,7 @@ export default function ProjectsListPage() {
         </AccordionItem>
       </Accordion>
 
+      {showLocalProjects && (
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
@@ -290,6 +300,7 @@ export default function ProjectsListPage() {
           )}
         </CardContent>
       </Card>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-12">

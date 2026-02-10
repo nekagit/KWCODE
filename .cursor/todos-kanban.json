@@ -101,7 +101,7 @@
       "description": "Zod (or similar) for generate and data endpoints to avoid 500s on malformed input",
       "priority": "P0",
       "featureName": "API security & validation",
-      "done": false
+      "done": true
     },
     {
       "id": "ticket-4",
@@ -110,7 +110,7 @@
       "description": "Either document local-only usage or add auth for generate/data routes",
       "priority": "P0",
       "featureName": "API security & validation",
-      "done": false
+      "done": true
     },
     {
       "id": "ticket-5",
@@ -155,7 +155,7 @@
       "description": "On Configuration or before calling generate endpoints",
       "priority": "P1",
       "featureName": "Data & configuration",
-      "done": false
+      "done": true
     },
     {
       "id": "ticket-10",
@@ -239,5 +239,5 @@
       "done": false
     }
   ],
-  "parsedAt": "2026-02-10T06:31:40.432Z"
+  "parsedAt": "2026-02-10T07:47:32.265Z"
 }

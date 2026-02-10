@@ -11,8 +11,8 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // In dev, use absolute URLs so Tauri webview loads CSS/JS reliably (relative URLs can fail in webview).
-  assetPrefix: process.env.NODE_ENV === "development" ? devOrigin : undefined,
+  // Only use assetPrefix when running via Tauri dev (TAURI_DEV=1). In browser, relative URLs work and avoid Next.js 15 assetPrefix CSS issues.
+  assetPrefix: process.env.NODE_ENV === "development" && process.env.TAURI_DEV === "1" ? devOrigin : undefined,
   // Force resolution of sonner and Next internal loaders from project node_modules
   webpack: (config) => {
     config.resolve.alias = {
