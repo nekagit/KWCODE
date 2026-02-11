@@ -14,7 +14,7 @@ const nextConfig = {
   // Only use assetPrefix when running via Tauri dev (TAURI_DEV=1). In browser, relative URLs work and avoid Next.js 15 assetPrefix CSS issues.
   assetPrefix: process.env.NODE_ENV === "development" && process.env.TAURI_DEV === "1" ? devOrigin : undefined,
   // Force resolution of sonner and Next internal loaders from project node_modules
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     config.resolve.alias = {
       ...config.resolve.alias,
       sonner: path.resolve(__dirname, "node_modules/sonner"),
@@ -32,6 +32,13 @@ const nextConfig = {
         "next-flight-client-entry-loader.js"
       ),
     };
+    // Tauri webview can be slower to load chunks; avoid "Loading chunk app/layout failed (timeout)"
+    if (!isServer) {
+      config.output = {
+        ...config.output,
+        chunkLoadTimeout: 180000, // 3 minutes (default 120s can be too short in Tauri dev)
+      };
+    }
     return config;
   },
 };

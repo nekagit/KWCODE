@@ -12,15 +12,11 @@ import { GridContainer } from "@/components/shared/GridContainer";
 interface ProjectArchitectureTabProps {
   project: Project;
   projectId: string;
-  exportLoading: boolean;
-  generateExport: (category: string) => Promise<void>;
 }
 
 export function ProjectArchitectureTab({
   project,
   projectId,
-  exportLoading,
-  generateExport,
 }: ProjectArchitectureTabProps) {
   return (
     <div className="mt-4 space-y-6">
@@ -28,10 +24,6 @@ export function ProjectArchitectureTab({
         title="Architectures"
         icon={<Building2 className="h-6 w-6" />}
         project={project}
-        projectId={projectId}
-        exportLoading={exportLoading}
-        generateExport={generateExport}
-        category="architecture"
       />
 
       {project.architectureIds?.length === 0 ? (

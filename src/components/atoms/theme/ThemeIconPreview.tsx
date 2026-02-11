@@ -6,18 +6,28 @@ import { Badge } from "@/components/ui/badge";
 interface ThemeIconPreviewProps {
   theme: UIThemeTemplate;
   hsl: (val: string) => string;
+  /** When app is dark and preview theme is light, use dark text. */
+  overrideFg?: string;
+  overrideMutedFg?: string;
 }
 
-export const ThemeIconPreview: React.FC<ThemeIconPreviewProps> = ({ theme, hsl }) => {
+export const ThemeIconPreview: React.FC<ThemeIconPreviewProps> = ({
+  theme,
+  hsl,
+  overrideFg,
+  overrideMutedFg,
+}) => {
   const v = theme.variables;
+  const fg = overrideFg != null ? hsl(overrideFg) : hsl(v.cardForeground);
+  const mutedFg = overrideMutedFg != null ? hsl(overrideMutedFg) : hsl(v.mutedForeground);
   return (
     <div
       className="flex items-center gap-1.5 flex-wrap"
-      style={{ color: hsl(v.cardForeground) }}
+      style={{ color: fg }}
     >
       <Badge
         className="text-[10px] font-medium uppercase tracking-wide w-full"
-        style={{ color: hsl(v.mutedForeground) }}
+        style={{ color: mutedFg }}
         variant="outline"
       >
         Icons

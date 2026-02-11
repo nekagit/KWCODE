@@ -12,15 +12,11 @@ import { GridContainer } from "@/components/shared/GridContainer";
 interface ProjectPromptRecordsTabProps {
   project: Project;
   projectId: string;
-  exportLoading: boolean;
-  generateExport: (category: string) => Promise<void>;
 }
 
 export function ProjectPromptRecordsTab({
   project,
   projectId,
-  exportLoading,
-  generateExport,
 }: ProjectPromptRecordsTabProps) {
   return (
     <div className="mt-4 space-y-6">
@@ -28,10 +24,6 @@ export function ProjectPromptRecordsTab({
         title="Prompts"
         icon={<MessageSquare className="h-6 w-6" />}
         project={project}
-        projectId={projectId}
-        exportLoading={exportLoading}
-        generateExport={generateExport}
-        category="prompts"
       />
 
       {project.promptIds?.length === 0 ? (

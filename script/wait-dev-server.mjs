@@ -39,13 +39,28 @@ async function waitReady() {
 
 /** Get first script src that looks like a Next.js chunk (_next/static or _next/webpack). */
 function findChunkUrl(html) {
-  // A more generic regex to find any script tag with a src attribute that contains "_next/"
   const nextScriptMatch = html.match(/<script[^>]+src=[\"\']([^\"\']*\/_next\/[^\"\']+)[\"\']/);
   if (nextScriptMatch) {
     console.log("Found potential Next.js chunk URL:", nextScriptMatch[1]);
     return nextScriptMatch[1];
   }
   return null;
+}
+
+/** Get all script srcs that look like Next.js chunks; prefer one that looks like app/layout. */
+function findAllChunkUrls(html) {
+  const re = /<script[^>]+src=[\"\']([^\"\']*\/_next\/[^\"\']+)[\"\']/g;
+  const urls = [];
+  let m;
+  while ((m = re.exec(html)) !== null) urls.push(m[1]);
+  return urls;
+}
+
+/** Find a chunk URL that likely refers to app/layout (reduces "Loading chunk app/layout failed" in Tauri). */
+function findAppLayoutChunkUrl(html) {
+  const urls = findAllChunkUrls(html);
+  const layoutLike = urls.find((u) => /app[\\/]layout|layout\.js/i.test(u));
+  return layoutLike || null;
 }
 
 /** Resolve relative chunk URL against dev origin. */
@@ -90,6 +105,23 @@ async function waitForChunk() {
   return false;
 }
 
+/** Warm app/layout chunk so it is compiled before Tauri opens (avoids "Loading chunk app/layout failed" timeout). */
+async function warmAppLayoutChunk() {
+  try {
+    const res = await fetch(devUrl, { method: "GET", signal: AbortSignal.timeout(fetchTimeoutMs) });
+    if (!res.ok) return;
+    const html = await res.text();
+    const layoutSrc = findAppLayoutChunkUrl(html);
+    if (!layoutSrc) return;
+    const layoutUrl = resolveChunkUrl(layoutSrc);
+    console.log("Warming app/layout chunk: ", layoutUrl);
+    await fetch(layoutUrl, { method: "GET", signal: AbortSignal.timeout(fetchTimeoutMs) });
+    console.log("App/layout chunk warmed.");
+  } catch (e) {
+    console.log("Warm app/layout skipped: ", e.message);
+  }
+}
+
 // If something is already serving on the port (e.g. previous npm run dev), reuse it
 const alreadyUp = await check(devUrl);
 if (!alreadyUp) {
@@ -128,5 +160,7 @@ if (!chunkReady) {
   console.error("Chunks not ready in time. Tauri would open with 404s. Run 'npm run dev', wait for compile, then run 'tauri dev' again.");
   process.exit(1);
 }
-console.log("Chunks OK, Tauri can open.");
+console.log("Chunks OK, warming app/layout chunk so Tauri does not hit timeout…");
+await warmAppLayoutChunk();
+console.log("Tauri can open.");
 process.exit(0);

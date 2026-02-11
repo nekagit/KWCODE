@@ -6,7 +6,6 @@ import { TerminalStatusBadge } from "@/components/molecules/Display/TerminalStat
 import { SidebarNavigation } from "@/components/organisms/SidebarNavigation";
 import { SidebarToggle } from "@/components/molecules/ControlsAndButtons/SidebarToggle";
 import { useRunState } from "@/context/run-state";
-import { QuickActionsFAB, useQuickActions } from "@/context/quick-actions-context";
 
 const SIDEBAR_STORAGE_KEY = "kwcode-sidebar-width";
 const SIDEBAR_MIN = 160;
@@ -25,15 +24,11 @@ function getStoredSidebarWidth(): number {
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_DEFAULT);
+  const [sidebarWidth, setSidebarWidth] = useState(() => getStoredSidebarWidth());
   const [isResizing, setIsResizing] = useState(false);
   const resizeStartX = useRef(0);
   const resizeStartWidth = useRef(SIDEBAR_DEFAULT);
   const lastWidthRef = useRef(SIDEBAR_DEFAULT);
-
-  useEffect(() => {
-    setSidebarWidth(getStoredSidebarWidth());
-  }, []);
 
   const startResize = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -76,7 +71,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     stopRun,
     isTauriEnv,
   } = useRunState();
-  const { openLogModal } = useQuickActions();
 
   return (
     <div className="flex h-screen overflow-hidden relative bg-transparent">
@@ -84,14 +78,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Sidebar: expandable and resizable. useSearchParams only inside Suspense so shell never suspends. */}
       <aside
-        className="flex shrink-0 flex-col border-r bg-transparent py-4 h-screen overflow-hidden glasgmorphism relative"
+        className="flex shrink-0 flex-col border-r border-border bg-sidebar py-4 h-screen overflow-hidden relative"
         style={{
           width: currentWidth,
           transition: isResizing ? "none" : "width 200ms ease-in-out",
         }}
       >
         <div
-          className={`px-3 pb-3 border-b border-border/50 mb-3 overflow-hidden ${
+          className={`px-3 pb-3 border-b border-primary/30 mb-3 overflow-hidden ${
             sidebarCollapsed ? "px-2" : ""
           }`}
         >
@@ -100,7 +94,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           )}
         </div>
         <SidebarNavigation sidebarCollapsed={sidebarCollapsed} />
-        <div className={`mt-2 mx-2 border-t border-border/50 pt-2 ${sidebarCollapsed ? "flex justify-center" : ""}`}>
+        <div className={`mt-2 mx-2 border-t border-primary/30 pt-2 ${sidebarCollapsed ? "flex justify-center" : ""}`}>
           <SidebarToggle
             sidebarCollapsed={sidebarCollapsed}
             setSidebarCollapsed={setSidebarCollapsed}
@@ -116,8 +110,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         )}
       </aside>
 
-      {/* Main content: scrollable, sidebar stays fixed. Normal colorless loading between pages; only initial app load is animated (root overlay). */}
-      <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-auto p-4 md:p-6">
+      {/* Main content: scrollable, sidebar stays fixed. Grey-black content area for contrast with dark-black sidebar. */}
+      <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-auto p-4 md:p-6 bg-background">
         <Suspense
           fallback={
             <div className="min-h-[60vh] flex items-center justify-center" aria-hidden>
@@ -130,9 +124,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </Suspense>
       </main>
-
-      {/* Flutter-style FAB: always visible bottom-right; hover reveals Log, Run, Configuration */}
-      <QuickActionsFAB />
     </div>
   );
 }

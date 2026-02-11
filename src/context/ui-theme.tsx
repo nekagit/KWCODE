@@ -62,14 +62,10 @@ function ThemeSync({ theme }: { theme: UIThemeId }) {
 }
 
 export function UIThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<UIThemeId>("light");
-
-  useEffect(() => {
+  const [theme, setThemeState] = useState<UIThemeId>(() => {
     const stored = getStoredUITheme();
-    if (stored && isValidUIThemeId(stored)) {
-      setThemeState(stored);
-    }
-  }, []);
+    return stored && isValidUIThemeId(stored) ? stored : "light";
+  });
 
   const setTheme = useCallback((id: UIThemeId) => {
     setThemeState(id);

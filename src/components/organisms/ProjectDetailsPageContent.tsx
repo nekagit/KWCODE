@@ -1,21 +1,22 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, AlertCircle } from "lucide-react";
-import type { Project, ProjectTabCategory } from "@/types/project";
-import { getProjectResolved, getProjectExport } from "@/lib/api-projects";
+import { Loader2, AlertCircle, FolderGit2, ListTodo, Settings } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
+import type { Project } from "@/types/project";
+import { getProjectResolved } from "@/lib/api-projects";
 import { ProjectHeader } from "@/components/molecules/LayoutAndNavigation/ProjectHeader";
+import { ProjectGitTab } from "@/components/molecules/TabAndContentSections/ProjectGitTab";
 import { ProjectDesignTab } from "@/components/molecules/TabAndContentSections/ProjectDesignTab";
 import { ProjectIdeasTab } from "@/components/molecules/TabAndContentSections/ProjectIdeasTab";
-import { ProjectFeaturesTab } from "@/components/molecules/TabAndContentSections/ProjectFeaturesTab"; // Corrected syntax
+import { ProjectFeaturesTab } from "@/components/molecules/TabAndContentSections/ProjectFeaturesTab";
 import { ProjectTicketsTab } from "@/components/molecules/TabAndContentSections/ProjectTicketsTab";
 import { ProjectPromptRecordsTab } from "@/components/molecules/TabAndContentSections/ProjectPromptsTab";
 import { ProjectArchitectureTab } from "@/components/molecules/TabAndContentSections/ProjectArchitectureTab";
-import { ExportContentDialog } from "@/components/molecules/FormsAndDialogs/ExportContentDialog";
-import type { ResolvedProject } from "@/lib/api-projects";
 
 export function ProjectDetailsPageContent() {
   const params = useParams();
@@ -24,48 +25,30 @@ export function ProjectDetailsPageContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [showExportDialog, setShowExportDialog] = useState(false);
-  const [exportContent, setExportContent] = useState("");
-  const [exportLoading, setExportLoading] = useState(false);
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const fetchProject = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const data = await getProjectResolved(projectId);
-      setProject(data);
+      if (mountedRef.current) setProject(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      if (mountedRef.current) setError(e instanceof Error ? e.message : String(e));
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   }, [projectId]);
 
   useEffect(() => {
     fetchProject();
   }, [fetchProject]);
-
-  const generateExport = useCallback(async (category: ProjectTabCategory) => {
-    setExportLoading(true);
-    setExportContent("");
-    try {
-      let exportCategory: keyof ResolvedProject;
-      if (category === "design") {
-        exportCategory = "designs";
-      } else if (category === "architecture") {
-        exportCategory = "architectures";
-      } else {
-        exportCategory = category as "ideas" | "features" | "tickets" | "prompts";
-      }
-      const content = await getProjectExport(projectId, exportCategory);
-      setExportContent(content);
-      setShowExportDialog(true);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setExportLoading(false);
-    }
-  }, [projectId]);
 
   if (loading) {
     return (
@@ -95,54 +78,54 @@ export function ProjectDetailsPageContent() {
     <div className="space-y-6">
       <ProjectHeader project={project} projectId={projectId} />
 
-      <ProjectDesignTab
-          project={project}
-          projectId={projectId}
-          exportLoading={exportLoading}
-          generateExport={() => generateExport("design")}
-        />
+      <Tabs defaultValue="todo" className="w-full">
+        <TabsList className="grid w-full max-w-2xl grid-cols-3">
+          <TabsTrigger value="git" className="flex items-center gap-2">
+            <FolderGit2 className="h-4 w-4" />
+            Git
+          </TabsTrigger>
+          <TabsTrigger value="todo" className="flex items-center gap-2">
+            <ListTodo className="h-4 w-4" />
+            Todo
+          </TabsTrigger>
+          <TabsTrigger value="setup" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Setup
+          </TabsTrigger>
+        </TabsList>
 
-      <ProjectIdeasTab
-          project={project}
-          projectId={projectId}
-          exportLoading={exportLoading}
-          generateExport={() => generateExport("ideas")}
-        />
+        <TabsContent value="git" className="mt-4">
+          <ProjectGitTab project={project} projectId={projectId} />
+        </TabsContent>
 
-      <ProjectFeaturesTab
-          project={project}
-          projectId={projectId}
-          exportLoading={exportLoading}
-          generateExport={() => generateExport("features")}
-        />
+        <TabsContent value="todo" className="mt-4 space-y-6">
+          <ProjectTicketsTab
+            project={project}
+            projectId={projectId}
+            fetchProject={fetchProject}
+          />
+          <ProjectFeaturesTab project={project} projectId={projectId} />
+          <ProjectPromptRecordsTab project={project} projectId={projectId} />
+        </TabsContent>
 
-      <ProjectTicketsTab
-          project={project}
-          projectId={projectId}
-          exportLoading={exportLoading}
-          generateExport={() => generateExport("tickets")}
-          fetchProject={fetchProject}
-        />
-
-      <ProjectPromptRecordsTab
-          project={project}
-          projectId={projectId}
-          exportLoading={exportLoading}
-          generateExport={() => generateExport("prompts")}
-        />
-
-      <ProjectArchitectureTab
-          project={project}
-          projectId={projectId}
-          exportLoading={exportLoading}
-          generateExport={() => generateExport("architecture")}
-        />
-
-      <ExportContentDialog
-        showExportDialog={showExportDialog}
-        setShowExportDialog={setShowExportDialog}
-        exportContent={exportContent}
-      />
+        <TabsContent value="setup" className="mt-4 space-y-6">
+          <Card>
+            <CardContent className="pt-6">
+              <ProjectDesignTab project={project} projectId={projectId} />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <ProjectIdeasTab project={project} projectId={projectId} />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <ProjectArchitectureTab project={project} projectId={projectId} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

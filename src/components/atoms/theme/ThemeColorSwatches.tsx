@@ -5,22 +5,35 @@ import { Badge } from "@/components/ui/badge";
 interface ThemeColorSwatchesProps {
   theme: UIThemeTemplate;
   hsl: (val: string) => string;
+  /** When app is dark and preview theme is light, use dimmer white + dark text. */
+  overrideCardBg?: string;
+  overrideCardFg?: string;
+  overrideMutedFg?: string;
 }
 
-export const ThemeColorSwatches: React.FC<ThemeColorSwatchesProps> = ({ theme, hsl }) => {
+export const ThemeColorSwatches: React.FC<ThemeColorSwatchesProps> = ({
+  theme,
+  hsl,
+  overrideCardBg,
+  overrideCardFg,
+  overrideMutedFg,
+}) => {
   const v = theme.variables;
+  const cardBg = overrideCardBg != null ? hsl(overrideCardBg) : hsl(v.card);
+  const cardFg = overrideCardFg != null ? hsl(overrideCardFg) : hsl(v.cardForeground);
+  const mutedFg = overrideMutedFg != null ? hsl(overrideMutedFg) : hsl(v.mutedForeground);
   return (
     <div
       className="rounded-md p-2 min-h-[48px] border"
       style={{
-        background: hsl(v.card),
+        background: cardBg,
         borderColor: hsl(v.border),
-        color: hsl(v.cardForeground),
+        color: cardFg,
       }}
     >
       <Badge
         className="text-[10px] font-medium uppercase tracking-wide mb-1.5"
-        style={{ color: hsl(v.mutedForeground) }}
+        style={{ color: mutedFg }}
         variant="outline"
       >
         Card

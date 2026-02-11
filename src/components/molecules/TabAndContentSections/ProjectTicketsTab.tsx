@@ -24,16 +24,12 @@ import { GenerateKanbanPromptSection } from "@/components/atoms/forms/GenerateKa
 interface ProjectTicketsTabProps {
   project: Project;
   projectId: string;
-  exportLoading: boolean;
-  generateExport: (category: string) => Promise<void>;
   fetchProject: () => Promise<void>;
 }
 
 export function ProjectTicketsTab({
   project,
   projectId,
-  exportLoading,
-  generateExport,
   fetchProject,
 }: ProjectTicketsTabProps) {
   const [kanbanData, setKanbanData] = useState<TodosKanbanData | null>(null);
@@ -97,10 +93,6 @@ export function ProjectTicketsTab({
         title="Tickets"
         icon={<TicketIcon className="h-6 w-6" />}
         project={project}
-        projectId={projectId}
-        exportLoading={exportLoading}
-        generateExport={generateExport}
-        category="tickets"
       />
 
       {showFeatureTicketWarning && (

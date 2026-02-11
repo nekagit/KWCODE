@@ -7,10 +7,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { TitleWithIcon } from "@/components/atoms/headers/TitleWithIcon";
 import { LocalProjectListItem } from "@/components/atoms/list-items/LocalProjectListItem";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 /**
  * Lists all folders in the configured projects root so the user can create a project from a path
  * without having to find or type it. Uses Tauri list_february_folders or /api/data/february-folders.
+ * Shown inside a collapsible section that is collapsed by default.
  */
 export function LocalReposSection() {
   const [localPaths, setLocalPaths] = useState<string[]>([]);
@@ -43,53 +45,62 @@ export function LocalReposSection() {
     }
   }, []);
 
-  if (loading) {
-    return (
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <TitleWithIcon icon={FolderOpen} title="Local repos" className="text-lg" />
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Folders in the configured projects directory. Create a project from one to avoid typing the path.
-        </p>
-        <div className="py-8 text-center text-muted-foreground text-sm">Loading…</div>
-      </section>
-    );
-  }
+  const triggerLabel =
+    localPaths.length > 0
+      ? `Local repos (${localPaths.length})`
+      : "Local repos";
 
-  if (localPaths.length === 0) {
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <>
+          <p className="text-sm text-muted-foreground">
+            Folders in the configured projects directory. Create a project from one to avoid typing the path.
+          </p>
+          <div className="py-8 text-center text-muted-foreground text-sm">Loading…</div>
+        </>
+      );
+    }
+    if (localPaths.length === 0) {
+      return (
+        <>
+          <p className="text-sm text-muted-foreground">
+            Folders in the configured projects directory.
+          </p>
+          <EmptyState
+            icon={FolderOpen}
+            message="No project folders found"
+            description="No subfolders in the configured projects directory, or the app cannot read that path. Set data/february-dir.txt or FEBRUARY_DIR, or run from the Tauri desktop app."
+          />
+        </>
+      );
+    }
     return (
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <TitleWithIcon icon={FolderOpen} title="Local repos" className="text-lg" />
-        </h2>
+      <>
         <p className="text-sm text-muted-foreground">
-          Folders in the configured projects directory.
+          All {localPaths.length} folders in the configured projects directory. Create a project from one to avoid typing the path.
         </p>
-        <EmptyState
-          icon={FolderOpen}
-          message="No project folders found"
-          description="No subfolders in the configured projects directory, or the app cannot read that path. Set data/february-dir.txt or FEBRUARY_DIR, or run from the Tauri desktop app."
-        />
-      </section>
+        <ScrollArea className="rounded-md border bg-muted/30 max-h-[520px]">
+          <ul className="p-2 space-y-0.5">
+            {localPaths.map((path, i) => (
+              <LocalProjectListItem key={i} path={path} />
+            ))}
+          </ul>
+        </ScrollArea>
+      </>
     );
-  }
+  };
 
   return (
-    <section className="space-y-3">
-      <h2 className="text-lg font-semibold flex items-center gap-2">
-        <TitleWithIcon icon={FolderOpen} title="Local repos" className="text-lg" />
-      </h2>
-      <p className="text-sm text-muted-foreground">
-        All {localPaths.length} folders in the configured projects directory. Create a project from one to avoid typing the path.
-      </p>
-      <ScrollArea className="rounded-md border bg-muted/30 max-h-[520px]">
-        <ul className="p-2 space-y-0.5">
-          {localPaths.map((path, i) => (
-            <LocalProjectListItem key={i} path={path} />
-          ))}
-        </ul>
-      </ScrollArea>
-    </section>
+    <Accordion type="single" collapsible className="w-full">
+      <AccordionItem value="local-repos" className="border-b">
+        <AccordionTrigger className="text-lg font-semibold py-4 hover:no-underline">
+          <TitleWithIcon icon={FolderOpen} title={triggerLabel} className="text-lg" />
+        </AccordionTrigger>
+        <AccordionContent className="space-y-3">
+          {renderContent()}
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
   );
 }

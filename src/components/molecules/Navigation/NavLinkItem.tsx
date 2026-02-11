@@ -9,6 +9,8 @@ type NavLinkItemProps = {
   icon: LucideIcon;
   isActive: boolean;
   sidebarCollapsed: boolean;
+  /** Optional class for icon when not active (e.g. text-info/90 for scheme color). */
+  iconClassName?: string;
 };
 
 export function NavLinkItem({
@@ -17,6 +19,7 @@ export function NavLinkItem({
   icon: Icon,
   isActive,
   sidebarCollapsed,
+  iconClassName,
 }: NavLinkItemProps) {
   const linkEl = (
     <Link
@@ -25,11 +28,11 @@ export function NavLinkItem({
         "flex items-center gap-2 rounded-md py-2.5 w-full text-sm font-medium transition-colors",
         sidebarCollapsed ? "justify-center px-0" : "px-3",
         isActive
-          ? "bg-background shadow-sm text-foreground"
-          : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+          ? "bg-background shadow-sm text-primary border-l-2 border-primary"
+          : "text-muted-foreground hover:bg-muted/50 hover:text-foreground border-l-2 border-transparent"
       )}
     >
-      <Icon className="h-4 w-4 shrink-0" />
+      <Icon className={cn("h-4 w-4 shrink-0", !isActive && iconClassName)} />
       {!sidebarCollapsed && <span className="truncate">{label}</span>}
     </Link>
   );

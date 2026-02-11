@@ -6,6 +6,7 @@
   :root {
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
+    --sidebar: 240 4.8% 95.9%; /* Light: same as secondary/muted for sidebar */
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
@@ -32,9 +33,10 @@
     --radius: 1.5rem; /* Increased radius */
   }
   .dark {
-    --background: 240 12% 4% / 0.7; /* Translucent background */
+    --background: 240 6% 11%; /* Grey-black: main content area */
     --foreground: 220 8% 96%;
-    --card: 235 14% 6% / 0.5; /* Translucent card */
+    --sidebar: 240 14% 2%; /* Dark black: sidebar for clear contrast */
+    --card: 240 8% 8%; /* Slightly lighter than content for cards */
     --card-foreground: 220 8% 96%;
     --popover: 235 14% 7% / 0.5; /* Translucent popover */
     --popover-foreground: 220 8% 96%;
@@ -54,8 +56,8 @@
     --warning-foreground: 240 12% 4%;
     --info: 217 91% 65%;
     --info-foreground: 0 0% 100%;
-    --border: 240 5% 12%;
-    --input: 240 5% 10%;
+    --border: 217 14% 16%;
+    --input: 217 12% 12%;
     --ring: 217 91% 65%;
     box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); /* Added shadow */
     backdrop-filter: blur(8px); /* Frosted glass effect */
@@ -65,6 +67,7 @@
   [data-theme="light"] {
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
+    --sidebar: 240 4.8% 95.9%;
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
@@ -91,9 +94,10 @@
     --radius: 1.5rem; /* Updated radius */
   }
   [data-theme="dark"] {
-    --background: 240 12% 4% / 0.7; /* Translucent background */
+    --background: 240 6% 11%; /* Grey-black: main content area */
     --foreground: 220 8% 96%;
-    --card: 235 14% 6% / 0.5; /* Translucent card */
+    --sidebar: 240 14% 2%; /* Dark black: sidebar for clear contrast */
+    --card: 240 8% 8%; /* Slightly lighter than content for cards */
     --card-foreground: 220 8% 96%;
     --popover: 235 14% 7% / 0.5; /* Translucent popover */
     --popover-foreground: 220 8% 96%;
@@ -113,8 +117,8 @@
     --warning-foreground: 240 12% 4%;
     --info: 217 91% 65%;
     --info-foreground: 0 0% 100%;
-    --border: 240 5% 12%;
-    --input: 240 5% 10%;
+    --border: 217 14% 16%;
+    --input: 217 12% 12%;
     --ring: 217 91% 65%;
     --radius: 1.5rem; /* Updated radius */
     box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); /* Added shadow */
@@ -123,6 +127,7 @@
   [data-theme="ocean"] {
     --background: 210 20% 98%;
     --foreground: 220 20% 12%;
+    --sidebar: 210 25% 94%;
     --card: 0 0% 100%;
     --card-foreground: 220 20% 12%;
     --popover: 0 0% 100%;
@@ -151,6 +156,7 @@
   [data-theme="forest"] {
     --background: 140 25% 98%;
     --foreground: 140 20% 12%;
+    --sidebar: 140 22% 94%;
     --card: 0 0% 100%;
     --card-foreground: 140 20% 12%;
     --popover: 0 0% 100%;
@@ -179,6 +185,7 @@
   [data-theme="warm"] {
     --background: 40 33% 98%;
     --foreground: 25 25% 12%;
+    --sidebar: 38 28% 94%;
     --card: 0 0% 100%;
     --card-foreground: 25 25% 12%;
     --popover: 0 0% 100%;
@@ -207,6 +214,7 @@
   [data-theme="red"] {
     --background: 0 100% 50%;
     --foreground: 0 0% 100%;
+    --sidebar: 0 85% 42%;
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
@@ -241,6 +249,12 @@
   border: 1px solid hsl(var(--border) / 0.2);
   box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.2);
   border-radius: var(--radius);
+}
+
+/* Dark mode: subtle primary-tinted borders for section dividers (use with border-t / border-b) */
+[data-theme="dark"] .border-accent-subtle,
+.dark .border-accent-subtle {
+  border-color: hsl(var(--primary) / 0.25);
 }
 
 @layer base {
