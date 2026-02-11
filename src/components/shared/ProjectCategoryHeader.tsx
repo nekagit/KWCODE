@@ -1,4 +1,5 @@
 import React from "react";
+import sharedClasses from './shared-classes';
 import type { Project } from "@/types/project";
 import { PageHeader } from "@/components/molecules/LayoutAndNavigation/PageHeader";
 
@@ -14,8 +15,8 @@ export function ProjectCategoryHeader({
   project,
 }: ProjectCategoryHeaderProps) {
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-4">
+    <div data-shared-ui className={sharedClasses.ProjectCategoryHeader.root}>
+      <div className={sharedClasses.ProjectCategoryHeader.inner}>
         <PageHeader title={title} icon={icon} description={project.description} />
       </div>
     </div>

@@ -1,10 +1,11 @@
-import React from 'react';
+import React from "react";
+import { EmptyPagePlaceholder } from "@/components/atoms/displays/EmptyPagePlaceholder";
 
 export function DesignPageContent() {
   return (
-    <div>
-      <h1>Design Page Content</h1>
-      <p>This is a placeholder for the design page content.</p>
-    </div>
+    <EmptyPagePlaceholder
+      title="Design Page Content"
+      description="This is a placeholder for the design page content."
+    />
   );
 }

@@ -5,10 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
 import { useRunState } from "@/context/run-state";
-import { PromptRecordActionButtons } from "@/components/molecules/ControlsAndButtons/PromptActionButtons"; // Corrected import
-import { PromptRecordTable } from "@/components/molecules/ListsAndTables/PromptTable";
-import { PromptRecordFormDialog } from "@/components/molecules/FormsAndDialogs/PromptFormDialog";
-import { GeneratePromptRecordDialog } from "@/components/molecules/FormsAndDialogs/GeneratePromptDialog";
+import { PromptRecordActionButtons } from "@/components/molecules/ControlsAndButtons/PromptRecordActionButtons";
+import { PromptRecordTable } from "@/components/molecules/ListsAndTables/PromptRecordTable";
+import { PromptRecordFormDialog } from "@/components/molecules/FormsAndDialogs/PromptRecordFormDialog";
+import { GeneratePromptRecordDialog } from "@/components/molecules/FormsAndDialogs/GeneratePromptRecordDialog";
 import { toast } from "sonner"; // Added import for toast, if not already imported elsewhere
 
 type PromptRecordRecord = {

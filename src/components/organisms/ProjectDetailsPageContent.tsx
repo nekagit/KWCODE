@@ -15,7 +15,7 @@ import { ProjectDesignTab } from "@/components/molecules/TabAndContentSections/P
 import { ProjectIdeasTab } from "@/components/molecules/TabAndContentSections/ProjectIdeasTab";
 import { ProjectFeaturesTab } from "@/components/molecules/TabAndContentSections/ProjectFeaturesTab";
 import { ProjectTicketsTab } from "@/components/molecules/TabAndContentSections/ProjectTicketsTab";
-import { ProjectPromptRecordsTab } from "@/components/molecules/TabAndContentSections/ProjectPromptsTab";
+import { ProjectPromptRecordsTab } from "@/components/molecules/TabAndContentSections/ProjectPromptRecordsTab";
 import { ProjectArchitectureTab } from "@/components/molecules/TabAndContentSections/ProjectArchitectureTab";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { Textarea } from "@/components/ui/textarea";
 import { FormField } from "@/components/shared/FormField";
 import { cn } from "@/lib/utils";
+import sharedClasses from './shared-classes';
 
 interface LabeledTextareaProps {
   id: string;
@@ -42,7 +43,7 @@ export const LabeledTextarea: React.FC<LabeledTextareaProps> = ({
         placeholder={placeholder}
         required={required}
         rows={rows}
-        className={cn("", className)}
+        className={cn(sharedClasses.LabeledTextarea.textarea, className)}
       />
     </FormField>
   );

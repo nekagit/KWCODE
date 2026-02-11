@@ -1,4 +1,5 @@
 import React from 'react';
+import sharedClasses from './shared-classes';
 
 interface FormProps {
   children: React.ReactNode;
@@ -8,7 +9,7 @@ interface FormProps {
 
 export const Form: React.FC<FormProps> = ({ children, onSubmit, className }) => {
   return (
-    <form onSubmit={onSubmit} className={`space-y-4 ${className || ''}`}>
+    <form data-shared-ui onSubmit={onSubmit} className={`${sharedClasses.Form.root} ${className || ''}`}>
       {children}
     </form>
   );

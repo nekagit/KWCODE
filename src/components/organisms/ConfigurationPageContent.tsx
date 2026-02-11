@@ -9,8 +9,8 @@ import {
 import { useUITheme } from "@/context/ui-theme";
 import { useRunState } from "@/context/run-state";
 import { Palette } from "lucide-react";
-import { ThemedPageLayout } from "@/components/molecules/LayoutAndNavigation/ThemedPageLayout";
 import { ThemeSelector } from "@/components/molecules/UtilitiesAndHelpers/ThemeSelector";
+import { SingleContentPage } from "@/components/organisms/SingleContentPage";
 
 export function ConfigurationPageContent() {
   const { error } = useRunState();
@@ -27,13 +27,14 @@ export function ConfigurationPageContent() {
   const effectiveTheme = isValidUIThemeId(uiTheme) ? uiTheme : "light";
 
   return (
-    <ThemedPageLayout
+    <SingleContentPage
       title="Design templates"
       description="Choose a theme to change the app background, accents, and UI component colors. Your choice is saved and applied on next load."
       icon={<Palette className="h-5 w-5 text-primary/90" />}
+      layout="card"
       error={error}
     >
       <ThemeSelector onThemeSelect={handleThemeSelect} effectiveTheme={effectiveTheme} />
-    </ThemedPageLayout>
+    </SingleContentPage>
   );
 }

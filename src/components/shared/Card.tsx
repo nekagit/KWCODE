@@ -1,4 +1,5 @@
 import React from 'react';
+import sharedClasses from './shared-classes';
 
 interface CardProps {
   title?: string | React.ReactNode;
@@ -10,19 +11,19 @@ interface CardProps {
 
 export const Card: React.FC<CardProps> = ({ title, subtitle, children, footerButtons, ...rest }) => {
   return (
-    <div className="bg-card text-card-foreground shadow-md rounded-lg p-6 mb-4 border border-border" {...rest}>
+    <div data-shared-ui className={sharedClasses.Card.root} {...rest}>
       {(title || subtitle) && (
-        <div className="mb-4">
-          {typeof title === 'string' ? <h3 className="text-xl font-semibold">{title}</h3> : title}
-          {typeof subtitle === 'string' ? <p className="text-muted-foreground text-sm">{subtitle}</p> : subtitle}
+        <div className={sharedClasses.Card.header}>
+          {typeof title === 'string' ? <h3 className={sharedClasses.Card.title}>{title}</h3> : title}
+          {typeof subtitle === 'string' ? <p className={sharedClasses.Card.subtitle}>{subtitle}</p> : subtitle}
         </div>
       )}
-      <div className="mb-4">
+      <div className={sharedClasses.Card.body}>
         {children}
       </div>
       {footerButtons && (
-        <div className="flex justify-end pt-4 border-t border-border">
-          <div className="flex space-x-2">
+        <div className={sharedClasses.Card.footer}>
+          <div className={sharedClasses.Card.footerInner}>
             {footerButtons}
           </div>
         </div>

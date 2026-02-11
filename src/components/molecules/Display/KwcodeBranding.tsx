@@ -1,4 +1,4 @@
-import { LoadingPulseDot } from "@/components/atoms/VisualEffects/LoadingPulseDot";
+import { LoadingPulseDot } from "@/components/atoms/visual-effects/LoadingPulseDot";
 
 export function KwcodeBranding() {
   return (

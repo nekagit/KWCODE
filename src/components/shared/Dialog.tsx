@@ -1,4 +1,5 @@
 import React from 'react';
+import sharedClasses from './shared-classes';
 
 interface DialogProps {
   title: string;
@@ -12,20 +13,20 @@ export const Dialog: React.FC<DialogProps> = ({ title, children, onClose, action
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex justify-center items-center">
-      <div className="relative p-5 border border-border w-96 shadow-lg rounded-md bg-card text-card-foreground">
-        <div className="flex justify-between items-center pb-3 border-b border-border">
-          <h4 className="text-lg font-semibold">{title}</h4>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+    <div data-shared-ui className={sharedClasses.Dialog.overlay}>
+      <div className={sharedClasses.Dialog.panel}>
+        <div className={sharedClasses.Dialog.header}>
+          <h4 className={sharedClasses.Dialog.title}>{title}</h4>
+          <button onClick={onClose} className={sharedClasses.Dialog.closeButton}>
             &times;
           </button>
         </div>
-        <div className="mt-3 mb-4">
+        <div className={sharedClasses.Dialog.body}>
           {children}
         </div>
         {actions && (
-          <div className="flex justify-end pt-3 border-t border-border">
-            <div className="flex space-x-2">
+          <div className={sharedClasses.Dialog.actions}>
+            <div className={sharedClasses.Dialog.actionsInner}>
               {actions}
             </div>
           </div>

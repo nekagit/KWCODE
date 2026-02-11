@@ -20,8 +20,8 @@ import { StatusBadge } from "@/components/molecules/Display/StatusBadge";
 import { DescriptionTooltip } from "@/components/molecules/Display/DescriptionTooltip";
 import { TicketActionsMenu } from "@/components/molecules/FormsAndDialogs/TicketActionsMenu";
 import { TicketStatusUpdater } from "@/components/molecules/FormsAndDialogs/TicketStatusUpdater";
-import { TicketsTable } from "@/components/organisms/TicketsTable";
-import { TicketsTableControls } from "@/components/organisms/TicketsTableControls";
+import { TicketSearchInput } from "@/components/molecules/FormsAndDialogs/TicketSearchInput";
+import { DataTableWithControls } from "@/components/molecules/Tables/DataTableWithControls";
 import { formatDate } from "@/lib/utils";
 import { type TicketRow, type TicketStatus } from "@/types/ticket";
 
@@ -152,13 +152,17 @@ export function TicketsDataTable({
   }
 
   return (
-    <div className="space-y-4">
-      <TicketsTableControls
-        table={table}
-        globalFilter={globalFilter}
-        setGlobalFilter={setGlobalFilter}
-      />
-      <TicketsTable table={table} columns={columns} />
-    </div>
+    <DataTableWithControls
+      table={table}
+      columns={columns}
+      emptyMessage="No tickets match the current filter."
+      searchSlot={
+        <TicketSearchInput
+          table={table}
+          globalFilter={globalFilter}
+          setGlobalFilter={setGlobalFilter}
+        />
+      }
+    />
   );
 }

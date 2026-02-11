@@ -1,5 +1,6 @@
 import React from 'react';
 import { Label } from '@/components/ui/label';
+import sharedClasses from './shared-classes';
 
 interface FormFieldProps {
   htmlFor: string;
@@ -11,11 +12,11 @@ interface FormFieldProps {
 
 export const FormField: React.FC<FormFieldProps> = ({ htmlFor, label, description, errorMessage, children }) => {
   return (
-    <div className="grid gap-2">
+    <div data-shared-ui className={sharedClasses.FormField.root}>
       <Label htmlFor={htmlFor}>{label}</Label>
-      {description && <p className="text-sm text-muted-foreground">{description}</p>}
+      {description && <p className={sharedClasses.FormField.description}>{description}</p>}
       {children}
-      {errorMessage && <p className="text-sm text-destructive">{errorMessage}</p>}
+      {errorMessage && <p className={sharedClasses.FormField.error}>{errorMessage}</p>}
     </div>
   );
 };

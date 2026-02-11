@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Shared components design: smooth shadows, typography, applied via data-shared-ui */
+@import "../components/shared/shared-design.css";
+
 @layer base {
   :root {
     --background: 0 0% 100%;

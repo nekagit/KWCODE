@@ -1,4 +1,5 @@
 import React from 'react';
+import sharedClasses from './shared-classes';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
@@ -16,7 +17,7 @@ export const CheckboxComponent: React.FC<CheckboxComponentProps> = ({
   onCheckedChange,
 }) => {
   return (
-    <div className="flex items-center space-x-2">
+    <div data-shared-ui className={sharedClasses.CheckboxComponent.root}>
       <Checkbox
         id={id}
         checked={checked}

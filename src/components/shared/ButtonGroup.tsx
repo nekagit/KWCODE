@@ -1,4 +1,5 @@
 import React from 'react';
+import sharedClasses from './shared-classes';
 
 interface ButtonGroupProps {
   children: React.ReactNode;
@@ -7,14 +8,10 @@ interface ButtonGroupProps {
 }
 
 export const ButtonGroup: React.FC<ButtonGroupProps> = ({ children, alignment = 'right', className }) => {
-  const justifyClass = {
-    left: 'justify-start',
-    center: 'justify-center',
-    right: 'justify-end',
-  }[alignment];
+  const justifyClass = sharedClasses.ButtonGroup.alignment[alignment];
 
   return (
-    <div className={`flex space-x-2 ${justifyClass} ${className || ''}`}>
+    <div data-shared-ui className={`${sharedClasses.ButtonGroup.root} ${justifyClass} ${className || ''}`}>
       {children}
     </div>
   );

@@ -10,7 +10,7 @@ import { listProjects } from "@/lib/api-projects";
 import type { Project } from "@/types/project";
 import { ProjectsTabContent } from "@/components/molecules/TabAndContentSections/ProjectsTabContent";
 import { AllDataTabContent } from "@/components/molecules/TabAndContentSections/AllDataTabContent";
-import { DbDataTabContent } from "@/components/molecules/TabAndContentSections/DbDataTabContent";
+import { DatabaseDataTabContent } from "@/components/molecules/TabAndContentSections/DatabaseDataTabContent";
 import { LogTabContent } from "@/components/molecules/TabAndContentSections/LogTabContent";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { DashboardTabContent } from "@/components/molecules/TabAndContentSections/DashboardTabContent";
@@ -317,7 +317,7 @@ export function HomePageContent() {
         </TabsContent>
 
         <TabsContent value="data" className="mt-0 space-y-6">
-          <DbDataTabContent
+          <DatabaseDataTabContent
             isTauriEnv={isTauriEnv}
             tickets={tickets}
             features={features}

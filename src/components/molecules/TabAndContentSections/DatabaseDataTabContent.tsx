@@ -16,7 +16,7 @@ import { FeaturesDisplay } from "@/components/molecules/Displays/FeaturesDisplay
 import { AllProjectsDisplay } from "@/components/molecules/Displays/AllProjectsDisplay";
 import { ActiveProjectsDisplay } from "@/components/molecules/Displays/ActiveProjectsDisplay";
 
-interface DbDataTabContentProps {
+interface DatabaseDataTabContentProps {
   isTauriEnv: boolean | null;
   tickets: TicketRow[];
   features: Feature[];
@@ -24,13 +24,13 @@ interface DbDataTabContentProps {
   activeProjects: string[];
 }
 
-export function DbDataTabContent({
+export function DatabaseDataTabContent({
   isTauriEnv,
   tickets,
   features,
   allProjects,
   activeProjects,
-}: DbDataTabContentProps) {
+}: DatabaseDataTabContentProps) {
   const [dataScripts, setDataScripts] = useState<{ name: string; path: string }[]>([]);
   const [dataJsonFiles, setDataJsonFiles] = useState<{ name: string; path: string }[]>([]);
   const [dataFileContent, setDataFileContent] = useState<string | null>(null);

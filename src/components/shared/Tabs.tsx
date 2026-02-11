@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import sharedClasses from './shared-classes';
 
 interface TabItem {
   label: string;
@@ -14,20 +15,18 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, initialActiveTab, ...props }) 
   const [activeTab, setActiveTab] = useState(initialActiveTab || (tabs.length > 0 ? tabs[0].label : ''));
 
   return (
-    <div {...props}>
-      <div className="border-b border-border mb-4">
-        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+    <div data-shared-ui {...props}>
+      <div className={sharedClasses.Tabs.tabsWrapper}>
+        <nav className={sharedClasses.Tabs.nav} aria-label="Tabs">
           {tabs.map((tab) => (
             <button
               key={tab.label}
               onClick={() => setActiveTab(tab.label)}
-              className={`
-                whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors
-                ${activeTab === tab.label
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-primary/30'
-                }
-              `}
+              className={`${sharedClasses.Tabs.tabButtonBase} ${
+                activeTab === tab.label
+                  ? sharedClasses.Tabs.tabButtonActive
+                  : sharedClasses.Tabs.tabButtonInactive
+              }`}
             >
               {tab.label}
             </button>

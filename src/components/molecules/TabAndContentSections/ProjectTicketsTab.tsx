@@ -51,7 +51,7 @@ import { buildKanbanContextBlock, combinePromptRecordWithKanban } from "@/lib/an
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { ProjectCategoryHeader } from "@/components/shared/ProjectCategoryHeader";
-import { ProjectTicketsKanbanColumn } from "@/components/organisms/ProjectTicketsKanbanColumn";
+import { KanbanColumnCard } from "@/components/molecules/Kanban/KanbanColumnCard";
 import { GenerateKanbanPromptSection } from "@/components/atoms/forms/GenerateKanbanPromptSection";
 
 const PRIORITIES: Array<"P0" | "P1" | "P2" | "P3"> = ["P0", "P1", "P2", "P3"];
@@ -835,11 +835,10 @@ export function ProjectTicketsTab({
                   featureColorByTitle[f.title] = getFeatureTicketBorderClasses(i);
                 });
                 return Object.entries(kanbanData.columns).map(([columnId, column]) => (
-                  <ProjectTicketsKanbanColumn
+                  <KanbanColumnCard
                     key={columnId}
                     columnId={columnId}
                     column={column}
-                    kanbanFeatures={kanbanData.features}
                     featureColorByTitle={featureColorByTitle}
                     projectId={projectId}
                     handleMarkDone={handleMarkDone}

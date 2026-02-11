@@ -1,16 +1,15 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2 } from "lucide-react";
 import { toast } from "sonner";
 import type { ArchitectureRecord, ArchitectureCategory } from "@/types/architecture";
-import { PageHeader } from "@/components/molecules/LayoutAndNavigation/PageHeader";
 import { ArchitectureEditDialog } from "@/components/molecules/FormsAndDialogs/ArchitectureEditDialog";
 import { ArchitectureViewDialog } from "@/components/molecules/FormsAndDialogs/ArchitectureViewDialog";
 import { ArchitectureTemplatesTabContent } from "@/components/molecules/TabAndContentSections/ArchitectureTemplatesTabContent";
 import { AiGeneratedArchitecturesTabContent } from "@/components/molecules/TabAndContentSections/AiGeneratedArchitecturesTabContent";
 import { MyDefinitionsTabContent } from "@/components/molecules/TabAndContentSections/MyDefinitionsTabContent";
+import { ThreeTabResourcePageContent } from "@/components/organisms/ThreeTabResourcePageContent";
 
 const CATEGORY_LABELS: Record<ArchitectureCategory, string> = {
   ddd: "DDD",
@@ -48,7 +47,7 @@ export function ArchitecturePageContent() {
   const [formExamples, setFormExamples] = useState("");
   const [formExtraInputs, setFormExtraInputs] = useState<{ key: string; value: string }[]>([]);
   const [formId, setFormId] = useState<string | undefined>(undefined);
-  const [saveLoading, setSaveLoading] = useState(false); // Corrected: setLoadingSave to setSaveLoading
+  const [saveLoading, setSaveLoading] = useState(false);
   const [viewItem, setViewItem] = useState<ArchitectureRecord | null>(null);
 
   const loadItems = useCallback(async () => {
@@ -120,7 +119,7 @@ export function ArchitecturePageContent() {
   );
 
   const addFromAi = useCallback(
-    async (item: any) => {
+    async (item: { name: string; category: ArchitectureCategory; description: string; practices: string; scenarios: string }) => {
       try {
         const res = await fetch("/api/data/architectures", {
           method: "POST",
@@ -148,11 +147,11 @@ export function ArchitecturePageContent() {
 
   const handleSaveEdit = useCallback(async () => {
     if (formId === undefined || !formName.trim()) return;
-    const extraaInputs: Record<string, string> = {};
+    const extraInputs: Record<string, string> = {};
     formExtraInputs.forEach(({ key, value }) => {
-      if (key.trim()) extraaInputs[key.trim()] = value.trim();
+      if (key.trim()) extraInputs[key.trim()] = value.trim();
     });
-    setSaveLoading(true); // Corrected: setLoadingSave to setSaveLoading
+    setSaveLoading(true);
     try {
       const res = await fetch(`/api/data/architectures/${formId}`, {
         method: "PATCH",
@@ -166,7 +165,7 @@ export function ArchitecturePageContent() {
           references: formReferences.trim() || undefined,
           anti_patterns: formAntiPatterns.trim() || undefined,
           examples: formExamples.trim() || undefined,
-          extra_inputs: Object.keys(extraaInputs).length ? extraaInputs : undefined,
+          extra_inputs: Object.keys(extraInputs).length ? extraInputs : undefined,
         }),
       });
       if (!res.ok) {
@@ -180,7 +179,7 @@ export function ArchitecturePageContent() {
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to save");
     } finally {
-      setSaveLoading(false); // Corrected: setLoadingSave to setSaveLoading
+      setSaveLoading(false);
     }
   }, [
     formId,
@@ -194,10 +193,6 @@ export function ArchitecturePageContent() {
     formExamples,
     formExtraInputs,
     loadItems,
-    setEditOpen,
-    setFormId,
-    toast,
-    setSaveLoading, // Corrected: setLoadingSave to setSaveLoading
   ]);
 
   const handleDelete = useCallback(
@@ -214,89 +209,127 @@ export function ArchitecturePageContent() {
         toast.success("Architecture removed");
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Failed to delete");
-      } 
+      }
     },
     [loadItems]
   );
 
+  const config = {
+    title: "Architecture & best practices",
+    description: "Select from templates or generate with AI, then edit and add more input. You cannot create from scratch—only add from templates or AI.",
+    icon: <Building2 className="text-primary/90" />,
+    tabLabels: ["Templates", "AI generated", "My definitions"] as [string, string, string],
+    tabListClassName: "grid w-full max-w-2xl grid-cols-3",
+  };
+
+  const resource = {
+    items,
+    loading,
+    filterCategory,
+    setFilterCategory,
+    editOpen,
+    setEditOpen,
+    viewOpen,
+    setViewOpen,
+    formName,
+    setFormName,
+    formCategory,
+    setFormCategory,
+    formDescription,
+    setFormDescription,
+    formPractices,
+    setFormPractices,
+    formScenarios,
+    setFormScenarios,
+    formReferences,
+    setFormReferences,
+    formAntiPatterns,
+    setFormAntiPatterns,
+    formExamples,
+    setFormExamples,
+    formExtraInputs,
+    setFormExtraInputs,
+    formId,
+    saveLoading,
+    viewItem,
+    setViewItem,
+    openEdit,
+    openView,
+    addFromTemplate,
+    addFromAi,
+    handleSaveEdit,
+    handleDelete,
+    CATEGORY_LABELS,
+    ALL_CATEGORIES,
+  };
+
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Architecture & best practices"
-        description="Select from templates or generate with AI, then edit and add more input. You cannot create from scratch—only add from templates or AI."
-      />
-
-      <Tabs defaultValue="templates" className="w-full">
-        <TabsList className="grid w-full max-w-2xl grid-cols-3">
-          <TabsTrigger value="templates">Templates</TabsTrigger>
-          <TabsTrigger value="ai">AI generated</TabsTrigger>
-          <TabsTrigger value="mine">My definitions</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="templates" className="mt-6">
-          <ArchitectureTemplatesTabContent
-            CATEGORY_LABELS={CATEGORY_LABELS}
-            addFromTemplate={addFromTemplate}
+    <ThreeTabResourcePageContent
+      config={config}
+      resource={resource}
+      renderTemplatesTab={(r) => (
+        <ArchitectureTemplatesTabContent
+          CATEGORY_LABELS={r.CATEGORY_LABELS}
+          addFromTemplate={r.addFromTemplate}
+        />
+      )}
+      renderAiTab={(r) => (
+        <AiGeneratedArchitecturesTabContent
+          CATEGORY_LABELS={r.CATEGORY_LABELS}
+          addFromAi={r.addFromAi}
+        />
+      )}
+      renderMineTab={(r) => (
+        <MyDefinitionsTabContent
+          items={r.items}
+          loading={r.loading}
+          filterCategory={r.filterCategory}
+          setFilterCategory={r.setFilterCategory}
+          ALL_CATEGORIES={r.ALL_CATEGORIES}
+          CATEGORY_LABELS={r.CATEGORY_LABELS}
+          openView={r.openView}
+          openEdit={r.openEdit}
+          handleDelete={r.handleDelete}
+        />
+      )}
+      renderDialogs={(r) => (
+        <>
+          <ArchitectureEditDialog
+            editOpen={r.editOpen}
+            setEditOpen={r.setEditOpen}
+            formName={r.formName}
+            setFormName={r.setFormName}
+            formCategory={r.formCategory}
+            setFormCategory={r.setFormCategory}
+            formDescription={r.formDescription}
+            setFormDescription={r.setFormDescription}
+            formPractices={r.formPractices}
+            setFormPractices={r.setFormPractices}
+            formScenarios={r.formScenarios}
+            setFormScenarios={r.setFormScenarios}
+            formReferences={r.formReferences}
+            setFormReferences={r.setFormReferences}
+            formAntiPatterns={r.formAntiPatterns}
+            setFormAntiPatterns={r.setFormAntiPatterns}
+            formExamples={r.formExamples}
+            setFormExamples={r.setFormExamples}
+            formExtraInputs={r.formExtraInputs}
+            setFormExtraInputs={r.setFormExtraInputs}
+            handleSaveEdit={r.handleSaveEdit}
+            saveLoading={r.saveLoading}
+            ALL_CATEGORIES={r.ALL_CATEGORIES}
+            CATEGORY_LABELS={r.CATEGORY_LABELS}
           />
-        </TabsContent>
-
-        <TabsContent value="ai" className="mt-6">
-          <AiGeneratedArchitecturesTabContent
-            CATEGORY_LABELS={CATEGORY_LABELS}
-            addFromAi={addFromAi}
+          <ArchitectureViewDialog
+            viewOpen={r.viewOpen}
+            setViewOpen={r.setViewOpen}
+            viewItem={r.viewItem}
+            CATEGORY_LABELS={r.CATEGORY_LABELS}
+            openEdit={r.openEdit}
+            handleDelete={r.handleDelete}
           />
-        </TabsContent>
-
-        <TabsContent value="mine" className="mt-6">
-          <MyDefinitionsTabContent
-            items={items}
-            loading={loading}
-            filterCategory={filterCategory}
-            setFilterCategory={setFilterCategory}
-            ALL_CATEGORIES={ALL_CATEGORIES}
-            CATEGORY_LABELS={CATEGORY_LABELS}
-            openView={openView}
-            openEdit={openEdit}
-            handleDelete={handleDelete}
-          />
-        </TabsContent>
-      </Tabs>
-
-      <ArchitectureEditDialog
-        editOpen={editOpen}
-        setEditOpen={setEditOpen}
-        formName={formName}
-        setFormName={setFormName}
-        formCategory={formCategory}
-        setFormCategory={setFormCategory}
-        formDescription={formDescription}
-        setFormDescription={setFormDescription}
-        formPractices={formPractices}
-        setFormPractices={setFormPractices}
-        formScenarios={formScenarios}
-        setFormScenarios={setFormScenarios}
-        formReferences={formReferences}
-        setFormReferences={setFormReferences}
-        formAntiPatterns={formAntiPatterns}
-        setFormAntiPatterns={setFormAntiPatterns}
-        formExamples={formExamples}
-        setFormExamples={setFormExamples}
-        formExtraInputs={formExtraInputs}
-        setFormExtraInputs={setFormExtraInputs}
-        handleSaveEdit={handleSaveEdit}
-        saveLoading={saveLoading}
-        ALL_CATEGORIES={ALL_CATEGORIES}
-        CATEGORY_LABELS={CATEGORY_LABELS}
-      />
-
-      <ArchitectureViewDialog
-        viewOpen={viewOpen}
-        setViewOpen={setViewOpen}
-        viewItem={viewItem}
-        CATEGORY_LABELS={CATEGORY_LABELS}
-        openEdit={openEdit}
-        handleDelete={handleDelete}
-      />
-    </div>
+        </>
+      )}
+    />
   );
 }

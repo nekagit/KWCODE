@@ -1,16 +1,14 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Lightbulb } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader } from "@/components/molecules/LayoutAndNavigation/PageHeader";
 import { IdeaTemplateCard } from "@/components/molecules/CardsAndDisplay/IdeaTemplateCard";
 import { MyIdeasCard } from "@/components/molecules/CardsAndDisplay/MyIdeasCard";
 import { IdeaFormDialog } from "@/components/molecules/FormsAndDialogs/IdeaFormDialog";
-import { IdeaCategory, IdeaRecord } from "@/types/idea";
 import { AiGeneratedIdeasCard } from "@/components/molecules/CardsAndDisplay/AiGeneratedIdeasCard";
-
+import { ThreeTabResourcePageContent } from "@/components/organisms/ThreeTabResourcePageContent";
+import { IdeaCategory, IdeaRecord } from "@/types/idea";
 
 type TemplateIdea = { title: string; description: string; category: IdeaCategory };
 
@@ -191,76 +189,96 @@ export function IdeasPageContent() {
     [loadIdeas]
   );
 
+  const config = {
+    title: "Business ideas",
+    description: "SaaS, IaaS, PaaS, websites, webapps, webshops — templates, AI-generated, or your own.",
+    icon: <Lightbulb className="text-warning/90" />,
+    tabLabels: ["Templates", "AI generated", "My ideas"] as [string, string, string],
+  };
+
+  const resource = {
+    myIdeas,
+    loading,
+    createOpen,
+    setCreateOpen,
+    editOpen,
+    setEditOpen,
+    formTitle,
+    setFormTitle,
+    formDescription,
+    setFormDescription,
+    formCategory,
+    setFormCategory,
+    formId,
+    saveLoading,
+    openCreate,
+    openEdit,
+    handleSaveCreate,
+    handleSaveEdit,
+    addToMyIdeas,
+    handleDelete,
+    TEMPLATE_IDEAS,
+    CATEGORY_LABELS,
+  };
+
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Business ideas"
-        description="SaaS, IaaS, PaaS, websites, webapps, webshops — templates, AI-generated, or your own."
-        icon={<Lightbulb className="text-warning/90" />}
-      />
-
-      <Tabs defaultValue="templates" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-3">
-          <TabsTrigger value="templates">Templates</TabsTrigger>
-          <TabsTrigger value="ai">AI generated</TabsTrigger>
-          <TabsTrigger value="mine">My ideas</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="templates" className="mt-6">
-          <IdeaTemplateCard
-            TEMPLATE_IDEAS={TEMPLATE_IDEAS}
-            CATEGORY_LABELS={CATEGORY_LABELS}
-            addToMyIdeas={addToMyIdeas}
+    <ThreeTabResourcePageContent
+      config={config}
+      resource={resource}
+      renderTemplatesTab={(r) => (
+        <IdeaTemplateCard
+          TEMPLATE_IDEAS={r.TEMPLATE_IDEAS}
+          CATEGORY_LABELS={r.CATEGORY_LABELS}
+          addToMyIdeas={r.addToMyIdeas}
+        />
+      )}
+      renderAiTab={(r) => (
+        <AiGeneratedIdeasCard CATEGORY_LABELS={r.CATEGORY_LABELS} addToMyIdeas={r.addToMyIdeas} />
+      )}
+      renderMineTab={(r) => (
+        <MyIdeasCard
+          myIdeas={r.myIdeas}
+          loading={r.loading}
+          openCreate={r.openCreate}
+          openEdit={r.openEdit}
+          handleDelete={r.handleDelete}
+          CATEGORY_LABELS={r.CATEGORY_LABELS}
+        />
+      )}
+      renderDialogs={(r) => (
+        <>
+          <IdeaFormDialog
+            open={r.createOpen}
+            setOpen={r.setCreateOpen}
+            title="New idea"
+            description="Add a business or product idea. You can change it later."
+            formTitle={r.formTitle}
+            setFormTitle={r.setFormTitle}
+            formDescription={r.formDescription}
+            setFormDescription={r.setFormDescription}
+            formCategory={r.formCategory}
+            setFormCategory={r.setFormCategory}
+            handleSave={r.handleSaveCreate}
+            saveLoading={r.saveLoading}
+            CATEGORY_LABELS={r.CATEGORY_LABELS}
           />
-        </TabsContent>
-
-        <TabsContent value="ai" className="mt-6">
-          <AiGeneratedIdeasCard CATEGORY_LABELS={CATEGORY_LABELS} addToMyIdeas={addToMyIdeas} />
-        </TabsContent>
-
-        <TabsContent value="mine" className="mt-6">
-          <MyIdeasCard
-            myIdeas={myIdeas}
-            loading={loading}
-            openCreate={openCreate}
-            openEdit={openEdit}
-            handleDelete={handleDelete}
-            CATEGORY_LABELS={CATEGORY_LABELS}
+          <IdeaFormDialog
+            open={r.editOpen}
+            setOpen={r.setEditOpen}
+            title="Edit idea"
+            description="Update title, description, or category."
+            formTitle={r.formTitle}
+            setFormTitle={r.setFormTitle}
+            formDescription={r.formDescription}
+            setFormDescription={r.setFormDescription}
+            formCategory={r.formCategory}
+            setFormCategory={r.setFormCategory}
+            handleSave={r.handleSaveEdit}
+            saveLoading={r.saveLoading}
+            CATEGORY_LABELS={r.CATEGORY_LABELS}
           />
-        </TabsContent>
-      </Tabs>
-
-      <IdeaFormDialog
-        open={createOpen}
-        setOpen={setCreateOpen}
-        title="New idea"
-        description="Add a business or product idea. You can change it later."
-        formTitle={formTitle}
-        setFormTitle={setFormTitle}
-        formDescription={formDescription}
-        setFormDescription={setFormDescription}
-        formCategory={formCategory}
-        setFormCategory={setFormCategory}
-        handleSave={handleSaveCreate}
-        saveLoading={saveLoading}
-        CATEGORY_LABELS={CATEGORY_LABELS}
-      />
-
-      <IdeaFormDialog
-        open={editOpen}
-        setOpen={setEditOpen}
-        title="Edit idea"
-        description="Update title, description, or category."
-        formTitle={formTitle}
-        setFormTitle={setFormTitle}
-        formDescription={formDescription}
-        setFormDescription={setFormDescription}
-        formCategory={formCategory}
-        setFormCategory={setFormCategory}
-        handleSave={handleSaveEdit}
-        saveLoading={saveLoading}
-        CATEGORY_LABELS={CATEGORY_LABELS}
-      />
-    </div>
+        </>
+      )}
+    />
   );
 }

@@ -1,4 +1,5 @@
 import React from 'react';
+import sharedClasses from './shared-classes';
 
 interface ListItem {
   id: string;
@@ -12,9 +13,9 @@ interface ListProps {
 
 export const List: React.FC<ListProps> = ({ items, className }) => {
   return (
-    <ul className={`divide-y divide-gray-200 dark:divide-gray-700 ${className || ''}`}>
+    <ul data-shared-ui className={`${sharedClasses.List.root} ${className || ''}`}>
       {items.map(item => (
-        <li key={item.id} className="py-4">
+        <li key={item.id} className={sharedClasses.List.item}>
           {item.content}
         </li>
       ))}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import sharedClasses from './shared-classes';
 
 interface JsonDisplayProps {
   title: string;
@@ -16,9 +17,9 @@ export const JsonDisplay: React.FC<JsonDisplayProps> = ({
   className,
 }) => {
   return (
-    <div className={cn("", className)}>
-      <p className="text-xs text-muted-foreground mb-2">{title}</p>
-      <ScrollArea className={cn(height, "rounded border bg-muted/30 p-3 font-mono text-xs whitespace-pre-wrap")}>
+    <div data-shared-ui className={cn(sharedClasses.JsonDisplay.root, className)}>
+      <p className={sharedClasses.JsonDisplay.title}>{title}</p>
+      <ScrollArea className={cn(height, sharedClasses.JsonDisplay.scrollArea)}>
         <pre>{JSON.stringify(data, null, 2)}</pre>
       </ScrollArea>
     </div>

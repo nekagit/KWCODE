@@ -1,4 +1,5 @@
 import React from 'react';
+import sharedClasses from './shared-classes';
 
 interface StateProps {
   message?: string;
@@ -25,24 +26,24 @@ export const EmptyState: React.FC<StateProps> = ({ message, title, description, 
   const Icon = icon != null && isIconComponent(icon) ? (icon as React.ElementType) : null;
   const iconAsNode = icon != null && !isIconComponent(icon) ? (icon as React.ReactNode) : null;
   return (
-    <div className="flex flex-col items-center justify-center p-8 text-center bg-card text-card-foreground rounded-lg border border-border">
-      {Icon != null && <Icon className="w-12 h-12 mb-4 text-primary/80" />}
-      {iconAsNode != null && <div className="w-12 h-12 mb-4 flex items-center justify-center text-primary/80">{iconAsNode}</div>}
-      {title && <p className="text-lg font-medium mb-2">{title}</p>}
-      {(description || displayMessage) && <p className="text-muted-foreground mb-2">{description ?? displayMessage}</p>}
-      {action && <div className="mt-4">{action}</div>}
+    <div data-shared-ui className={sharedClasses.EmptyState.root}>
+      {Icon != null && <Icon className={sharedClasses.EmptyState.icon} />}
+      {iconAsNode != null && <div className={sharedClasses.EmptyState.iconWrapper}>{iconAsNode}</div>}
+      {title && <p className={sharedClasses.EmptyState.title}>{title}</p>}
+      {(description || displayMessage) && <p className={sharedClasses.EmptyState.description}>{description ?? displayMessage}</p>}
+      {action && <div className={sharedClasses.EmptyState.action}>{action}</div>}
     </div>
   );
 };
 
 export const LoadingState: React.FC = () => {
   return (
-    <div className="flex flex-col items-center justify-center p-8 text-center bg-card text-card-foreground rounded-lg border border-border">
-      <svg className="animate-spin h-8 w-8 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    <div data-shared-ui className={sharedClasses.LoadingState.root}>
+      <svg className={sharedClasses.LoadingState.spinner} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle className={sharedClasses.LoadingState.spinnerCircle} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+        <path className={sharedClasses.LoadingState.spinnerPath} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
       </svg>
-      <p className="mt-4 text-lg font-medium">Loading...</p>
+      <p className={sharedClasses.LoadingState.text}>Loading...</p>
     </div>
   );
 };

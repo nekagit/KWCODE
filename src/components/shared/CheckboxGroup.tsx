@@ -1,4 +1,5 @@
 import React from 'react';
+import sharedClasses from './shared-classes';
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CheckboxComponent } from "@/components/shared/CheckboxComponent";
@@ -23,12 +24,12 @@ export const CheckboxGroup = <T extends { id: string | number; name: string }>({
   };
 
   return (
-    <div className="grid gap-2">
+    <div data-shared-ui className={sharedClasses.CheckboxGroup.root}>
       <Label>{label}</Label>
-      <ScrollArea className="h-[100px] rounded border p-2">
-        <div className="space-y-1">
+      <ScrollArea className={sharedClasses.CheckboxGroup.scrollArea}>
+        <div className={sharedClasses.CheckboxGroup.inner}>
           {items.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{emptyMessage}</p>
+            <p className={sharedClasses.CheckboxGroup.emptyMessage}>{emptyMessage}</p>
           ) : (
             items.map((item) => (
               <CheckboxComponent

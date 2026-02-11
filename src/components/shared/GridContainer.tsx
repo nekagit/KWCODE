@@ -1,4 +1,5 @@
 import React from 'react';
+import sharedClasses from './shared-classes';
 
 interface GridContainerProps {
   children: React.ReactNode;
@@ -7,7 +8,7 @@ interface GridContainerProps {
 
 export const GridContainer: React.FC<GridContainerProps> = ({
   children,
-  className = "grid gap-4 sm:grid-cols-2 lg:grid-cols-3",
+  className = sharedClasses.GridContainer.root,
 }) => {
-  return <div className={className}>{children}</div>;
+  return <div data-shared-ui className={className}>{children}</div>;
 };

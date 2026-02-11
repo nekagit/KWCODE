@@ -2,6 +2,7 @@ import React from 'react';
 import { Button, ButtonProps } from "@/components/ui/button";
 import { LucideIcon } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import sharedClasses from './shared-classes';
 
 interface ButtonComponentProps {
   onClick: (event: React.MouseEvent) => void;
@@ -29,9 +30,7 @@ export const ButtonComponent: React.FC<ButtonComponentProps> = ({
   iconClassName,
 }) => {
   const resolvedVariant: ButtonProps["variant"] = variant === "purple" ? "default" : variant;
-  const purpleClass = variant === "purple"
-    ? "bg-purple-500 text-purple-50-foreground hover:bg-purple-500/80"
-    : "";
+  const purpleClass = variant === "purple" ? sharedClasses.ButtonComponent.purple : "";
 
   return (
     <Button
@@ -42,9 +41,9 @@ export const ButtonComponent: React.FC<ButtonComponentProps> = ({
       title={title}
       className={cn(className, purpleClass)}
     >
-      {iconPlacement === "left" && Icon && <Icon className={cn("h-4 w-4 mr-2", iconClassName)} />}
+      {iconPlacement === "left" && Icon && <Icon className={cn(sharedClasses.ButtonComponent.iconLeft, iconClassName)} />}
       {text}
-      {iconPlacement === "right" && Icon && <Icon className={cn("h-4 w-4 ml-2", iconClassName)} />}
+      {iconPlacement === "right" && Icon && <Icon className={cn(sharedClasses.ButtonComponent.iconRight, iconClassName)} />}
     </Button>
   );
 };

@@ -1,4 +1,4 @@
-import { FlyingStarItem } from "@/components/atoms/VisualEffects/FlyingStarItem";
+import { FlyingStarItem } from "@/components/atoms/visual-effects/FlyingStarItem";
 
 const STAR_COUNT = 12;
 

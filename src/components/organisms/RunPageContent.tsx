@@ -7,7 +7,7 @@ import { useRunState } from "@/context/run-state";
 import { getApiErrorMessage } from "@/lib/utils";
 import { RunPageHeader } from "@/components/molecules/LayoutAndNavigation/RunPageHeader";
 import { RunFromFeatureCard } from "@/components/molecules/CardsAndDisplay/RunFromFeatureCard";
-import { PromptRecordSelectionCard } from "@/components/molecules/CardsAndDisplay/PromptSelectionCard"; // Corrected import
+import { PromptRecordSelectionCard } from "@/components/molecules/CardsAndDisplay/PromptRecordSelectionCard";
 import { ProjectSelectionCard } from "@/components/molecules/CardsAndDisplay/ProjectSelectionCard";
 import { RunLabelCard } from "@/components/molecules/CardsAndDisplay/RunLabelCard";
 import { RunControls } from "@/components/molecules/ControlsAndButtons/RunControls";

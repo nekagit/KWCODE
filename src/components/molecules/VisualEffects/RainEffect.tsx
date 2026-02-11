@@ -1,4 +1,4 @@
-import { RaindropCircle } from "@/components/atoms/VisualEffects/RaindropCircle";
+import { RaindropCircle } from "@/components/atoms/visual-effects/RaindropCircle";
 
 const RAIN_COUNT = 80;
 
