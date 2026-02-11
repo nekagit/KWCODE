@@ -17,6 +17,7 @@ import { ProjectFeaturesTab } from "@/components/molecules/TabAndContentSections
 import { ProjectTicketsTab } from "@/components/molecules/TabAndContentSections/ProjectTicketsTab";
 import { ProjectPromptRecordsTab } from "@/components/molecules/TabAndContentSections/ProjectPromptsTab";
 import { ProjectArchitectureTab } from "@/components/molecules/TabAndContentSections/ProjectArchitectureTab";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export function ProjectDetailsPageContent() {
   const params = useParams();
@@ -75,57 +76,59 @@ export function ProjectDetailsPageContent() {
   }
 
   return (
-    <div className="space-y-6" data-testid="project-detail-page">
-      <ProjectHeader project={project} projectId={projectId} />
+    <ErrorBoundary fallbackTitle="Project detail error">
+      <div className="space-y-6" data-testid="project-detail-page">
+        <ProjectHeader project={project} projectId={projectId} />
 
-      <Tabs defaultValue="todo" className="w-full" data-testid="project-detail-tabs">
-        <TabsList className="mx-auto grid w-full max-w-2xl grid-cols-3" aria-label="Project sections">
-          <TabsTrigger value="git" className="flex items-center gap-2" data-testid="tab-git">
-            <FolderGit2 className="h-4 w-4 text-destructive" />
-            Git & Testing
-          </TabsTrigger>
-          <TabsTrigger value="todo" className="flex items-center gap-2" data-testid="tab-todo">
-            <ListTodo className="h-4 w-4 text-info/90" />
-            Todo
-          </TabsTrigger>
-          <TabsTrigger value="setup" className="flex items-center gap-2" data-testid="tab-setup">
-            <Settings className="h-4 w-4 text-success/90" />
-            Setup
-          </TabsTrigger>
-        </TabsList>
+        <Tabs defaultValue="todo" className="w-full" data-testid="project-detail-tabs">
+          <TabsList className="mx-auto grid w-full max-w-2xl grid-cols-3" aria-label="Project sections">
+            <TabsTrigger value="git" className="flex items-center gap-2" data-testid="tab-git">
+              <FolderGit2 className="h-4 w-4 text-destructive" />
+              Git & Testing
+            </TabsTrigger>
+            <TabsTrigger value="todo" className="flex items-center gap-2" data-testid="tab-todo">
+              <ListTodo className="h-4 w-4 text-info/90" />
+              Todo
+            </TabsTrigger>
+            <TabsTrigger value="setup" className="flex items-center gap-2" data-testid="tab-setup">
+              <Settings className="h-4 w-4 text-success/90" />
+              Setup
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="git" className="mt-4">
-          <ProjectGitTab project={project} projectId={projectId} />
-        </TabsContent>
+          <TabsContent value="git" className="mt-4">
+            <ProjectGitTab project={project} projectId={projectId} />
+          </TabsContent>
 
-        <TabsContent value="todo" className="mt-4 flex min-h-[calc(100vh-14rem)] flex-col gap-6">
-          <ProjectTicketsTab
-            project={project}
-            projectId={projectId}
-            fetchProject={fetchProject}
-          />
-          <ProjectFeaturesTab project={project} projectId={projectId} />
-          <ProjectPromptRecordsTab project={project} projectId={projectId} />
-        </TabsContent>
+          <TabsContent value="todo" className="mt-4 flex min-h-[calc(100vh-14rem)] flex-col gap-6">
+            <ProjectTicketsTab
+              project={project}
+              projectId={projectId}
+              fetchProject={fetchProject}
+            />
+            <ProjectFeaturesTab project={project} projectId={projectId} />
+            <ProjectPromptRecordsTab project={project} projectId={projectId} />
+          </TabsContent>
 
-        <TabsContent value="setup" className="mt-4 space-y-6">
-          <Card>
-            <CardContent className="pt-6">
-              <ProjectDesignTab project={project} projectId={projectId} />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <ProjectIdeasTab project={project} projectId={projectId} />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <ProjectArchitectureTab project={project} projectId={projectId} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+          <TabsContent value="setup" className="mt-4 space-y-6">
+            <Card>
+              <CardContent className="pt-6">
+                <ProjectDesignTab project={project} projectId={projectId} />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <ProjectIdeasTab project={project} projectId={projectId} />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <ProjectArchitectureTab project={project} projectId={projectId} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </ErrorBoundary>
   );
 }

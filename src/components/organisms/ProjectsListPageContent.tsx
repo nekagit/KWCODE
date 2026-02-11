@@ -99,7 +99,7 @@ export function ProjectsListPageContent() {
       ) : projects.length === 0 ? (
         <NoProjectsFoundCard seeding={seeding} seedTemplateProject={seedTemplateProject} />
       ) : (
-        <section className="space-y-3">
+        <section className="space-y-3" data-testid="projects-list">
           <h2 className="text-lg font-semibold">Your projects</h2>
           <ProjectListContainer>
             <ul className="space-y-1 rounded-md border bg-muted/30 p-2">

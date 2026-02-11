@@ -6,6 +6,7 @@ import { TerminalStatusBadge } from "@/components/molecules/Display/TerminalStat
 import { SidebarNavigation } from "@/components/organisms/SidebarNavigation";
 import { SidebarToggle } from "@/components/molecules/ControlsAndButtons/SidebarToggle";
 import { useRunState } from "@/context/run-state";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const SIDEBAR_STORAGE_KEY = "kwcode-sidebar-width";
 const SIDEBAR_MIN = 160;
@@ -119,9 +120,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           }
         >
-          <div className="flex flex-col min-h-0 flex-1">
-            {children}
-          </div>
+          <ErrorBoundary fallbackTitle="Page error">
+            <div className="flex flex-col min-h-0 flex-1">
+              {children}
+            </div>
+          </ErrorBoundary>
         </Suspense>
       </main>
     </div>

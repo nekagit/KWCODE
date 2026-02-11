@@ -11,6 +11,7 @@ import { PromptRecordSelectionCard } from "@/components/molecules/CardsAndDispla
 import { ProjectSelectionCard } from "@/components/molecules/CardsAndDisplay/ProjectSelectionCard";
 import { RunLabelCard } from "@/components/molecules/CardsAndDisplay/RunLabelCard";
 import { RunControls } from "@/components/molecules/ControlsAndButtons/RunControls";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 import type { Feature } from "@/types/project";
 export function RunPageContent() {
@@ -105,54 +106,56 @@ export function RunPageContent() {
   const canStart = selectedPromptRecordIds.length > 0 && activeProjects.length > 0;
 
   return (
-    <div className="space-y-6" data-testid="run-page">
-      <RunPageHeader />
+    <ErrorBoundary fallbackTitle="Run page error">
+      <div className="space-y-6" data-testid="run-page">
+        <RunPageHeader />
 
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-      {dataWarning && !error && (
-        <Alert variant="default" className="border-amber-500/50 bg-amber-500/10">
-          <AlertDescription>{dataWarning}</AlertDescription>
-        </Alert>
-      )}
+        {dataWarning && !error && (
+          <Alert variant="default" className="border-amber-500/50 bg-amber-500/10">
+            <AlertDescription>{dataWarning}</AlertDescription>
+          </Alert>
+        )}
 
-      {/* Run from feature */}
-      {features.length > 0 && (
-        <RunFromFeatureCard
-          features={features}
-          selectedFeatureId={selectedFeatureId}
-          applyFeature={applyFeature}
+        {/* Run from feature */}
+        {features.length > 0 && (
+          <RunFromFeatureCard
+            features={features}
+            selectedFeatureId={selectedFeatureId}
+            applyFeature={applyFeature}
+          />
+        )}
+
+        {/* PromptRecords */}
+        <PromptRecordSelectionCard
+          prompts={prompts}
+          selectedPromptRecordIds={selectedPromptRecordIds}
+          setSelectedPromptRecordIds={setSelectedPromptRecordIds}
         />
-      )}
 
-      {/* PromptRecords */}
-      <PromptRecordSelectionCard // Corrected component name
-        prompts={prompts}
-        selectedPromptRecordIds={selectedPromptRecordIds}
-        setSelectedPromptRecordIds={setSelectedPromptRecordIds}
-      />
+        {/* Projects */}
+        <ProjectSelectionCard
+          allProjects={allProjects}
+          activeProjects={activeProjects}
+          toggleProject={toggleProject}
+        />
 
-      {/* Projects */}
-      <ProjectSelectionCard
-        allProjects={allProjects}
-        activeProjects={activeProjects}
-        toggleProject={toggleProject}
-      />
+        {/* Run label (optional) */}
+        <RunLabelCard runLabel={runLabel} setRunLabel={setRunLabel} />
 
-      {/* Run label (optional) */}
-      <RunLabelCard runLabel={runLabel} setRunLabel={setRunLabel} />
-
-      {/* Start / Stop */}
-      <RunControls
-        handleStart={handleStart}
-        handleStop={handleStop}
-        canStart={canStart}
-        running={running}
-      />
-    </div>
+        {/* Start / Stop */}
+        <RunControls
+          handleStart={handleStart}
+          handleStop={handleStop}
+          canStart={canStart}
+          running={running}
+        />
+      </div>
+    </ErrorBoundary>
   );
 }

@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { TicketBoardLayout } from "@/components/molecules/LayoutAndNavigation/TicketBoardLayout";
 import { TicketCard } from "@/components/molecules/CardsAndDisplay/TicketCard";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import type { Ticket, TicketStatus } from "@/types/ticket";
 
 interface TicketBoardProps {
@@ -12,8 +13,9 @@ interface TicketBoardProps {
 
 export function TicketBoard({ tickets, updateTicket, deleteTicket }: TicketBoardProps) {
   return (
-    <div data-testid="kanban-board">
-      <TicketBoardLayout>
+    <ErrorBoundary fallbackTitle="Kanban error">
+      <div data-testid="kanban-board">
+        <TicketBoardLayout>
       {(["backlog", "in_progress", "done", "blocked"] as const).map((status) => (
         <div
           key={status}
@@ -51,7 +53,8 @@ export function TicketBoard({ tickets, updateTicket, deleteTicket }: TicketBoard
           </ScrollArea>
         </div>
       ))}
-      </TicketBoardLayout>
-    </div>
+        </TicketBoardLayout>
+      </div>
+    </ErrorBoundary>
   );
 }
