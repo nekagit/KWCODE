@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { FeatureInput } from "@/components/atoms/inputs/FeatureInput";
 import { CheckboxGroup } from "@/components/shared/CheckboxGroup";
-import { CheckboxGroup as ProjectCheckboxGroup } from "@/components/shared/CheckboxGroup";
+import { GenericInputWithLabel } from "@/components/shared/inputs/GenericInputWithLabel";
 import type { Feature } from "@/types/project";
 import type { Ticket } from "@/types/ticket";
 
@@ -54,10 +53,11 @@ export const FeatureAddForm: React.FC<FeatureAddFormProps> = ({
 
   return (
     <div className="px-4 pb-4 pt-1 grid gap-2">
-      <FeatureInput
+      <GenericInputWithLabel
+        id="feature-title"
         label="Title"
         value={featureForm.title}
-        onChange={(title: string) => setFeatureForm((f) => ({ ...f, title }))}
+        onChange={(e) => setFeatureForm((f) => ({ ...f, title: e.target.value }))}
         placeholder="e.g. Calendar event adding"
       />
       <CheckboxGroup
@@ -82,7 +82,7 @@ export const FeatureAddForm: React.FC<FeatureAddFormProps> = ({
             : [...f.prompt_ids, id as number],
         }))}
       />
-      <ProjectCheckboxGroup
+      <CheckboxGroup
         label="Projects"
         items={allProjects.map(p => ({id: p, name: p.split("/").pop() ?? p}))}
         selectedItems={featureForm.project_paths}

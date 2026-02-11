@@ -10,11 +10,11 @@ interface TabsProps {
   initialActiveTab?: string;
 }
 
-export const Tabs: React.FC<TabsProps> = ({ tabs, initialActiveTab }) => {
+export const Tabs: React.FC<TabsProps> = ({ tabs, initialActiveTab, ...props }) => {
   const [activeTab, setActiveTab] = useState(initialActiveTab || (tabs.length > 0 ? tabs[0].label : ''));
 
   return (
-    <div>
+    <div {...props}>
       <div className="border-b border-gray-200 dark:border-gray-700 mb-4">
         <nav className="-mb-px flex space-x-8" aria-label="Tabs">
           {tabs.map((tab) => (

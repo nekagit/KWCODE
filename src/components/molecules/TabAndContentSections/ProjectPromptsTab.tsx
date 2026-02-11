@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Plus, MessageSquare } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import type { Project } from "@/types/project";
-import { ProjectPromptRecordHeader } from "@/components/atoms/ProjectPromptRecordHeader";
-import { ProjectPromptRecordListItem } from "@/components/atoms/ProjectPromptRecordListItem";
+import { ProjectHeader } from "@/components/shared/ProjectHeader";
+import { ProjectPromptListItem } from "@/components/atoms/list-items/ProjectPromptListItem";
 import { GridContainer } from "@/components/shared/GridContainer";
 
 interface ProjectPromptRecordsTabProps {
@@ -24,11 +24,17 @@ export function ProjectPromptRecordsTab({
 }: ProjectPromptRecordsTabProps) {
   return (
     <div className="mt-4 space-y-6">
-      <ProjectPromptRecordHeader
+      <ProjectHeader
         project={project}
         projectId={projectId}
         exportLoading={exportLoading}
         generateExport={generateExport}
+        categoryName="Prompts"
+        categoryIcon={MessageSquare}
+        categoryLength={project.promptIds?.length || 0}
+        newHref={`/prompts?projectId=${projectId}`}
+        newButtonText="New prompt"
+        exportCategory="prompts"
       />
 
       {project.promptIds?.length === 0 ? (

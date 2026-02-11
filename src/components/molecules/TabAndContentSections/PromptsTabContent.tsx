@@ -3,8 +3,8 @@ import type { PromptRecord } from "@/types/prompt";
 
 interface PromptsTabContentProps {
   prompts: PromptRecord[];
-  selectedPromptIds: number[];
-  setSelectedPromptIds: React.Dispatch<React.SetStateAction<number[]>>;
+  selectedPromptRecordIds: number[];
+  setSelectedPromptRecordIds: React.Dispatch<React.SetStateAction<number[]>>;
 }
 
 export function PromptsTabContent({
@@ -17,7 +17,7 @@ export function PromptsTabContent({
       <PromptsAndTiming
         prompts={prompts}
         selectedPromptIds={selectedPromptRecordIds}
-        setSelectedPromptRecordIds={setSelectedPromptRecordIds}
+        setSelectedPromptIds={setSelectedPromptRecordIds}
       />
     </div>
   );

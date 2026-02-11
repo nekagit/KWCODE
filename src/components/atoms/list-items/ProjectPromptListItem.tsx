@@ -16,17 +16,19 @@ export const ProjectPromptRecordListItem: React.FC<ProjectPromptRecordListItemPr
   projectId,
 }) => {
   return (
-    <Card
-      title={prompt.title || `PromptRecord ${prompt.id}`}
-      subtitle={prompt.description}
-      className="flex flex-col"
-      footerButtons={
-        <Button size="sm" variant="outline" className="w-full" asChild>
-          <Link href={`/prompts/${prompt.id}?projectId=${projectId}`}>
-            Open prompt <ArrowRight className="h-4 w-4 ml-2" />
-          </Link>
-        </Button>
-      }
-    ><div/></Card>
+    <li key={prompt.id}>
+      <Card
+        title={prompt.title || `PromptRecord ${prompt.id}`}
+        subtitle={prompt.description}
+        className="flex flex-col bg-muted/30"
+        footerButtons={
+          <Button size="sm" variant="outline" className="w-full" asChild>
+            <Link href={`/prompts/${prompt.id}?projectId=${projectId}`}>
+              Open prompt <ArrowRight className="h-4 w-4 ml-2" />
+            </Link>
+          </Button>
+        }
+      />
+    </li>
   );
 };

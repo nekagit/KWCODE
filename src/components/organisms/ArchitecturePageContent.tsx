@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useCallback, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2 } from "lucide-react";
@@ -78,8 +80,8 @@ export function ArchitecturePageContent() {
     setFormAntiPatterns(record.anti_patterns ?? "");
     setFormExamples(record.examples ?? "");
     setFormExtraInputs(
-      record["extr-inputs"] // Corrected: extr-inputs to extr-inputs
-        ? Object.entries(record["extr-inputs"]).map(([key, value]) => ({ key, value: value as string })) // Corrected: extr-inputs to extr-inputs
+      record.extr-inputs
+        ? Object.entries(record.extr-inputs).map(([key, value]) => ({ key, value: value as string }))
         : []
     );
     setEditOpen(true);
@@ -146,9 +148,9 @@ export function ArchitecturePageContent() {
 
   const handleSaveEdit = useCallback(async () => {
     if (formId === undefined || !formName.trim()) return;
-    const extraInputs: Record<string, string> = {};
+    const extraaInputs: Record<string, string> = {};
     formExtraInputs.forEach(({ key, value }) => {
-      if (key.trim()) extraInputs[key.trim()] = value.trim();
+      if (key.trim()) extraaInputs[key.trim()] = value.trim();
     });
     setSaveLoading(true); // Corrected: setLoadingSave to setSaveLoading
     try {
@@ -164,7 +166,7 @@ export function ArchitecturePageContent() {
           references: formReferences.trim() || undefined,
           anti_patterns: formAntiPatterns.trim() || undefined,
           examples: formExamples.trim() || undefined,
-          "extr-inputs": Object.keys(extraInputs).length ? extraInputs : undefined, // Corrected: extr-inputs to extr-inputs
+          "extr-inputs": Object.keys(extraaInputs).length ? extraaInputs : undefined,
         }),
       });
       if (!res.ok) {
@@ -221,7 +223,7 @@ export function ArchitecturePageContent() {
     <div className="space-y-6">
       <PageHeader
         title="Architecture & best practices"
-        description="Select from templates or generate with AI, then edit and add more inputs. You cannot create from scratch—only add from templates or AI."
+        description="Select from templates or generate with AI, then edit and add more input. You cannot create from scratch—only add from templates or AI."
       />
 
       <Tabs defaultValue="templates" className="w-full">

@@ -6,11 +6,11 @@ interface AccordionItemProps {
   defaultOpen?: boolean;
 }
 
-const AccordionItem: React.FC<AccordionItemProps> = ({ title, children, defaultOpen = false }) => {
+const AccordionItem: React.FC<AccordionItemProps> = ({ title, children, defaultOpen = false, ...props }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="border-b border-gray-200 dark:border-gray-700 last:border-b-0">
+    <div className="border-b border-gray-200 dark:border-gray-700 last:border-b-0" {...props}>
       <button
         className="flex justify-between items-center w-full py-4 text-left font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700/50"
         onClick={() => setIsOpen(!isOpen)}
@@ -35,13 +35,22 @@ const AccordionItem: React.FC<AccordionItemProps> = ({ title, children, defaultO
 
 interface AccordionProps {
   items: AccordionItemProps[];
+  initialActiveTab?: string;
 }
 
-export const Accordion: React.FC<AccordionProps> = ({ items }) => {
+export const Accordion: React.FC<AccordionProps> = ({ items, initialActiveTab, ...props }) => {
+  const [activeItemTitle, setActiveItemTitle] = useState(initialActiveTab || (items.length > 0 ? items[0].title : ''));
+
   return (
-    <div className="w-full rounded-lg bg-white dark:bg-gray-800 shadow">
+    <div className="w-full rounded-lg bg-white dark:bg-gray-800 shadow" {...props}>
       {items.map((item, index) => (
-        <AccordionItem key={index} {...item} />
+        <AccordionItem
+          key={item.title || index}
+          title={item.title}
+          defaultOpen={activeItemTitle === item.title}
+        >
+          {item.children}
+        </AccordionItem>
       ))}
     </div>
   );

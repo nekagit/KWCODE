@@ -6,7 +6,7 @@ import { Plus, Building2 } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import type { Project } from "@/types/project";
 import { ProjectCategoryHeader } from "@/components/shared/ProjectCategoryHeader";
-import { ProjectArchitectureListItem } from "@/components/atoms/ProjectArchitectureListItem";
+import { ProjectArchitectureListItem } from "@/components/atoms/list-items/ProjectArchitectureListItem";
 import { GridContainer } from "@/components/shared/GridContainer";
 
 interface ProjectArchitectureTabProps {

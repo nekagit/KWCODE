@@ -4,7 +4,7 @@ import { useCallback } from "react";
 import { Card } from "@/components/shared/Card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { TEST_TEMPLATES } from "@/data/test-templates";
-import { TestTemplateListItem } from "@/components/atoms/TestTemplateListItem";
+import { TestTemplateListItem } from "@/components/atoms/list-items/TestTemplateListItem";
 
 interface TestTemplateListProps {
   copiedId: string | null;

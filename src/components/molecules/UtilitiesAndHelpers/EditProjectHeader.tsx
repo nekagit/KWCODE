@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { PageHeader } from "@/components/molecules/LayoutAndNavigation/PageHeader/PageHeader";
+import { PageHeader } from "@/components/molecules/LayoutAndNavigation/PageHeader";
 
 interface EditProjectHeaderProps {
   projectId: string;

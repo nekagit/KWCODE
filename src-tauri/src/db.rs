@@ -71,101 +71,6 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
     Ok(())
 }
 
-/// Migrate data from JSON files in `data_dir` into the database if DB is empty.
-pub fn migrate_from_json(data_dir: &Path, conn: &Connection) -> Result<(), String> {
-    let count: i64 = conn
-        .query_row(
-            "SELECT (SELECT COUNT(*) FROM kv_store) + (SELECT COUNT(*) FROM tickets) + (SELECT COUNT(*) FROM features) AS n",
-            [],
-            |row| row.get::<_, i64>(0),
-        )
-        .map_err(|e| e.to_string())?;
-    if count != 0 {
-        return Ok(());
-    }
-
-    let all_projects_path = data_dir.join("all_projects.json");
-    if all_projects_path.exists() {
-        let content = std::fs::read_to_string(&all_projects_path).map_err(|e| e.to_string())?;
-        let _: Vec<String> = serde_json::from_str(&content).map_err(|e| e.to_string())?;
-        conn.execute(
-            "INSERT OR REPLACE INTO kv_store (key, value) VALUES (?1, ?2)",
-            params![KV_ALL_PROJECTS, content],
-        )
-        .map_err(|e| e.to_string())?;
-    }
-
-    let cursor_projects_path = data_dir.join("cursor_projects.json");
-    if cursor_projects_path.exists() {
-        let content = std::fs::read_to_string(&cursor_projects_path).map_err(|e| e.to_string())?;
-        conn.execute(
-            "INSERT OR REPLACE INTO kv_store (key, value) VALUES (?1, ?2)",
-            params![KV_CURSOR_PROJECTS, content],
-        )
-        .map_err(|e| e.to_string())?;
-    }
-
-    let tickets_path = data_dir.join("tickets.json");
-    if tickets_path.exists() {
-        let content = std::fs::read_to_string(&tickets_path).map_err(|e| e.to_string())?;
-        let tickets: Vec<super::Ticket> = serde_json::from_str(&content).map_err(|e| e.to_string())?;
-        for t in tickets {
-            let prompt_ids = t.prompt_ids.as_ref().and_then(|v| serde_json::to_string(v).ok());
-            let project_paths = t.project_paths.as_ref().and_then(|v| serde_json::to_string(v).ok());
-            conn.execute(
-                "INSERT OR REPLACE INTO tickets (id, title, description, status, priority, created_at, updated_at, prompt_ids, project_paths)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
-                params![
-                    t.id,
-                    t.title,
-                    t.description,
-                    t.status,
-                    t.priority,
-                    t.created_at,
-                    t.updated_at,
-                    prompt_ids,
-                    project_paths,
-                ],
-            )
-            .map_err(|e| e.to_string())?;
-        }
-    }
-
-    let features_path = data_dir.join("features.json");
-    if features_path.exists() {
-        let content = std::fs::read_to_string(&features_path).map_err(|e| e.to_string())?;
-        let features: Vec<super::Feature> = serde_json::from_str(&content).map_err(|e| e.to_string())?;
-        for f in features {
-            let ticket_ids = serde_json::to_string(&f.ticket_ids).map_err(|e| e.to_string())?;
-            let prompt_ids = serde_json::to_string(&f.prompt_ids).map_err(|e| e.to_string())?;
-            let project_paths = serde_json::to_string(&f.project_paths).map_err(|e| e.to_string())?;
-            conn.execute(
-                "INSERT OR REPLACE INTO features (id, title, ticket_ids, prompt_ids, project_paths, created_at, updated_at)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-                params![
-                    f.id,
-                    f.title,
-                    ticket_ids,
-                    prompt_ids,
-                    project_paths,
-                    f.created_at,
-                    f.updated_at,
-                ],
-            )
-            .map_err(|e| e.to_string())?;
-        }
-    }
-
-    // Persist data dir so all access uses path from DB (ADR 069).
-    let data_dir_value = data_dir.to_string_lossy().to_string();
-    conn.execute(
-        "INSERT OR REPLACE INTO kv_store (key, value) VALUES (?1, ?2)",
-        params![KV_DATA_DIR, data_dir_value],
-    )
-    .map_err(|e| e.to_string())?;
-
-    Ok(())
-}
 
 /// Get data directory path from DB; if missing or invalid, use fallback and persist it.
 pub fn get_data_dir(conn: &Connection, fallback: &Path) -> PathBuf {
@@ -194,16 +99,6 @@ pub fn get_data_dir(conn: &Connection, fallback: &Path) -> PathBuf {
     }
 }
 
-/// Set data directory path in DB (e.g. from settings).
-pub fn set_data_dir(conn: &Connection, path: &Path) -> Result<(), String> {
-    let value = path.to_string_lossy().to_string();
-    conn.execute(
-        "INSERT OR REPLACE INTO kv_store (key, value) VALUES (?1, ?2)",
-        params![KV_DATA_DIR, value],
-    )
-    .map_err(|e| e.to_string())?;
-    Ok(())
-}
 
 pub fn get_all_projects(conn: &Connection) -> Result<Vec<String>, String> {
     let content: String = match conn.query_row(

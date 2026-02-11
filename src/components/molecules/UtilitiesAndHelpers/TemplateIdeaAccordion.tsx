@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Lightbulb } from "lucide-react";
 import { TEMPLATE_IDEAS } from "@/data/template-ideas";
-import { TemplateIdeaCard } from "@/components/atoms/TemplateIdeaCard";
+import { TemplateIdeaCard } from "@/components/molecules/CardsAndDisplay/TemplateIdeaCard";
 import { GridContainer } from "@/components/shared/GridContainer";
 
 interface TemplateIdeaAccordionProps {

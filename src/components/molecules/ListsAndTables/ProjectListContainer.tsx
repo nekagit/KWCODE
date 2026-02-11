@@ -8,7 +8,12 @@ interface ProjectListContainerProps {
 export function ProjectListContainer({ children }: ProjectListContainerProps) {
   return (
     <GridContainer>
-      {children}
+      {React.Children.map(children, (child, index) => {
+        if (React.isValidElement(child)) {
+          return React.cloneElement(child, { key: child.key || index });
+        }
+        return child;
+      })}
     </GridContainer>
   );
 }

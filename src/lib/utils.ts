@@ -18,3 +18,21 @@ export async function getApiErrorMessage(res: Response): Promise<string> {
   if (text?.trim()) return text.trim().slice(0, 200);
   return res.status === 500 ? "Server error loading data" : res.statusText || "Request failed";
 }
+
+/** Pseudo-random 0..1 from index (different primes to avoid column/row patterns). */
+export function scatter(i: number, prime: number, mod: number) {
+  return ((i * prime) % mod) / mod;
+}
+
+export function normalizePath(p: string) {
+  return p.replace(/\\/g, "/");
+}
+
+export function formatDate(iso: string): string {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString(undefined, { dateStyle: "short" }) + " " + d.toLocaleTimeString(undefined, { timeStyle: "short" });
+  } catch {
+    return iso;
+  }
+}

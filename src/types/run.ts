@@ -16,6 +16,7 @@ export type Timing = typeof DEFAULT_TIMING;
 export interface PromptRecordItem {
   id: number;
   title: string;
+  content: string;
 }
 
 export interface RunInfo {

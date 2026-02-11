@@ -36,7 +36,7 @@ export function QuickActionButtons({
           runningRuns={runningRuns}
         />
       )}
-      <CreatePromptButton onClick={() => navigateToTab("prompts")} />
+      <CreatePromptRecordButton onClick={() => navigateToTab("prompts")} />
       <ActiveReposButton onClick={() => navigateToTab("projects")} />
       <FeaturesButton onClick={() => navigateToTab("feature")} />
       <ViewLogButton

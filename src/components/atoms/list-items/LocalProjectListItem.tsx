@@ -9,7 +9,7 @@ interface LocalProjectListItemProps {
 
 export const LocalProjectListItem: React.FC<LocalProjectListItemProps> = ({ path }) => {
   return (
-    <li
+    <div
       className="flex items-center gap-2 rounded-md py-1.5 px-2 hover:bg-muted/50 group"
     >
       <span className="flex-1 min-w-0 truncate font-mono text-muted-foreground" title={path}>
@@ -26,6 +26,6 @@ export const LocalProjectListItem: React.FC<LocalProjectListItemProps> = ({ path
           Create project
         </Link>
       </Button>
-    </li>
+    </div>
   );
 };

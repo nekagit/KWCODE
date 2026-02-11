@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/shared/Card";
-import { TitleWithIcon } from "@/components/atoms/headers/TitleWithIcon";
+import { TitleWithIcon } from "@/components/shared/TitleWithIcon";
 import { AiGeneratorInput } from "@/components/atoms/inputs/AiGeneratorInput";
 import { LoadingState } from "@/components/shared/EmptyState";
 import { IdeaCategory, IdeaRecord } from "@/components/organisms/IdeasPageContent";

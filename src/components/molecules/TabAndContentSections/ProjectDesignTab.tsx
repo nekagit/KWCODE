@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Plus, Palette } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import type { Project } from "@/types/project";
-import { ProjectDesignHeader } from "@/components/atoms/ProjectDesignHeader";
-import { ProjectDesignListItem } from "@/components/atoms/ProjectDesignListItem";
+import { ProjectHeader } from "@/components/shared/ProjectHeader";
+import { ProjectDesignListItem } from "@/components/atoms/list-items/ProjectDesignListItem";
 import { GridContainer } from "@/components/shared/GridContainer";
 
 interface ProjectDesignTabProps {
@@ -24,11 +24,17 @@ export function ProjectDesignTab({
 }: ProjectDesignTabProps) {
   return (
     <div className="mt-4 space-y-6">
-      <ProjectDesignHeader
+      <ProjectHeader
         project={project}
         projectId={projectId}
         exportLoading={exportLoading}
         generateExport={generateExport}
+        categoryName="Design"
+        categoryIcon={Palette}
+        categoryLength={project.designIds?.length || 0}
+        newHref={`/design?projectId=${projectId}`}
+        newButtonText="New design"
+        exportCategory="design"
       />
 
       {project.designIds?.length === 0 ? (

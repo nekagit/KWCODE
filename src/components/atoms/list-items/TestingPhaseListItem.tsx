@@ -1,5 +1,4 @@
 import React from 'react';
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   TestTube2,
@@ -7,6 +6,7 @@ import {
   ShieldCheck,
   Monitor,
 } from "lucide-react";
+import { ListItemCard } from "@/components/shared/ListItemCard";
 
 interface TestingPhaseListItemProps {
   phase: {
@@ -29,21 +29,23 @@ const IconMap = {
 export const TestingPhaseListItem: React.FC<TestingPhaseListItemProps> = ({ phase, index }) => {
   const IconComponent = IconMap[phase.icon];
 
+  const children = (
+    <div className="flex items-center gap-2">
+      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-medium">
+        {index + 1}
+      </span>
+      {IconComponent && <IconComponent className="h-5 w-5 text-muted-foreground" />}
+      <h3 className="font-medium">{phase.name}</h3>
+      <Badge variant="outline">{phase.phase}</Badge>
+    </div>
+  );
+
   return (
-    <li key={phase.id}>
-      <Card className="bg-muted/30">
-        <div className="pt-4 p-6">
-          <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-medium">
-              {index + 1}
-            </span>
-            {IconComponent && <IconComponent className="h-5 w-5 text-muted-foreground" />}
-            <h3 className="font-medium">{phase.name}</h3>
-            <Badge variant="outline">{phase.phase}</Badge>
-          </div>
-          <p className="text-sm text-muted-foreground mt-2 ml-10">{phase.description}</p>
-        </div>
-      </Card>
-    </li>
+    <ListItemCard
+      id={phase.id}
+      title={phase.name}
+      subtitle={phase.description}
+      children={children}
+    />
   );
 };

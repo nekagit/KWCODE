@@ -15,14 +15,15 @@ export const ProjectCheckboxListItem: React.FC<ProjectCheckboxListItemProps> = (
   onToggle,
 }) => {
   return (
-    <label
+    <div
       key={path}
       className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-muted/50"
+      onClick={() => onToggle(path)}
     >
       <Checkbox checked={isChecked} onCheckedChange={() => onToggle(path)} />
       <span className="truncate text-sm font-mono" title={path}>
         {name}
       </span>
-    </label>
+    </div>
   );
 };

@@ -153,7 +153,7 @@ export const useRunStore = create<RunStore>()((set, get) => ({
     try {
       if (isTauri()) {
         const [all, active, promptList] = await Promise.all([
-          invoke<string[]>("get_all_projects"),
+          invoke<string[]>("list_february_folders"),
           invoke<string[]>("get_active_projects"),
           invoke<PromptRecordItem[]>("get_prompts"),
         ]);

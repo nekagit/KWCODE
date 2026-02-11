@@ -3,14 +3,13 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import type { Project } from "@/types/project";
-import { getProjectResolved } from "@/lib/api-projects"; // Changed from getProject
+import { getProjectResolved } from "@/lib/api-projects";
 import { isTauri } from "@/lib/tauri";
-import { invoke } from "@tauri-apps/api/tauri"; // Added import for invoke
 import { ProjectForm } from "@/components/molecules/FormsAndDialogs/ProjectForm";
 import { ProjectLoadingState } from "@/components/molecules/UtilitiesAndHelpers/ProjectLoadingState";
 import { EditProjectHeader } from "@/components/molecules/UtilitiesAndHelpers/EditProjectHeader";
 import { ProjectNotFoundState } from "@/components/molecules/UtilitiesAndHelpers/ProjectNotFoundState";
-import type { ResolvedProject } from "@/lib/api-projects"; // Import ResolvedProject type
+import type { ResolvedProject } from "@/lib/api-projects";
 
 type PromptRecordItem = { id: number; title: string };
 type TicketItem = { id: string; title: string; status?: string };
@@ -42,6 +41,7 @@ export function EditProjectPageContent() {
       try {
         let fetchedProject: ResolvedProject;
         if (isTauri()) {
+          const { invoke } = await import("@tauri-apps/api/tauri");
           fetchedProject = await invoke<ResolvedProject>("get_project_resolved", { id });
         } else {
           const res = await fetch(`/api/data/projects/${id}?resolve=1`);

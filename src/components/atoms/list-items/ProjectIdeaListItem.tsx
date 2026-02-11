@@ -18,22 +18,24 @@ export const ProjectIdeaListItem: React.FC<ProjectIdeaListItemProps> = ({
   projectId,
 }) => {
   return (
-    <Card
-      title={idea.title}
-      subtitle={idea.description}
-      className="flex flex-col"
-      footerButtons={
-        <ButtonGroup alignment="left">
-          <Badge variant="secondary" className="shrink-0 text-xs">
-            {idea.category}
-          </Badge>
-          <Button size="sm" variant="outline" className="w-full" asChild>
-            <Link href={`/ideas/${idea.id}?projectId=${projectId}`}>
-              Open idea <ArrowRight className="h-4 w-4 ml-2" />
-            </Link>
-          </Button>
-        </ButtonGroup>
-      }
-    ><div/></Card>
+    <li key={idea.id}>
+      <Card
+        title={idea.title}
+        subtitle={idea.description}
+        className="flex flex-col bg-muted/30"
+        footerButtons={
+          <ButtonGroup alignment="left">
+            <Badge variant="secondary" className="shrink-0 text-xs">
+              {idea.category}
+            </Badge>
+            <Button size="sm" variant="outline" className="w-full" asChild>
+              <Link href={`/ideas/${idea.id}?projectId=${projectId}`}>
+                Open idea <ArrowRight className="h-4 w-4 ml-2" />
+              </Link>
+            </Button>
+          </ButtonGroup>
+        }
+      ><div/></Card>
+    </li>
   );
 };

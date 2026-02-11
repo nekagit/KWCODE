@@ -17,9 +17,9 @@ import {
 import { buildKanbanContextBlock } from "@/lib/analysis-prompt";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
-import { ProjectTicketsHeader } from "@/components/atoms/ProjectTicketsHeader";
-import { ProjectTicketsKanbanColumn } from "@/components/atoms/ProjectTicketsKanbanColumn";
-import { GenerateKanbanPromptRecordSection } from "@/components/atoms/GenerateKanbanPromptRecordSection";
+import { ProjectHeader } from "@/components/shared/ProjectHeader";
+import { ProjectTicketsKanbanColumn } from "@/components/organisms/Display/ProjectTicketsKanbanColumn";
+import { GenerateKanbanPromptSection } from "@/components/atoms/forms/GenerateKanbanPromptSection";
 
 interface ProjectTicketsTabProps {
   project: Project;
@@ -93,11 +93,17 @@ export function ProjectTicketsTab({
 
   return (
     <div className="mt-4 space-y-6">
-      <ProjectTicketsHeader
+      <ProjectHeader
         project={project}
         projectId={projectId}
         exportLoading={exportLoading}
         generateExport={generateExport}
+        categoryName="Tickets"
+        categoryIcon={TicketIcon}
+        categoryLength={project.ticketIds?.length || 0}
+        newHref={`/tickets?projectId=${projectId}`}
+        newButtonText="New ticket"
+        exportCategory="tickets"
       />
 
       {showFeatureTicketWarning && (

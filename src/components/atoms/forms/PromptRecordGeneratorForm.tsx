@@ -1,7 +1,6 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { GenericTextareaWithLabel } from "@/components/shared/inputs/GenericTextareaWithLabel";
 
 interface PromptGeneratorFormProps {
   generateDescription: string;
@@ -18,16 +17,14 @@ export const PromptGeneratorForm: React.FC<PromptGeneratorFormProps> = ({
 }) => {
   return (
     <>
-      <div className="grid gap-2">
-        <Label htmlFor="generate-desc">Description</Label>
-        <Textarea
-          id="generate-desc"
-          value={generateDescription}
-          onChange={(e) => setGenerateDescription(e.target.value)}
-          placeholder="e.g. A prompt that refactors React components to use TypeScript and strict typing"
-          rows={4}
-        />
-      </div>
+      <GenericTextareaWithLabel
+        id="generate-desc"
+        label="Description"
+        value={generateDescription}
+        onChange={(e) => setGenerateDescription(e.target.value)}
+        placeholder="e.g. A prompt that refactors React components to use TypeScript and strict typing"
+        rows={4}
+      />
       <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
         <Button
           variant="outline"

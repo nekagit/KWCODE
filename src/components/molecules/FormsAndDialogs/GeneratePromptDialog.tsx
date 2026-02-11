@@ -1,8 +1,8 @@
 "use client";
 
 import { Dialog } from "@/components/shared/Dialog";
-import { GeneratedPromptDisplay } from "@/components/atoms/displays/GeneratedPromptDisplay";
-import { PromptGeneratorForm } from "@/components/atoms/forms/PromptGeneratorForm";
+import { GeneratedContentForm } from "@/components/molecules/FormsAndDialogs/GeneratedContentForm";
+import { PromptGeneratorForm } from "@/components/atoms/forms/PromptRecordGeneratorForm";
 
 interface GeneratePromptRecordDialogProps {
   open: boolean;
@@ -45,7 +45,7 @@ export function GeneratePromptRecordDialog({
           generateLoading={generateLoading}
         />
       ) : (
-        <GeneratedPromptDisplay
+        <GeneratedContentForm
           generateResult={generateResult}
           setGenerateResult={setGenerateResult}
           useGeneratedAndCreate={useGeneratedAndCreate}

@@ -4,12 +4,11 @@ import type { Feature } from "@/types/project";
 import type { Ticket } from "@/types/ticket";
 import type { RunInfo } from "@/types/run";
 import { useRouter } from "next/navigation";
-import { TabValue } from "@/components/molecules/LayoutAndNavigation/NavigationTabs";
 
 interface DashboardTabContentProps {
   features: Feature[];
   runningRuns: RunInfo[];
-  navigateToTab: (tab: TabValue) => void;
+  navigateToTab: (tab: string) => void;
   runForFeature: (feature: Feature) => Promise<void>;
   setSelectedRunId: (id: string | null) => void;
   tickets: Ticket[];

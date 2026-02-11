@@ -8,13 +8,13 @@ import { Loader2, Database, FileCode, Braces } from "lucide-react";
 import { invoke, isTauri } from "@/lib/tauri";
 import type { Ticket } from "@/types/ticket";
 import type { Feature } from "@/types/project";
-import { ScriptListDisplay } from "@/components/atoms/ScriptListDisplay";
-import { JsonFileListDisplay } from "@/components/atoms/JsonFileListDisplay";
-import { KvStoreDisplay } from "@/components/atoms/KvStoreDisplay";
-import { TicketsDisplay } from "@/components/atoms/TicketsDisplay";
-import { FeaturesDisplay } from "@/components/atoms/FeaturesDisplay";
-import { AllProjectsDisplay } from "@/components/atoms/AllProjectsDisplay";
-import { ActiveProjectsDisplay } from "@/components/atoms/ActiveProjectsDisplay";
+import { ScriptListDisplay } from "@/components/molecules/Displays/ScriptListDisplay";
+import { JsonFileListDisplay } from "@/components/molecules/Displays/JsonFileListDisplay";
+import { KvStoreDisplay } from "@/components/molecules/Displays/KvStoreDisplay";
+import { TicketsDisplay } from "@/components/molecules/Displays/TicketsDisplay";
+import { FeaturesDisplay } from "@/components/molecules/Displays/FeaturesDisplay";
+import { AllProjectsDisplay } from "@/components/molecules/Displays/AllProjectsDisplay";
+import { ActiveProjectsDisplay } from "@/components/molecules/Displays/ActiveProjectsDisplay";
 
 interface DbDataTabContentProps {
   isTauriEnv: boolean | null;

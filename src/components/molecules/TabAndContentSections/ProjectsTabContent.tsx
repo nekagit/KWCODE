@@ -4,7 +4,7 @@ import { Card } from "@/components/shared/Card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
-import { ProjectCheckboxListItem } from "@/components/atoms/ProjectCheckboxListItem";
+import { ProjectCheckboxListItem } from "@/components/atoms/list-items/ProjectCheckboxListItem";
 
 interface ProjectsTabContentProps {
   allProjects: string[];

@@ -1,14 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertCircle } from "lucide-react";
-import type { Project, ProjectEntityCategories, ProjectTabCategory } from "@/types/project";
+import type { Project, ProjectTabCategory } from "@/types/project";
 import { getProjectResolved, getProjectExport } from "@/lib/api-projects";
 import { ProjectHeader } from "@/components/molecules/LayoutAndNavigation/ProjectHeader";
-import { ProjectTabs } from "@/components/molecules/LayoutAndNavigation/ProjectTabs";
 import { ProjectDesignTab } from "@/components/molecules/TabAndContentSections/ProjectDesignTab";
 import { ProjectIdeasTab } from "@/components/molecules/TabAndContentSections/ProjectIdeasTab";
 import { ProjectFeaturesTab } from "@/components/molecules/TabAndContentSections/ProjectFeaturesTab"; // Corrected syntax
@@ -24,7 +23,6 @@ export function ProjectDetailsPageContent() {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<ProjectTabCategory>("design");
 
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [exportContent, setExportContent] = useState("");
@@ -97,62 +95,48 @@ export function ProjectDetailsPageContent() {
     <div className="space-y-6">
       <ProjectHeader project={project} projectId={projectId} />
 
-      <ProjectTabs activeTab={activeTab} setActiveTab={setActiveTab} project={project} />
-
-      {activeTab === "design" && (
-        <ProjectDesignTab
+      <ProjectDesignTab
           project={project}
           projectId={projectId}
           exportLoading={exportLoading}
           generateExport={() => generateExport("design")}
         />
-      )}
 
-      {activeTab === "ideas" && (
-        <ProjectIdeasTab
+      <ProjectIdeasTab
           project={project}
           projectId={projectId}
           exportLoading={exportLoading}
           generateExport={() => generateExport("ideas")}
         />
-      )}
 
-      {activeTab === "features" && (
-        <ProjectFeaturesTab
+      <ProjectFeaturesTab
           project={project}
           projectId={projectId}
           exportLoading={exportLoading}
           generateExport={() => generateExport("features")}
         />
-      )}
 
-      {activeTab === "tickets" && (
-        <ProjectTicketsTab
+      <ProjectTicketsTab
           project={project}
           projectId={projectId}
           exportLoading={exportLoading}
           generateExport={() => generateExport("tickets")}
           fetchProject={fetchProject}
         />
-      )}
 
-      {activeTab === "prompts" && (
-        <ProjectPromptRecordsTab
+      <ProjectPromptRecordsTab
           project={project}
           projectId={projectId}
           exportLoading={exportLoading}
           generateExport={() => generateExport("prompts")}
         />
-      )}
 
-      {activeTab === "architecture" && (
-        <ProjectArchitectureTab
+      <ProjectArchitectureTab
           project={project}
           projectId={projectId}
           exportLoading={exportLoading}
           generateExport={() => generateExport("architecture")}
         />
-      )}
 
       <ExportContentDialog
         showExportDialog={showExportDialog}

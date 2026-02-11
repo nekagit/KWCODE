@@ -1,5 +1,7 @@
 import React from 'react';
 import type { UIThemeTemplate } from "@/data/ui-theme-templates";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface ThemeButtonPreviewProps {
   theme: UIThemeTemplate;
@@ -10,12 +12,13 @@ export const ThemeButtonPreview: React.FC<ThemeButtonPreviewProps> = ({ theme, h
   const v = theme.variables;
   return (
     <div className="space-y-1">
-      <span
+      <Badge
         className="text-[10px] font-medium uppercase tracking-wide"
         style={{ color: hsl(v.mutedForeground) }}
+        variant="outline"
       >
         Buttons
-      </span>
+      </Badge>
       <div className="flex flex-wrap gap-1">
         {[
           { bg: v.primary, fg: v.primaryForeground, label: "Primary" },
@@ -25,9 +28,9 @@ export const ThemeButtonPreview: React.FC<ThemeButtonPreviewProps> = ({ theme, h
           { bg: v.warning, fg: v.warningForeground, label: "Warn" },
           { bg: v.info, fg: v.infoForeground, label: "Info" },
         ].map(({ bg, fg, label }) => (
-          <span
+          <Button
             key={label}
-            className="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium shadow-sm"
+            className="rounded-md px-2 py-0.5 text-[10px] font-medium shadow-sm"
             style={{
               background: hsl(bg),
               color: hsl(fg),
@@ -35,7 +38,7 @@ export const ThemeButtonPreview: React.FC<ThemeButtonPreviewProps> = ({ theme, h
             }}
           >
             {label}
-          </span>
+          </Button>
         ))}
       </div>
     </div>

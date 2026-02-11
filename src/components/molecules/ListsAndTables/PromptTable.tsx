@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { TableHead, TableHeader, TableRow, TableBody, TableCell, Table } from "@/components/ui/table";
-import { PromptRecordTableRow } from "@/components/atoms/PromptRecordTableRow";
+import { PromptTableRow } from "@/components/atoms/list-items/PromptTableRow";
 
 type PromptRecordRecord = {
   id: number;
@@ -64,7 +64,7 @@ export function PromptRecordTable({
           </TableRow>
         ) : (
           fullPromptRecords.map((p: PromptRecordRecord) => (
-            <PromptRecordTableRow
+            <PromptTableRow
               key={p.id}
               prompt={p}
               selectedPromptRecordIds={selectedPromptRecordIds}

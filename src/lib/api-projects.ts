@@ -53,7 +53,7 @@ export async function getProjectResolved(id: string): Promise<ResolvedProject> {
 
 export async function listProjects(): Promise<Project[]> {
   if (isTauri()) {
-    return invoke("list_projects");
+    return invoke("list_february_folders");
   } else {
     return fetchJson<Project[]>("/api/data/projects");
   }

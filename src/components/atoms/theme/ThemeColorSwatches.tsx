@@ -1,5 +1,6 @@
 import React from 'react';
 import type { UIThemeTemplate } from "@/data/ui-theme-templates";
+import { Badge } from "@/components/ui/badge";
 
 interface ThemeColorSwatchesProps {
   theme: UIThemeTemplate;
@@ -17,12 +18,13 @@ export const ThemeColorSwatches: React.FC<ThemeColorSwatchesProps> = ({ theme, h
         color: hsl(v.cardForeground),
       }}
     >
-      <div
+      <Badge
         className="text-[10px] font-medium uppercase tracking-wide mb-1.5"
         style={{ color: hsl(v.mutedForeground) }}
+        variant="outline"
       >
         Card
-      </div>
+      </Badge>
       <div className="flex flex-wrap gap-1">
         {[
           { label: "Bg", val: v.background },

@@ -30,10 +30,10 @@ export function ProjectCard({
       <DeleteButton onClick={(e: React.MouseEvent) => onDelete(project.id, e)} title="Delete project" />
       <Link href={`/projects/${project.id}`} className="block">
         <div className="flex flex-wrap gap-1.5 text-xs mb-2">
-          <StatBadge icon={MessageSquare} count={project.promptIds.length} label="PromptRecords" />
-          <StatBadge icon={TicketIcon} count={project.ticketIds.length} label="Tickets" />
-          <StatBadge icon={Layers} count={project.featureIds.length} label="Features" />
-          <StatBadge icon={Lightbulb} count={project.ideaIds.length} label="Ideas" />
+          <StatBadge icon={MessageSquare} count={project.promptIds?.length ?? 0} label="PromptRecords" />
+          <StatBadge icon={TicketIcon} count={project.ticketIds?.length ?? 0} label="Tickets" />
+          <StatBadge icon={Layers} count={project.featureIds?.length ?? 0} label="Features" />
+          <StatBadge icon={Lightbulb} count={project.ideaIds?.length ?? 0} label="Ideas" />
         </div>
         {project.repoPath && (
           <p className="text-xs text-muted-foreground truncate font-mono" title={project.repoPath}>

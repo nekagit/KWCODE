@@ -6,9 +6,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
 import { useRunState } from "@/context/run-state";
 import { PromptRecordActionButtons } from "@/components/molecules/ControlsAndButtons/PromptActionButtons"; // Corrected import
-import { PromptTable } from "@/components/molecules/ListsAndTables/PromptTable";
-import { PromptFormDialog } from "@/components/molecules/FormsAndDialogs/PromptFormDialog";
-import { GeneratePromptDialog } from "@/components/molecules/FormsAndDialogs/GeneratePromptDialog";
+import { PromptRecordTable } from "@/components/molecules/ListsAndTables/PromptTable";
+import { PromptRecordFormDialog } from "@/components/molecules/FormsAndDialogs/PromptFormDialog";
+import { GeneratePromptRecordDialog } from "@/components/molecules/FormsAndDialogs/GeneratePromptDialog";
 import { toast } from "sonner"; // Added import for toast, if not already imported elsewhere
 
 type PromptRecordRecord = {
@@ -286,7 +286,7 @@ export function PromptRecordsPageContent() {
           {tableLoading ? (
             <p className="text-sm text-muted-foreground py-4">Loading prompts…</p>
           ) : (
-            <PromptTable
+            <PromptRecordTable
               fullPromptRecords={fullPromptRecords}
               selectedPromptRecordIds={selectedPromptRecordIds}
               setSelectedPromptRecordIds={setSelectedPromptRecordIds}
@@ -300,7 +300,7 @@ export function PromptRecordsPageContent() {
         </CardContent>
       </Card>
 
-      <PromptFormDialog
+      <PromptRecordFormDialog
         open={createOpen}
         setOpen={setCreateOpen}
         title="Create prompt"
@@ -313,7 +313,7 @@ export function PromptRecordsPageContent() {
         saveLoading={saveLoading}
       />
 
-      <PromptFormDialog
+      <PromptRecordFormDialog
         open={editOpen}
         setOpen={setEditOpen}
         title="Edit prompt"
@@ -326,7 +326,7 @@ export function PromptRecordsPageContent() {
         saveLoading={saveLoading}
       />
 
-      <GeneratePromptDialog
+      <GeneratePromptRecordDialog
         open={generateOpen}
         setOpen={setGenerateOpen}
         generateDescription={generateDescription}

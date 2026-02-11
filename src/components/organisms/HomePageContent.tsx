@@ -4,11 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { invoke, isTauri } from "@/lib/tauri";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useRunState } from "@/context/run-state";
-import { toast } from "sonner";
 import type { Project } from "@/types/project";
-import { NavigationTabs, TabValue } from "@/components/molecules/LayoutAndNavigation/NavigationTabs";
 import { ProjectsTabContent } from "@/components/molecules/TabAndContentSections/ProjectsTabContent";
 import { AllDataTabContent } from "@/components/molecules/TabAndContentSections/AllDataTabContent";
 import { DbDataTabContent } from "@/components/molecules/TabAndContentSections/DbDataTabContent";
@@ -30,21 +27,17 @@ interface IdeaRecord {
   source?: string;
 }
 
-const VALID_TABS = ["dashboard", "projects", "tickets", "feature", "all", "data", "log", "prompts"] as const;
-
-function tabFromParams(searchParams: ReturnType<typeof useSearchParams>): TabValue {
+function tabFromParams(searchParams: ReturnType<typeof useSearchParams>): string {
   const t = searchParams.get("tab");
-  return (VALID_TABS.includes(t as TabValue) ? t : "dashboard") as TabValue;
+  return (["dashboard", "projects", "tickets", "feature", "all", "data", "log", "prompts"].includes(t as string) ? t : "dashboard") as string;
 }
 
 export function HomePageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const tab = tabFromParams(searchParams);
-  const navigateToTab = (t: TabValue) => router.push("/?tab=" + t);
+  const navigateToTab = (t: string) => router.push("/?tab=" + t);
   const {
-    error,
-    setError,
     allProjects,
     activeProjects,
     setActiveProjects,
@@ -76,7 +69,6 @@ export function HomePageContent() {
 
   const loadTicketsAndFeatures = useCallback(async () => {
     if (!isTauri()) return;
-    setError(null);
     try {
       const [ticketList, featureList] = await Promise.all([
         invoke<Ticket[]>("get_tickets"),
@@ -105,9 +97,9 @@ export function HomePageContent() {
         setTickets(cleanTickets);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      console.error(e);
     }
-  }, [setError]);
+  }, []);
 
   useEffect(() => {
     if (isTauri()) loadTicketsAndFeatures();
@@ -157,13 +149,13 @@ export function HomePageContent() {
 
   const runForFeature = async (feature: Feature) => {
     if (feature.prompt_ids.length === 0) {
-      setError("Feature has no prompts");
+      console.error("Feature has no prompts");
       return;
     }
     const projectsToUse =
       feature.project_paths.length > 0 ? feature.project_paths : activeProjects;
     if (projectsToUse.length === 0) {
-      setError("Select at least one project (in Projects tab or on the feature)");
+      console.error("Select at least one project (in Projects tab or on the feature)");
       return;
     }
     await runWithParams({
@@ -178,12 +170,9 @@ export function HomePageContent() {
     try {
       await invoke("save_features", { features: next });
       setFeatures(next);
-      setError(null);
-      toast.success("Features saved");
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      setError(msg);
-      toast.error("Failed to save features", { description: msg });
+      console.error(msg);
     }
   };
 
@@ -192,12 +181,9 @@ export function HomePageContent() {
       const clean = next.map(({ prompt_ids, project_paths, ...t }) => t);
       await invoke("save_tickets", { tickets: clean });
       setTickets(next);
-      setError(null);
-      toast.success("Tickets saved");
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      setError(msg);
-      toast.error("Failed to save tickets", { description: msg });
+      console.error(msg);
     }
   };
 
@@ -222,18 +208,12 @@ export function HomePageContent() {
       : runningRuns[runningRuns.length - 1]?.logLines ?? [];
 
   return (
-    <Tabs value={tab} onValueChange={(v) => navigateToTab(v as TabValue)} className="flex flex-1 flex-col">
+    <Tabs value={tab} onValueChange={(v) => navigateToTab(v as string)} className="flex flex-1 flex-col">
       <div className="flex-1 flex flex-col min-w-0 overflow-auto">
         <div className="mb-4 flex items-center justify-between gap-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
         </div>
 
         <ScrollArea className="w-full whitespace-nowrap pb-2">
-          <NavigationTabs activeTab={tab} navigateToTab={navigateToTab} />
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
 
@@ -265,7 +245,6 @@ export function HomePageContent() {
             saveTickets={saveTickets}
             updateTicket={updateTicket}
             deleteTicket={deleteTicket}
-            setError={setError}
           />
         </TabsContent>
 
@@ -278,7 +257,6 @@ export function HomePageContent() {
             activeProjects={activeProjects}
             runningRuns={runningRuns}
             featureQueue={featureQueue as Feature[]}
-            setError={setError}
             addFeatureToQueue={addFeatureToQueue}
             removeFeatureFromQueue={removeFeatureFromQueue}
             clearFeatureQueue={clearFeatureQueue}

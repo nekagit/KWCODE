@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import { StartButton } from "@/components/atoms/buttons/StartButton";
 import { StopButton } from "@/components/atoms/buttons/StopButton";
-import { PageFooterText } from "@/components/atoms/displays/PageFooterText";
+import { PageFooterText } from "@/components/molecules/Navigation/PageFooterText";
 
 interface RunControlsProps {
   handleStart: () => Promise<void>;

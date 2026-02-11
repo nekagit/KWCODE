@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TicketManagementCard } from "@/components/molecules/CardsAndDisplay/TicketManagementCard";
 import { AddTicketAccordion } from "@/components/molecules/FormsAndDialogs/AddTicketAccordion";
-import { TicketsDisplayList } from "@/components/atoms/displays/TicketsDisplayList";
+import { TicketsDisplayList } from "@/components/molecules/Displays/TicketsDisplayList";
 import type { Ticket, TicketStatus } from "@/types/ticket";
 import { toast } from "sonner";
 

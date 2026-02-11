@@ -48,7 +48,7 @@ export function PromptRecordFormDialog({
         </ButtonGroup>
       }
     >
-      <PromptRecordFormFields
+      <PromptFormFields
         formTitle={formTitle}
         setFormTitle={setFormTitle}
         formContent={formContent}

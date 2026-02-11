@@ -4,7 +4,7 @@ import { Card } from "@/components/shared/Card";
 import { BarChart3 } from "lucide-react";
 import { CoverageMetricCard } from "@/components/molecules/CardsAndDisplay/CoverageMetricCard";
 import { GridContainer } from "@/components/shared/GridContainer";
-import { CodeBlock } from "@/components/shared/CodeBlock";
+import { CodeBlock } from "@/components/atoms/displays/CodeBlock";
 
 export function CoverageDashboard() {
   return (

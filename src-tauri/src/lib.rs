@@ -535,50 +535,6 @@ fn list_scripts() -> Result<Vec<FileEntry>, String> {
     Ok(entries)
 }
 
-/// Get a single project with resolved prompts, tickets, features, ideas, designs, architectures.
-/// Uses the same data sources as the dashboard (SQLite for tickets, get_features for features, JSON for rest)
-/// so that "All data" and project details show consistent counts.
-#[tauri::command]
-fn get_project_resolved(id: String) -> Result<String, String> {
-    // For now, project data itself is not in DB, so we'll just return a dummy project.
-    // In the future, this should fetch project details from a 'projects' table.
-    let project = serde_json::json!({
-        "id": id,
-        "name": "Dummy Project",
-        "description": "This is a placeholder project until project data is migrated to the database.",
-        "repoPath": "",
-        "promptIds": [],
-        "ticketIds": [],
-        "featureIds": [],
-        "ideaIds": [],
-        "designIds": [],
-        "architectureIds": [],
-        "created_at": now_iso(),
-        "updated_at": now_iso(),
-    });
-
-    let tickets = get_tickets()?;
-    let features = get_features()?;
-    let prompts_list = get_prompts()?; // Use DB
-    let designs_list = get_designs()?; // Use DB
-
-    // These would be fetched from their respective DB tables once migrated.
-    let ideas_list: Vec<serde_json::Value> = vec![];
-    let architectures_list: Vec<serde_json::Value> = vec![];
-
-    let mut out = serde_json::to_value(&project).map_err(|e| e.to_string())?;
-    let obj = out.as_object_mut().ok_or("Invalid project")?;
-    obj.insert("prompts".to_string(), serde_json::to_value(prompts_list).map_err(|e| e.to_string())?);
-    obj.insert("tickets".to_string(), serde_json::to_value(tickets).map_err(|e| e.to_string())?);
-    obj.insert("features".to_string(), serde_json::to_value(features).map_err(|e| e.to_string())?);
-    obj.insert("ideas".to_string(), serde_json::Value::Array(ideas_list));
-    obj.insert("designs".to_string(), serde_json::to_value(designs_list).map_err(|e| e.to_string())?);
-    obj.insert("architectures".to_string(), serde_json::Value::Array(architectures_list));
-
-    serde_json::to_string(&out).map_err(|e| e.to_string())
-}
-
-
 /// List all files under project_path/.cursor (recursive). Returns empty vec if .cursor does not exist or is not a directory.
 #[tauri::command]
 fn list_cursor_folder(project_path: String) -> Result<Vec<FileEntry>, String> {
@@ -667,27 +623,6 @@ fn archive_cursor_file(project_path: String, file_kind: String) -> Result<(), St
 }
 
 /// List JSON files in data/ directory.
-#[tauri::command]
-fn list_data_files() -> Result<Vec<FileEntry>, String> {
-    let data = resolve_data_dir()?;
-    if !data.is_dir() {
-        return Ok(vec![]);
-    }
-    let mut entries = vec![];
-    for e in std::fs::read_dir(&data).map_err(|e| e.to_string())? {
-        let e = e.map_err(|e| e.to_string())?;
-        let path = e.path();
-        if path.is_file() {
-            let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("").to_string();
-            if name.ends_with(".json") {
-                let path_str = path.to_string_lossy().to_string();
-                entries.push(FileEntry { name, path: path_str });
-            }
-        }
-    }
-    entries.sort_by(|a, b| a.name.cmp(&b.name));
-    Ok(entries)
-}
 
 /// Result of analyzing a project directory for AI ticket generation.
 #[derive(Debug, Clone, Serialize, Deserialize)]

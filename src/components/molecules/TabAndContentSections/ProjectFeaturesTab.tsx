@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Plus, Layers } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import type { Project } from "@/types/project";
-import { ProjectFeatureHeader } from "@/components/atoms/ProjectFeatureHeader";
-import { ProjectFeatureListItem } from "@/components/atoms/ProjectFeatureListItem";
+import { ProjectHeader } from "@/components/shared/ProjectHeader";
+import { ProjectFeatureListItem } from "@/components/atoms/list-items/ProjectFeatureListItem";
 import { GridContainer } from "@/components/shared/GridContainer";
 
 interface ProjectFeaturesTabProps {
@@ -24,11 +24,17 @@ export function ProjectFeaturesTab({
 }: ProjectFeaturesTabProps) {
   return (
     <div className="mt-4 space-y-6">
-      <ProjectFeatureHeader
+      <ProjectHeader
         project={project}
         projectId={projectId}
         exportLoading={exportLoading}
         generateExport={generateExport}
+        categoryName="Features"
+        categoryIcon={Layers}
+        categoryLength={project.featureIds?.length || 0}
+        newHref={`/feature?projectId=${projectId}`}
+        newButtonText="New feature"
+        exportCategory="features"
       />
 
       {project.featureIds?.length === 0 ? (

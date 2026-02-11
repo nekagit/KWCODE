@@ -16,17 +16,19 @@ export const ProjectDesignListItem: React.FC<ProjectDesignListItemProps> = ({
   projectId,
 }) => {
   return (
-    <Card
-      title={design.name}
-      subtitle={design.description}
-      className="flex flex-col"
-      footerButtons={
-        <Button size="sm" variant="outline" className="w-full" asChild>
-          <Link href={`/design/${design.id}?projectId=${projectId}`}>
-            Open design <ArrowRight className="h-4 w-4 ml-2" />
-          </Link>
-        </Button>
-      }
-    ><div/></Card>
+    <li key={design.id}>
+      <Card
+        title={design.name}
+        subtitle={design.description}
+        className="flex flex-col bg-muted/30"
+        footerButtons={
+          <Button size="sm" variant="outline" className="w-full" asChild>
+            <Link href={`/design/${design.id}?projectId=${projectId}`}>
+              Open design <ArrowRight className="h-4 w-4 ml-2" />
+            </Link>
+          </Button>
+        }
+      ><div/></Card>
+    </li>
   );
 };

@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Plus, Lightbulb } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import type { Project } from "@/types/project";
-import { ProjectIdeaHeader } from "@/components/atoms/ProjectIdeaHeader";
-import { ProjectIdeaListItem } from "@/components/atoms/ProjectIdeaListItem";
+import { ProjectHeader } from "@/components/shared/ProjectHeader";
+import { ProjectIdeaListItem } from "@/components/atoms/list-items/ProjectIdeaListItem";
 import { GridContainer } from "@/components/shared/GridContainer";
 
 interface ProjectIdeasTabProps {
@@ -24,11 +24,17 @@ export function ProjectIdeasTab({
 }: ProjectIdeasTabProps) {
   return (
     <div className="mt-4 space-y-6">
-      <ProjectIdeaHeader
+      <ProjectHeader
         project={project}
         projectId={projectId}
         exportLoading={exportLoading}
         generateExport={generateExport}
+        categoryName="Ideas"
+        categoryIcon={Lightbulb}
+        categoryLength={project.ideaIds?.length || 0}
+        newHref={`/ideas?projectId=${projectId}`}
+        newButtonText="New idea"
+        exportCategory="ideas"
       />
 
       {project.ideaIds?.length === 0 ? (

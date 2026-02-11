@@ -8,11 +8,11 @@ import type { Project } from "@/types/project";
 import type { PromptRecord } from "@/types/prompt";
 import type { Ticket } from "@/types/ticket";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
-import { AllProjectsDisplayList } from "@/components/atoms/AllProjectsDisplayList";
-import { PromptRecordsDisplayList } from "@/components/atoms/PromptRecordsDisplayList";
-import { TicketsDisplayList } from "@/components/atoms/TicketsDisplayList";
-import { FeaturesDisplayList } from "@/components/atoms/FeaturesDisplayList";
-import { IdeasDisplayList } from "@/components/atoms/IdeasDisplayList";
+import { AllProjectsDisplayList } from "@/components/molecules/Displays/AllProjectsDisplayList";
+import { PromptsDisplayList } from "@/components/molecules/Displays/PromptsDisplayList";
+import { TicketsDisplayList } from "@/components/molecules/Displays/TicketsDisplayList";
+import { FeaturesDisplayList } from "@/components/molecules/Displays/FeaturesDisplayList";
+import { IdeasDisplayList } from "@/components/molecules/Displays/IdeasDisplayList";
 
 interface AllDataTabContentProps {
   allProjects: string[];
@@ -80,10 +80,10 @@ export function AllDataTabContent({
           }
           subtitle={`${prompts.length} prompts`}
         >
-          <PromptRecordsDisplayList
+          <PromptsDisplayList
             prompts={prompts as PromptRecord[]}
-            selectedPromptRecordIds={selectedPromptRecordIds}
-            setSelectedPromptRecordIds={setSelectedPromptRecordIds}
+            selectedPromptIds={selectedPromptRecordIds}
+            setSelectedPromptIds={setSelectedPromptRecordIds}
           />
           <p className="text-xs text-muted-foreground mt-2">Select prompts for Run. Edit on PromptRecords page.</p>
         </Card>

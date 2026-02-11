@@ -239,7 +239,7 @@
   backdrop-filter: blur(10px);
   background-color: hsl(var(--card) / 0.4);
   border: 1px solid hsl(var(--border) / 0.2);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.2);
   border-radius: var(--radius);
 }
 
