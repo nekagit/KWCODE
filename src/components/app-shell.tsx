@@ -3,8 +3,8 @@
 import { useState, Suspense } from "react";
 import { usePathname } from "next/navigation";
 import { TerminalStatusBadge } from "@/components/molecules/Display/TerminalStatusBadge";
-import { RunningTerminalsPopover } from "@/components/organisms/Display/RunningTerminalsPopover";
-import { SidebarNavigation } from "@/components/organisms/Navigation/SidebarNavigation";
+import { RunningTerminalsPopover } from "@/components/organisms/RunningTerminalsPopover";
+import { SidebarNavigation } from "@/components/organisms/SidebarNavigation";
 import { SidebarToggle } from "@/components/molecules/ControlsAndButtons/SidebarToggle";
 import { useRunState } from "@/context/run-state";
 import { QuickActionsFAB, useQuickActions } from "@/context/quick-actions-context";
@@ -28,13 +28,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         runningRuns={runningRuns}
         onOpenChange={setRunningTerminalsOpen}
         open={runningTerminalsOpen}
-      />
-      <RunningTerminalsPopover
-        runningRuns={runningRuns}
-        setSelectedRunId={setSelectedRunId}
-        stopRun={stopRun}
-        openLogModal={openLogModal}
-        setRunningTerminalsOpen={setRunningTerminalsOpen}
       />
 
       {/* Sidebar: collapsible, fixed height. useSearchParams only inside Suspense so shell never suspends. */}
