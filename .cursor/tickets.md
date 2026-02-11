@@ -12,6 +12,7 @@
 
 | Area | What's implemented |
 |------|--------------------|
+| Resilience | #5 React error boundaries (ErrorBoundary component, AppShell + section-level boundaries) |
 
 ### Missing or incomplete
 
@@ -26,7 +27,7 @@
 #### Feature: Testing & quality
 
 - [x] #1 Add unit test suite — Set up Vitest or Jest; add tests for lib (e.g. todos-kanban, analysis-prompt) and store
-- [ ] #2 Add E2E tests for critical flows — Playwright for project detail, run script, Kanban load/sync
+- [x] #2 Add E2E tests for critical flows — Playwright for project detail, run script, Kanban load/sync
 
 #### Feature: API security & validation
 
@@ -37,7 +38,7 @@
 
 #### Feature: Resilience
 
-- [ ] #5 Add React error boundaries — Catch component errors and show fallback UI so one throw does not blank the app
+- [x] #5 Add React error boundaries — Catch component errors and show fallback UI so one throw does not blank the app
 - [ ] #6 Add run history persistence — Persist run log/history (e.g. SQLite in Tauri; optional browser storage)
 
 #### Feature: Project details & Kanban

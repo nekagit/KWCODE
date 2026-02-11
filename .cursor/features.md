@@ -4,7 +4,7 @@ Features below are derived from `.cursor/tickets.md`. Each major feature groups 
 
 ## Major features
 
-- [ ] Testing & quality — #1, #2
+- [x] Testing & quality — #1, #2
 - [ ] API security & validation — #3, #4
 - [ ] Resilience — #5, #6, #18
 - [ ] Project details & Kanban — #7, #8
