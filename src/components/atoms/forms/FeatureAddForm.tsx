@@ -52,7 +52,7 @@ export const FeatureAddForm: React.FC<FeatureAddFormProps> = ({
   };
 
   return (
-    <div className="px-4 pb-4 pt-1 grid gap-2">
+    <div className="px-4 pb-4 pt-3 grid gap-5">
       <GenericInputWithLabel
         id="feature-title"
         label="Title"

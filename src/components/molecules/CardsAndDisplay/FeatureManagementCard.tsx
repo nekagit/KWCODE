@@ -121,22 +121,24 @@ export function FeatureManagementCard({
       }
       subtitle="Combine tickets with prompts and projects; run automation or use in run. Filter by project below. Scroll to see all."
     >
-      <Accordion
-        items={[
-          {
-            title: "Add feature",
-            children: (
-              <FeatureAddForm
-                tickets={tickets}
-                prompts={prompts}
-                allProjects={allProjects}
-                onAddFeature={handleAddFeature}
-                onError={setError}
-              />
-            ),
-          },
-        ]}
-      />
+      <div className="mb-4">
+        <Accordion
+          items={[
+            {
+              title: "Add feature",
+              children: (
+                <FeatureAddForm
+                  tickets={tickets}
+                  prompts={prompts}
+                  allProjects={allProjects}
+                  onAddFeature={handleAddFeature}
+                  onError={setError}
+                />
+              ),
+            },
+          ]}
+        />
+      </div>
       <div className={classes[1]}>
         <FeatureFilterSelect
           projectsList={projectsList}

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Layers, ArrowRight, Archive, RotateCcw } from "lucide-react";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import type { ParsedTicket } from "@/lib/todos-kanban";
+import { cn } from "@/lib/utils";
 import { getClasses } from "@/components/molecules/tailwind-molecules";
 const classes = getClasses("Kanban/KanbanTicketCard.tsx");
 
@@ -28,7 +29,7 @@ export const KanbanTicketCard: React.FC<KanbanTicketCardProps> = ({
 }) => (
   <Card
     key={ticket.id}
-    className={classes[13]}
+    className={cn(classes[13], featureBorderClass ?? "border-2 border-border")}
   >
     <div className={classes[0]}>
       <h4 className={classes[1]}>

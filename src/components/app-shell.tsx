@@ -112,7 +112,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main content: scrollable, sidebar stays fixed. Grey-black content area for contrast with dark-black sidebar. */}
-      <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-auto p-4 md:p-6 bg-background">
+      <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-auto p-6 md:p-8 lg:p-10 xl:p-12 bg-background">
         <Suspense
           fallback={
             <div className="min-h-[60vh] flex items-center justify-center" aria-hidden>
