@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface TitleWithIconProps {
-  icon?: React.ReactNode;
+  icon?: React.ElementType;
   title: string;
   className?: string;
 }
@@ -9,7 +9,7 @@ interface TitleWithIconProps {
 export const TitleWithIcon: React.FC<TitleWithIconProps> = ({ icon, title, className }) => {
   return (
     <div className={`flex items-center gap-2 ${className || ''}`}>
-      {icon && (typeof icon === 'string' ? <span className="text-lg font-semibold">{icon}</span> : icon)}
+      {icon && <span className="flex items-center text-lg font-semibold">{React.createElement(icon)}</span>}
       <span className="text-lg font-semibold">{title}</span>
     </div>
   );

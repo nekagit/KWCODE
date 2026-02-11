@@ -18,7 +18,7 @@ export function featureToMarkdown(feature: FeatureForExport): string {
   lines.push("");
   lines.push(`- **ID:** \`${feature.id}\``);
   if (feature.prompt_ids?.length) {
-    lines.push(`- **Prompt IDs:** ${feature.prompt_ids.join(", ")}`);
+    lines.push(`- **PromptRecord IDs:** ${feature.prompt_ids.join(", ")}`);
   }
   if (feature.project_paths?.length) {
     lines.push(`- **Project paths:** ${feature.project_paths.join(", ")}`);

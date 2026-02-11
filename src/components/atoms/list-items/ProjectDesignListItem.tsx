@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { Card } from "@/components/shared/Card";
 import type { Project } from "@/types/project";
+import type { DesignRecord } from "@/types/design";
 
 interface ProjectDesignListItemProps {
-  design: Project["designs"][number];
+  design: DesignRecord;
   projectId: string;
 }
 
@@ -26,6 +27,6 @@ export const ProjectDesignListItem: React.FC<ProjectDesignListItemProps> = ({
           </Link>
         </Button>
       }
-    ></Card>
+    ><div/></Card>
   );
 };

@@ -6,8 +6,8 @@ import { FolderOpen } from "lucide-react";
 import { invoke, isTauri } from "@/lib/tauri";
 import { Card } from "@/components/shared/Card";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { TitleWithIcon } from "@/components/atoms/TitleWithIcon";
-import { LocalProjectListItem } from "@/components/atoms/LocalProjectListItem";
+import { TitleWithIcon } from "@/components/atoms/headers/TitleWithIcon";
+import { LocalProjectListItem } from "@/components/atoms/list-items/LocalProjectListItem";
 
 export function LocalProjectsCard() {
   const [localPaths, setLocalPaths] = useState<string[]>([]);

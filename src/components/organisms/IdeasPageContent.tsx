@@ -5,14 +5,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/molecules/LayoutAndNavigation/PageHeader";
-import { IdeaTemplateCard } from "@/components/molecules/CardsAndDisplay/IdeaTemplateCard/IdeaTemplateCard";
-import { AiGeneratedIdeasCard } from "@/components/molecules/CardsAndDisplay/AiGeneratedIdeasCard/AiGeneratedIdeasCard";
-import { MyIdeasCard } from "@/components/molecules/CardsAndDisplay/MyIdeasCard/MyIdeasCard";
-import { IdeaFormDialog } from "@/components/molecules/FormsAndDialogs/IdeaFormDialog/IdeaFormDialog";
+import { IdeaTemplateCard } from "@/components/molecules/CardsAndDisplay/IdeaTemplateCard";
+import { AiGeneratedIdeasCard } from "@/components/molecules/CardsAndDisplay/AiGeneratedIdeasCard";
+import { MyIdeasCard } from "@/components/molecules/CardsAndDisplay/MyIdeasCard";
+import { IdeaFormDialog } from "@/components/molecules/FormsAndDialogs/IdeaFormDialog";
 
-type IdeaCategory = "saas" | "iaas" | "paas" | "website" | "webapp" | "webshop" | "other";
+export type IdeaCategory = "saas" | "iaas" | "paas" | "website" | "webapp" | "webshop" | "other";
 
-type IdeaRecord = {
+export type IdeaRecord = {
   id: number;
   title: string;
   description: string;
@@ -206,7 +206,7 @@ export function IdeasPageContent() {
       <PageHeader
         title="Business ideas"
         description="SaaS, IaaS, PaaS, websites, webapps, webshops — templates, AI-generated, or your own."
-        icon={<Lightbulb className="h-6 w-6" />}
+        icon={Lightbulb} // Pass the component directly
       />
 
       <Tabs defaultValue="templates" className="w-full">

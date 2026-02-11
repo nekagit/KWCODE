@@ -1,13 +1,14 @@
 import { QuickActions } from "@/components/organisms/QuickActions";
 import { TicketBoard } from "@/components/organisms/TicketBoard";
-import type { Feature, Ticket } from "@/app/page";
-import type { RunningRun } from "@/store/run-store";
+import type { Feature } from "@/types/project";
+import type { Ticket } from "@/types/ticket";
+import type { RunInfo } from "@/types/run";
 import { useRouter } from "next/navigation";
-import { TabValue } from "@/components/molecules/LayoutAndNavigation/NavigationTabs/NavigationTabs";
+import { TabValue } from "@/components/molecules/LayoutAndNavigation/NavigationTabs";
 
 interface DashboardTabContentProps {
   features: Feature[];
-  runningRuns: RunningRun[];
+  runningRuns: RunInfo[];
   navigateToTab: (tab: TabValue) => void;
   runForFeature: (feature: Feature) => Promise<void>;
   setSelectedRunId: (id: string | null) => void;

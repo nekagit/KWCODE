@@ -8,16 +8,16 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useRunState } from "@/context/run-state";
 import { toast } from "sonner";
 import type { Project } from "@/types/project";
-import { NavigationTabs, TabValue } from "@/components/molecules/LayoutAndNavigation/NavigationTabs/NavigationTabs";
-import { ProjectsTabContent } from "@/components/molecules/TabAndContentSections/ProjectsTabContent/ProjectsTabContent";
-import { AllDataTabContent } from "@/components/molecules/TabAndContentSections/AllDataTabContent/AllDataTabContent";
-import { DbDataTabContent } from "@/components/molecules/TabAndContentSections/DbDataTabContent/DbDataTabContent";
-import { LogTabContent } from "@/components/molecules/TabAndContentSections/LogTabContent/LogTabContent";
+import { NavigationTabs, TabValue } from "@/components/molecules/LayoutAndNavigation/NavigationTabs";
+import { ProjectsTabContent } from "@/components/molecules/TabAndContentSections/ProjectsTabContent";
+import { AllDataTabContent } from "@/components/molecules/TabAndContentSections/AllDataTabContent";
+import { DbDataTabContent } from "@/components/molecules/TabAndContentSections/DbDataTabContent";
+import { LogTabContent } from "@/components/molecules/TabAndContentSections/LogTabContent";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { DashboardTabContent } from "@/components/molecules/TabAndContentSections/DashboardTabContent/DashboardTabContent";
-import { PromptsTabContent } from "@/components/molecules/TabAndContentSections/PromptsTabContent/PromptsTabContent";
-import { TicketsTabContent } from "@/components/molecules/TabAndContentSections/TicketsTabContent/TicketsTabContent";
-import { FeatureTabContent } from "@/components/molecules/TabAndContentSections/FeatureTabContent/FeatureTabContent";
+import { DashboardTabContent } from "@/components/molecules/TabAndContentSections/DashboardTabContent";
+import { PromptsTabContent } from "@/components/molecules/TabAndContentSections/PromptsTabContent"; // Corrected import
+import { TicketsTabContent } from "@/components/molecules/TabAndContentSections/TicketsTabContent";
+import { FeatureTabContent } from "@/components/molecules/TabAndContentSections/FeatureTabContent";
 
 import type { Ticket, TicketStatus } from "@/types/ticket";
 import type { Feature } from "@/types/project";
@@ -51,8 +51,8 @@ export function HomePageContent() {
     toggleProject,
     saveActiveProjects,
     prompts,
-    selectedPromptIds,
-    setSelectedPromptIds,
+    selectedPromptRecordIds,
+    setSelectedPromptRecordIds,
     runningRuns,
     selectedRunId,
     setSelectedRunId,
@@ -254,8 +254,8 @@ export function HomePageContent() {
         <TabsContent value="prompts" className="mt-0 space-y-6">
           <PromptsTabContent
             prompts={prompts}
-            selectedPromptIds={selectedPromptIds}
-            setSelectedPromptIds={setSelectedPromptIds}
+            selectedPromptRecordIds={selectedPromptRecordIds}
+            setSelectedPromptRecordIds={setSelectedPromptRecordIds}
           />
         </TabsContent>
 
@@ -277,12 +277,12 @@ export function HomePageContent() {
             allProjects={allProjects}
             activeProjects={activeProjects}
             runningRuns={runningRuns}
-            featureQueue={featureQueue}
+            featureQueue={featureQueue as Feature[]}
             setError={setError}
             addFeatureToQueue={addFeatureToQueue}
             removeFeatureFromQueue={removeFeatureFromQueue}
             clearFeatureQueue={clearFeatureQueue}
-            runFeatureQueue={runFeatureQueue(activeProjects)}
+            runFeatureQueue={runFeatureQueue}
             runForFeature={runForFeature}
             saveFeatures={saveFeatures}
           />
@@ -293,7 +293,7 @@ export function HomePageContent() {
             allProjects={allProjects}
             activeProjects={activeProjects}
             toggleProject={toggleProject}
-            saveActiveProjects={saveActiveProjects(activeProjects)}
+            saveActiveProjects={saveActiveProjects}
           />
         </TabsContent>
 
@@ -304,8 +304,8 @@ export function HomePageContent() {
             toggleProject={toggleProject}
             saveActiveProjects={saveActiveProjects}
             prompts={prompts}
-            selectedPromptIds={selectedPromptIds}
-            setSelectedPromptIds={setSelectedPromptIds}
+            selectedPromptRecordIds={selectedPromptRecordIds}
+            setSelectedPromptRecordIds={setSelectedPromptRecordIds}
             tickets={tickets}
             features={features}
             ideas={ideas}

@@ -1,5 +1,5 @@
-import { PromptsPageContent } from "@/components/organisms/PromptsPageContent";
+import { PromptRecordsPageContent } from "@/components/organisms/PromptRecordsPageContent";
 
-export default function PromptsPage() {
-  return <PromptsPageContent />;
+export default function PromptRecordsPage() {
+  return <PromptRecordsPageContent />;
 }

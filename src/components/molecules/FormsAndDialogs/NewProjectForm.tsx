@@ -8,8 +8,8 @@ import { Loader2 } from "lucide-react";
 import { createProject } from "@/lib/api-projects";
 import { Card } from "@/components/shared/Card";
 import { Form } from "@/components/shared/Form";
-import { ProjectInput } from "@/components/atoms/ProjectInput";
-import { ProjectTextarea } from "@/components/atoms/ProjectTextarea";
+import { ProjectInput } from "@/components/atoms/inputs/ProjectInput";
+import { ProjectTextarea } from "@/components/atoms/inputs/ProjectTextarea";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 

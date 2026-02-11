@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { Dialog } from "@/components/shared/Dialog";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
-import { IdeaFormFields } from "@/components/atoms/IdeaFormFields";
+import { IdeaFormFields } from "@/components/atoms/forms/IdeaFormFields";
 
 interface IdeaCategoryLabels {
   saas: string;

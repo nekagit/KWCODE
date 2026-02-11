@@ -9,25 +9,20 @@ import { updateProject } from "@/lib/api-projects";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/shared/Card";
 import { Form } from "@/components/shared/Form";
-import { ProjectInput } from "@/components/atoms/ProjectInput";
-import { ProjectTextarea } from "@/components/atoms/ProjectTextarea";
+import { ProjectInput } from "@/components/atoms/inputs/ProjectInput";
+import { ProjectTextarea } from "@/components/atoms/inputs/ProjectTextarea";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
-import { ProjectPromptCheckboxGroup } from "@/components/atoms/ProjectPromptCheckboxGroup";
-import { ProjectTicketCheckboxGroup } from "@/components/atoms/ProjectTicketCheckboxGroup";
-import { ProjectFeatureCheckboxGroup } from "@/components/atoms/ProjectFeatureCheckboxGroup";
-import { ProjectIdeaCheckboxGroup } from "@/components/atoms/ProjectIdeaCheckboxGroup";
-import { ProjectDesignCheckboxGroup } from "@/components/atoms/ProjectDesignCheckboxGroup";
-import { ProjectArchitectureCheckboxGroup } from "@/components/atoms/ProjectArchitectureCheckboxGroup";
+import { ProjectCheckboxGroup } from "@/components/atoms/checkbox-groups/ProjectCheckboxGroup";
 
-type PromptItem = { id: number; title: string };
+type PromptRecordItem = { id: number; title: string };
 type TicketItem = { id: string; title: string; status?: string };
 type FeatureItem = { id: string; title: string };
 type IdeaItem = { id: number; title: string; category?: string };
 
 interface ProjectFormProps {
   project: Project;
-  prompts: PromptItem[];
+  prompts: PromptRecordItem[];
   tickets: TicketItem[];
   features: FeatureItem[];
   ideas: IdeaItem[];
@@ -48,15 +43,15 @@ export function ProjectForm({
   const [name, setName] = useState(project.name);
   const [description, setDescription] = useState(project.description ?? "");
   const [repoPath, setRepoPath] = useState(project.repoPath ?? "");
-  const [promptIds, setPromptIds] = useState<number[]>(project.promptIds ?? []);
+  const [promptIds, setPromptRecordIds] = useState<number[]>(project.promptIds ?? []);
   const [ticketIds, setTicketIds] = useState<string[]>(project.ticketIds ?? []);
   const [featureIds, setFeatureIds] = useState<string[]>(project.featureIds ?? []);
   const [ideaIds, setIdeaIds] = useState<number[]>(project.ideaIds ?? []);
   const [designIds, setDesignIds] = useState<string[]>(project.designIds ?? []);
   const [architectureIds, setArchitectureIds] = useState<string[]>(project.architectureIds ?? []);
 
-  const togglePrompt = useCallback((pid: number) => {
-    setPromptIds((prev) =>
+  const togglePromptRecord = useCallback((pid: number) => {
+    setPromptRecordIds((prev) =>
       prev.includes(pid) ? prev.filter((id) => id !== pid) : [...prev, pid]
     );
   }, []);
@@ -145,35 +140,41 @@ export function ProjectForm({
         />
 
         <div className="grid gap-4 sm:grid-cols-2 pt-4 border-t">
-          <ProjectPromptCheckboxGroup
-            prompts={prompts}
-            selectedPromptIds={promptIds}
-            onTogglePrompt={togglePrompt}
+          <ProjectCheckboxGroup
+            label="PromptRecords"
+            items={prompts.map(p => ({id: String(p.id), name: p.title}))}
+            selectedItems={promptIds.map(String)}
+            onToggleItem={(id) => togglePromptRecord(Number(id))}
           />
-          <ProjectTicketCheckboxGroup
-            tickets={tickets}
-            selectedTicketIds={ticketIds}
-            onToggleTicket={toggleTicket}
+          <ProjectCheckboxGroup
+            label="Tickets"
+            items={tickets.map(t => ({id: t.id, name: t.title}))}
+            selectedItems={ticketIds}
+            onToggleItem={toggleTicket}
           />
-          <ProjectFeatureCheckboxGroup
-            features={features}
-            selectedFeatureIds={featureIds}
-            onToggleFeature={toggleFeature}
+          <ProjectCheckboxGroup
+            label="Features"
+            items={features.map(f => ({id: f.id, name: f.title}))}
+            selectedItems={featureIds}
+            onToggleItem={toggleFeature}
           />
-          <ProjectIdeaCheckboxGroup
-            ideas={ideas}
-            selectedIdeaIds={ideaIds}
-            onToggleIdea={toggleIdea}
+          <ProjectCheckboxGroup
+            label="Ideas"
+            items={ideas.map(i => ({id: String(i.id), name: i.title}))}
+            selectedItems={ideaIds.map(String)}
+            onToggleItem={(id) => toggleIdea(Number(id))}
           />
-          <ProjectDesignCheckboxGroup
-            designs={designs}
-            selectedDesignIds={designIds}
-            onToggleDesign={toggleDesign}
+          <ProjectCheckboxGroup
+            label="Designs"
+            items={designs.map(d => ({id: d.id, name: d.name}))}
+            selectedItems={designIds}
+            onToggleItem={toggleDesign}
           />
-          <ProjectArchitectureCheckboxGroup
-            architectures={architectures}
-            selectedArchitectureIds={architectureIds}
-            onToggleArchitecture={toggleArchitecture}
+          <ProjectCheckboxGroup
+            label="Architectures"
+            items={architectures}
+            selectedItems={architectureIds}
+            onToggleItem={toggleArchitecture}
           />
         </div>
 

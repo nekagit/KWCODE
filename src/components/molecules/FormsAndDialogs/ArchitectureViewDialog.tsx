@@ -5,7 +5,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import type { ArchitectureRecord, ArchitectureCategory } from "@/types/architecture";
 import { Dialog } from "@/components/shared/Dialog";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
-import { ArchitectureDetailsDisplay } from "@/components/atoms/ArchitectureDetailsDisplay";
+import { ArchitectureDetailsDisplay } from "@/components/atoms/architecture/ArchitectureDetailsDisplay";
 
 interface ArchitectureViewDialogProps {
   viewOpen: boolean;

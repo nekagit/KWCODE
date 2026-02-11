@@ -10,17 +10,17 @@ import {
   FileCode,
 } from "lucide-react";
 import { PageHeader } from "@/components/molecules/LayoutAndNavigation/PageHeader";
-import { TestingTemplatesTabContent } from "@/components/molecules/TabAndContentSections/TestingTemplatesTabContent/TestingTemplatesTabContent";
-import { TestingPracticesTabContent } from "@/components/molecules/TabAndContentSections/TestingPracticesTabContent/TestingPracticesTabContent";
-import { TestingPhasesTabContent } from "@/components/molecules/TabAndContentSections/TestingPhasesTabContent/TestingPhasesTabContent";
-import { TestingCoverageTabContent } from "@/components/molecules/TabAndContentSections/TestingCoverageTabContent/TestingCoverageTabContent";
+import { TestingTemplatesTabContent } from "@/components/molecules/TabAndContentSections/TestingTemplatesTabContent";
+import { TestingPracticesTabContent } from "@/components/molecules/TabAndContentSections/TestingPracticesTabContent";
+import { TestingPhasesTabContent } from "@/components/molecules/TabAndContentSections/TestingPhasesTabContent";
+import { TestingCoverageTabContent } from "@/components/molecules/TabAndContentSections/TestingCoverageTabContent";
 
 const MY_TEST_PRACTICES_KEY = "testing-my-practices";
 
 export function TestingPageContent() {
   const [myPractices, setMyPractices] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiPromptRecord, setAiPromptRecord] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState<string | null>(null);
 
@@ -43,7 +43,7 @@ export function TestingPageContent() {
   }, []);
 
   const handleAiGenerate = useCallback(async () => {
-    if (!aiPrompt.trim()) return;
+    if (!aiPromptRecord.trim()) return;
     setAiLoading(true);
     setAiResult(null);
     try {
@@ -51,7 +51,7 @@ export function TestingPageContent() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          description: `Test plan generation: You are a test automation expert. The user wants a concise test plan or test cases (bullet list or short outline). Focus on best practices: clear test names, arrange-act-assert, edge cases. Request: ${aiPrompt.trim()}`,
+          description: `Test plan generation: You are a test automation expert. The user wants a concise test plan or test cases (bullet list or short outline). Focus on best practices: clear test names, arrange-act-assert, edge cases. Request: ${aiPromptRecord.trim()}`,
         }),
       });
       if (!res.ok) {
@@ -66,11 +66,11 @@ export function TestingPageContent() {
     finally {
       setAiLoading(false);
     }
-  }, [aiPrompt]);
+  }, [aiPromptRecord]);
 
   const generationProps = {
-    aiPrompt,
-    setAiPrompt,
+    aiPromptRecord,
+    setAiPromptRecord,
     aiLoading,
     aiResult,
     handleAiGenerate,
@@ -81,7 +81,7 @@ export function TestingPageContent() {
       <PageHeader
         title="Testing"
         description="AI test templates, best practices, automation phases, and test coverage dashboard."
-        icon={<TestTube2 className="h-7 w-7" />}
+        icon={TestTube2} // Pass the component directly
       />
 
       <Tabs defaultValue="templates" className="w-full">
@@ -106,8 +106,8 @@ export function TestingPageContent() {
 
         <TabsContent value="templates" className="mt-6 space-y-6">
           <TestingTemplatesTabContent
-            aiPrompt={aiPrompt}
-            setAiPrompt={setAiPrompt}
+            aiPromptRecord={aiPromptRecord}
+            setAiPromptRecord={setAiPromptRecord}
             aiLoading={aiLoading}
             aiResult={aiResult}
             handleAiGenerate={handleAiGenerate}

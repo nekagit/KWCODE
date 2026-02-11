@@ -8,7 +8,7 @@ import { ButtonGroup } from "@/components/shared/ButtonGroup";
 
 interface GeneratedPromptDisplayProps {
   generateResult: { title: string; content: string };
-  setGenerateResult: (result: { title: string; content: string } | null) => void;
+  setGenerateResult: React.Dispatch<React.SetStateAction<{ title: string; content: string } | null>>;
   useGeneratedAndCreate: () => void;
   saveGeneratedAsNew: () => Promise<void>;
   saveLoading: boolean;
@@ -28,8 +28,9 @@ export const GeneratedPromptDisplay: React.FC<GeneratedPromptDisplayProps> = ({
         <Input
           value={generateResult.title}
           onChange={(e) =>
-            setGenerateResult((r) => (r ? { ...r, title: e.target.value } : null))
-          }
+            setGenerateResult((r: { title: string; content: string } | null) =>
+              r ? { ...r, title: e.target.value } : null
+            )}
         />
       </div>
       <div className="grid gap-2">
@@ -37,8 +38,9 @@ export const GeneratedPromptDisplay: React.FC<GeneratedPromptDisplayProps> = ({
         <Textarea
           value={generateResult.content}
           onChange={(e) =>
-            setGenerateResult((r) => (r ? { ...r, content: e.target.value } : null))
-          }
+            setGenerateResult((r: { title: string; content: string } | null) =>
+              r ? { ...r, content: e.target.value } : null
+            )}
           rows={10}
           className="min-h-[200px]"
         />

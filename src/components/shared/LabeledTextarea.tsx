@@ -1,5 +1,6 @@
 import React from 'react';
 import { Textarea } from "@/components/ui/textarea";
+import { FormField } from "@/components/shared/forms/FormField";
 import { FieldWrapper } from "@/components/shared/FieldWrapper";
 import { cn } from "@/lib/utils";
 

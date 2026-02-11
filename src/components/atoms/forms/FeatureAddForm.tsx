@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { FeatureInput } from "@/components/atoms/FeatureInput";
-import { TicketCheckboxGroup } from "@/components/atoms/TicketCheckboxGroup";
-import { PromptCheckboxGroup } from "@/components/atoms/PromptCheckboxGroup";
-import { ProjectCheckboxGroup } from "@/components/atoms/ProjectCheckboxGroup";
+import { FeatureInput } from "@/components/atoms/inputs/FeatureInput";
+import { CheckboxGroup } from "@/components/shared/CheckboxGroup";
+import { CheckboxGroup as ProjectCheckboxGroup } from "@/components/shared/CheckboxGroup";
 import type { Feature } from "@/types/project";
 import type { Ticket } from "@/types/ticket";
 
@@ -58,23 +57,41 @@ export const FeatureAddForm: React.FC<FeatureAddFormProps> = ({
       <FeatureInput
         label="Title"
         value={featureForm.title}
-        onChange={(title) => setFeatureForm((f) => ({ ...f, title }))}
+        onChange={(title: string) => setFeatureForm((f) => ({ ...f, title }))}
         placeholder="e.g. Calendar event adding"
       />
-      <TicketCheckboxGroup
-        tickets={tickets}
-        selectedTicketIds={featureForm.ticket_ids}
-        onSelectionChange={(ids) => setFeatureForm((f) => ({ ...f, ticket_ids: ids }))}
+      <CheckboxGroup
+        label="Tickets (required, at least one)"
+        items={tickets.map(t => ({id: t.id, name: t.title}))}
+        selectedItems={featureForm.ticket_ids}
+        onToggleItem={(id) => setFeatureForm((f) => ({
+          ...f,
+          ticket_ids: f.ticket_ids.includes(id as string)
+            ? f.ticket_ids.filter((tid) => tid !== id)
+            : [...f.ticket_ids, id as string],
+        }))}
       />
-      <PromptCheckboxGroup
-        prompts={prompts}
-        selectedPromptIds={featureForm.prompt_ids}
-        onSelectionChange={(ids) => setFeatureForm((f) => ({ ...f, prompt_ids: ids }))}
+      <CheckboxGroup
+        label="PromptRecords (required)"
+        items={prompts.map(p => ({id: p.id, name: `${p.id}: ${p.title}`}))}
+        selectedItems={featureForm.prompt_ids}
+        onToggleItem={(id) => setFeatureForm((f) => ({
+          ...f,
+          prompt_ids: f.prompt_ids.includes(id as number)
+            ? f.prompt_ids.filter((pid) => pid !== id)
+            : [...f.prompt_ids, id as number],
+        }))}
       />
       <ProjectCheckboxGroup
-        allProjects={allProjects}
-        selectedProjectPaths={featureForm.project_paths}
-        onSelectionChange={(paths) => setFeatureForm((f) => ({ ...f, project_paths: paths }))}
+        label="Projects"
+        items={allProjects.map(p => ({id: p, name: p.split("/").pop() ?? p}))}
+        selectedItems={featureForm.project_paths}
+        onToggleItem={(id) => setFeatureForm((f) => ({
+          ...f,
+          project_paths: f.project_paths.includes(id as string)
+            ? f.project_paths.filter((pp) => pp !== id)
+            : [...f.project_paths, id as string],
+        }))}
       />
       <Button onClick={handleAddFeature}>
         <Plus className="h-4 w-4 mr-2" />

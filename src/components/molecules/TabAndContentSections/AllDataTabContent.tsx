@@ -5,11 +5,11 @@ import { Card } from "@/components/shared/Card";
 import { Button } from "@/components/ui/button";
 import { Folders, MessageSquare, Ticket as TicketIcon, Layers, Lightbulb, Palette } from "lucide-react";
 import type { Project } from "@/types/project";
-import type { Prompt } from "@/types/prompt";
+import type { PromptRecord } from "@/types/prompt";
 import type { Ticket } from "@/types/ticket";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import { AllProjectsDisplayList } from "@/components/atoms/AllProjectsDisplayList";
-import { PromptsDisplayList } from "@/components/atoms/PromptsDisplayList";
+import { PromptRecordsDisplayList } from "@/components/atoms/PromptRecordsDisplayList";
 import { TicketsDisplayList } from "@/components/atoms/TicketsDisplayList";
 import { FeaturesDisplayList } from "@/components/atoms/FeaturesDisplayList";
 import { IdeasDisplayList } from "@/components/atoms/IdeasDisplayList";
@@ -20,8 +20,8 @@ interface AllDataTabContentProps {
   toggleProject: (path: string) => void;
   saveActiveProjects: () => Promise<void>;
   prompts: { id: number; title: string; description?: string }[];
-  selectedPromptIds: number[];
-  setSelectedPromptIds: (ids: number[]) => void;
+  selectedPromptRecordIds: number[];
+  setSelectedPromptRecordIds: (ids: number[]) => void;
   tickets: { id: string; title: string; status: string; description?: string }[];
   features: { id: string; title: string; prompt_ids: number[]; project_paths: string[] }[];
   ideas: { id: number; title: string; description: string; category: string }[];
@@ -34,8 +34,8 @@ export function AllDataTabContent({
   toggleProject,
   saveActiveProjects,
   prompts,
-  selectedPromptIds,
-  setSelectedPromptIds,
+  selectedPromptRecordIds,
+  setSelectedPromptRecordIds,
   tickets,
   features,
   ideas,
@@ -75,17 +75,17 @@ export function AllDataTabContent({
           title={
             <>
               <MessageSquare className="h-5 w-5" />
-              Prompts
+              PromptRecords
             </>
           }
           subtitle={`${prompts.length} prompts`}
         >
-          <PromptsDisplayList
-            prompts={prompts as Prompt[]}
-            selectedPromptIds={selectedPromptIds}
-            setSelectedPromptIds={setSelectedPromptIds}
+          <PromptRecordsDisplayList
+            prompts={prompts as PromptRecord[]}
+            selectedPromptRecordIds={selectedPromptRecordIds}
+            setSelectedPromptRecordIds={setSelectedPromptRecordIds}
           />
-          <p className="text-xs text-muted-foreground mt-2">Select prompts for Run. Edit on Prompts page.</p>
+          <p className="text-xs text-muted-foreground mt-2">Select prompts for Run. Edit on PromptRecords page.</p>
         </Card>
       </div>
 

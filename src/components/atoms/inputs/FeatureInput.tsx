@@ -14,7 +14,7 @@ export const FeatureInput: React.FC<FeatureInputProps> = ({
   placeholder,
 }) => {
   return (
-    <GenericInputWithLabel
+    <LabeledInput
       id="feature-input"
       label={label}
       value={value}

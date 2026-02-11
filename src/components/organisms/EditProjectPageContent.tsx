@@ -3,14 +3,16 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import type { Project } from "@/types/project";
-import { getProject } from "@/lib/api-projects";
+import { getProjectResolved } from "@/lib/api-projects"; // Changed from getProject
 import { isTauri } from "@/lib/tauri";
-import { ProjectForm } from "@/components/molecules/FormsAndDialogs/ProjectForm/ProjectForm";
-import { ProjectLoadingState } from "@/components/molecules/UtilitiesAndHelpers/ProjectLoadingState/ProjectLoadingState";
-import { EditProjectHeader } from "@/components/molecules/UtilitiesAndHelpers/EditProjectHeader/EditProjectHeader";
-import { ProjectNotFoundState } from "@/components/molecules/UtilitiesAndHelpers/ProjectNotFoundState/ProjectNotFoundState";
+import { invoke } from "@tauri-apps/api/tauri"; // Added import for invoke
+import { ProjectForm } from "@/components/molecules/FormsAndDialogs/ProjectForm";
+import { ProjectLoadingState } from "@/components/molecules/UtilitiesAndHelpers/ProjectLoadingState";
+import { EditProjectHeader } from "@/components/molecules/UtilitiesAndHelpers/EditProjectHeader";
+import { ProjectNotFoundState } from "@/components/molecules/UtilitiesAndHelpers/ProjectNotFoundState";
+import type { ResolvedProject } from "@/lib/api-projects"; // Import ResolvedProject type
 
-type PromptItem = { id: number; title: string };
+type PromptRecordItem = { id: number; title: string };
 type TicketItem = { id: string; title: string; status?: string };
 type FeatureItem = { id: string; title: string };
 type IdeaItem = { id: number; title: string; category?: string };
@@ -21,7 +23,7 @@ export function EditProjectPageContent() {
   const id = params?.id as string | undefined;
   const [project, setProject] = useState<Project | null>(null);
 
-  const [prompts, setPrompts] = useState<PromptItem[]>([]);
+  const [prompts, setPromptRecords] = useState<PromptRecordItem[]>([]);
   const [tickets, setTickets] = useState<TicketItem[]>([]);
   const [features, setFeatures] = useState<FeatureItem[]>([]);
   const [ideas, setIdeas] = useState<IdeaItem[]>([]);
@@ -35,51 +37,35 @@ export function EditProjectPageContent() {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    const projectPromise = isTauri()
-      ? getProject(id)
-      : fetch(`/api/data/projects/${id}`).then((res) => {
-          if (!res.ok) throw new Error("Project not found");
-          return res.json();
-        });
-    const restPromise = isTauri()
-      ? Promise.resolve([[], { tickets: [], features: [], prompts: [] }, [], [], []])
-      : Promise.all([
-          fetch("/api/data/prompts").then((r) => (r.ok ? r.json() : [])),
-          fetch("/api/data").then((r) => (r.ok ? r.json() : { tickets: [], features: [], prompts: [] })),
-          fetch("/api/data/ideas").then((r) => (r.ok ? r.json() : [])),
-          fetch("/api/data/designs").then((r) => (r.ok ? r.json() : [])),
-          fetch("/api/data/architectures").then((r) => (r.ok ? r.json() : [])),
-        ]);
-    Promise.all([projectPromise, restPromise])
-      .then(([proj, rest]) => {
-        if (cancelled) return;
-        const p = proj as Project & { designIds?: string[]; architectureIds?: string[] };
-        setProject(p);
 
+    const fetchProjectData = async () => {
+      try {
+        let fetchedProject: ResolvedProject;
         if (isTauri()) {
-          const [promptsList, data, ideasList, designsList, architecturesList] = rest as [unknown[], { tickets: TicketItem[]; features: FeatureItem[] }, IdeaItem[], { id: string; name: string }[], { id: string; name: string }[]];
-          setPrompts(Array.isArray(promptsList) ? (promptsList as { id: number; title: string }[]).map((x) => ({ id: Number(x.id), title: x.title ?? "" })) : []);
-          setTickets(Array.isArray(data?.tickets) ? data.tickets : []);
-          setFeatures(Array.isArray(data?.features) ? data.features : []);
-          setIdeas(Array.isArray(ideasList) ? ideasList : []);
-          setDesigns(Array.isArray(designsList) ? designsList.map((x) => ({ id: x.id, name: x.name ?? "" })) : []);
-          setArchitectures(Array.isArray(architecturesList) ? architecturesList.map((x) => ({ id: x.id, name: x.name ?? "" })) : []);
+          fetchedProject = await invoke<ResolvedProject>("get_project_resolved", { id });
         } else {
-          const [promptsList, data, ideasList, designsList, architecturesList] = rest as [unknown[], { tickets: TicketItem[]; features: FeatureItem[] }, IdeaItem[], { id: string; name: string }[], { id: string; name: string }[]];
-          setPrompts(Array.isArray(promptsList) ? (promptsList as { id: number; title: string }[]).map((x) => ({ id: Number(x.id), title: x.title ?? "" })) : []);
-          setTickets(Array.isArray(data?.tickets) ? data.tickets : []);
-          setFeatures(Array.isArray(data?.features) ? data.features : []);
-          setIdeas(Array.isArray(ideasList) ? ideasList : []);
-          setDesigns(Array.isArray(designsList) ? designsList.map((x) => ({ id: x.id, name: x.name ?? "" })) : []);
-          setArchitectures(Array.isArray(architecturesList) ? architecturesList.map((x) => ({ id: x.id, name: x.name ?? "" })) : []);
+          const res = await fetch(`/api/data/projects/${id}?resolve=1`);
+          if (!res.ok) throw new Error("Project not found");
+          fetchedProject = await res.json();
         }
-      })
-      .catch((e) => {
+
+        if (cancelled) return;
+        setProject(fetchedProject);
+        setPromptRecords(Array.isArray(fetchedProject.prompts) ? (fetchedProject.prompts as PromptRecordItem[]) : []);
+        setTickets(Array.isArray(fetchedProject.tickets) ? (fetchedProject.tickets as TicketItem[]) : []);
+        setFeatures(Array.isArray(fetchedProject.features) ? (fetchedProject.features as FeatureItem[]) : []);
+        setIdeas(Array.isArray(fetchedProject.ideas) ? (fetchedProject.ideas as IdeaItem[]) : []);
+        setDesigns(Array.isArray(fetchedProject.designs) ? (fetchedProject.designs as { id: string; name: string }[]) : []);
+        setArchitectures(Array.isArray(fetchedProject.architectures) ? (fetchedProject.architectures as { id: string; name: string }[]) : []);
+      } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : String(e));
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setLoading(false);
-      });
+      }
+    };
+
+    fetchProjectData();
+
     return () => {
       cancelled = true;
     };

@@ -31,7 +31,7 @@ export function ProjectIdeasTab({
         generateExport={generateExport}
       />
 
-      {project.ideas.length === 0 ? (
+      {project.ideaIds?.length === 0 ? (
         <EmptyState
           icon={<Lightbulb className="h-6 w-6" />}
           title="No ideas yet"
@@ -47,8 +47,8 @@ export function ProjectIdeasTab({
         />
       ) : (
         <GridContainer>
-          {project.ideas.map((idea) => (
-            <ProjectIdeaListItem key={idea.id} idea={idea} projectId={projectId} />
+          {project.ideaIds?.map((ideaId) => (
+            <ProjectIdeaListItem key={ideaId} idea={ideaId as any} projectId={projectId} />
           ))}
         </GridContainer>
       )}

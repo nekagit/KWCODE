@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
           )
           .join("\n");
 
-  const userPrompt = `You are helping a developer who uses Cursor IDE. They have a Kanban board driven by .cursor/features.md and .cursor/tickets.md. Below are the current PENDING (not done) features and tickets.
+  const userPromptRecord = `You are helping a developer who uses Cursor IDE. They have a Kanban board driven by .cursor/features.md and .cursor/tickets.md. Below are the current PENDING (not done) features and tickets.
 
 Generate a single Cursor/IDE prompt that will instruct an AI assistant to complete these features and tickets efficiently. The prompt should:
 1. Be actionable and clear (steps, order, references to ticket numbers).
@@ -91,7 +91,7 @@ Respond with a JSON object with exactly two keys:
           content:
             'You output only a single JSON object with keys "title" and "content". No other text, no markdown.',
         },
-        { role: "user", content: userPrompt },
+        { role: "user", content: userPromptRecord },
       ],
       temperature: 0.5,
     });

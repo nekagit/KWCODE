@@ -4,8 +4,8 @@ import { Card } from "@/components/shared/Card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2 } from "lucide-react";
 import type { ArchitectureRecord, ArchitectureCategory } from "@/types/architecture";
-import { DefinitionCategorySelect } from "@/components/atoms/DefinitionCategorySelect";
-import { DefinitionListItem } from "@/components/atoms/DefinitionListItem";
+import { DefinitionCategorySelect } from "@/components/atoms/forms/DefinitionCategorySelect";
+import { DefinitionListItem } from "@/components/atoms/list-items/DefinitionListItem";
 import { LoadingState, EmptyState } from "@/components/shared/EmptyState";
 
 interface MyDefinitionsCardProps {

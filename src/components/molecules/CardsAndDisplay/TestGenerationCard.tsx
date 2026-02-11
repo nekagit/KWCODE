@@ -3,20 +3,20 @@
 import { Card } from "@/components/shared/Card";
 import { Input } from "@/components/ui/input";
 import { Sparkles } from "lucide-react";
-import { TitleWithIcon } from "@/components/atoms/TitleWithIcon";
-import { AiGeneratorInput } from "@/components/atoms/AiGeneratorInput";
+import { TitleWithIcon } from "@/components/atoms/headers/TitleWithIcon";
+import { AiGeneratorInput } from "@/components/atoms/inputs/AiGeneratorInput";
 
 interface TestGenerationCardProps {
-  aiPrompt: string;
-  setAiPrompt: (value: string) => void;
+  aiPromptRecord: string;
+  setAiPromptRecord: (value: string) => void;
   aiLoading: boolean;
   aiResult: string | null;
   handleAiGenerate: () => Promise<void>;
 }
 
 export function TestGenerationCard({
-  aiPrompt,
-  setAiPrompt,
+  aiPromptRecord,
+  setAiPromptRecord,
   aiLoading,
   aiResult,
   handleAiGenerate,
@@ -28,8 +28,8 @@ export function TestGenerationCard({
     >
       <AiGeneratorInput
         placeholder="e.g. login form validation, API /users GET, checkout flow"
-        value={aiPrompt}
-        onChange={setAiPrompt}
+        value={aiPromptRecord}
+        onChange={setAiPromptRecord}
         onGenerate={handleAiGenerate}
         loading={aiLoading}
       />

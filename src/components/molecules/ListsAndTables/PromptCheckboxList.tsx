@@ -1,20 +1,20 @@
 import React from 'react';
-import type { Prompt } from "@/types/project";
-import { PromptCheckboxItem } from "@/components/atoms/PromptCheckboxItem";
+import type { PromptRecord } from "@/types/prompt";
+import { PromptRecordCheckboxItem } from "@/components/atoms/PromptRecordCheckboxItem";
 
-interface PromptCheckboxListProps {
-  prompts: Prompt[];
-  selectedPromptIds: number[];
-  setSelectedPromptIds: React.Dispatch<React.SetStateAction<number[]>>;
+interface PromptRecordCheckboxListProps {
+  prompts: PromptRecord[];
+  selectedPromptRecordIds: number[];
+  setSelectedPromptRecordIds: React.Dispatch<React.SetStateAction<number[]>>;
 }
 
-export function PromptCheckboxList({
+export function PromptRecordCheckboxList({
   prompts,
-  selectedPromptIds,
-  setSelectedPromptIds,
-}: PromptCheckboxListProps) {
+  selectedPromptRecordIds,
+  setSelectedPromptRecordIds,
+}: PromptRecordCheckboxListProps) {
   const handleToggle = (id: number, checked: boolean) => {
-    setSelectedPromptIds((prev) =>
+    setSelectedPromptRecordIds((prev) =>
       checked ? [...prev, id] : prev.filter((promptId) => promptId !== id)
     );
   };
@@ -22,11 +22,11 @@ export function PromptCheckboxList({
   return (
     <div className="flex flex-wrap gap-2">
       {prompts.map((p) => (
-        <PromptCheckboxItem
+        <PromptRecordCheckboxItem
           key={p.id}
           promptId={p.id}
           promptTitle={p.title}
-          isChecked={selectedPromptIds.includes(p.id)}
+          isChecked={selectedPromptRecordIds.includes(p.id)}
           onToggle={handleToggle}
         />
       ))}

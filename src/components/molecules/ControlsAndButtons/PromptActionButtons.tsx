@@ -1,23 +1,23 @@
 "use client";
 
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
-import { CreatePromptButton } from "@/components/atoms/CreatePromptButton";
-import { EditPromptButton } from "@/components/atoms/EditPromptButton";
-import { GeneratePromptWithAiButton } from "@/components/atoms/GeneratePromptWithAiButton";
+import { CreatePromptButton } from "@/components/atoms/buttons/CreatePromptButton";
+import { EditPromptButton } from "@/components/atoms/buttons/EditPromptButton";
+import { GeneratePromptButton } from "@/components/atoms/buttons/GeneratePromptButton";
 
-interface PromptActionButtonsProps {
+interface PromptRecordActionButtonsProps {
   openCreate: () => void;
   openEdit: () => void;
   setGenerateOpen: (open: boolean) => void;
   canEdit: boolean;
 }
 
-export function PromptActionButtons({
+export function PromptRecordActionButtons({
   openCreate,
   openEdit,
   setGenerateOpen,
   canEdit,
-}: PromptActionButtonsProps) {
+}: PromptRecordActionButtonsProps) {
   return (
     <ButtonGroup alignment="left">
       <CreatePromptButton onClick={openCreate} />
@@ -26,7 +26,7 @@ export function PromptActionButtons({
         disabled={!canEdit}
         title={canEdit ? "Edit selected prompt" : "Select exactly one prompt to edit"}
       />
-      <GeneratePromptWithAiButton onClick={() => setGenerateOpen(true)} />
+      <GeneratePromptButton onClick={() => setGenerateOpen(true)} />
     </ButtonGroup>
   );
 }

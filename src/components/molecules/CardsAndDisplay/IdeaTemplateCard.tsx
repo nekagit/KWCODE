@@ -2,28 +2,13 @@
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/shared/Card";
-import { TemplateIdeaListItem } from "@/components/atoms/TemplateIdeaListItem";
-
-interface IdeaCategoryLabels {
-  saas: string;
-  iaas: string;
-  paas: string;
-  website: string;
-  webapp: string;
-  webshop: string;
-  other: string;
-}
-
-interface TemplateIdea {
-  title: string;
-  description: string;
-  category: keyof IdeaCategoryLabels;
-}
+import { IdeaTemplateListItem } from "@/components/atoms/list-items/IdeaTemplateListItem"; // Updated import
+import { IdeaCategory } from "@/components/organisms/IdeasPageContent";
 
 interface IdeaTemplateCardProps {
-  TEMPLATE_IDEAS: TemplateIdea[];
-  CATEGORY_LABELS: IdeaCategoryLabels;
-  addToMyIdeas: (item: TemplateIdea, source: "template" | "ai") => Promise<void>;
+  TEMPLATE_IDEAS: { title: string; description: string; category: IdeaCategory; practices?: string; scenarios?: string }[];
+  CATEGORY_LABELS: Record<IdeaCategory, string>;
+  addToMyIdeas: (item: { title: string; description: string; category: IdeaCategory }, source: "template" | "ai") => Promise<void>;
 }
 
 export function IdeaTemplateCard({
@@ -39,11 +24,23 @@ export function IdeaTemplateCard({
       <ScrollArea className="h-[calc(100vh-20rem)] pr-4">
         <ul className="space-y-3">
           {TEMPLATE_IDEAS.map((idea, i) => (
-            <TemplateIdeaListItem
+            <IdeaTemplateListItem
               key={i}
-              idea={idea}
+              item={{
+                title: idea.title,
+                description: idea.description,
+                category: idea.category,
+                practices: idea.practices || "",
+                scenarios: idea.scenarios || "",
+              }}
               CATEGORY_LABELS={CATEGORY_LABELS}
-              onAddToMyIdeas={addToMyIdeas}
+              onAddItem={async (item) => {
+                await addToMyIdeas({
+                  title: item.title,
+                  description: item.description,
+                  category: item.category,
+                }, "template");
+              }}
             />
           ))}
         </ul>

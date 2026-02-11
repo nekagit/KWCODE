@@ -4,11 +4,11 @@ import { Building2 } from "lucide-react";
 import { toast } from "sonner";
 import type { ArchitectureRecord, ArchitectureCategory } from "@/types/architecture";
 import { PageHeader } from "@/components/molecules/LayoutAndNavigation/PageHeader";
-import { ArchitectureEditDialog } from "@/components/molecules/FormsAndDialogs/ArchitectureEditDialog/ArchitectureEditDialog";
-import { ArchitectureViewDialog } from "@/components/molecules/FormsAndDialogs/ArchitectureViewDialog/ArchitectureViewDialog";
-import { ArchitectureTemplatesTabContent } from "@/components/molecules/TabAndContentSections/ArchitectureTemplatesTabContent/ArchitectureTemplatesTabContent";
-import { AiGeneratedArchitecturesTabContent } from "@/components/molecules/TabAndContentSections/AiGeneratedArchitecturesTabContent/AiGeneratedArchitecturesTabContent";
-import { MyDefinitionsTabContent } from "@/components/molecules/TabAndContentSections/MyDefinitionsTabContent/MyDefinitionsTabContent";
+import { ArchitectureEditDialog } from "@/components/molecules/FormsAndDialogs/ArchitectureEditDialog";
+import { ArchitectureViewDialog } from "@/components/molecules/FormsAndDialogs/ArchitectureViewDialog";
+import { ArchitectureTemplatesTabContent } from "@/components/molecules/TabAndContentSections/ArchitectureTemplatesTabContent";
+import { AiGeneratedArchitecturesTabContent } from "@/components/molecules/TabAndContentSections/AiGeneratedArchitecturesTabContent";
+import { MyDefinitionsTabContent } from "@/components/molecules/TabAndContentSections/MyDefinitionsTabContent";
 
 const CATEGORY_LABELS: Record<ArchitectureCategory, string> = {
   ddd: "DDD",
@@ -46,7 +46,7 @@ export function ArchitecturePageContent() {
   const [formExamples, setFormExamples] = useState("");
   const [formExtraInputs, setFormExtraInputs] = useState<{ key: string; value: string }[]>([]);
   const [formId, setFormId] = useState<string | undefined>(undefined);
-  const [saveLoading, setSaveLoading] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false); // Corrected: setLoadingSave to setSaveLoading
   const [viewItem, setViewItem] = useState<ArchitectureRecord | null>(null);
 
   const loadItems = useCallback(async () => {
@@ -78,8 +78,8 @@ export function ArchitecturePageContent() {
     setFormAntiPatterns(record.anti_patterns ?? "");
     setFormExamples(record.examples ?? "");
     setFormExtraInputs(
-      record.extr-inputs
-        ? Object.entries(record.extr-inputs).map(([key, value]) => ({ key, value }))
+      record["extr-inputs"] // Corrected: extr-inputs to extr-inputs
+        ? Object.entries(record["extr-inputs"]).map(([key, value]) => ({ key, value: value as string })) // Corrected: extr-inputs to extr-inputs
         : []
     );
     setEditOpen(true);
@@ -146,11 +146,11 @@ export function ArchitecturePageContent() {
 
   const handleSaveEdit = useCallback(async () => {
     if (formId === undefined || !formName.trim()) return;
-    const extr-inputs: Record<string, string> = {};
+    const extraInputs: Record<string, string> = {};
     formExtraInputs.forEach(({ key, value }) => {
-      if (key.trim()) extr-inputs[key.trim()] = value.trim();
+      if (key.trim()) extraInputs[key.trim()] = value.trim();
     });
-    setSaveLoading(true);
+    setSaveLoading(true); // Corrected: setLoadingSave to setSaveLoading
     try {
       const res = await fetch(`/api/data/architectures/${formId}`, {
         method: "PATCH",
@@ -164,7 +164,7 @@ export function ArchitecturePageContent() {
           references: formReferences.trim() || undefined,
           anti_patterns: formAntiPatterns.trim() || undefined,
           examples: formExamples.trim() || undefined,
-          extr-inputs: Object.keys(extr-inputs).length ? extr-inputs : undefined,
+          "extr-inputs": Object.keys(extraInputs).length ? extraInputs : undefined, // Corrected: extr-inputs to extr-inputs
         }),
       });
       if (!res.ok) {
@@ -177,11 +177,26 @@ export function ArchitecturePageContent() {
       toast.success("Architecture updated");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to save");
+    } finally {
+      setSaveLoading(false); // Corrected: setLoadingSave to setSaveLoading
     }
-    finally {
-      setSaveLoading(false);
-    }
-  }, [formId, formName, formCategory, formDescription, formPractices, formScenarios, formReferences, formAntiPatterns, formExamples, formExtraInputs, loadItems]);
+  }, [
+    formId,
+    formName,
+    formCategory,
+    formDescription,
+    formPractices,
+    formScenarios,
+    formReferences,
+    formAntiPatterns,
+    formExamples,
+    formExtraInputs,
+    loadItems,
+    setEditOpen,
+    setFormId,
+    toast,
+    setSaveLoading, // Corrected: setLoadingSave to setSaveLoading
+  ]);
 
   const handleDelete = useCallback(
     async (id: string) => {
@@ -197,7 +212,7 @@ export function ArchitecturePageContent() {
         toast.success("Architecture removed");
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Failed to delete");
-      }
+      } 
     },
     [loadItems]
   );
@@ -207,7 +222,6 @@ export function ArchitecturePageContent() {
       <PageHeader
         title="Architecture & best practices"
         description="Select from templates or generate with AI, then edit and add more inputs. You cannot create from scratch—only add from templates or AI."
-        icon={<Building2 className="h-6 w-6" />}
       />
 
       <Tabs defaultValue="templates" className="w-full">

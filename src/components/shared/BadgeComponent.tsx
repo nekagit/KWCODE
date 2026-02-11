@@ -1,5 +1,5 @@
 import React from 'react';
-import { Badge } from "@/components/ui/badge";
+import { Badge, BadgeProps } from "@/components/ui/badge";
 import { LucideIcon } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
@@ -18,8 +18,13 @@ export const BadgeComponent: React.FC<BadgeComponentProps> = ({
   className,
   title,
 }) => {
+  const resolvedVariant: BadgeProps["variant"] = variant === "purple" ? "default" : variant;
+  const purpleClass = variant === "purple"
+    ? "bg-purple-500 text-purple-50-foreground hover:bg-purple-500/80"
+    : "";
+
   return (
-    <Badge variant={variant} className={cn("gap-1", className)} title={title}>
+    <Badge variant={resolvedVariant} className={cn("gap-1", className, purpleClass)} title={title}>
       {Icon && <Icon className="h-3 w-3" />}
       {text}
     </Badge>

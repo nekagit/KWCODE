@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 import type { ArchitectureCategory } from "@/types/architecture";
 import { Dialog } from "@/components/shared/Dialog";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
-import { ArchitectureEditForm } from "@/components/atoms/ArchitectureEditForm";
+import { ArchitectureEditForm } from "@/components/atoms/architecture/ArchitectureEditForm";
 
 interface ExtraInput {
   key: string;

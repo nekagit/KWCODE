@@ -2,8 +2,8 @@ import { TestGenerationCard } from "@/components/molecules/CardsAndDisplay/TestG
 import { TestTemplateList } from "@/components/molecules/ListsAndTables/TestTemplateList.tsx";
 
 interface TestingTemplatesTabContentProps {
-  aiPrompt: string;
-  setAiPrompt: React.Dispatch<React.SetStateAction<string>>;
+  aiPromptRecord: string;
+  setAiPromptRecord: React.Dispatch<React.SetStateAction<string>>;
   aiLoading: boolean;
   aiResult: string | null;
   handleAiGenerate: () => Promise<void>;
@@ -12,8 +12,8 @@ interface TestingTemplatesTabContentProps {
 }
 
 export function TestingTemplatesTabContent({
-  aiPrompt,
-  setAiPrompt,
+  aiPromptRecord,
+  setAiPromptRecord,
   aiLoading,
   aiResult,
   handleAiGenerate,
@@ -23,8 +23,8 @@ export function TestingTemplatesTabContent({
   return (
     <div className="mt-6 space-y-6">
       <TestGenerationCard
-        aiPrompt={aiPrompt}
-        setAiPrompt={setAiPrompt}
+        aiPromptRecord={aiPromptRecord}
+        setAiPromptRecord={setAiPromptRecord}
         aiLoading={aiLoading}
         aiResult={aiResult}
         handleAiGenerate={handleAiGenerate}

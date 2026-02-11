@@ -10,14 +10,14 @@ import {
   Palette,
   Building2,
 } from "lucide-react";
-import { Tabs } from "@/components/shared/Tabs";
-import { ProjectTabTrigger } from "@/components/atoms/ProjectTabTrigger";
-import type { Project, ProjectEntityCategories } from "@/types/project";
+import { Tabs, TabsList } from "@/components/ui/tabs"; // Assuming TabsList is used with shadcn Tabs
+import { ProjectTabTrigger } from "@/components/atoms/navigation/ProjectTabTrigger"; // Corrected import path
+import type { Project, ProjectEntityCategories, ProjectTabCategory } from "@/types/project";
 
 interface ProjectTabsProps {
   project: Project;
-  activeTab: ProjectEntityCategories;
-  setActiveTab: (tab: ProjectEntityCategories) => void;
+  activeTab: ProjectTabCategory;
+  setActiveTab: (tab: ProjectTabCategory) => void;
 }
 
 export function ProjectTabs({
@@ -25,22 +25,22 @@ export function ProjectTabs({
   activeTab,
   setActiveTab,
 }: ProjectTabsProps) {
-  const entityCategories: { id: ProjectEntityCategories; label: string; icon: React.ElementType }[] = useMemo(
+  const entityCategories: { id: ProjectTabCategory; label: string; icon: React.ElementType }[] = useMemo(
     () => [
       { id: "design", label: "Design", icon: Palette },
       { id: "ideas", label: "Ideas", icon: Lightbulb },
       { id: "features", label: "Features", icon: Layers },
       { id: "tickets", label: "Tickets", icon: TicketIcon },
-      { id: "prompts", label: "Prompts", icon: MessageSquare },
+      { id: "prompts", label: "PromptRecords", icon: MessageSquare },
       { id: "architecture", label: "Architecture", icon: Building2 },
     ],
     []
   );
 
   return (
-    <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ProjectEntityCategories)}>
+    <Tabs value={activeTab} onValueChange={(v: ProjectTabCategory) => setActiveTab(v)}>
       <ScrollArea className="w-full whitespace-nowrap pb-2">
-        <div className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">
+        <TabsList className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">
           {entityCategories.map((category) => (
             <ProjectTabTrigger
               key={category.id}
@@ -48,7 +48,7 @@ export function ProjectTabs({
               project={project}
             />
           ))}
-        </div>
+        </TabsList>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
     </Tabs>

@@ -2,8 +2,8 @@ import Link from "next/link";
 import { Folders, MessageSquare, Ticket as TicketIcon, Layers, Lightbulb, ArrowRight } from "lucide-react";
 import type { Project } from "@/types/project";
 import { Card } from "@/components/shared/Card";
-import { StatBadge } from "@/components/atoms/StatBadge";
-import { DeleteButton } from "@/components/atoms/DeleteButton";
+import { StatBadge } from "@/components/atoms/badges/StatBadge";
+import { DeleteButton } from "@/components/atoms/buttons/DeleteButton";
 import { Button } from "@/components/ui/button";
 
 interface ProjectCardProps {
@@ -27,10 +27,10 @@ export function ProjectCard({
         </Link>
       }
     >
-      <DeleteButton onClick={(e) => onDelete(project.id, e)} title="Delete project" />
+      <DeleteButton onClick={(e: React.MouseEvent) => onDelete(project.id, e)} title="Delete project" />
       <Link href={`/projects/${project.id}`} className="block">
         <div className="flex flex-wrap gap-1.5 text-xs mb-2">
-          <StatBadge icon={MessageSquare} count={project.promptIds.length} label="Prompts" />
+          <StatBadge icon={MessageSquare} count={project.promptIds.length} label="PromptRecords" />
           <StatBadge icon={TicketIcon} count={project.ticketIds.length} label="Tickets" />
           <StatBadge icon={Layers} count={project.featureIds.length} label="Features" />
           <StatBadge icon={Lightbulb} count={project.ideaIds.length} label="Ideas" />

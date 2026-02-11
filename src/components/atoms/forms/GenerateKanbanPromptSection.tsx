@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles, Wand2, ClipboardCopy } from "lucide-react";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/shared/Accordion";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import type { TodosKanbanData } from "@/lib/todos-kanban";
 

@@ -5,12 +5,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
 import { useRunState } from "@/context/run-state";
-import { PromptActionButtons } from "@/components/molecules/ControlsAndButtons/PromptActionButtons/PromptActionButtons";
-import { PromptTable } from "@/components/molecules/ListsAndTables/PromptTable/PromptTable";
-import { PromptFormDialog } from "@/components/molecules/FormsAndDialogs/PromptFormDialog/PromptFormDialog";
-import { GeneratePromptDialog } from "@/components/molecules/FormsAndDialogs/GeneratePromptDialog/GeneratePromptDialog";
+import { PromptRecordActionButtons } from "@/components/molecules/ControlsAndButtons/PromptActionButtons"; // Corrected import
+import { PromptTable } from "@/components/molecules/ListsAndTables/PromptTable";
+import { PromptFormDialog } from "@/components/molecules/FormsAndDialogs/PromptFormDialog";
+import { GeneratePromptDialog } from "@/components/molecules/FormsAndDialogs/GeneratePromptDialog";
+import { toast } from "sonner"; // Added import for toast, if not already imported elsewhere
 
-type PromptRecord = {
+type PromptRecordRecord = {
   id: number;
   title: string;
   content: string;
@@ -20,11 +21,11 @@ type PromptRecord = {
   updated_at?: string | null;
 };
 
-export function PromptsPageContent() {
+export function PromptRecordsPageContent() {
   const {
     error,
-    selectedPromptIds,
-    setSelectedPromptIds,
+    selectedPromptRecordIds,
+    setSelectedPromptRecordIds,
     refreshData,
     setError,
   } = useRunState();
@@ -42,27 +43,27 @@ export function PromptsPageContent() {
   const [generateLoading, setGenerateLoading] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
 
-  const [fullPrompts, setFullPrompts] = useState<PromptRecord[]>([]);
+  const [fullPromptRecords, setFullPromptRecords] = useState<PromptRecordRecord[]>([]);
   const [tableLoading, setTableLoading] = useState(true);
 
-  const fetchFullPrompts = useCallback(async () => {
+  const fetchFullPromptRecords = useCallback(async () => {
     setTableLoading(true);
     try {
       const res = await fetch("/api/data/prompts");
       if (res.ok) {
-        const list: PromptRecord[] = await res.json();
-        setFullPrompts(Array.isArray(list) ? list : []);
+        const list: PromptRecordRecord[] = await res.json();
+        setFullPromptRecords(Array.isArray(list) ? list : []);
       }
     } catch {
-      setFullPrompts([]);
+      setFullPromptRecords([]);
     } finally {
       setTableLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchFullPrompts();
-  }, [fetchFullPrompts]);
+    fetchFullPromptRecords();
+  }, [fetchFullPromptRecords]);
 
   const openCreate = useCallback(() => {
     setFormId(undefined);
@@ -72,21 +73,21 @@ export function PromptsPageContent() {
   }, []);
 
   const openEdit = useCallback(async () => {
-    if (selectedPromptIds.length !== 1) return;
-    const id = selectedPromptIds[0];
+    if (selectedPromptRecordIds.length !== 1) return;
+    const id = selectedPromptRecordIds[0];
     setEditOpen(true);
     setSaveLoading(true);
     try {
       const res = await fetch("/api/data/prompts");
       if (!res.ok) throw new Error(await res.text());
-      const list: PromptRecord[] = await res.json();
+      const list: PromptRecordRecord[] = await res.json();
       const one = list.find((p) => Number(p.id) === id);
       if (one) {
         setFormId(one.id);
         setFormTitle(one.title);
         setFormContent(one.content ?? "");
       } else {
-        setError("Prompt not found");
+        setError("PromptRecord not found");
         setEditOpen(false);
       }
     } catch (e) {
@@ -95,7 +96,7 @@ export function PromptsPageContent() {
     } finally {
       setSaveLoading(false);
     }
-  }, [selectedPromptIds, setError]);
+  }, [selectedPromptRecordIds, setError]);
 
   const handleSaveCreate = useCallback(async () => {
     if (!formTitle.trim()) return;
@@ -112,16 +113,17 @@ export function PromptsPageContent() {
         throw new Error(err.error || res.statusText);
       }
       await refreshData();
-      fetchFullPrompts();
+      fetchFullPromptRecords();
       setCreateOpen(false);
       setFormTitle("");
       setFormContent("");
+      toast.success("PromptRecord added");
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setSaveLoading(false);
     }
-  }, [formTitle, formContent, refreshData, setError, fetchFullPrompts]);
+  }, [formTitle, formContent, refreshData, setError, fetchFullPromptRecords]);
 
   const handleSaveEdit = useCallback(async () => {
     if (formId === undefined || !formTitle.trim()) return;
@@ -142,17 +144,18 @@ export function PromptsPageContent() {
         throw new Error(err.error || res.statusText);
       }
       await refreshData();
-      fetchFullPrompts();
+      fetchFullPromptRecords();
       setEditOpen(false);
       setFormId(undefined);
       setFormTitle("");
       setFormContent("");
+      toast.success("PromptRecord updated");
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setSaveLoading(false);
     }
-  }, [formId, formTitle, formContent, refreshData, setError, fetchFullPrompts]);
+  }, [formId, formTitle, formContent, refreshData, setError, fetchFullPromptRecords]);
 
   const handleGenerate = useCallback(async () => {
     if (!generateDescription.trim()) return;
@@ -208,18 +211,20 @@ export function PromptsPageContent() {
         throw new Error(err.error || res.statusText);
       }
       await refreshData();
-      fetchFullPrompts();
+      fetchFullPromptRecords();
       setGenerateOpen(false);
       setGenerateResult(null);
       setGenerateDescription("");
+      toast.success("PromptRecord added");
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
-    } finally {
+    }
+    finally {
       setSaveLoading(false);
     }
-  }, [generateResult, refreshData, setError, fetchFullPrompts]);
+  }, [generateResult, refreshData, setError, fetchFullPromptRecords]);
 
-  const canEdit = selectedPromptIds.length === 1;
+  const canEdit = selectedPromptRecordIds.length === 1;
 
   const handleDelete = useCallback(
     async (promptId: number) => {
@@ -231,16 +236,16 @@ export function PromptsPageContent() {
           throw new Error(err.error || res.statusText);
         }
         await refreshData();
-        fetchFullPrompts();
-        setSelectedPromptIds((prev) => prev.filter((id) => id !== promptId));
-        toast.success("Prompt removed");
+        fetchFullPromptRecords();
+        setSelectedPromptRecordIds((prev) => prev.filter((id) => id !== promptId));
+        toast.success("PromptRecord removed");
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         setError(msg);
         toast.error(msg);
       }
     },
-    [refreshData, fetchFullPrompts, setSelectedPromptIds, setError]
+    [refreshData, fetchFullPromptRecords, setSelectedPromptRecordIds, setError]
   );
 
   return (
@@ -269,7 +274,7 @@ export function PromptsPageContent() {
                 page.
               </CardDescription>
             </div>
-            <PromptActionButtons
+            <PromptRecordActionButtons // Corrected component name
               openCreate={openCreate}
               openEdit={openEdit}
               setGenerateOpen={setGenerateOpen}
@@ -282,9 +287,9 @@ export function PromptsPageContent() {
             <p className="text-sm text-muted-foreground py-4">Loading prompts…</p>
           ) : (
             <PromptTable
-              fullPrompts={fullPrompts}
-              selectedPromptIds={selectedPromptIds}
-              setSelectedPromptIds={setSelectedPromptIds}
+              fullPromptRecords={fullPromptRecords}
+              selectedPromptRecordIds={selectedPromptRecordIds}
+              setSelectedPromptRecordIds={setSelectedPromptRecordIds}
               handleDelete={handleDelete}
               setEditOpen={setEditOpen}
               setFormId={setFormId}

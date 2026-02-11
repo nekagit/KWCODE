@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Card } from "@/components/shared/Card";
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/shared/Accordion";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { Loader2, Database, FileCode, Braces } from "lucide-react";
 import { invoke, isTauri } from "@/lib/tauri";

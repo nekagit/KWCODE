@@ -5,33 +5,33 @@ import { Button } from "@/components/ui/button";
 import { Plus, MessageSquare } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import type { Project } from "@/types/project";
-import { ProjectPromptHeader } from "@/components/atoms/ProjectPromptHeader";
-import { ProjectPromptListItem } from "@/components/atoms/ProjectPromptListItem";
+import { ProjectPromptRecordHeader } from "@/components/atoms/ProjectPromptRecordHeader";
+import { ProjectPromptRecordListItem } from "@/components/atoms/ProjectPromptRecordListItem";
 import { GridContainer } from "@/components/shared/GridContainer";
 
-interface ProjectPromptsTabProps {
+interface ProjectPromptRecordsTabProps {
   project: Project;
   projectId: string;
   exportLoading: boolean;
   generateExport: (category: "prompts") => Promise<void>;
 }
 
-export function ProjectPromptsTab({
+export function ProjectPromptRecordsTab({
   project,
   projectId,
   exportLoading,
   generateExport,
-}: ProjectPromptsTabProps) {
+}: ProjectPromptRecordsTabProps) {
   return (
     <div className="mt-4 space-y-6">
-      <ProjectPromptHeader
+      <ProjectPromptRecordHeader
         project={project}
         projectId={projectId}
         exportLoading={exportLoading}
         generateExport={generateExport}
       />
 
-      {project.prompts.length === 0 ? (
+      {project.promptIds?.length === 0 ? (
         <EmptyState
           icon={<MessageSquare className="h-6 w-6" />}
           title="No prompts yet"
@@ -47,10 +47,10 @@ export function ProjectPromptsTab({
         />
       ) : (
         <GridContainer>
-          {project.prompts.map((prompt) => (
-            <ProjectPromptListItem
-              key={prompt.id}
-              prompt={prompt}
+          {project.promptIds?.map((promptId) => (
+            <ProjectPromptRecordListItem
+              key={promptId}
+              prompt={promptId as any}
               projectId={projectId}
             />
           ))}

@@ -2,10 +2,10 @@
 
 import { Check, AlertTriangle, Trash2, Info, Sparkles } from "lucide-react";
 import type { UIThemeTemplate } from "@/data/ui-theme-templates";
-import { ThemeNameHeader } from "@/components/atoms/ThemeNameHeader";
-import { ThemeColorSwatches } from "@/components/atoms/ThemeColorSwatches";
-import { ThemeIconPreview } from "@/components/atoms/ThemeIconPreview";
-import { ThemeButtonPreview } from "@/components/atoms/ThemeButtonPreview";
+import { ThemeNameHeader } from "@/components/atoms/headers/ThemeNameHeader";
+import { ThemeColorSwatches } from "@/components/atoms/theme/ThemeColorSwatches";
+import { ThemeIconPreview } from "@/components/atoms/theme/ThemeIconPreview";
+import { ThemeButtonPreview } from "@/components/atoms/theme/ThemeButtonPreview";
 
 export function ThemePreviewCard({
   theme,

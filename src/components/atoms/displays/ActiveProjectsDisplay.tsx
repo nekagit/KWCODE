@@ -8,7 +8,7 @@ export const ActiveProjectsDisplay: React.FC<ActiveProjectsDisplayProps> = ({
   activeProjects,
 }) => {
   return (
-    <GenericJsonDisplay
+    <JsonDisplay
       title={`cursor_projects / active (${activeProjects.length})`}
       data={activeProjects}
       height="h-24"

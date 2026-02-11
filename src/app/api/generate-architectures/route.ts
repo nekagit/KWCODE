@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
   }
 
   const openai = new OpenAI({ apiKey });
-  const userPrompt = `Generate ${count} short architecture or best-practice definitions for software projects based on this topic or scenario: "${topic}"
+  const userPromptRecord = `Generate ${count} short architecture or best-practice definitions for software projects based on this topic or scenario: "${topic}"
 
 For each definition respond with a JSON array of objects. Each object must have:
 - "name": short name (e.g. "Domain-Driven Design (DDD)")
@@ -56,7 +56,7 @@ Output only a single JSON array, no markdown, no other text. Example format:
           role: "system",
           content: `You output only a JSON array of objects with keys "name", "description", "category", "practices", "scenarios". Category must be one of: ${CATEGORIES.join(", ")}. No other text, no markdown.`,
         },
-        { role: "user", content: userPrompt },
+        { role: "user", content: userPromptRecord },
       ],
       temperature: 0.7,
     });

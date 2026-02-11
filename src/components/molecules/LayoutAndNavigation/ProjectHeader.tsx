@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Settings, Trash2 } from "lucide-react";
 import type { Project } from "@/types/project";
 import { deleteProject } from "@/lib/api-projects";
-import { PageHeader } from "@/components/shared/PageHeader";
+import { PageHeader } from "@/components/molecules/LayoutAndNavigation/PageHeader";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 
 interface ProjectHeaderProps {

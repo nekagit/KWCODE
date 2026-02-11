@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
   const { topic, count } = parsed.data;
 
   const openai = new OpenAI({ apiKey });
-  const userPrompt = `Generate ${count} short business/product ideas for the internet or computer space based on this topic or niche: "${topic}"
+  const userPromptRecord = `Generate ${count} short business/product ideas for the internet or computer space based on this topic or niche: "${topic}"
 
 Types to mix when relevant: SaaS (software as a service), IaaS (infrastructure), PaaS (platform), website, webapp, webshop, or other digital products.
 
@@ -39,7 +39,7 @@ Output only a single JSON array, no markdown, no other text. Example format:
           content:
             'You output only a JSON array of objects with keys "title", "description", "category". Category must be one of: saas, iaas, paas, website, webapp, webshop, other. No other text, no markdown.',
         },
-        { role: "user", content: userPrompt },
+        { role: "user", content: userPromptRecord },
       ],
       temperature: 0.7,
     });

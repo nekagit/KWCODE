@@ -13,7 +13,7 @@ export const DEFAULT_TIMING = {
 
 export type Timing = typeof DEFAULT_TIMING;
 
-export interface PromptItem {
+export interface PromptRecordItem {
   id: number;
   title: string;
 }

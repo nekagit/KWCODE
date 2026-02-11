@@ -36,7 +36,7 @@ interface ArchitectureEditFormProps {
   formExamples: string;
   setFormExamples: (examples: string) => void;
   formExtraInputs: ExtraInput[];
-  setFormExtraInputs: (inputs: ExtraInput[]) => void;
+  setFormExtraInputs: React.Dispatch<React.SetStateAction<ExtraInput[]>>;
   ALL_CATEGORIES: ArchitectureCategory[];
   CATEGORY_LABELS: Record<ArchitectureCategory, string>;
 }
@@ -64,12 +64,12 @@ export const ArchitectureEditForm: React.FC<ArchitectureEditFormProps> = ({
   CATEGORY_LABELS,
 }) => {
   const addExtraInput = useCallback(() => {
-    setFormExtraInputs((prev) => [...prev, { key: "", value: "" }]);
+    setFormExtraInputs((prev: ExtraInput[]) => [...prev, { key: "", value: "" }]);
   }, [setFormExtraInputs]);
 
   const updateExtraInput = useCallback(
     (index: number, field: "key" | "value", val: string) => {
-      setFormExtraInputs((prev) => {
+      setFormExtraInputs((prev: ExtraInput[]) => {
         const next = [...prev];
         next[index] = { ...next[index], [field]: val };
         return next;
@@ -80,7 +80,7 @@ export const ArchitectureEditForm: React.FC<ArchitectureEditFormProps> = ({
 
   const removeExtraInput = useCallback(
     (index: number) => {
-      setFormExtraInputs((prev) => prev.filter((_, i) => i !== index));
+      setFormExtraInputs((prev: ExtraInput[]) => prev.filter((_: ExtraInput, i: number) => i !== index));
     },
     [setFormExtraInputs]
   );

@@ -66,6 +66,9 @@ export const FeatureListItem: React.FC<FeatureListItemProps> = ({
                     title: feature.title,
                     prompt_ids: feature.prompt_ids,
                     project_paths: feature.project_paths,
+                    ticket_ids: feature.ticket_ids,
+                    created_at: feature.created_at,
+                    updated_at: feature.updated_at,
                   })
                 }
                 disabled={feature.prompt_ids.length === 0}

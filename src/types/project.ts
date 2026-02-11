@@ -53,3 +53,5 @@ export interface Feature {
   created_at: string;
   updated_at: string;
 }
+
+export type ProjectTabCategory = "design" | "ideas" | "features" | "tickets" | "prompts" | "architecture";

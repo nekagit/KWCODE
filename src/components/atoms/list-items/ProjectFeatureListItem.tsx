@@ -3,10 +3,10 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { Card } from "@/components/shared/Card";
-import type { Project } from "@/types/project";
+import type { Project, Feature } from "@/types/project";
 
 interface ProjectFeatureListItemProps {
-  feature: Project["features"][number];
+  feature: Feature;
   projectId: string;
 }
 
@@ -26,6 +26,6 @@ export const ProjectFeatureListItem: React.FC<ProjectFeatureListItemProps> = ({
           </Link>
         </Button>
       }
-    ></Card>
+    ><div/></Card>
   );
 };

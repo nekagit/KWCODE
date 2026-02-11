@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
-import { parseAndValidate, createPromptSchema } from "@/lib/api-validation";
+import { parseAndValidate, createPromptRecordSchema } from "@/lib/api-validation";
 
 function findDataDir(): string {
   const cwd = process.cwd();
@@ -15,7 +15,7 @@ function findDataDir(): string {
 const DATA_DIR = findDataDir();
 const PROMPTS_FILE = path.join(DATA_DIR, "prompts-export.json");
 
-export interface PromptRecord {
+export interface PromptRecordRecord {
   id: number;
   title: string;
   content: string;
@@ -25,7 +25,7 @@ export interface PromptRecord {
   updated_at?: string | null;
 }
 
-function readPrompts(): PromptRecord[] {
+function readPromptRecords(): PromptRecordRecord[] {
   try {
     if (!fs.existsSync(PROMPTS_FILE)) return [];
     const raw = fs.readFileSync(PROMPTS_FILE, "utf-8");
@@ -36,7 +36,7 @@ function readPrompts(): PromptRecord[] {
   }
 }
 
-function writePrompts(prompts: PromptRecord[]): void {
+function writePromptRecords(prompts: PromptRecordRecord[]): void {
   fs.mkdirSync(DATA_DIR, { recursive: true });
   fs.writeFileSync(PROMPTS_FILE, JSON.stringify(prompts, null, 2), "utf-8");
 }
@@ -44,10 +44,10 @@ function writePrompts(prompts: PromptRecord[]): void {
 /** GET: return full prompt list (with content) for edit UI */
 export async function GET() {
   try {
-    const prompts = readPrompts();
+    const prompts = readPromptRecords();
     return NextResponse.json(prompts);
   } catch (e) {
-    console.error("Prompts GET error:", e);
+    console.error("PromptRecords GET error:", e);
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Failed to load prompts" },
       { status: 500 }
@@ -58,7 +58,7 @@ export async function GET() {
 /** POST: create or update a prompt. Body: { id?: number, title: string, content: string, category?: string } */
 export async function POST(request: NextRequest) {
   try {
-    const parsed = await parseAndValidate(request, createPromptSchema);
+    const parsed = await parseAndValidate(request, createPromptRecordSchema);
     if (!parsed.success) return parsed.response;
     const body = parsed.data;
 
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     const content = body.content;
     const category = body.category ?? null;
 
-    const prompts = readPrompts();
+    const prompts = readPromptRecords();
     const existingId = body.id;
     const now = new Date().toISOString();
 
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
           category: category ?? prompts[idx].category ?? null,
           updated_at: now,
         };
-        writePrompts(prompts);
+        writePromptRecords(prompts);
         return NextResponse.json(prompts[idx]);
       }
     }
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
       prompts.length === 0
         ? 1
         : Math.max(...prompts.map((p) => Number(p.id)), 0) + 1;
-    const newPrompt: PromptRecord = {
+    const newPromptRecord: PromptRecordRecord = {
       id: nextId,
       title,
       content,
@@ -98,11 +98,11 @@ export async function POST(request: NextRequest) {
       created_at: now,
       updated_at: now,
     };
-    prompts.push(newPrompt);
-    writePrompts(prompts);
-    return NextResponse.json(newPrompt);
+    prompts.push(newPromptRecord);
+    writePromptRecords(prompts);
+    return NextResponse.json(newPromptRecord);
   } catch (e) {
-    console.error("Prompts POST error:", e);
+    console.error("PromptRecords POST error:", e);
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Failed to save prompt" },
       { status: 500 }

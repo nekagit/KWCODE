@@ -2,8 +2,8 @@
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/shared/Card";
-import { TitleWithIcon } from "@/components/atoms/TitleWithIcon";
-import { ArchitectureTemplateListItem } from "@/components/atoms/ArchitectureTemplateListItem";
+import { TitleWithIcon } from "@/components/atoms/headers/TitleWithIcon";
+import { ArchitectureTemplateListItem } from "@/components/atoms/list-items/ArchitectureTemplateListItem";
 import type { ArchitectureCategory } from "@/types/architecture";
 import { ARCHITECTURE_TEMPLATES } from "@/data/architecture-templates";
 
@@ -23,9 +23,23 @@ export function ArchitectureTemplateCard({ CATEGORY_LABELS, addFromTemplate }: A
           {ARCHITECTURE_TEMPLATES.map((t, i) => (
             <ArchitectureTemplateListItem
               key={i}
-              template={t}
+              item={{
+                title: t.name,
+                description: t.description,
+                category: t.category,
+                practices: t.practices,
+                scenarios: t.scenarios,
+              }}
               CATEGORY_LABELS={CATEGORY_LABELS}
-              onAddFromTemplate={addFromTemplate}
+              onAddItem={async (item) => {
+                await addFromTemplate({
+                  name: item.title,
+                  category: item.category,
+                  description: item.description,
+                  practices: item.practices,
+                  scenarios: item.scenarios,
+                });
+              }}
             />
           ))}
         </ul>

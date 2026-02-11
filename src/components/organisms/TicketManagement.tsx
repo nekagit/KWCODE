@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { TicketManagementCard } from "@/components/molecules/CardsAndDisplay/TicketManagementCard/TicketManagementCard";
-import { AddTicketAccordion } from "@/components/molecules/FormsAndDialogs/AddTicketAccordion/AddTicketAccordion";
-import { TicketsDisplayTable } from "@/components/molecules/ListsAndTables/TicketsDisplayTable/TicketsDisplayTable";
-import type { Ticket, TicketStatus } from "@/app/page";
+import { TicketManagementCard } from "@/components/molecules/CardsAndDisplay/TicketManagementCard";
+import { AddTicketAccordion } from "@/components/molecules/FormsAndDialogs/AddTicketAccordion";
+import { TicketsDisplayList } from "@/components/atoms/displays/TicketsDisplayList";
+import type { Ticket, TicketStatus } from "@/types/ticket";
 import { toast } from "sonner";
 
 interface TicketManagementProps {
@@ -62,7 +62,7 @@ export function TicketManagement({
         addTicket={addTicket}
       />
 
-      <TicketsDisplayTable
+      <TicketsDisplayList
         tickets={tickets}
         onUpdateStatus={updateTicket}
         onDelete={deleteTicket}

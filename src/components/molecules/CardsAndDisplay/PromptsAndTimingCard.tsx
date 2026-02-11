@@ -1,14 +1,14 @@
 import { ReactNode } from "react";
 import { Card } from "@/components/shared/Card";
 
-interface PromptsAndTimingCardProps {
+interface PromptRecordsAndTimingCardProps {
   children: ReactNode;
 }
 
-export function PromptsAndTimingCard({ children }: PromptsAndTimingCardProps) {
+export function PromptRecordsAndTimingCard({ children }: PromptRecordsAndTimingCardProps) {
   return (
     <Card
-      title="Prompts & timing"
+      title="PromptRecords & timing"
       subtitle="Select which prompt IDs to run. Timing (delays, etc.) is configured on the Configuration page."
     >
       {children}

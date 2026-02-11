@@ -1,7 +1,7 @@
 "use client";
 
 import { Card } from "@/components/shared/Card";
-import { TestingPhaseListItem } from "@/components/atoms/TestingPhaseListItem";
+import { TestingPhaseListItem } from "@/components/atoms/list-items/TestingPhaseListItem";
 import { TEST_PHASES } from "@/data/test-best-practices";
 
 export function TestingPhasesCard() {

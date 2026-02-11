@@ -1,10 +1,10 @@
 "use client";
 
 import { Dialog } from "@/components/shared/Dialog";
-import { GeneratedPromptDisplay } from "@/components/atoms/GeneratedPromptDisplay";
-import { PromptGeneratorForm } from "@/components/atoms/PromptGeneratorForm";
+import { GeneratedPromptDisplay } from "@/components/atoms/displays/GeneratedPromptDisplay";
+import { PromptGeneratorForm } from "@/components/atoms/forms/PromptGeneratorForm";
 
-interface GeneratePromptDialogProps {
+interface GeneratePromptRecordDialogProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   generateDescription: string;
@@ -18,7 +18,7 @@ interface GeneratePromptDialogProps {
   saveLoading: boolean;
 }
 
-export function GeneratePromptDialog({
+export function GeneratePromptRecordDialog({
   open,
   setOpen,
   generateDescription,
@@ -30,15 +30,12 @@ export function GeneratePromptDialog({
   useGeneratedAndCreate,
   saveGeneratedAsNew,
   saveLoading,
-}: GeneratePromptDialogProps) {
+}: GeneratePromptRecordDialogProps) {
   return (
     <Dialog
       title="Generate prompt with AI"
       onClose={() => setOpen(false)}
       isOpen={open}
-      description={
-        "Describe what you want the prompt to do. We'll generate a title and full prompt text you can edit and save."
-      }
     >
       {!generateResult ? (
         <PromptGeneratorForm

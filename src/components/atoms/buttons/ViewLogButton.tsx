@@ -1,10 +1,10 @@
-import { GenericButton } from "./GenericButton";
+import { ButtonComponent } from "@/components/shared/ButtonComponent";
 import { ScrollText } from "lucide-react";
-import type { RunningRun } from "@/store/run-store";
+import type { RunInfo } from "@/types/run";
 
 interface ViewLogButtonProps {
   onClick: () => void;
-  runningRuns: RunningRun[];
+  runningRuns: RunInfo[];
   setSelectedRunId: (id: string | null) => void;
 }
 
@@ -19,7 +19,7 @@ export const ViewLogButton: React.FC<ViewLogButtonProps> = ({
   };
 
   return (
-    <GenericButton
+    <ButtonComponent
       variant="outline"
       onClick={handleViewLogClick}
       icon={ScrollText}

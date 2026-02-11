@@ -42,7 +42,7 @@ interface IdeaRecord {
   updated_at?: string;
 }
 
-interface PromptRecord {
+interface PromptRecordRecord {
   id: number;
   title: string;
   content: string;
@@ -61,7 +61,7 @@ const PAGE_TEMPLATES = new Set<string>(["landing", "contact", "about", "pricing"
 const SECTION_KINDS = new Set<string>(["hero", "features", "testimonials", "cta", "pricing", "faq", "team", "contact-form", "footer", "nav", "content", "sidebar", "custom"]);
 const NAV_STYLES = new Set<string>(["minimal", "centered", "full", "sidebar"]);
 
-function buildPrompt(idea: { title: string; description: string; category: string }): string {
+function buildPromptRecord(idea: { title: string; description: string; category: string }): string {
   return `You are a product and technical lead. Given the following product idea, generate a complete project specification as a single JSON object. Output ONLY valid JSON, no markdown, no code fence, no explanation.
 
 ## Idea
@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
   }
 
   const openai = new OpenAI({ apiKey });
-  const userPrompt = buildPrompt(idea);
+  const userPromptRecord = buildPromptRecord(idea);
 
   let raw: string;
   try {
@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
           content:
             "You output only a single valid JSON object with keys prompts, tickets, features, design, architectures. No markdown, no code fence, no other text.",
         },
-        { role: "user", content: userPrompt },
+        { role: "user", content: userPromptRecord },
       ],
       temperature: 0.5,
     });
@@ -247,18 +247,18 @@ export async function POST(request: NextRequest) {
 
   const now = new Date().toISOString();
 
-  const promptsExisting = (readJson<PromptRecord[]>("prompts-export.json") ?? []).filter((p) => p != null && typeof p.id === "number");
-  const nextPromptId = promptsExisting.length === 0 ? 1 : Math.max(...promptsExisting.map((p) => Number(p.id)), 0) + 1;
-  const newPrompts: PromptRecord[] = parsed.prompts.slice(0, 15).map((p, i) => ({
-    id: nextPromptId + i,
-    title: String(p.title ?? "Prompt").slice(0, 200),
+  const promptsExisting = (readJson<PromptRecordRecord[]>("prompts-export.json") ?? []).filter((p) => p != null && typeof p.id === "number");
+  const nextPromptRecordId = promptsExisting.length === 0 ? 1 : Math.max(...promptsExisting.map((p) => Number(p.id)), 0) + 1;
+  const newPromptRecords: PromptRecordRecord[] = parsed.prompts.slice(0, 15).map((p, i) => ({
+    id: nextPromptRecordId + i,
+    title: String(p.title ?? "PromptRecord").slice(0, 200),
     content: String(p.content ?? "").slice(0, 8000),
     category: "template",
     tags: null,
     created_at: now,
     updated_at: now,
   }));
-  const promptIds = newPrompts.map((p) => p.id);
+  const promptIds = newPromptRecords.map((p) => p.id);
 
   const newTicketIds: string[] = [];
   const ticketsExisting = (readJson<{ id: string }[]>("tickets.json") ?? []).filter((t) => t != null && typeof t.id === "string");
@@ -360,7 +360,7 @@ export async function POST(request: NextRequest) {
   const architecturesExisting = (readJson<ArchitectureRecord[]>("architectures.json") ?? []).filter((a) => a != null && typeof a.id === "string");
   writeJson("architectures.json", [...architecturesExisting, newArch]);
 
-  writeJson("prompts-export.json", [...promptsExisting, ...newPrompts]);
+  writeJson("prompts-export.json", [...promptsExisting, ...newPromptRecords]);
   writeJson("tickets.json", [...ticketsExisting, ...newTickets]);
   writeJson("features.json", [...featuresExisting, ...newFeatures]);
 
@@ -412,7 +412,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     project: newProject,
     counts: {
-      prompts: newPrompts.length,
+      prompts: newPromptRecords.length,
       tickets: newTickets.length,
       features: newFeatures.length,
       ideas: 1,

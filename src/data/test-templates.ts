@@ -80,7 +80,7 @@ export const TEST_TEMPLATES: TestTemplate[] = [
   {
     id: "coverage-gaps",
     name: "Coverage gap analysis prompt",
-    description: "Prompt to ask AI to suggest tests for uncovered code.",
+    description: "PromptRecord to ask AI to suggest tests for uncovered code.",
     prompt:
       "Given this coverage report (or file list) and the codebase, suggest concrete test cases or files to add tests for, to improve line/branch coverage. Prioritize critical paths and public APIs.",
     category: "other",

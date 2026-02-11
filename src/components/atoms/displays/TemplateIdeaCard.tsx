@@ -79,6 +79,6 @@ export const TemplateIdeaCard: React.FC<TemplateIdeaCardProps> = ({
           </Button>
         </ButtonGroup>
       }
-    ></Card>
+    ><div/></Card>
   );
 };

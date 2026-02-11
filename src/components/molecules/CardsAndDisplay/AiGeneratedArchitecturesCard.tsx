@@ -5,13 +5,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/shared/Card";
-import { TitleWithIcon } from "@/components/atoms/TitleWithIcon";
-import { ArchitectureGeneratorInput } from "@/components/atoms/ArchitectureGeneratorInput";
-import { AiArchitectureListItem } from "@/components/atoms/AiArchitectureListItem";
+import { TitleWithIcon } from "@/components/atoms/headers/TitleWithIcon";
 import { LoadingState } from "@/components/shared/EmptyState";
-import type { ArchitectureCategory } from "@/types/architecture";
+import { AiGeneratorInput } from "@/components/atoms/inputs/AiGeneratorInput";
+import { AiIdeaListItem } from "@/components/atoms/list-items/AiIdeaListItem";
+import type { ArchitectureRecord, ArchitectureCategory } from "@/types/architecture";
 
-type AiResult = { name: string; description: string; category: ArchitectureCategory; practices: string; scenarios: string };
+type AiResult = ArchitectureRecord;
 
 interface AiGeneratedArchitecturesCardProps {
   CATEGORY_LABELS: Record<ArchitectureCategory, string>;
@@ -53,11 +53,9 @@ export function AiGeneratedArchitecturesCard({ CATEGORY_LABELS, addFromAi }: AiG
       title={<TitleWithIcon icon={Sparkles} title="AI generated" className="text-lg" />}
       subtitle="Enter a topic or scenario; we&apos;ll suggest architecture definitions you can add to My definitions."
     >
-      <ArchitectureGeneratorInput
-        topic={aiTopic}
-        onTopicChange={setAiTopic}
-        count={aiCount}
-        onCountChange={setAiCount}
+      <AiGeneratorInput
+        value={aiTopic}
+        onChange={setAiTopic}
         onGenerate={handleAiGenerate}
         loading={aiLoading}
       />
@@ -67,11 +65,19 @@ export function AiGeneratedArchitecturesCard({ CATEGORY_LABELS, addFromAi }: AiG
         <ScrollArea className="h-[400px] pr-4 mt-4">
           <ul className="space-y-3">
             {aiResults.map((item, i) => (
-              <AiArchitectureListItem
+              <AiIdeaListItem
                 key={i}
                 item={item}
                 CATEGORY_LABELS={CATEGORY_LABELS}
-                onAddFromAi={addFromAi}
+                onAddFromAi={async (item) => {
+                  const newItem = {
+                    ...item,
+                    id: crypto.randomUUID(),
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  };
+                  await addFromAi(newItem);
+                }}
               />
             ))}
           </ul>

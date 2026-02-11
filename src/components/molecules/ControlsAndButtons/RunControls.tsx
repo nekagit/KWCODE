@@ -3,9 +3,9 @@
 import { Play, Square } from "lucide-react";
 import Link from "next/link";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
-import { StartButton } from "@/components/atoms/StartButton";
-import { StopButton } from "@/components/atoms/StopButton";
-import { PageFooterText } from "@/components/atoms/PageFooterText";
+import { StartButton } from "@/components/atoms/buttons/StartButton";
+import { StopButton } from "@/components/atoms/buttons/StopButton";
+import { PageFooterText } from "@/components/atoms/displays/PageFooterText";
 
 interface RunControlsProps {
   handleStart: () => Promise<void>;

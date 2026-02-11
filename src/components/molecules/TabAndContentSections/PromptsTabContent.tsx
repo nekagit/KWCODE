@@ -1,23 +1,23 @@
-import { PromptsAndTiming } from "@/components/organisms/PromptsAndTiming.tsx";
-import type { Prompt } from "@/types/prompt";
+import { PromptRecordsAndTiming } from "@/components/organisms/PromptsAndTiming.tsx";
+import type { PromptRecord } from "@/types/prompt";
 
 interface PromptsTabContentProps {
-  prompts: Prompt[];
+  prompts: PromptRecord[];
   selectedPromptIds: number[];
   setSelectedPromptIds: React.Dispatch<React.SetStateAction<number[]>>;
 }
 
 export function PromptsTabContent({
   prompts,
-  selectedPromptIds,
-  setSelectedPromptIds,
+  selectedPromptRecordIds,
+  setSelectedPromptRecordIds,
 }: PromptsTabContentProps) {
   return (
     <div className="mt-0 space-y-6">
       <PromptsAndTiming
         prompts={prompts}
-        selectedPromptIds={selectedPromptIds}
-        setSelectedPromptIds={setSelectedPromptIds}
+        selectedPromptIds={selectedPromptRecordIds}
+        setSelectedPromptRecordIds={setSelectedPromptRecordIds}
       />
     </div>
   );

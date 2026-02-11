@@ -3,6 +3,7 @@ import React from 'react';
 interface ErrorDisplayProps {
   message: string;
   details?: string;
+  variant?: "default" | "destructive";
 }
 
 export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({ message, details }) => {

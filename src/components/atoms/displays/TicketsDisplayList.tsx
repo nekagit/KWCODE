@@ -1,13 +1,15 @@
 import React from 'react';
-import { ScrollArea } => from "@/components/ui/scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import type { Ticket } from "@/types/ticket";
 
 interface TicketsDisplayListProps {
   tickets: Ticket[];
+  onUpdateStatus: (id: string, updates: Partial<Ticket>) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
 }
 
-export const TicketsDisplayList: React.FC<TicketsDisplayListProps> = ({ tickets }) => {
+export const TicketsDisplayList: React.FC<TicketsDisplayListProps> = ({ tickets, onUpdateStatus, onDelete }) => {
   return (
     <ScrollArea className="h-[220px] rounded border p-2">
       <div className="space-y-2 text-sm">

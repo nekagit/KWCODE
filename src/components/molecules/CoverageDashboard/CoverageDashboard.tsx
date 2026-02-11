@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart3 } from "lucide-react";
-import { CoverageMetricCard } from "@/components/molecules/CoverageMetricCard/CoverageMetricCard";
+import { CoverageMetricCard } from "@/components/molecules/CardsAndDisplay/CoverageMetricCard";
 
 export function CoverageDashboard() {
   return (

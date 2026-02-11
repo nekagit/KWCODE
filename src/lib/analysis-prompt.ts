@@ -42,7 +42,7 @@ export const ANALYSIS_PROMPT = `You are a senior engineer and architect. Analyze
 export const ANALYSIS_PROMPT_FILENAME = "analysis-prompt.md";
 
 /** Build prompt for design-only analysis; writes to .cursor/design.md */
-export function buildDesignAnalysisPrompt(opts: {
+export function buildDesignAnalysisPromptRecord(opts: {
   projectName: string;
   designNames: string[];
 }): string {
@@ -52,7 +52,7 @@ Write the result to \`.cursor/design.md\` in the project root. Create \`.cursor\
 }
 
 /** Build prompt for architecture-only analysis; writes to .cursor/architecture.md */
-export function buildArchitectureAnalysisPrompt(opts: {
+export function buildArchitectureAnalysisPromptRecord(opts: {
   projectName: string;
   architectureNames: string[];
 }): string {
@@ -62,7 +62,7 @@ Write the result to \`.cursor/architecture.md\` in the project root. Create \`.c
 }
 
 /** Build prompt for tickets/work analysis; writes .cursor/tickets.md (checklist by feature) and .cursor/features.md in one run. */
-export function buildTicketsAnalysisPrompt(opts: {
+export function buildTicketsAnalysisPromptRecord(opts: {
   projectName: string;
   ticketSummaries: { title: string; status: string }[];
 }): string {
@@ -90,7 +90,7 @@ Create the \`.cursor\` folder if needed. Write both files in one run so feature 
 }
 
 /** Build prompt for features roadmap; writes to .cursor/features.md. Features must consist of tickets from .cursor/tickets.md. */
-export function buildFeaturesAnalysisPrompt(opts: {
+export function buildFeaturesAnalysisPromptRecord(opts: {
   projectName: string;
   featureTitles: string[];
   /** When provided, features in features.md must be derived from these work items (tickets). Omit to instruct the AI to read .cursor/tickets.md if present. */
@@ -188,8 +188,8 @@ export function buildKanbanContextBlock(data: KanbanContextData): string {
 /**
  * Combine Kanban context with the user's prompt. The result always includes features and tickets first.
  */
-export function combinePromptWithKanban(kanbanContext: string, userPrompt: string): string {
-  const trimmed = (userPrompt ?? "").trim();
+export function combinePromptRecordWithKanban(kanbanContext: string, userPromptRecord: string): string {
+  const trimmed = (userPromptRecord ?? "").trim();
   if (!trimmed) return kanbanContext;
   return `${kanbanContext}\n\n---\n\n${trimmed}`;
 }

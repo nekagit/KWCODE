@@ -1,4 +1,4 @@
-import { Design } from '../../src-tauri/src/lib'; // Assuming Design is exported from lib.rs
+import { DesignRecord as Design } from '@/types/design';
 
 export const seedDesigns: Design[] = [
   {

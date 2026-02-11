@@ -4,19 +4,20 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { Card } from "@/components/shared/Card";
 import type { Project } from "@/types/project";
+import type { PromptRecord } from "@/types/prompt";
 
-interface ProjectPromptListItemProps {
-  prompt: Project["prompts"][number];
+interface ProjectPromptRecordListItemProps {
+  prompt: PromptRecord;
   projectId: string;
 }
 
-export const ProjectPromptListItem: React.FC<ProjectPromptListItemProps> = ({
+export const ProjectPromptRecordListItem: React.FC<ProjectPromptRecordListItemProps> = ({
   prompt,
   projectId,
 }) => {
   return (
     <Card
-      title={prompt.title || `Prompt ${prompt.id}`}
+      title={prompt.title || `PromptRecord ${prompt.id}`}
       subtitle={prompt.description}
       className="flex flex-col"
       footerButtons={
@@ -26,6 +27,6 @@ export const ProjectPromptListItem: React.FC<ProjectPromptListItemProps> = ({
           </Link>
         </Button>
       }
-    ></Card>
+    ><div/></Card>
   );
 };

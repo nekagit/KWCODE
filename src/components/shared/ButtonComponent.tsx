@@ -1,11 +1,11 @@
 import React from 'react';
-import { Button } from "@/components/ui/button";
+import { Button, ButtonProps } from "@/components/ui/button";
 import { LucideIcon } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
-interface GenericButtonProps {
-  onClick: () => void;
-  icon?: React.ElementType<LucideIcon>;
+interface ButtonComponentProps {
+  onClick: (event: React.MouseEvent) => void;
+  icon?: LucideIcon;
   text: string;
   variant?: "link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | "purple" | null | undefined;
   size?: "default" | "sm" | "lg" | "icon" | null | undefined;
@@ -16,7 +16,7 @@ interface GenericButtonProps {
   iconClassName?: string;
 }
 
-export const GenericButton: React.FC<GenericButtonProps> = ({
+export const ButtonComponent: React.FC<ButtonComponentProps> = ({
   onClick,
   icon: Icon,
   text,
@@ -26,15 +26,21 @@ export const GenericButton: React.FC<GenericButtonProps> = ({
   title,
   iconPlacement = "left",
   className,
+  iconClassName,
 }) => {
+  const resolvedVariant: ButtonProps["variant"] = variant === "purple" ? "default" : variant;
+  const purpleClass = variant === "purple"
+    ? "bg-purple-500 text-purple-50-foreground hover:bg-purple-500/80"
+    : "";
+
   return (
     <Button
-      variant={variant}
+      variant={resolvedVariant}
       size={size}
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={className}
+      className={cn(className, purpleClass)}
     >
       {iconPlacement === "left" && Icon && <Icon className={cn("h-4 w-4 mr-2", iconClassName)} />}
       {text}

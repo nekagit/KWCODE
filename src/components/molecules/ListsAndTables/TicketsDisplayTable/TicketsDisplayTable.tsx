@@ -1,5 +1,5 @@
 import { TicketsDataTable, type TicketRow } from "@/components/tickets-data-table";
-import type { Ticket, TicketStatus } from "@/app/page";
+import type { Ticket, TicketStatus } from "@/types/ticket";
 
 interface TicketsDisplayTableProps {
   tickets: Ticket[];

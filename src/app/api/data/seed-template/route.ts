@@ -33,7 +33,7 @@ function writeJson(filename: string, data: unknown): void {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
 }
 
-interface PromptRecord {
+interface PromptRecordRecord {
   id: number;
   title: string;
   content: string;
@@ -123,8 +123,8 @@ export async function POST() {
   try {
     const now = new Date().toISOString();
 
-    const promptsExisting = (readJson<PromptRecord[]>("prompts-export.json") ?? []).filter(
-      (p): p is PromptRecord => p != null && typeof p.id === "number"
+    const promptsExisting = (readJson<PromptRecordRecord[]>("prompts-export.json") ?? []).filter(
+      (p): p is PromptRecordRecord => p != null && typeof p.id === "number"
     );
     const ticketsExisting = (readJson<TicketRecord[]>("tickets.json") ?? []).filter(
       (t): t is TicketRecord => t != null && typeof t.id === "string"
@@ -145,13 +145,13 @@ export async function POST() {
       (p): p is Project => p != null && typeof p.id === "string"
     );
 
-    const nextPromptId =
+    const nextPromptRecordId =
       promptsExisting.length === 0 ? 1 : Math.max(...promptsExisting.map((p) => Number(p.id)), 0) + 1;
     const nextIdeaId =
       ideasExisting.length === 0 ? 1 : Math.max(...ideasExisting.map((i) => Number(i.id)), 0) + 1;
 
-    const newPrompts: PromptRecord[] = RECURRING_PROMPT_TITLES.map((title, i) => ({
-      id: nextPromptId + i,
+    const newPromptRecords: PromptRecordRecord[] = RECURRING_PROMPT_TITLES.map((title, i) => ({
+      id: nextPromptRecordId + i,
       title,
       content: RECURRING_PROMPT_CONTENT,
       category: "template",
@@ -194,12 +194,12 @@ export async function POST() {
       const slice = newTicketIds.slice(ticketOffset, ticketOffset + ticketsForThisFeature);
       ticketOffset += slice.length;
       if (slice.length === 0) continue; // feature must have at least one ticket
-      const promptIndex = f % newPrompts.length;
+      const promptIndex = f % newPromptRecords.length;
       features.push({
         id,
         title: MAJOR_FEATURE_TITLES[f],
         ticket_ids: slice,
-        prompt_ids: [newPrompts[promptIndex].id],
+        prompt_ids: [newPromptRecords[promptIndex].id],
         project_paths: [],
         created_at: now,
         updated_at: now,
@@ -285,7 +285,7 @@ export async function POST() {
 
     const buildEntityCategories = (): ProjectEntityCategories => {
       const promptsMap: Record<string, EntityCategory> = {};
-      newPrompts.forEach((p) => {
+      newPromptRecords.forEach((p) => {
         promptsMap[String(p.id)] = { phase: "Recurring", step: "Ongoing", organization: "Shared", categorizer: "template", other: "prompt" };
       });
       const ticketsMap: Record<string, EntityCategory> = {};
@@ -316,7 +316,7 @@ export async function POST() {
       id: projectId,
       name: "Template project",
       description: "Seed project with 10 prompts, categorized multiphased tickets, major features for 1 idea, 1 design, 1 architecture.",
-      promptIds: newPrompts.map((p) => p.id),
+      promptIds: newPromptRecords.map((p) => p.id),
       ticketIds: newTicketIds,
       featureIds: newFeatureIds,
       ideaIds: [newIdea.id],
@@ -327,7 +327,7 @@ export async function POST() {
       updated_at: now,
     };
 
-    writeJson("prompts-export.json", [...promptsExisting, ...newPrompts]);
+    writeJson("prompts-export.json", [...promptsExisting, ...newPromptRecords]);
     writeJson("tickets.json", [...ticketsExisting, ...newTickets]);
     writeJson("features.json", [...featuresExisting, ...newFeatures]);
     writeJson("ideas.json", [...ideasExisting, newIdea]);
@@ -339,7 +339,7 @@ export async function POST() {
       ok: true,
       project: newProject,
       counts: {
-        prompts: newPrompts.length,
+        prompts: newPromptRecords.length,
         tickets: newTickets.length,
         features: newFeatures.length,
         ideas: 1,

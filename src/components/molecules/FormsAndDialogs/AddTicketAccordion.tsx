@@ -1,6 +1,6 @@
 import { Accordion } from "@/components/shared/Accordion";
-import { TicketFormFields } from "@/components/atoms/TicketFormFields";
-import type { TicketStatus } from "@/app/page";
+import { TicketFormFields } from "@/components/atoms/forms/TicketFormFields";
+import type { TicketStatus } from "@/types/ticket";
 
 interface AddTicketAccordionProps {
   ticketForm: { title: string; description: string; status: TicketStatus; priority: number; };

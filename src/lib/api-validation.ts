@@ -6,7 +6,7 @@
 import { z } from "zod";
 import { NextResponse } from "next/server";
 
-export const generatePromptSchema = z.object({
+export const generatePromptRecordSchema = z.object({
   description: z.string().min(1, "description is required").max(10000),
 });
 
@@ -69,7 +69,7 @@ export const generateProjectFromIdeaSchema = z.union([
   }),
 ]);
 
-export const generatePromptFromKanbanSchema = z.object({
+export const generatePromptRecordFromKanbanSchema = z.object({
   features: z.array(z.object({ title: z.string(), ticketRefs: z.array(z.number()).optional() })).optional().default([]),
   tickets: z.array(z.object({
     number: z.number(),
@@ -96,7 +96,7 @@ export const createProjectSchema = z.object({
   architectureIds: z.array(z.string()).optional().default([]),
 });
 
-export const createPromptSchema = z.object({
+export const createPromptRecordSchema = z.object({
   id: z.number().int().positive().optional(),
   title: z.string().min(1, "title is required").max(500),
   content: z.string().max(100_000),

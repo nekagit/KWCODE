@@ -3,29 +3,29 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageSquare } from "lucide-react";
 import { Card } from "@/components/shared/Card";
-import { TitleWithIcon } from "@/components/atoms/TitleWithIcon";
-import { PromptCheckboxItem } from "@/components/atoms/PromptCheckboxItem";
+import { TitleWithIcon } from "@/components/atoms/headers/TitleWithIcon";
+import { PromptCheckboxItem } from "@/components/atoms/checkbox-groups/PromptCheckboxItem";
 
-interface PromptSelectionCardProps {
+interface PromptRecordSelectionCardProps {
   prompts: { id: number; title: string }[];
-  selectedPromptIds: number[];
-  setSelectedPromptIds: (ids: number[]) => void;
+  selectedPromptRecordIds: number[];
+  setSelectedPromptRecordIds: React.Dispatch<React.SetStateAction<number[]>>; // Updated to accept a functional updater
 }
 
-export function PromptSelectionCard({
+export function PromptRecordSelectionCard({
   prompts,
-  selectedPromptIds,
-  setSelectedPromptIds,
-}: PromptSelectionCardProps) {
+  selectedPromptRecordIds,
+  setSelectedPromptRecordIds,
+}: PromptRecordSelectionCardProps) {
   const handleToggle = (id: number, checked: boolean) => {
-    setSelectedPromptIds((prev) =>
-      checked ? [...prev, id] : prev.filter((promptId) => promptId !== id)
+    setSelectedPromptRecordIds((prev: number[]) =>
+      checked ? [...prev, id] : prev.filter((promptId: number) => promptId !== id)
     );
   };
 
   return (
     <Card
-      title={<TitleWithIcon icon={MessageSquare} title="Prompts" className="text-lg" />}
+      title={<TitleWithIcon icon={MessageSquare} title="PromptRecords" className="text-lg" />}
       subtitle={
         <>
           Select at least one prompt to run (script <code className="text-xs">-p ID ...</code>).
@@ -39,7 +39,7 @@ export function PromptSelectionCard({
               key={p.id}
               promptId={p.id}
               promptTitle={p.title}
-              isChecked={selectedPromptIds.includes(p.id)}
+              isChecked={selectedPromptRecordIds.includes(p.id)}
               onToggle={handleToggle}
             />
           ))}

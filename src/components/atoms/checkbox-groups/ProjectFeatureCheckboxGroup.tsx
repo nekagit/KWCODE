@@ -1,8 +1,8 @@
 import React from 'react';
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Layers } from "lucide-react";
+import { CheckboxComponent } from "@/components/shared/CheckboxComponent";
 
 type FeatureItem = { id: string; title: string };
 
@@ -26,13 +26,13 @@ export const ProjectFeatureCheckboxGroup: React.FC<ProjectFeatureCheckboxGroupPr
       <ScrollArea className="h-[180px] rounded border p-2">
         <div className="space-y-2">
           {features.map((f) => (
-            <label key={f.id} className="flex items-center gap-2 cursor-pointer text-sm rounded px-2 py-1 hover:bg-muted/50">
-              <Checkbox
-                checked={selectedFeatureIds.includes(f.id)}
-                onCheckedChange={() => onToggleFeature(f.id)}
-              />
-              <span className="truncate">{f.title}</span>
-            </label>
+            <CheckboxComponent
+              key={f.id}
+              id={f.id}
+              label={f.title}
+              checked={selectedFeatureIds.includes(f.id)}
+              onCheckedChange={() => onToggleFeature(f.id)}
+            />
           ))}
           {features.length === 0 && (
             <p className="text-xs text-muted-foreground p-2">No features. Add some on the Feature tab.</p>

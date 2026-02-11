@@ -29,13 +29,13 @@ export function LogTabContent({
       subtitle={
         selectedRunId != null
           ? `Live output: ${runningRuns.find((r) => r.runId === selectedRunId)?.label ?? "Run"}`
-          : "Select a run from the top-right to view its output, or start a run from Feature or Prompts."
+          : "Select a run from the top-right to view its output, or start a run from Feature or PromptRecords."
       }
     >
       <ScrollArea className="h-[400px] rounded border bg-muted/30 p-3 font-mono text-sm">
         {displayLogLines.length === 0 && !running ? (
           <p className="text-muted-foreground">
-            No output yet. Run a feature or start from the Prompts page, then open running terminals (top-right) to view.
+            No output yet. Run a feature or start from the PromptRecords page, then open running terminals (top-right) to view.
           </p>
         ) : (
           displayLogLines.map((line, i) => (

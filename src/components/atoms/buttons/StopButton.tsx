@@ -1,4 +1,4 @@
-import { GenericButton } from "./GenericButton";
+import { ButtonComponent } from "@/components/shared/ButtonComponent";
 import { Square } from "lucide-react";
 
 interface StopButtonProps {
@@ -11,7 +11,7 @@ export const StopButton: React.FC<StopButtonProps> = ({
   disabled,
 }) => {
   return (
-    <GenericButton
+    <ButtonComponent
       variant="destructive"
       onClick={onClick}
       disabled={disabled}

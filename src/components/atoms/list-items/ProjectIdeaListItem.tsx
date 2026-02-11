@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight } from "lucide-react";
 import { Card } from "@/components/shared/Card";
+import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import type { Project } from "@/types/project";
+import type { IdeaRecord, IdeaCategory } from "@/components/organisms/IdeasPageContent";
 
 interface ProjectIdeaListItemProps {
-  idea: Project["ideas"][number];
+  idea: IdeaRecord;
   projectId: string;
 }
 
@@ -32,6 +34,6 @@ export const ProjectIdeaListItem: React.FC<ProjectIdeaListItemProps> = ({
           </Button>
         </ButtonGroup>
       }
-    ></Card>
+    ><div/></Card>
   );
 };

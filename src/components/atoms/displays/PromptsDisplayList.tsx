@@ -1,12 +1,12 @@
 import React from 'react';
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { Prompt } from "@/types/prompt";
+import type { PromptRecord } from "@/types/prompt";
 
 interface PromptsDisplayListProps {
-  prompts: Prompt[];
+  prompts: PromptRecord[];
   selectedPromptIds: number[];
-  setSelectedPromptIds: (ids: number[]) => void;
+  setSelectedPromptIds: React.Dispatch<React.SetStateAction<number[]>>;
 }
 
 export const PromptsDisplayList: React.FC<PromptsDisplayListProps> = ({
@@ -22,8 +22,8 @@ export const PromptsDisplayList: React.FC<PromptsDisplayListProps> = ({
             <Checkbox
               checked={selectedPromptIds.includes(p.id)}
               onCheckedChange={(c) =>
-                setSelectedPromptIds((prev) =>
-                  prev.includes(p.id) ? prev.filter((id) => id !== p.id) : [...prev, p.id]
+                setSelectedPromptIds((prev: number[]) =>
+                  prev.includes(p.id) ? prev.filter((id: number) => id !== p.id) : [...prev, p.id]
                 )}
             />
             <span className="truncate">{p.title || `#${p.id}`}</span>

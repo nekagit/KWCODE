@@ -4,8 +4,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Folders } from "lucide-react";
 import { Card } from "@/components/shared/Card";
-import { TitleWithIcon } from "@/components/atoms/TitleWithIcon";
-import { ProjectCheckboxItem } from "@/components/atoms/ProjectCheckboxItem";
+import { TitleWithIcon } from "@/components/atoms/headers/TitleWithIcon";
+import { ProjectCheckboxItem } from "@/components/atoms/checkbox-groups/ProjectCheckboxItem";
 
 interface ProjectSelectionCardProps {
   allProjects: string[];

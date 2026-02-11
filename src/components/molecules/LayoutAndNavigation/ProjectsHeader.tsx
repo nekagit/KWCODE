@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Folders, Plus, Sparkles, FolderOpen, Loader2 } from "lucide-react";
-import { PageHeader } from "@/components/shared/PageHeader";
+import { PageHeader } from "@/components/molecules/LayoutAndNavigation/PageHeader";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 
 interface ProjectsHeaderProps {
   showLocalProjects: boolean;
-  setShowLocalProjects: (show: boolean) => void;
+  setShowLocalProjects: React.Dispatch<React.SetStateAction<boolean>>;
   seeding: boolean;
   seedTemplateProject: () => Promise<void>;
 }
@@ -30,7 +30,7 @@ export function ProjectsHeader({
       <ButtonGroup alignment="right">
         <Button
           variant="outline"
-          onClick={() => setShowLocalProjects((v) => !v)}
+          onClick={() => setShowLocalProjects((v: boolean) => !v)}
           className={showLocalProjects ? "bg-accent" : ""}
         >
           <FolderOpen className="h-4 w-4 mr-2" />

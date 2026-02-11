@@ -13,7 +13,7 @@ export function RunStoreHydration() {
   const isTauriEnv = useRunStore((s) => s.isTauriEnv);
   const setIsTauriEnv = useRunStore((s) => s.setIsTauriEnv);
   const setLoading = useRunStore((s) => s.setLoading);
-  const setRunningRuns = useRunStore((s) => s.setRunningRuns);
+  const setRunInfos = useRunStore((s) => s.setRunInfos);
   const unlistenLogRef = useRef<(() => void) | null>(null);
   const unlistenExitedRef = useRef<(() => void) | null>(null);
 
@@ -43,7 +43,7 @@ export function RunStoreHydration() {
     if (isTauriEnv !== true) return;
     let cancelled = false;
     listen<{ run_id: string; line: string }>("script-log", (payload) => {
-      useRunStore.getState().setRunningRuns((prev) =>
+      setRunInfos((prev) =>
         prev.map((r) =>
           r.runId === payload.run_id
             ? { ...r, logLines: [...r.logLines, payload.line] }
@@ -65,7 +65,7 @@ export function RunStoreHydration() {
     let cancelled = false;
     listen<{ run_id: string }>("script-exited", (payload) => {
       const store = useRunStore.getState();
-      store.setRunningRuns((prev) =>
+      store.setRunInfos((prev) =>
         prev.map((r) =>
           r.runId === payload.run_id ? { ...r, status: "done" as const } : r
         )

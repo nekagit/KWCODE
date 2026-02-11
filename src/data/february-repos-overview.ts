@@ -16,7 +16,7 @@ export const FEBRUARY_REPOS_OVERVIEW: RepoOverview[] = [
     name: "automated_development",
     type: "desktop-app",
     description:
-      "Run Prompts Control – Tauri + Next.js app to run prompts across projects (script/run_prompts_all_projects.sh). Dashboard, tickets, features, AI ticket generation.",
+      "Run PromptRecords Control – Tauri + Next.js app to run prompts across projects (script/run_prompts_all_projects.sh). Dashboard, tickets, features, AI ticket generation.",
     techStack: {
       frontend: ["Next.js 15", "React 18", "TypeScript", "Tailwind CSS", "Radix UI", "Lucide"],
       desktop: ["Tauri 2", "Rust", "SQLite (rusqlite)"],

@@ -1,4 +1,4 @@
-import { GenericButton } from "./GenericButton";
+import { ButtonComponent } from "@/components/shared/ButtonComponent";
 import { Play } from "lucide-react";
 
 interface StartButtonProps {
@@ -11,7 +11,7 @@ export const StartButton: React.FC<StartButtonProps> = ({
   disabled,
 }) => {
   return (
-    <GenericButton
+    <ButtonComponent
       onClick={onClick}
       disabled={disabled}
       icon={Play}

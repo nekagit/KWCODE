@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { LayoutDashboard, MessageSquare, Ticket as TicketIcon, Layers, Lightbulb, Database, ScrollText, Folders } from "lucide-react";
 import { Tabs } from "@/components/shared/Tabs";
-import { NavigationTabItem } from "@/components/atoms/NavigationTabItem";
+import { NavigationTabItem } from "@/components/atoms/navigation/NavigationTabItem";
 
 const VALID_TABS = ["dashboard", "projects", "tickets", "feature", "all", "data", "log", "prompts"] as const;
 export type TabValue = (typeof VALID_TABS)[number];
@@ -26,20 +26,18 @@ export function NavigationTabs({
       { id: "all", label: "All Data", icon: Database },
       { id: "data", label: "DB Data", icon: Database },
       { id: "log", label: "Log", icon: ScrollText },
-      { id: "prompts", label: "Prompts", icon: MessageSquare },
+      { id: "prompts", label: "PromptRecords", icon: MessageSquare },
     ],
     []
   );
 
   return (
-    <Tabs value={activeTab}>
-      {tabs.map((tabItem) => (
-        <NavigationTabItem
-          key={tabItem.id}
-          tabItem={tabItem}
-          navigateToTab={navigateToTab}
-        />
-      ))}
-    </Tabs>
+    <Tabs
+      tabs={tabs.map((tabItem) => ({
+      label: tabItem.label,
+        content: null, // Content will be rendered by the parent component based on activeTab
+      }))}
+      initialActiveTab={activeTab}
+    />
   );
 }

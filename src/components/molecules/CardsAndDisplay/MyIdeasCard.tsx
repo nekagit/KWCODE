@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Card } from "@/components/shared/Card";
 import { EmptyState, LoadingState } from "@/components/shared/EmptyState";
-import { IdeaListItem } from "@/components/atoms/IdeaListItem";
+import { IdeaListItem } from "@/components/atoms/list-items/IdeaListItem";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 
 interface IdeaCategoryLabels {

@@ -7,7 +7,7 @@ interface FeaturesDisplayProps {
 
 export const FeaturesDisplay: React.FC<FeaturesDisplayProps> = ({ features }) => {
   return (
-    <GenericJsonDisplay
+    <JsonDisplay
       title={`features (${features.length})`}
       data={features}
       height="h-48"

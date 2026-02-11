@@ -1,21 +1,18 @@
-import type { PromptItem as Prompt } from "@/types/run";
-import { PromptsAndTimingCard } from "@/components/molecules/CardsAndDisplay/PromptsAndTimingCard/PromptsAndTimingCard";
-import { PromptCheckboxList } from "@/components/molecules/ListsAndTables/PromptCheckboxList/PromptCheckboxList";
+import type { PromptRecordItem as PromptRecord } from "@/types/run";
+import { PromptRecordSelectionCard } from "@/components/molecules/CardsAndDisplay/PromptSelectionCard"; // Corrected import
 
-interface PromptsAndTimingProps {
-  prompts: Prompt[];
-  selectedPromptIds: number[];
-  setSelectedPromptIds: React.Dispatch<React.SetStateAction<number[]>>;
+interface PromptRecordsAndTimingProps {
+  prompts: PromptRecord[];
+  selectedPromptRecordIds: number[];
+  setSelectedPromptRecordIds: React.Dispatch<React.SetStateAction<number[]>>;
 }
 
-export function PromptsAndTiming({ prompts, selectedPromptIds, setSelectedPromptIds }: PromptsAndTimingProps) {
+export function PromptRecordsAndTiming({ prompts, selectedPromptRecordIds, setSelectedPromptRecordIds }: PromptRecordsAndTimingProps) {
   return (
-    <PromptsAndTimingCard>
-      <PromptCheckboxList
-        prompts={prompts}
-        selectedPromptIds={selectedPromptIds}
-        setSelectedPromptIds={setSelectedPromptIds}
-      />
-    </PromptsAndTimingCard>
+    <PromptRecordSelectionCard // Corrected component name
+      prompts={prompts}
+      selectedPromptRecordIds={selectedPromptRecordIds}
+      setSelectedPromptRecordIds={setSelectedPromptRecordIds}
+    />
   );
 }

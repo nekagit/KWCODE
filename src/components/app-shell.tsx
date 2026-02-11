@@ -35,7 +35,7 @@ import { useQuickActions, QuickActionsFAB } from "@/context/quick-actions-contex
 
 type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; tab?: string };
 
-/** Dashboard at top; then grouped: Tools (Testing, Architecture, Database, Ideas), Work (Projects, Tickets, Feature, Prompts). */
+/** Dashboard at top; then grouped: Tools (Testing, Architecture, Database, Ideas), Work (Projects, Tickets, Feature, PromptRecords). */
 const dashboardNavItem: NavItem = {
   href: "/",
   label: "Dashboard",
@@ -51,12 +51,12 @@ const toolsNavItems: NavItem[] = [
   { href: "/ideas", label: "Ideas", icon: Lightbulb },
 ];
 
-/** Group: Projects, Tickets, Features, Prompts. */
+/** Group: Projects, Tickets, Features, PromptRecords. */
 const workNavItems: NavItem[] = [
   { href: "/projects", label: "Projects", icon: Folders },
   { href: "/?tab=tickets", label: "Tickets", icon: TicketIcon, tab: "tickets" },
   { href: "/?tab=feature", label: "Feature", icon: Layers, tab: "feature" },
-  { href: "/prompts", label: "Prompts", icon: MessageSquare },
+  { href: "/prompts", label: "PromptRecords", icon: MessageSquare },
 ];
 
 /** Reads search params for home tab; isolated so only this subtree suspends, not the whole shell. */
@@ -244,7 +244,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <>
               <h1 className="text-xl font-bold whitespace-nowrap uppercase">KWCode</h1>
               <p className="text-sm text-muted-foreground mt-0.5 whitespace-nowrap uppercase">
-                Dashboard · Prompts · Projects · Tickets · Feature
+                Dashboard · PromptRecords · Projects · Tickets · Feature
               </p>
             </>
           )}

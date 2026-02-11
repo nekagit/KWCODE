@@ -1,6 +1,6 @@
 import React from 'react';
 import { Trash2 } from "lucide-react";
-import { GenericButton } from "./GenericButton";
+import { ButtonComponent } from "@/components/shared/ButtonComponent";
 
 interface DeleteButtonProps {
   onClick: (event: React.MouseEvent) => void;
@@ -9,7 +9,7 @@ interface DeleteButtonProps {
 
 export const DeleteButton: React.FC<DeleteButtonProps> = ({ onClick, title = "Delete" }) => {
   return (
-    <GenericButton
+    <ButtonComponent
       onClick={onClick}
       icon={Trash2}
       text=""

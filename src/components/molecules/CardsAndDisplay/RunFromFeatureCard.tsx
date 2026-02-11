@@ -8,9 +8,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Layers } from "lucide-react";
-import type { Feature } from "@/components/organisms/RunPageContent";
+import type { Feature } from "@/types/project";
 import { Card } from "@/components/shared/Card";
-import { TitleWithIcon } from "@/components/atoms/TitleWithIcon";
+import { TitleWithIcon } from "@/components/atoms/headers/TitleWithIcon";
 
 interface RunFromFeatureCardProps {
   features: Feature[];

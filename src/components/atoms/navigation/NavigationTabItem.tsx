@@ -1,6 +1,6 @@
 import React from 'react';
 import { TabsTrigger } from "@/components/ui/tabs";
-import { TabValue } from "./NavigationTabs";
+import { TabValue } from "@/components/molecules/LayoutAndNavigation/NavigationTabs";
 
 interface NavigationTabItemProps {
   tabItem: { id: TabValue; label: string; icon: React.ElementType };

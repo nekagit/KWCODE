@@ -1,44 +1,39 @@
 import React from 'react';
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { CheckboxComponent } from "@/components/shared/CheckboxComponent";
 
 interface ProjectCheckboxGroupProps {
-  allProjects: string[];
-  selectedProjectPaths: string[];
-  onSelectionChange: (paths: string[]) => void;
+  label: string;
+  items: { id: string; name: string }[];
+  selectedItems: string[];
+  onToggleItem: (id: string) => void;
 }
 
 export const ProjectCheckboxGroup: React.FC<ProjectCheckboxGroupProps> = ({
-  allProjects,
-  selectedProjectPaths,
-  onSelectionChange,
+  label,
+  items,
+  selectedItems,
+  onToggleItem,
 }) => {
-  const handleCheckedChange = (path: string, checked: boolean) => {
-    const newSelection = checked
-      ? [...selectedProjectPaths, path]
-      : selectedProjectPaths.filter((p) => p !== path);
-    onSelectionChange(newSelection);
+  const handleCheckedChange = (id: string, checked: boolean) => {
+    onToggleItem(id);
   };
 
   return (
     <div className="grid gap-2">
-      <Label>Projects (optional — leave empty to use active list)</Label>
+      <Label>{label}</Label>
       <ScrollArea className="h-[100px] rounded border p-2">
         <div className="space-y-1">
-          {allProjects.map((path) => {
-            const name = path.split("/").pop() ?? path;
+          {items.map((item) => {
             return (
-              <label
-                key={path}
-                className="flex cursor-pointer items-center gap-2 text-sm"
-              >
-                <Checkbox
-                  checked={selectedProjectPaths.includes(path)}
-                  onCheckedChange={(checked: boolean) => handleCheckedChange(path, checked)}
-                />
-                {name}
-              </label>
+              <CheckboxComponent
+                key={item.id}
+                id={item.id}
+                label={item.name}
+                checked={selectedItems.includes(item.id)}
+                onCheckedChange={(checked: boolean) => handleCheckedChange(item.id, checked)}
+              />
             );
           })}
         </div>

@@ -8,13 +8,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Layers, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Project } from "@/types/project";
-import { Feature, Ticket } from "@/components/organisms/HomePageContent";
-import { TitleWithIcon } from "@/components/atoms/TitleWithIcon";
-import { FeatureAddForm } from "@/components/atoms/FeatureAddForm";
-import { FeatureFilterSelect } from "@/components/atoms/FeatureFilterSelect";
-import { FeatureQueueActions } from "@/components/atoms/FeatureQueueActions";
+import type { Feature } from "@/types/project";
+import type { Ticket } from "@/types/ticket";
+import { TitleWithIcon } from "@/components/atoms/headers/TitleWithIcon";
+import { FeatureAddForm } from "@/components/atoms/forms/FeatureAddForm";
+import { FeatureFilterSelect } from "@/components/atoms/forms/FeatureFilterSelect";
+import { FeatureQueueActions } from "@/components/atoms/buttons/FeatureQueueActions";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { FeatureListItem } from "@/components/atoms/FeatureListItem";
+import { FeatureListItem } from "@/components/atoms/list-items/FeatureListItem";
 
 interface FeatureManagementCardProps {
   features: Feature[];
@@ -28,7 +29,7 @@ interface FeatureManagementCardProps {
   addFeatureToQueue: (feature: any) => void;
   removeFeatureFromQueue: (id: string) => void;
   clearFeatureQueue: () => void;
-  runFeatureQueue: (projects: string[]) => void;
+  runFeatureQueue: (projects: string[]) => Promise<void>;
   runForFeature: (feature: Feature) => Promise<void>;
   saveFeatures: (features: Feature[]) => Promise<void>;
 }
@@ -108,7 +109,7 @@ export function FeatureManagementCard({
         items={[
           {
             title: "Add feature",
-            content: (
+            children: (
               <FeatureAddForm
                 tickets={tickets}
                 prompts={prompts}

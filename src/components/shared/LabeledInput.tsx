@@ -1,5 +1,6 @@
 import React from 'react';
 import { Input } from "@/components/ui/input";
+import { FormField } from "@/components/shared/forms/FormField";
 import { FieldWrapper } from "@/components/shared/FieldWrapper";
 import { cn } from "@/lib/utils";
 

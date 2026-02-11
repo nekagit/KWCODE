@@ -9,7 +9,7 @@ interface StatBadgeProps {
 
 export const StatBadge: React.FC<StatBadgeProps> = ({ icon, count, label }) => {
   return (
-    <GenericBadge
+    <BadgeComponent
       icon={icon}
       text={count}
       title={label}

@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Card } from "@/components/shared/Card";
-import { TitleWithIcon } from "@/components/atoms/TitleWithIcon";
+import { TitleWithIcon } from "@/components/atoms/headers/TitleWithIcon";
 import { Zap } from "lucide-react";
 
 interface QuickActionCardProps {

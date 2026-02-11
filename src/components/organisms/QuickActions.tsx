@@ -1,8 +1,8 @@
 import { useRouter } from "next/navigation";
 import type { Feature } from "@/types/project";
 import type { RunInfo as RunningRun } from "@/types/run";
-import { QuickActionCard } from "@/components/molecules/CardsAndDisplay/QuickActionCard/QuickActionCard";
-import { QuickActionButtons } from "@/components/molecules/ControlsAndButtons/QuickActionButtons/QuickActionButtons";
+import { QuickActionCard } from "@/components/molecules/CardsAndDisplay/QuickActionCard";
+import { QuickActionButtons } from "@/components/molecules/ControlsAndButtons/QuickActionButtons";
 
 interface QuickActionsProps {
   features: Feature[];

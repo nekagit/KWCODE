@@ -20,7 +20,7 @@ export const ProjectInput: React.FC<ProjectInputProps> = ({
   className,
 }) => {
   return (
-    <GenericInputWithLabel
+    <LabeledInput
       id={id}
       label={label}
       value={value}

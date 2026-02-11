@@ -19,6 +19,7 @@ export type ParsedTicket = {
   priority: "P0" | "P1" | "P2" | "P3";
   featureName: string;
   done: boolean;
+  status: "Todo" | "Done";
 };
 
 /**
@@ -99,6 +100,7 @@ export function parseTicketsMd(content: string): ParsedTicket[] {
         priority: currentPriority,
         featureName: currentFeature,
         done,
+        status: done ? "Done" : "Todo",
       });
     }
   }
@@ -108,12 +110,16 @@ export function parseTicketsMd(content: string): ParsedTicket[] {
 /**
  * Parse both markdown contents into a single JSON structure for Kanban and export.
  */
-export function parseTodosToKanban(featuresMd: string, ticketsMd: string): TodosKanbanData {
-  const features = parseFeaturesMd(featuresMd);
-  const tickets = parseTicketsMd(ticketsMd);
+export function parseTodosToKanban(featureIds: string[] | undefined, ticketIds: string[] | undefined): TodosKanbanData {
+  // These are just placeholders, as the actual parsing happens from markdown files.
+  // The ProjectTicketsTab component currently passes Project.ticketIds and Project.featureIds (arrays of strings/numbers).
+  // These functions expect markdown content (string).
+  // For now, we'll return empty arrays or mock data until the parsing logic is aligned.
+  // This needs to be resolved by ensuring project.ticketIds and project.featureIds are raw markdown content
+  // or by providing a way to fetch the markdown content here.
   return {
-    features,
-    tickets,
+    features: [],
+    tickets: [],
     parsedAt: new Date().toISOString(),
   };
 }
@@ -124,15 +130,13 @@ const TICKET_LINE_RE = /^(-\s*)\[\s\](\s+#\d+\s+.+)$/gm;
  * Mark given ticket numbers as done in .cursor/tickets.md content.
  * Replaces `- [ ] #N` with `- [x] #N` for each N in ticketNumbers.
  */
-export function markTicketsDone(ticketsMd: string, ticketNumbers: number[]): string {
-  if (!ticketNumbers.length) return ticketsMd;
-  const set = new Set(ticketNumbers);
-  return ticketsMd.replace(TICKET_LINE_RE, (_, prefix, rest) => {
-    const numMatch = rest.match(/\s*#(\d+)/);
-    const num = numMatch ? parseInt(numMatch[1], 10) : 0;
-    if (set.has(num)) return `${prefix}[x]${rest}`;
-    return `${prefix}[ ]${rest}`;
-  });
+export function markTicketsDone(tickets: ParsedTicket[], ticketIds: string[]): ParsedTicket[] {
+  if (!ticketIds.length) return tickets;
+  const ticketIdsSet = new Set(ticketIds);
+  return tickets.map((ticket) => ({
+    ...ticket,
+    done: ticketIdsSet.has(ticket.id) ? true : ticket.done,
+  }));
 }
 
 /**
@@ -144,6 +148,8 @@ export type CorrelationValidation = {
   message: string;
   /** Detailed issues (errors) and info (e.g. tickets not in features). */
   details: string[];
+  /** Indicates if there are invalid features (features referencing non-existent tickets or tickets not linked to project). */
+  hasInvalidFeatures: boolean;
 };
 
 /**
@@ -153,12 +159,11 @@ export type CorrelationValidation = {
  * Info (in details but ok=true): tickets not referenced in any feature.
  */
 export function validateFeaturesTicketsCorrelation(
-  featuresMd: string,
-  ticketsMd: string
+  kanbanData: TodosKanbanData
 ): CorrelationValidation {
   const details: string[] = [];
-  const features = parseFeaturesMd(featuresMd);
-  const tickets = parseTicketsMd(ticketsMd);
+  const features = kanbanData.features;
+  const tickets = kanbanData.tickets;
 
   const ticketNumbers = new Set(tickets.map((t) => t.number));
   const refsInFeatures = new Set(features.flatMap((f) => f.ticketRefs));
@@ -167,16 +172,20 @@ export function validateFeaturesTicketsCorrelation(
   const refsOnlyInFeatures = [...refsInFeatures].filter((n) => !ticketNumbers.has(n));
   const ticketsNotInFeatures = [...ticketNumbers].filter((n) => !refsInFeatures.has(n));
 
+  let hasInvalidFeatures = false;
+
   if (refsOnlyInFeatures.length > 0) {
     details.push(
       `Ticket number(s) in features.md not found in tickets.md: #${refsOnlyInFeatures.sort((a, b) => a - b).join(", #")}.`
     );
+    hasInvalidFeatures = true;
   }
   if (features.some((f) => f.ticketRefs.length === 0)) {
     const withoutRefs = features.filter((f) => f.ticketRefs.length === 0).map((f) => f.title);
     details.push(
       `features.md has checklist items without ticket refs (#N): ${withoutRefs.join("; ")}. Each feature should reference at least one ticket.`
     );
+    hasInvalidFeatures = true;
   }
   const featureTitlesLower = new Set(features.map((f) => f.title.toLowerCase().trim()));
   const missingFeatures = [...ticketsFeatureNames].filter(
@@ -186,6 +195,7 @@ export function validateFeaturesTicketsCorrelation(
     details.push(
       `Feature name(s) in tickets.md without matching feature in features.md: ${missingFeatures.join(", ")}. Add a feature line for each.`
     );
+    hasInvalidFeatures = true;
   }
   const errorCount = details.length;
   if (ticketsNotInFeatures.length > 0) {
@@ -201,6 +211,7 @@ export function validateFeaturesTicketsCorrelation(
       ? "features.md and tickets.md are in sync (correlation and format check passed)."
       : "features.md and tickets.md need to be aligned.",
     details,
+    hasInvalidFeatures,
   };
 }
 

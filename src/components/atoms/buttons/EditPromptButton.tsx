@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pencil } from "lucide-react";
-import { GenericButton } from "./GenericButton";
+import { ButtonComponent } from "@/components/shared/ButtonComponent";
 
 interface EditPromptButtonProps {
   onClick: () => void;
@@ -14,7 +14,7 @@ export const EditPromptButton: React.FC<EditPromptButtonProps> = ({
   title,
 }) => {
   return (
-    <GenericButton
+    <ButtonComponent
       onClick={onClick}
       icon={Pencil}
       text="Edit prompt"

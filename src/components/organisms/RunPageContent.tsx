@@ -5,28 +5,22 @@ import { invoke, isTauri } from "@/lib/tauri";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useRunState } from "@/context/run-state";
 import { getApiErrorMessage } from "@/lib/utils";
-import { RunPageHeader } from "@/components/molecules/LayoutAndNavigation/RunPageHeader/RunPageHeader";
-import { RunFromFeatureCard } from "@/components/molecules/CardsAndDisplay/RunFromFeatureCard/RunFromFeatureCard";
-import { PromptSelectionCard } from "@/components/molecules/CardsAndDisplay/PromptSelectionCard/PromptSelectionCard";
-import { ProjectSelectionCard } from "@/components/molecules/CardsAndDisplay/ProjectSelectionCard/ProjectSelectionCard";
-import { RunLabelCard } from "@/components/molecules/CardsAndDisplay/RunLabelCard/RunLabelCard";
-import { RunControls } from "@/components/molecules/ControlsAndButtons/RunControls/RunControls";
+import { RunPageHeader } from "@/components/molecules/LayoutAndNavigation/RunPageHeader";
+import { RunFromFeatureCard } from "@/components/molecules/CardsAndDisplay/RunFromFeatureCard";
+import { PromptRecordSelectionCard } from "@/components/molecules/CardsAndDisplay/PromptSelectionCard"; // Corrected import
+import { ProjectSelectionCard } from "@/components/molecules/CardsAndDisplay/ProjectSelectionCard";
+import { RunLabelCard } from "@/components/molecules/CardsAndDisplay/RunLabelCard";
+import { RunControls } from "@/components/molecules/ControlsAndButtons/RunControls";
 
-interface Feature {
-  id: string;
-  title: string;
-  prompt_ids: number[];
-  project_paths: string[];
-}
-
+import type { Feature } from "@/types/project";
 export function RunPageContent() {
   const {
     error,
     dataWarning,
     setError,
     prompts,
-    selectedPromptIds,
-    setSelectedPromptIds,
+    selectedPromptRecordIds,
+    setSelectedPromptRecordIds,
     allProjects,
     activeProjects,
     setActiveProjects,
@@ -36,6 +30,11 @@ export function RunPageContent() {
     stopScript,
     runningRuns,
     isTauriEnv,
+    featureQueue,
+    addFeatureToQueue,
+    removeFeatureFromQueue,
+    clearFeatureQueue,
+    runFeatureQueue,
   } = useRunState();
 
   const [features, setFeatures] = useState<Feature[]>([]);
@@ -71,17 +70,17 @@ export function RunPageContent() {
     (feature: Feature | null) => {
       setSelectedFeatureId(feature?.id ?? null);
       if (feature) {
-        setSelectedPromptIds(feature.prompt_ids);
+        setSelectedPromptRecordIds(feature.prompt_ids);
         setActiveProjects(
           feature.project_paths.length > 0 ? feature.project_paths : allProjects // Changed to allProjects
         );
       }
     },
-    [setSelectedPromptIds, setActiveProjects, allProjects]
+    [setSelectedPromptRecordIds, setActiveProjects, allProjects]
   );
 
   const handleStart = async () => {
-    if (selectedPromptIds.length === 0) {
+    if (selectedPromptRecordIds.length === 0) {
       setError("Select at least one prompt");
       return;
     }
@@ -92,7 +91,7 @@ export function RunPageContent() {
     setError(null);
     await saveActiveProjects();
     await runWithParams({
-      promptIds: selectedPromptIds,
+      promptIds: selectedPromptRecordIds,
       activeProjects,
       runLabel: runLabel.trim() || null,
     });
@@ -103,7 +102,7 @@ export function RunPageContent() {
     await stopScript();
   };
 
-  const canStart = selectedPromptIds.length > 0 && activeProjects.length > 0;
+  const canStart = selectedPromptRecordIds.length > 0 && activeProjects.length > 0;
 
   return (
     <div className="space-y-6">
@@ -130,11 +129,11 @@ export function RunPageContent() {
         />
       )}
 
-      {/* Prompts */}
-      <PromptSelectionCard
+      {/* PromptRecords */}
+      <PromptRecordSelectionCard // Corrected component name
         prompts={prompts}
-        selectedPromptIds={selectedPromptIds}
-        setSelectedPromptIds={setSelectedPromptIds}
+        selectedPromptRecordIds={selectedPromptRecordIds}
+        setSelectedPromptRecordIds={setSelectedPromptRecordIds}
       />
 
       {/* Projects */}

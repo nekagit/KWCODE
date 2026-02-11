@@ -2,7 +2,7 @@
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/shared/Card";
-import { CuratedPracticeListItem } from "@/components/atoms/CuratedPracticeListItem";
+import { CuratedPracticeListItem } from "@/components/atoms/list-items/CuratedPracticeListItem";
 import { TEST_BEST_PRACTICES_LIST } from "@/data/test-best-practices";
 
 export function CuratedPracticesCard() {

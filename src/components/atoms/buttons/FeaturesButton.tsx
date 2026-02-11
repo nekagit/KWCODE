@@ -1,4 +1,4 @@
-import { GenericButton } from "./GenericButton";
+import { ButtonComponent } from "@/components/shared/ButtonComponent";
 import { Layers } from "lucide-react";
 
 interface FeaturesButtonProps {
@@ -9,7 +9,7 @@ export const FeaturesButton: React.FC<FeaturesButtonProps> = ({
   onClick,
 }) => {
   return (
-    <GenericButton
+    <ButtonComponent
       variant="outline"
       onClick={onClick}
       icon={Layers}

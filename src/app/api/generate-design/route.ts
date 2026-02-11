@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   const { description, templateId, projectName } = parsed.data;
 
   const openai = new OpenAI({ apiKey });
-  const userPrompt = `You are a web product designer. Generate a design specification in Markdown for a web page based on this description.
+  const userPromptRecord = `You are a web product designer. Generate a design specification in Markdown for a web page based on this description.
 
 Description: ${description}
 Page template type: ${templateId}
@@ -41,7 +41,7 @@ Be specific and use the user's description to choose colors, fonts, and structur
           content:
             "You output only a single Markdown document. No surrounding text, no code block wrapper.",
         },
-        { role: "user", content: userPrompt },
+        { role: "user", content: userPromptRecord },
       ],
       temperature: 0.6,
     });

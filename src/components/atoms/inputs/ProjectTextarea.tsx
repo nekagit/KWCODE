@@ -20,7 +20,7 @@ export const ProjectTextarea: React.FC<ProjectTextareaProps> = ({
   className,
 }) => {
   return (
-    <GenericTextareaWithLabel
+    <LabeledTextarea
       id={id}
       label={label}
       value={value}

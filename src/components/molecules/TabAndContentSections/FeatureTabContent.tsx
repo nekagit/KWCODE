@@ -1,15 +1,16 @@
-import type { Project, Prompt, Feature, Ticket } from "@/types/project";
+import type { Project, PromptRecord, Feature } from "@/types/project";
+import type { Ticket } from "@/types/ticket";
 import { FeatureManagementCard } from "@/components/molecules/CardsAndDisplay/FeatureManagementCard.tsx";
-import type { RunningRun } from "@/store/run-store";
+import type { RunInfo } from "@/types/run";
 import { useRunState } from "@/context/run-state";
 
 interface FeatureTabContentProps {
   features: Feature[];
   tickets: Ticket[];
-  prompts: Prompt[];
+  prompts: PromptRecord[];
   allProjects: string[];
   activeProjects: string[];
-  runningRuns: RunningRun[];
+  runningRuns: RunInfo[];
   featureQueue: Feature[];
   setError: (error: string | null) => void;
   addFeatureToQueue: (feature: Feature) => void;
@@ -50,7 +51,7 @@ export function FeatureTabContent({
         addFeatureToQueue={addFeatureToQueue}
         removeFeatureFromQueue={removeFeatureFromQueue}
         clearFeatureQueue={clearFeatureQueue}
-            runFeatureQueue={activeProjects}
+        runFeatureQueue={runFeatureQueue}
         runForFeature={runForFeature}
         saveFeatures={saveFeatures}
       />

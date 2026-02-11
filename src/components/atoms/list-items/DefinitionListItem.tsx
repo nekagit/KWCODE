@@ -6,16 +6,6 @@ import { FileText, Pencil, Trash2 } from "lucide-react";
 import type { ArchitectureRecord, ArchitectureCategory } from "@/types/architecture";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 
-interface IdeaCategoryLabels {
-  saas: string;
-  iaas: string;
-  paas: string;
-  website: string;
-  webapp: string;
-  webshop: string;
-  other: string;
-}
-
 interface DefinitionListItemProps {
   record: ArchitectureRecord;
   CATEGORY_LABELS: Record<ArchitectureCategory, string>;

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
-import { parseAndValidate, generatePromptSchema } from "@/lib/api-validation";
+import { parseAndValidate, generatePromptRecordSchema } from "@/lib/api-validation";
 
 export async function POST(request: NextRequest) {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -11,12 +11,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const parsed = await parseAndValidate(request, generatePromptSchema);
+  const parsed = await parseAndValidate(request, generatePromptRecordSchema);
   if (!parsed.success) return parsed.response;
   const { description } = parsed.data;
 
   const openai = new OpenAI({ apiKey });
-  const userPrompt = `Generate a single Cursor/IDE prompt based on this description. The prompt will be used to instruct an AI assistant when working in a codebase.
+  const userPromptRecord = `Generate a single Cursor/IDE prompt based on this description. The prompt will be used to instruct an AI assistant when working in a codebase.
 
 Description: ${description}
 
@@ -33,7 +33,7 @@ Respond with a JSON object with exactly two keys:
           content:
             'You output only a single JSON object with keys "title" and "content". No other text, no markdown.',
         },
-        { role: "user", content: userPrompt },
+        { role: "user", content: userPromptRecord },
       ],
       temperature: 0.5,
     });

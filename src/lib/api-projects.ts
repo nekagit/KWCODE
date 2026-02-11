@@ -59,6 +59,30 @@ export async function listProjects(): Promise<Project[]> {
   }
 }
 
+export async function createProject(body: CreateProjectBody): Promise<Project> {
+  if (isTauri()) {
+    return invoke("create_project", { project: body });
+  } else {
+    return fetchJson<Project>("/api/data/projects", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
+}
+
+export async function updateProject(id: string, body: Partial<CreateProjectBody>): Promise<Project> {
+  if (isTauri()) {
+    return invoke("update_project", { id, project: body });
+  } else {
+    return fetchJson<Project>(`/api/data/projects/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
+}
+
 export async function deleteProject(id: string): Promise<void> {
   if (isTauri()) {
     return invoke("delete_project", { id });

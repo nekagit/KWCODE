@@ -3,10 +3,10 @@
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/shared/Dialog";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
-import { PromptFormFields } from "@/components/atoms/PromptFormFields";
+import { PromptFormFields } from "@/components/atoms/forms/PromptFormFields";
 import { Loader2 } from "lucide-react";
 
-interface PromptFormDialogProps {
+interface PromptRecordFormDialogProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   title: string;
@@ -19,7 +19,7 @@ interface PromptFormDialogProps {
   saveLoading: boolean;
 }
 
-export function PromptFormDialog({
+export function PromptRecordFormDialog({
   open,
   setOpen,
   title,
@@ -30,13 +30,12 @@ export function PromptFormDialog({
   setFormContent,
   handleSave,
   saveLoading,
-}: PromptFormDialogProps) {
+}: PromptRecordFormDialogProps) {
   return (
     <Dialog
       title={title}
       onClose={() => setOpen(false)}
       isOpen={open}
-      description={description}
       actions={
         <ButtonGroup alignment="right">
           <Button variant="outline" onClick={() => setOpen(false)}>
@@ -49,7 +48,7 @@ export function PromptFormDialog({
         </ButtonGroup>
       }
     >
-      <PromptFormFields
+      <PromptRecordFormFields
         formTitle={formTitle}
         setFormTitle={setFormTitle}
         formContent={formContent}

@@ -15,9 +15,14 @@ import {
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import type { TodosKanbanData, ParsedFeature, ParsedTicket } from "@/lib/todos-kanban";
 
+interface KanbanColumn {
+  name: string;
+  items: ParsedTicket[];
+}
+
 interface ProjectTicketsKanbanColumnProps {
   columnId: string;
-  column: TodosKanbanData["columns"][string];
+  column: KanbanColumn;
   kanbanFeatures: ParsedFeature[];
   projectId: string;
   handleMarkDone: (ticketId: string) => Promise<void>;
@@ -43,7 +48,7 @@ export const ProjectTicketsKanbanColumn: React.FC<ProjectTicketsKanbanColumnProp
       </div>
       <ScrollArea className="flex-1 h-[300px] px-3 pb-3">
         <div className="space-y-2">
-          {column.items.map((ticket) => (
+          {column.items.map((ticket: ParsedTicket) => (
             <Card key={ticket.id} className="bg-muted/20">
               <div className="pb-2">
                 <h4 className="text-sm font-semibold flex items-center justify-between gap-2">
@@ -57,29 +62,24 @@ export const ProjectTicketsKanbanColumn: React.FC<ProjectTicketsKanbanColumnProp
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2 pt-0">
-                {ticket.featureIds.length > 0 && (
+                {ticket.featureName && (
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Layers className="h-3 w-3" />
-                    {ticket.featureIds.map((featureId) => {
-                      const feature = kanbanFeatures.find((f) => f.id === featureId);
-                      return (
-                        <Badge key={featureId} variant="outline" className="text-xs">
-                          {feature?.title || featureId}
-                        </Badge>
-                      );
-                    })}
+                    <Badge variant="outline" className="text-xs">
+                      {ticket.featureName}
+                    </Badge>
                   </div>
                 )}
                 <ButtonGroup alignment="left">
                   <Button
-                    size="xs"
+                    size="sm"
                     variant="outline"
                     onClick={() => handleMarkDone(ticket.id)}
-                    disabled={ticket.status === "done"}
+                    disabled={ticket.status === "Done"}
                   >
                     <CheckCircle2 className="h-3 w-3 mr-1" /> Done
                   </Button>
-                  <Button size="xs" variant="outline" asChild>
+                  <Button variant="outline" asChild>
                     <Link href={`/tickets/${ticket.id}?projectId=${projectId}`}>
                       Open <ArrowRight className="h-3 w-3 ml-1" />
                     </Link>

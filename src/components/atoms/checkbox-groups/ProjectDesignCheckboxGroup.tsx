@@ -1,8 +1,8 @@
 import React from 'react';
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Palette } from "lucide-react";
+import { CheckboxComponent } from "@/components/shared/CheckboxComponent";
 
 interface ProjectDesignCheckboxGroupProps {
   designs: { id: string; name: string }[];
@@ -24,13 +24,13 @@ export const ProjectDesignCheckboxGroup: React.FC<ProjectDesignCheckboxGroupProp
       <ScrollArea className="h-[180px] rounded border p-2">
         <div className="space-y-2">
           {designs.map((d) => (
-            <label key={d.id} className="flex items-center gap-2 cursor-pointer text-sm rounded px-2 py-1 hover:bg-muted/50">
-              <Checkbox
-                checked={selectedDesignIds.includes(d.id)}
-                onCheckedChange={() => onToggleDesign(d.id)}
-              />
-              <span className="truncate">{d.name}</span>
-            </label>
+            <CheckboxComponent
+              key={d.id}
+              id={d.id}
+              label={d.name}
+              checked={selectedDesignIds.includes(d.id)}
+              onCheckedChange={() => onToggleDesign(d.id)}
+            />
           ))}
           {designs.length === 0 && (
             <p className="text-xs text-muted-foreground p-2">No designs. Save from Design page first.</p>

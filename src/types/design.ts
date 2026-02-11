@@ -80,3 +80,12 @@ export interface PageTemplate {
   description: string;
   defaultSections: { kind: SectionKind; title: string; order: number }[];
 }
+
+export interface DesignRecord {
+  id: string;
+  name: string;
+  description?: string;
+  image_url?: string;
+  created_at?: string;
+  updated_at?: string;
+}

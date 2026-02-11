@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Building2 } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import type { Project } from "@/types/project";
-import { ProjectArchitectureHeader } from "@/components/atoms/ProjectArchitectureHeader";
+import { ProjectCategoryHeader } from "@/components/shared/ProjectCategoryHeader";
 import { ProjectArchitectureListItem } from "@/components/atoms/ProjectArchitectureListItem";
 import { GridContainer } from "@/components/shared/GridContainer";
 
@@ -24,14 +24,17 @@ export function ProjectArchitectureTab({
 }: ProjectArchitectureTabProps) {
   return (
     <div className="mt-4 space-y-6">
-      <ProjectArchitectureHeader
+      <ProjectCategoryHeader
+        title="Architectures"
+        icon={<Building2 className="h-6 w-6" />}
         project={project}
         projectId={projectId}
         exportLoading={exportLoading}
         generateExport={generateExport}
+        category="architecture"
       />
 
-      {project.architectures.length === 0 ? (
+      {project.architectureIds?.length === 0 ? (
         <EmptyState
           icon={<Building2 className="h-6 w-6" />}
           title="No architectures yet"
@@ -47,10 +50,10 @@ export function ProjectArchitectureTab({
         />
       ) : (
         <GridContainer>
-          {project.architectures.map((architecture) => (
+          {project.architectureIds?.map((architectureId) => (
             <ProjectArchitectureListItem
-              key={architecture.id}
-              architecture={architecture}
+              key={architectureId}
+              architecture={architectureId as any}
               projectId={projectId}
             />
           ))}

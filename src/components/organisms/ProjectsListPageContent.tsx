@@ -4,14 +4,14 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { Project } from "@/types/project";
 import { listProjects, deleteProject } from "@/lib/api-projects";
-import { ProjectsHeader } from "@/components/molecules/LayoutAndNavigation/ProjectsHeader/ProjectsHeader";
-import { ErrorDisplay } from "@/components/molecules/UtilitiesAndHelpers/ErrorDisplay/ErrorDisplay";
-import { TemplateIdeaAccordion } from "@/components/molecules/UtilitiesAndHelpers/TemplateIdeaAccordion/TemplateIdeaAccordion";
-import { LocalProjectsCard } from "@/components/molecules/CardsAndDisplay/LocalProjectsCard/LocalProjectsCard";
-import { NoProjectsFoundCard } from "@/components/molecules/CardsAndDisplay/NoProjectsFoundCard/NoProjectsFoundCard";
-import { ProjectListContainer } from "@/components/molecules/ListsAndTables/ProjectListContainer/ProjectListContainer";
-import { ProjectLoadingState } from "@/components/molecules/UtilitiesAndHelpers/ProjectLoadingState/ProjectLoadingState";
-import { ProjectCard } from "@/components/molecules/CardsAndDisplay/ProjectCard/ProjectCard";
+import { ProjectsHeader } from "@/components/molecules/LayoutAndNavigation/ProjectsHeader";
+import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
+import { TemplateIdeaAccordion } from "@/components/molecules/UtilitiesAndHelpers/TemplateIdeaAccordion";
+import { LocalProjectsCard } from "@/components/molecules/CardsAndDisplay/LocalProjectsCard";
+import { NoProjectsFoundCard } from "@/components/molecules/CardsAndDisplay/NoProjectsFoundCard";
+import { ProjectListContainer } from "@/components/molecules/ListsAndTables/ProjectListContainer";
+import { ProjectLoadingState } from "@/components/molecules/UtilitiesAndHelpers/ProjectLoadingState";
+import { ProjectCard } from "@/components/molecules/CardsAndDisplay/ProjectCard";
 
 export function ProjectsListPageContent() {
   const router = useRouter();
@@ -85,14 +85,16 @@ export function ProjectsListPageContent() {
         seedTemplateProject={seedTemplateProject}
       />
 
-      <ErrorDisplay
-        error={error}
-        onRetry={() => {
-          setError(null);
-          setLoading(true);
-          refetch();
-        }}
-      />
+      {error && (
+        <ErrorDisplay
+          message={error || "An unknown error occurred."}
+          onRetry={() => {
+            setError(null);
+            setLoading(true);
+            refetch();
+          }}
+        />
+      )}
 
       <TemplateIdeaAccordion setError={setError} />
 

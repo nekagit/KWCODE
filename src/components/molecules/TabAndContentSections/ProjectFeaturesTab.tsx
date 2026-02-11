@@ -31,7 +31,7 @@ export function ProjectFeaturesTab({
         generateExport={generateExport}
       />
 
-      {project.features.length === 0 ? (
+      {project.featureIds?.length === 0 ? (
         <EmptyState
           icon={<Layers className="h-6 w-6" />}
           title="No features yet"
@@ -47,10 +47,10 @@ export function ProjectFeaturesTab({
         />
       ) : (
         <GridContainer>
-          {project.features.map((feature) => (
+          {project.featureIds?.map((featureId) => (
             <ProjectFeatureListItem
-              key={feature.id}
-              feature={feature}
+              key={featureId}
+              feature={featureId as any}
               projectId={projectId}
             />
           ))}

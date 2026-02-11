@@ -12,13 +12,14 @@ import {
   markTicketsDone,
   validateFeaturesTicketsCorrelation,
   type TodosKanbanData,
+  type ParsedTicket
 } from "@/lib/todos-kanban";
 import { buildKanbanContextBlock } from "@/lib/analysis-prompt";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { ProjectTicketsHeader } from "@/components/atoms/ProjectTicketsHeader";
 import { ProjectTicketsKanbanColumn } from "@/components/atoms/ProjectTicketsKanbanColumn";
-import { GenerateKanbanPromptSection } from "@/components/atoms/GenerateKanbanPromptSection";
+import { GenerateKanbanPromptRecordSection } from "@/components/atoms/GenerateKanbanPromptRecordSection";
 
 interface ProjectTicketsTabProps {
   project: Project;
@@ -38,8 +39,8 @@ export function ProjectTicketsTab({
   const [kanbanData, setKanbanData] = useState<TodosKanbanData | null>(null);
   const [kanbanLoading, setKanbanLoading] = useState(false);
   const [kanbanError, setKanbanError] = useState<string | null>(null);
-  const [kanbanPrompt, setKanbanPrompt] = useState("");
-  const [kanbanPromptLoading, setKanbanPromptLoading] = useState(false);
+  const [kanbanPromptRecord, setKanbanPromptRecord] = useState("");
+  const [kanbanPromptRecordLoading, setKanbanPromptRecordLoading] = useState(false);
   const [showFeatureTicketWarning, setShowFeatureTicketWarning] = useState(false);
 
   const generateKanban = useCallback(async () => {
@@ -58,17 +59,17 @@ export function ProjectTicketsTab({
     }
   }, [project]);
 
-  const generateKanbanPrompt = useCallback(async () => {
+  const generateKanbanPromptRecord = useCallback(async () => {
     if (!project || !kanbanData) return;
-    setKanbanPromptLoading(true);
+    setKanbanPromptRecordLoading(true);
     setKanbanError(null);
     try {
       const block = buildKanbanContextBlock(kanbanData);
-      setKanbanPrompt(block);
+      setKanbanPromptRecord(block);
     } catch (e) {
       setKanbanError(e instanceof Error ? e.message : String(e));
     } finally {
-      setKanbanPromptLoading(false);
+      setKanbanPromptRecordLoading(false);
     }
   }, [project, kanbanData]);
 
@@ -76,7 +77,7 @@ export function ProjectTicketsTab({
     if (!project) return;
     try {
       const updatedTickets = markTicketsDone(kanbanData?.tickets || [], [ticketId]);
-      await updateProject(projectId, { ticketIds: updatedTickets.map(t => t.id) });
+      await updateProject(projectId, { ticketIds: updatedTickets.map((t: ParsedTicket) => t.id) });
       await fetchProject();
       toast.success("Ticket marked as done.");
     } catch (e) {
@@ -142,11 +143,11 @@ export function ProjectTicketsTab({
         </div>
       )}
 
-      <GenerateKanbanPromptSection
+      <GenerateKanbanPromptRecordSection
         kanbanData={kanbanData}
-        kanbanPrompt={kanbanPrompt}
-        kanbanPromptLoading={kanbanPromptLoading}
-        generateKanbanPrompt={generateKanbanPrompt}
+        kanbanPromptRecord={kanbanPromptRecord}
+        kanbanPromptRecordLoading={kanbanPromptRecordLoading}
+        generateKanbanPromptRecord={generateKanbanPromptRecord}
       />
     </div>
   );

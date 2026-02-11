@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import {
   DEFAULT_TIMING,
   type Timing,
-  type PromptItem,
+  type PromptRecordItem,
   type RunInfo,
   type FeatureQueueItem,
 } from "@/types/run";
@@ -21,15 +21,15 @@ export interface RunState {
   dataWarning: string | null;
   allProjects: string[];
   activeProjects: string[];
-  prompts: PromptItem[];
-  selectedPromptIds: number[];
+  prompts: PromptRecordItem[];
+  selectedPromptRecordIds: number[];
   timing: Timing;
   runningRuns: RunInfo[];
   selectedRunId: string | null;
   /** Features added via + on Feature tab; run queue to execute in order. */
   featureQueue: FeatureQueueItem[];
   /** run_id of the current run that is part of the queue (for advancing on script-exited). */
-  queueRunningRunId: string | null;
+  queueRunInfoId: string | null;
 }
 
 export interface RunActions {
@@ -37,15 +37,15 @@ export interface RunActions {
   setActiveProjects: (p: string[] | ((prev: string[]) => string[])) => void;
   toggleProject: (path: string) => void;
   saveActiveProjects: () => Promise<void>;
-  setSelectedPromptIds: (ids: number[] | ((prev: number[]) => number[])) => void;
+  setSelectedPromptRecordIds: (ids: number[] | ((prev: number[]) => number[])) => void;
   setTiming: React.Dispatch<React.SetStateAction<Timing>>;
-  setRunningRuns: React.Dispatch<React.SetStateAction<RunInfo[]>>;
+  setRunInfos: React.Dispatch<React.SetStateAction<RunInfo[]>>;
   setSelectedRunId: (id: string | null) => void;
   refreshData: () => Promise<void>;
   runScript: () => Promise<void>;
   runWithParams: (params: {
     promptIds?: number[];
-    combinedPrompt?: string;
+    combinedPromptRecord?: string;
     activeProjects: string[];
     runLabel: string | null;
   }) => Promise<string | null>;
@@ -62,7 +62,7 @@ export interface RunActions {
   setLoading: (v: boolean | ((prev: boolean) => boolean)) => void;
   setAllProjects: (v: string[]) => void;
   setActiveProjectsSync: (v: string[]) => void;
-  setPrompts: (v: PromptItem[]) => void;
+  setPromptRecords: (v: PromptRecordItem[]) => void;
 }
 
 export type RunStore = RunState & RunActions;
@@ -75,12 +75,12 @@ const initialState: RunState = {
   allProjects: [],
   activeProjects: [],
   prompts: [],
-  selectedPromptIds: [],
+  selectedPromptRecordIds: [],
   timing: DEFAULT_TIMING,
   runningRuns: [],
   selectedRunId: null,
   featureQueue: [],
-  queueRunningRunId: null,
+  queueRunInfoId: null,
 };
 
 export const useRunStore = create<RunStore>()((set, get) => ({
@@ -113,10 +113,10 @@ export const useRunStore = create<RunStore>()((set, get) => ({
     }
   },
 
-  setSelectedPromptIds: (ids) =>
+  setSelectedPromptRecordIds: (ids) =>
     set((s) => ({
-      selectedPromptIds:
-        typeof ids === "function" ? ids(s.selectedPromptIds) : ids,
+      selectedPromptRecordIds:
+        typeof ids === "function" ? ids(s.selectedPromptRecordIds) : ids,
     })),
 
   setTiming: (updater) =>
@@ -124,7 +124,7 @@ export const useRunStore = create<RunStore>()((set, get) => ({
       timing: typeof updater === "function" ? updater(s.timing) : updater,
     })),
 
-  setRunningRuns: (updater) =>
+  setRunInfos: (updater) =>
     set((s) => ({
       runningRuns:
         typeof updater === "function" ? updater(s.runningRuns) : updater,
@@ -155,7 +155,7 @@ export const useRunStore = create<RunStore>()((set, get) => ({
         const [all, active, promptList] = await Promise.all([
           invoke<string[]>("get_all_projects"),
           invoke<string[]>("get_active_projects"),
-          invoke<PromptItem[]>("get_prompts"),
+          invoke<PromptRecordItem[]>("get_prompts"),
         ]);
         set({ allProjects: all, activeProjects: active, prompts: promptList });
       } else {
@@ -181,8 +181,8 @@ export const useRunStore = create<RunStore>()((set, get) => ({
   },
 
   runScript: async () => {
-    const { selectedPromptIds, activeProjects, getTimingForRun, setError, setRunningRuns, setSelectedRunId } = get();
-    if (selectedPromptIds.length === 0) {
+    const { selectedPromptRecordIds, activeProjects, getTimingForRun, setError, setRunInfos, setSelectedRunId } = get();
+    if (selectedPromptRecordIds.length === 0) {
       set({ error: "Select at least one prompt" });
       return;
     }
@@ -194,8 +194,8 @@ export const useRunStore = create<RunStore>()((set, get) => ({
     try {
       const { run_id } = await invoke<{ run_id: string }>("run_script", {
         args: {
-          promptIds: selectedPromptIds,
-          combinedPrompt: null,
+          promptIds: selectedPromptRecordIds,
+          combinedPromptRecord: null,
           activeProjects,
           timing: getTimingForRun(),
           runLabel: null,
@@ -216,17 +216,17 @@ export const useRunStore = create<RunStore>()((set, get) => ({
   runWithParams: async (params) => {
     const { getTimingForRun } = get();
     set({ error: null });
-    const hasCombined = params.combinedPrompt != null && params.combinedPrompt.trim() !== "";
+    const hasCombined = params.combinedPromptRecord != null && params.combinedPromptRecord.trim() !== "";
     const hasIds = Array.isArray(params.promptIds) && params.promptIds.length > 0;
     if (!hasCombined && !hasIds) {
-      set({ error: "Provide either combinedPrompt or promptIds" });
+      set({ error: "Provide either combinedPromptRecord or promptIds" });
       return null;
     }
     try {
       const { run_id } = await invoke<{ run_id: string }>("run_script", {
         args: {
           promptIds: hasIds ? params.promptIds : [],
-          combinedPrompt: hasCombined ? params.combinedPrompt : null,
+          combinedPromptRecord: hasCombined ? params.combinedPromptRecord : null,
           activeProjects: params.activeProjects,
           timing: getTimingForRun(),
           runLabel: params.runLabel,
@@ -270,13 +270,13 @@ export const useRunStore = create<RunStore>()((set, get) => ({
   removeFeatureFromQueue: (id) =>
     set((s) => ({
       featureQueue: s.featureQueue.filter((f) => f.id !== id),
-      queueRunningRunId:
-        s.queueRunningRunId != null && s.featureQueue[0]?.id === id
+      queueRunInfoId:
+        s.queueRunInfoId != null && s.featureQueue[0]?.id === id
           ? null
-          : s.queueRunningRunId,
+          : s.queueRunInfoId,
     })),
 
-  clearFeatureQueue: () => set({ featureQueue: [], queueRunningRunId: null }),
+  clearFeatureQueue: () => set({ featureQueue: [], queueRunInfoId: null }),
 
   runFeatureQueue: async (activeProjectsFallback) => {
     const s = get();
@@ -302,13 +302,13 @@ export const useRunStore = create<RunStore>()((set, get) => ({
       activeProjects: projectsToUse,
       runLabel: first.title,
     });
-    if (runId != null) set({ queueRunningRunId: runId });
+    if (runId != null) set({ queueRunInfoId: runId });
   },
 
   runNextInQueue: (exitedRunId) => {
     const s = get();
-    if (s.queueRunningRunId !== exitedRunId) return;
-    set({ queueRunningRunId: null });
+    if (s.queueRunInfoId !== exitedRunId) return;
+    set({ queueRunInfoId: null });
     const rest = s.featureQueue.slice(1);
     set({ featureQueue: rest });
     if (rest.length === 0) return;
@@ -323,7 +323,7 @@ export const useRunStore = create<RunStore>()((set, get) => ({
         runLabel: next.title,
       })
       .then((runId) => {
-        if (runId != null) set({ queueRunningRunId: runId });
+        if (runId != null) set({ queueRunInfoId: runId });
       });
   },
 
@@ -361,7 +361,7 @@ export const useRunStore = create<RunStore>()((set, get) => ({
     set((s) => ({ loading: typeof v === "function" ? v(s.loading) : v })),
   setAllProjects: (v) => set({ allProjects: v }),
   setActiveProjectsSync: (v) => set({ activeProjects: v }),
-  setPrompts: (v) => set({ prompts: v }),
+  setPromptRecords: (v) => set({ prompts: v }),
 }));
 
 /** Hook with same API as legacy useRunState from context. Use anywhere run state is needed. */
@@ -379,16 +379,16 @@ export function useRunState() {
       toggleProject: s.toggleProject,
       saveActiveProjects: s.saveActiveProjects,
       prompts: s.prompts,
-      selectedPromptIds: s.selectedPromptIds,
-      setSelectedPromptIds: s.setSelectedPromptIds,
+      selectedPromptRecordIds: s.selectedPromptRecordIds,
+      setSelectedPromptRecordIds: s.setSelectedPromptRecordIds,
       timing: s.timing,
       setTiming: s.setTiming,
       runningRuns: s.runningRuns,
-      setRunningRuns: s.setRunningRuns,
+      setRunInfos: s.setRunInfos,
       selectedRunId: s.selectedRunId,
       setSelectedRunId: s.setSelectedRunId,
       featureQueue: s.featureQueue,
-      queueRunningRunId: s.queueRunningRunId,
+      queueRunInfoId: s.queueRunInfoId,
       addFeatureToQueue: s.addFeatureToQueue,
       removeFeatureFromQueue: s.removeFeatureFromQueue,
       clearFeatureQueue: s.clearFeatureQueue,

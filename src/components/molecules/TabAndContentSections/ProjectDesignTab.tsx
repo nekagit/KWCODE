@@ -31,7 +31,7 @@ export function ProjectDesignTab({
         generateExport={generateExport}
       />
 
-      {project.designs.length === 0 ? (
+      {project.designIds?.length === 0 ? (
         <EmptyState
           icon={<Palette className="h-6 w-6" />}
           title="No designs yet"
@@ -47,10 +47,10 @@ export function ProjectDesignTab({
         />
       ) : (
         <GridContainer>
-          {project.designs.map((design) => (
+          {project.designIds?.map((designId) => (
             <ProjectDesignListItem
-              key={design.id}
-              design={design}
+              key={designId}
+              design={designId as any}
               projectId={projectId}
             />
           ))}

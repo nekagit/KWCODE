@@ -1,16 +1,16 @@
 import React from 'react';
 import { Plus } from "lucide-react";
-import { GenericButton } from "./GenericButton";
+import { ButtonComponent } from "@/components/shared/ButtonComponent";
 
-interface CreatePromptButtonProps {
+interface CreatePromptRecordButtonProps {
   onClick: () => void;
 }
 
-export const CreatePromptButton: React.FC<CreatePromptButtonProps> = ({
+export const CreatePromptRecordButton: React.FC<CreatePromptRecordButtonProps> = ({
   onClick,
 }) => {
   return (
-    <GenericButton
+    <ButtonComponent
       onClick={onClick}
       icon={Plus}
       text="Create prompt"
