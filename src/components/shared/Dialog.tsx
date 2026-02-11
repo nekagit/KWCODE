@@ -13,10 +13,10 @@ export const Dialog: React.FC<DialogProps> = ({ title, children, onClose, action
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex justify-center items-center">
-      <div className="relative p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
-        <div className="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700">
-          <h4 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h4>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+      <div className="relative p-5 border border-border w-96 shadow-lg rounded-md bg-card text-card-foreground">
+        <div className="flex justify-between items-center pb-3 border-b border-border">
+          <h4 className="text-lg font-semibold">{title}</h4>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
             &times;
           </button>
         </div>
@@ -24,7 +24,7 @@ export const Dialog: React.FC<DialogProps> = ({ title, children, onClose, action
           {children}
         </div>
         {actions && (
-          <div className="flex justify-end pt-3 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex justify-end pt-3 border-t border-border">
             <div className="flex space-x-2">
               {actions}
             </div>

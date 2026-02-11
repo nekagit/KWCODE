@@ -48,7 +48,7 @@ export function AiGeneratedIdeasCard({ CATEGORY_LABELS, addToMyIdeas }: AiGenera
 
   return (
     <Card
-      title={<TitleWithIcon icon={Sparkles} title="AI generated ideas" className="text-lg" />}
+      title={<TitleWithIcon icon={Sparkles} title="AI generated ideas" className="text-lg" iconClassName="text-primary/90" />}
       subtitle="Enter a topic or scenario; we&apos;ll suggest business ideas you can add to My ideas."
     >
       <AiGeneratorInput

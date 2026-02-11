@@ -11,7 +11,7 @@ interface ThemeButtonPreviewProps {
 export const ThemeButtonPreview: React.FC<ThemeButtonPreviewProps> = ({ theme, hsl }) => {
   const v = theme.variables;
   return (
-    <div className="space-y-1">
+    <div className="space-y-2">
       <Badge
         className="text-[10px] font-medium uppercase tracking-wide"
         style={{ color: hsl(v.mutedForeground) }}
@@ -19,7 +19,7 @@ export const ThemeButtonPreview: React.FC<ThemeButtonPreviewProps> = ({ theme, h
       >
         Buttons
       </Badge>
-      <div className="flex flex-wrap gap-1">
+      <div className="flex flex-wrap gap-2">
         {[
           { bg: v.primary, fg: v.primaryForeground, label: "Primary" },
           { bg: v.secondary, fg: v.secondaryForeground, label: "Sec" },

@@ -53,7 +53,7 @@ export function ProjectDetailsPageContent() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary/80" />
       </div>
     );
   }
@@ -62,7 +62,7 @@ export function ProjectDetailsPageContent() {
     return (
       <div className="space-y-4">
         <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
+          <AlertCircle className="h-4 w-4 text-destructive/90" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
         <Button onClick={() => setError(null)}>Clear error</Button>
@@ -81,15 +81,15 @@ export function ProjectDetailsPageContent() {
       <Tabs defaultValue="todo" className="w-full">
         <TabsList className="grid w-full max-w-2xl grid-cols-3">
           <TabsTrigger value="git" className="flex items-center gap-2">
-            <FolderGit2 className="h-4 w-4" />
+            <FolderGit2 className="h-4 w-4 text-success/90" />
             Git
           </TabsTrigger>
           <TabsTrigger value="todo" className="flex items-center gap-2">
-            <ListTodo className="h-4 w-4" />
+            <ListTodo className="h-4 w-4 text-info/90" />
             Todo
           </TabsTrigger>
           <TabsTrigger value="setup" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
+            <Settings className="h-4 w-4 text-muted-foreground/90" />
             Setup
           </TabsTrigger>
         </TabsList>

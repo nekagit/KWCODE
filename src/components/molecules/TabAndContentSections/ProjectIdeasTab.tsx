@@ -22,13 +22,13 @@ export function ProjectIdeasTab({
     <div className="mt-4 space-y-6">
       <ProjectCategoryHeader
         title="Ideas"
-        icon={<Lightbulb className="h-6 w-6" />}
+        icon={<Lightbulb className="h-6 w-6 text-warning/90" />}
         project={project}
       />
 
       {project.ideaIds?.length === 0 ? (
         <EmptyState
-          icon={<Lightbulb className="h-6 w-6" />}
+          icon={<Lightbulb className="h-6 w-6 text-warning/90" />}
           title="No ideas yet"
           description="Generate new ideas or add existing ones to your project."
           action={

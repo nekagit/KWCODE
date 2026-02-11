@@ -22,7 +22,7 @@ export const ThemeIconPreview: React.FC<ThemeIconPreviewProps> = ({
   const mutedFg = overrideMutedFg != null ? hsl(overrideMutedFg) : hsl(v.mutedForeground);
   return (
     <div
-      className="flex items-center gap-1.5 flex-wrap"
+      className="flex items-center gap-2 flex-wrap"
       style={{ color: fg }}
     >
       <Badge
@@ -32,7 +32,7 @@ export const ThemeIconPreview: React.FC<ThemeIconPreviewProps> = ({
       >
         Icons
       </Badge>
-      <div className="flex gap-1">
+      <div className="flex gap-2">
         <Check className="h-4 w-4" style={{ color: hsl(v.primary) }} />
         <Check className="h-4 w-4" style={{ color: hsl(v.success) }} />
         <AlertTriangle className="h-4 w-4" style={{ color: hsl(v.warning) }} />

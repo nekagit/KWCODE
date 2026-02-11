@@ -22,13 +22,13 @@ export function ProjectFeaturesTab({
     <div className="mt-4 space-y-6">
       <ProjectCategoryHeader
         title="Features"
-        icon={<Layers className="h-6 w-6" />}
+        icon={<Layers className="h-6 w-6 text-info/90" />}
         project={project}
       />
 
       {project.featureIds?.length === 0 ? (
         <EmptyState
-          icon={<Layers className="h-6 w-6" />}
+          icon={<Layers className="h-6 w-6 text-info/90" />}
           title="No features yet"
           description="Create features to group tickets and prompts for specific functionalities."
           action={

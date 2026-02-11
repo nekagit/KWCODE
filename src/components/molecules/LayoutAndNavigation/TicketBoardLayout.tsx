@@ -11,7 +11,7 @@ interface TicketBoardLayoutProps {
 export function TicketBoardLayout({ children }: TicketBoardLayoutProps) {
   return (
     <Card
-      title={<TitleWithIcon icon={TicketIcon} title="Ticket board" className="text-lg" />}
+      title={<TitleWithIcon icon={TicketIcon} title="Ticket board" className="text-lg" iconClassName="text-warning/90" />}
       subtitle="Drag cards between columns to change status"
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

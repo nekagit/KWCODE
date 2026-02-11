@@ -24,7 +24,7 @@ export const ThemeColorSwatches: React.FC<ThemeColorSwatchesProps> = ({
   const mutedFg = overrideMutedFg != null ? hsl(overrideMutedFg) : hsl(v.mutedForeground);
   return (
     <div
-      className="rounded-md p-2 min-h-[48px] border"
+      className="rounded-md p-3 min-h-[48px] border"
       style={{
         background: cardBg,
         borderColor: hsl(v.border),
@@ -32,13 +32,13 @@ export const ThemeColorSwatches: React.FC<ThemeColorSwatchesProps> = ({
       }}
     >
       <Badge
-        className="text-[10px] font-medium uppercase tracking-wide mb-1.5"
+        className="text-[10px] font-medium uppercase tracking-wide mb-2"
         style={{ color: mutedFg }}
         variant="outline"
       >
         Card
       </Badge>
-      <div className="flex flex-wrap gap-1">
+      <div className="flex flex-wrap gap-1.5">
         {[
           { label: "Bg", val: v.background },
           { label: "Card", val: v.card },

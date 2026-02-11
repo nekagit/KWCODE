@@ -22,7 +22,7 @@ export function ProjectCard({
       footerButtons={
         <Link href={`/projects/${project.id}`} className="block">
           <Button variant="ghost" className="inline-flex items-center text-primary">
-            Open <ArrowRight className="h-3 w-3 ml-1" />
+            Open <ArrowRight className="h-3 w-3 ml-1 text-primary/90" />
           </Button>
         </Link>
       }
@@ -37,7 +37,7 @@ export function ProjectCard({
         </div>
         {project.repoPath && (
           <p className="text-xs text-muted-foreground truncate font-mono" title={project.repoPath}>
-            <Folders className="h-3 w-3 inline-block mr-1" />
+            <Folders className="h-3 w-3 inline-block mr-1 text-success/90" />
             {project.repoPath.split("/").pop() ?? project.repoPath}
           </p>
         )}

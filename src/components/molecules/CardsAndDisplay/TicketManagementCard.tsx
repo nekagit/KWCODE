@@ -13,7 +13,7 @@ export function TicketManagementCard({ tickets, children }: TicketManagementCard
   return (
     <Card
       title={
-        <TitleWithIcon icon={TicketIcon} title="Tickets" className="text-lg" />
+        <TitleWithIcon icon={TicketIcon} title="Tickets" className="text-lg" iconClassName="text-warning/90" />
       }
       subtitle={
         <>

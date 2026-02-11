@@ -11,6 +11,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 import { useRunState } from "@/store/run-store";
 import RunPage from "@/app/run/page";
 import ConfigurationPage from "@/app/configuration/page";
@@ -78,9 +79,9 @@ function LogModalContent({ initialRunId }: { initialRunId?: string | null }) {
 }
 
 const FAB_ACTIONS = [
-  { id: "log" as const, label: "Log", icon: ScrollText },
-  { id: "run" as const, label: "Run", icon: Play },
-  { id: "config" as const, label: "Configuration", icon: Settings },
+  { id: "log" as const, label: "Log", icon: ScrollText, iconClassName: "text-info/90" },
+  { id: "run" as const, label: "Run", icon: Play, iconClassName: "text-destructive/90" },
+  { id: "config" as const, label: "Configuration", icon: Settings, iconClassName: "text-success/90" },
 ] as const;
 
 /** Flutter-style FAB: always-visible main button bottom-right; hover reveals 3 action circles (Log, Run, Configuration). Portaled to body so it is never clipped by overflow-hidden on AppShell. */
@@ -113,7 +114,7 @@ export function QuickActionsFAB() {
                 if (action.id === "config") openConfigModal();
               }}
             >
-              <action.icon className="h-5 w-5" />
+              <action.icon className={cn("h-5 w-5", action.iconClassName)} />
             </button>
           ))}
           <div

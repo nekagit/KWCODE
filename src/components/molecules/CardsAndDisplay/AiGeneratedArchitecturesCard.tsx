@@ -50,7 +50,7 @@ export function AiGeneratedArchitecturesCard({ CATEGORY_LABELS, addFromAi }: AiG
 
   return (
     <Card
-      title={<TitleWithIcon icon={Sparkles} title="AI generated" className="text-lg" />}
+      title={<TitleWithIcon icon={Sparkles} title="AI generated" className="text-lg" iconClassName="text-primary/90" />}
       subtitle="Enter a topic or scenario; we&apos;ll suggest architecture definitions you can add to My definitions."
     >
       <AiGeneratorInput

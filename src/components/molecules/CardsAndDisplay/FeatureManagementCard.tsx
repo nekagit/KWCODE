@@ -114,6 +114,7 @@ export function FeatureManagementCard({
               : `Feature ${featureProjectFilter ? `(${filteredFeatures.length} of ${features.length})` : `(${features.length})`}`
           }
           className="text-lg"
+          iconClassName="text-info/90"
         />
       }
       subtitle="Combine tickets with prompts and projects; run automation or use in run. Filter by project below. Scroll to see all."

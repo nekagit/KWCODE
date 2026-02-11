@@ -30,7 +30,7 @@ export function LocalProjectsCard() {
 
   return (
     <Card
-      title={<TitleWithIcon icon={FolderOpen} title="Local projects" className="text-lg" />}
+      title={<TitleWithIcon icon={FolderOpen} title="Local projects" className="text-lg" iconClassName="text-success/90" />}
       subtitle={
         <>
           All folders in the configured projects directory. Use a path to create a first-class project above or for runs.

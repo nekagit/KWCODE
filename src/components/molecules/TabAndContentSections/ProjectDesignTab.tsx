@@ -22,13 +22,13 @@ export function ProjectDesignTab({
     <div className="mt-4 space-y-6">
       <ProjectCategoryHeader
         title="Design"
-        icon={<Palette className="h-6 w-6" />}
+        icon={<Palette className="h-6 w-6 text-primary/90" />}
         project={project}
       />
 
       {project.designIds?.length === 0 ? (
         <EmptyState
-          icon={<Palette className="h-6 w-6" />}
+          icon={<Palette className="h-6 w-6 text-primary/90" />}
           title="No designs yet"
           description="Create a design to define the look and feel of your project."
           action={

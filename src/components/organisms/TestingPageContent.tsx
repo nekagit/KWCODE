@@ -81,7 +81,7 @@ export function TestingPageContent() {
       <PageHeader
         title="Testing"
         description="AI test templates, best practices, automation phases, and test coverage dashboard."
-        icon={<TestTube2 className="h-6 w-6" />}
+        icon={<TestTube2 className="h-6 w-6 text-info/90" />}
       />
 
       <Tabs defaultValue="templates" className="w-full">

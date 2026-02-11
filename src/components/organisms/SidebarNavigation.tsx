@@ -13,25 +13,26 @@ const dashboardNavItem: NavItem = {
   label: "Dashboard",
   icon: LayoutDashboard,
   tab: "dashboard",
+  iconClassName: "text-success/90",
 };
 
 const toolsNavItems: NavItem[] = [
-  { href: "/testing", label: "Testing", icon: TestTube2 },
-  { href: "/architecture", label: "Architecture", icon: Building2 },
-  { href: "/?tab=all", label: "Database", icon: LayoutGrid, tab: "all" },
-  { href: "/ideas", label: "Ideas", icon: Lightbulb },
+  { href: "/testing", label: "Testing", icon: TestTube2, iconClassName: "text-info/90" },
+  { href: "/architecture", label: "Architecture", icon: Building2, iconClassName: "text-primary/90" },
+  { href: "/?tab=all", label: "Database", icon: LayoutGrid, tab: "all", iconClassName: "text-destructive/90" },
+  { href: "/ideas", label: "Ideas", icon: Lightbulb, iconClassName: "text-warning/90" },
 ];
 
 const workNavItems: NavItem[] = [
-  { href: "/projects", label: "Projects", icon: Folders },
-  { href: "/?tab=tickets", label: "Tickets", icon: TicketIcon, tab: "tickets" },
-  { href: "/?tab=feature", label: "Feature", icon: Layers, tab: "feature" },
-  { href: "/prompts", label: "Prompts", icon: MessageSquare },
+  { href: "/projects", label: "Projects", icon: Folders, iconClassName: "text-success/90" },
+  { href: "/?tab=tickets", label: "Tickets", icon: TicketIcon, tab: "tickets", iconClassName: "text-warning/90" },
+  { href: "/?tab=feature", label: "Feature", icon: Layers, tab: "feature", iconClassName: "text-info/90" },
+  { href: "/prompts", label: "Prompts", icon: MessageSquare, iconClassName: "text-primary/90" },
 ];
 
 const bottomNavItems: NavItem[] = [
-  { href: "/run", label: "Run", icon: Play, iconClassName: "text-info/90" },
-  { href: "/configuration", label: "Configuration", icon: Settings, iconClassName: "text-muted-foreground/90" },
+  { href: "/run", label: "Run", icon: Play, iconClassName: "text-destructive/90" },
+  { href: "/configuration", label: "Configuration", icon: Settings, iconClassName: "text-success/90" },
 ];
 
 function SidebarNavWithParams({

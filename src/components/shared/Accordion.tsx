@@ -10,9 +10,9 @@ const AccordionItem: React.FC<AccordionItemProps> = ({ title, children, defaultO
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="border-b border-gray-200 dark:border-gray-700 last:border-b-0" {...props}>
+    <div className="border-b border-border last:border-b-0" {...props}>
       <button
-        className="flex justify-between items-center w-full py-4 text-left font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700/50"
+        className="flex justify-between items-center w-full py-4 text-left font-medium text-foreground hover:bg-muted/50"
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
       >
@@ -25,7 +25,7 @@ const AccordionItem: React.FC<AccordionItemProps> = ({ title, children, defaultO
         </svg>
       </button>
       {isOpen && (
-        <div className="pb-4 text-gray-700 dark:text-gray-300">
+        <div className="pb-4 text-muted-foreground">
           {children}
         </div>
       )}
@@ -42,7 +42,7 @@ export const Accordion: React.FC<AccordionProps> = ({ items, initialActiveTab, .
   const [activeItemTitle, setActiveItemTitle] = useState(initialActiveTab || (items.length > 0 ? items[0].title : ''));
 
   return (
-    <div className="w-full rounded-lg bg-white dark:bg-gray-800 shadow" {...props}>
+    <div className="w-full rounded-lg bg-card text-card-foreground shadow border border-border" {...props}>
       {items.map((item, index) => (
         <AccordionItem
           key={item.title || index}

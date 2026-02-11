@@ -95,7 +95,7 @@ export function LocalReposSection() {
     <Accordion type="single" collapsible className="w-full">
       <AccordionItem value="local-repos" className="border-b">
         <AccordionTrigger className="text-lg font-semibold py-4 hover:no-underline">
-          <TitleWithIcon icon={FolderOpen} title={triggerLabel} className="text-lg" />
+          <TitleWithIcon icon={FolderOpen} title={triggerLabel} className="text-lg" iconClassName="text-success/90" />
         </AccordionTrigger>
         <AccordionContent className="space-y-3">
           {renderContent()}

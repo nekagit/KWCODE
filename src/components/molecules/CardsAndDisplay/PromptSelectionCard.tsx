@@ -25,7 +25,7 @@ export function PromptRecordSelectionCard({
 
   return (
     <Card
-      title={<TitleWithIcon icon={MessageSquare} title="PromptRecords" className="text-lg" />}
+      title={<TitleWithIcon icon={MessageSquare} title="PromptRecords" className="text-lg" iconClassName="text-primary/90" />}
       subtitle={
         <>
           Select at least one prompt to run (script <code className="text-xs">-p ID ...</code>).

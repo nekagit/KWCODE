@@ -27,7 +27,7 @@ export function RunningTerminalsPopover({
         <Empty
           title="No runs yet"
           description="Start a run from Dashboard or Run page."
-          icon={<Terminal className="h-6 w-6" />}
+          icon={<Terminal className="h-6 w-6 text-info/90" />}
         />
       ) : (
         <ul className="space-y-1">

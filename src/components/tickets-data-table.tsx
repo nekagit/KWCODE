@@ -146,7 +146,7 @@ export function TicketsDataTable({
       <Empty
         title={emptyTitle}
         description={emptyDescription}
-        icon={<TicketIcon className="h-6 w-6" />}
+        icon={<TicketIcon className="h-6 w-6 text-warning/90" />}
       />
     );
   }

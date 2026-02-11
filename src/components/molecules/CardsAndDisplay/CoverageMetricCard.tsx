@@ -23,7 +23,7 @@ export function CoverageMetricCard({
 }: CoverageMetricCardProps) {
   return (
     <Card
-      title={icon ? <TitleWithIcon icon={icon} title={title} className="text-sm font-medium text-muted-foreground" /> : <TitleWithIcon icon={Activity} title={title} className="text-sm font-medium text-muted-foreground" />}
+      title={icon ? <TitleWithIcon icon={icon} title={title} className="text-sm font-medium text-muted-foreground" iconClassName="text-primary/80" /> : <TitleWithIcon icon={Activity} title={title} className="text-sm font-medium text-muted-foreground" iconClassName="text-primary/80" />}
       subtitle={<p className="text-xs text-muted-foreground">Target: {target}</p>}
     >
       <div className="text-2xl font-bold">{value}</div>

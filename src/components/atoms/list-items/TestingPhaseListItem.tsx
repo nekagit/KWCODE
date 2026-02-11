@@ -34,7 +34,7 @@ export const TestingPhaseListItem: React.FC<TestingPhaseListItemProps> = ({ phas
       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-medium">
         {index + 1}
       </span>
-      {IconComponent && <IconComponent className="h-5 w-5 text-muted-foreground" />}
+      {IconComponent && <IconComponent className="h-5 w-5 text-info/80" />}
       <h3 className="font-medium">{phase.name}</h3>
       <Badge variant="outline">{phase.phase}</Badge>
     </div>

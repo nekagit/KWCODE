@@ -22,13 +22,13 @@ export function ProjectPromptRecordsTab({
     <div className="mt-4 space-y-6">
       <ProjectCategoryHeader
         title="Prompts"
-        icon={<MessageSquare className="h-6 w-6" />}
+        icon={<MessageSquare className="h-6 w-6 text-primary/90" />}
         project={project}
       />
 
       {project.promptIds?.length === 0 ? (
         <EmptyState
-          icon={<MessageSquare className="h-6 w-6" />}
+          icon={<MessageSquare className="h-6 w-6 text-primary/90" />}
           title="No prompts yet"
           description="Create prompts to guide AI models for code generation, documentation, and more."
           action={

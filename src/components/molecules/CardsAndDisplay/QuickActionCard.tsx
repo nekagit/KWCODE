@@ -10,7 +10,7 @@ interface QuickActionCardProps {
 export function QuickActionCard({ children }: QuickActionCardProps) {
   return (
     <Card
-      title={<TitleWithIcon icon={Zap} title="Quick actions" className="text-lg" />}
+      title={<TitleWithIcon icon={Zap} title="Quick actions" className="text-lg" iconClassName="text-warning/90" />}
       subtitle="Shortcuts to common tasks"
     >
       {children}

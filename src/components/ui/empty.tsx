@@ -25,7 +25,7 @@ function Empty({ className, title, description, icon, children, ...props }: Empt
       {...props}
     >
       {(IconComponent || iconNode) && (
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground [&>svg]:h-6 [&>svg]:w-6">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-primary/80 [&>svg]:h-6 [&>svg]:w-6">
           {IconComponent ? <IconComponent /> : iconNode}
         </div>
       )}

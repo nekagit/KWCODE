@@ -20,7 +20,7 @@ export function ProjectSelectionCard({
 }: ProjectSelectionCardProps) {
   return (
     <Card
-      title={<TitleWithIcon icon={Folders} title="Projects" className="text-lg" />}
+      title={<TitleWithIcon icon={Folders} title="Projects" className="text-lg" iconClassName="text-success/90" />}
       subtitle="Select at least one project to run the script against (Dashboard → Projects also saves this list)."
     >
       <ScrollArea className="h-[180px] rounded-md border p-3">

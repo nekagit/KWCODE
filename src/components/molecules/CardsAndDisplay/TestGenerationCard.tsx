@@ -23,7 +23,7 @@ export function TestGenerationCard({
 }: TestGenerationCardProps) {
   return (
     <Card
-      title={<TitleWithIcon icon={Sparkles} title="AI test generation" className="text-lg" />}
+      title={<TitleWithIcon icon={Sparkles} title="AI test generation" className="text-lg" iconClassName="text-primary/90" />}
       subtitle="Describe what you want to test; we generate a short test plan or outline (uses prompt API)."
     >
       <AiGeneratorInput

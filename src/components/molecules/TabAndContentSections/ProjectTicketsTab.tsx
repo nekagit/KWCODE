@@ -91,7 +91,7 @@ export function ProjectTicketsTab({
     <div className="mt-4 space-y-6">
       <ProjectCategoryHeader
         title="Tickets"
-        icon={<TicketIcon className="h-6 w-6" />}
+        icon={<TicketIcon className="h-6 w-6 text-warning/90" />}
         project={project}
       />
 
@@ -99,7 +99,7 @@ export function ProjectTicketsTab({
         <ErrorDisplay
           title="Feature-Ticket Mismatch"
           message="Some features reference tickets that do not exist or are not linked to this project. Consider editing your features."
-          icon={<AlertCircle className="h-4 w-4" />}
+          icon={<AlertCircle className="h-4 w-4 text-destructive/90" />}
         />
       )}
 
@@ -111,7 +111,7 @@ export function ProjectTicketsTab({
         <ErrorDisplay message={kanbanError} />
       ) : !kanbanData || Object.keys(kanbanData.columns).every(key => kanbanData.columns[key].items.length === 0) ? (
         <EmptyState
-          icon={<TicketIcon className="h-6 w-6" />}
+          icon={<TicketIcon className="h-6 w-6 text-warning/90" />}
           title="No tickets yet"
           description="Create new tickets to track tasks and bugs for your project."
           action={

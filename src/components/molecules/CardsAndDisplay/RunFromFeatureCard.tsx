@@ -25,7 +25,7 @@ export function RunFromFeatureCard({
 }: RunFromFeatureCardProps) {
   return (
     <Card
-      title={<TitleWithIcon icon={Layers} title="Run from feature" className="text-lg" />}
+      title={<TitleWithIcon icon={Layers} title="Run from feature" className="text-lg" iconClassName="text-info/90" />}
       subtitle="Prefill prompts and projects from a feature (tickets linked to prompts and projects)."
     >
       <Select

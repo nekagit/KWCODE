@@ -25,7 +25,7 @@ export const BadgeComponent: React.FC<BadgeComponentProps> = ({
 
   return (
     <Badge variant={resolvedVariant} className={cn("gap-1", className, purpleClass)} title={title}>
-      {Icon && <Icon className="h-3 w-3" />}
+      {Icon && <Icon className="h-3 w-3 text-primary/90" />}
       {text}
     </Badge>
   );

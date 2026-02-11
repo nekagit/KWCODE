@@ -54,7 +54,7 @@ export function AllDataTabContent({
         <Card
           title={
             <>
-              <Folders className="h-5 w-5" />
+              <Folders className="h-5 w-5 text-success/90" />
               Projects
             </>
           }
@@ -74,7 +74,7 @@ export function AllDataTabContent({
         <Card
           title={
             <>
-              <MessageSquare className="h-5 w-5" />
+              <MessageSquare className="h-5 w-5 text-primary/90" />
               PromptRecords
             </>
           }
@@ -93,7 +93,7 @@ export function AllDataTabContent({
         <Card
           title={
             <>
-              <TicketIcon className="h-5 w-5" />
+              <TicketIcon className="h-5 w-5 text-warning/90" />
               Tickets
             </>
           }
@@ -105,7 +105,7 @@ export function AllDataTabContent({
         <Card
           title={
             <>
-              <Layers className="h-5 w-5" />
+              <Layers className="h-5 w-5 text-info/90" />
               Features
             </>
           }
@@ -120,7 +120,7 @@ export function AllDataTabContent({
         <Card
           title={
             <>
-              <Lightbulb className="h-5 w-5" />
+              <Lightbulb className="h-5 w-5 text-warning/90" />
               Ideas
             </>
           }
@@ -131,7 +131,7 @@ export function AllDataTabContent({
         <Card
           title={
             <>
-              <Palette className="h-5 w-5" />
+              <Palette className="h-5 w-5 text-primary/90" />
               Design
             </>
           }

@@ -22,13 +22,13 @@ export function ProjectArchitectureTab({
     <div className="mt-4 space-y-6">
       <ProjectCategoryHeader
         title="Architectures"
-        icon={<Building2 className="h-6 w-6" />}
+        icon={<Building2 className="h-6 w-6 text-primary/90" />}
         project={project}
       />
 
       {project.architectureIds?.length === 0 ? (
         <EmptyState
-          icon={<Building2 className="h-6 w-6" />}
+          icon={<Building2 className="h-6 w-6 text-primary/90" />}
           title="No architectures yet"
           description="Define the high-level structure and components of your project."
           action={

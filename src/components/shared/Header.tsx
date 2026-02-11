@@ -33,7 +33,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
   return (
     <div className="flex items-center justify-between">
       <h2 className="text-xl font-semibold flex items-center gap-2">
-        <CategoryIcon className="h-5 w-5" /> {categoryName} ({categoryLength})
+        <CategoryIcon className="h-5 w-5 text-primary/90" /> {categoryName} ({categoryLength})
       </h2>
       <ButtonGroup alignment="right">
         <Button variant="outline" size="sm" asChild>
