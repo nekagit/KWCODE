@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { createProject } from "@/lib/api-projects";
-import { showOpenDirectoryDialog } from "@/lib/electron";
+import { showOpenDirectoryDialog } from "@/lib/tauri";
 import { Card } from "@/components/shared/Card";
 import { Form } from "@/components/shared/Form";
 import { ProjectInput } from "@/components/atoms/inputs/ProjectInput";

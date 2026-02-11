@@ -30,14 +30,6 @@ export function DashboardTabContent({
 }: DashboardTabContentProps) {
   return (
     <div className="mt-0 space-y-6">
-      <QuickActions
-        features={features}
-        runningRuns={runningRuns}
-        navigateToTab={navigateToTab}
-        runForFeature={runForFeature}
-        setSelectedRunId={setSelectedRunId}
-        router={router}
-      />
 
       <TicketBoard tickets={tickets} updateTicket={updateTicket} deleteTicket={deleteTicket} />
     </div>
