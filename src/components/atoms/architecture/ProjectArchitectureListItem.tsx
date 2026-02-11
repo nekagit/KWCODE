@@ -26,6 +26,8 @@ export const ProjectArchitectureListItem: React.FC<ProjectArchitectureListItemPr
           </Link>
         </Button>
       }
-    ></Card>
+    >
+      {/* children is required by CardProps, but this component doesn't have any direct children */}
+    </Card>
   );
 };

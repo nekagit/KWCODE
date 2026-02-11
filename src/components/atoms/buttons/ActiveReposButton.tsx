@@ -1,6 +1,6 @@
 import React from 'react';
-import { Button } from "@/components/ui/button";
 import { Folders } from "lucide-react";
+import { GenericButton } from "./GenericButton";
 
 interface ActiveReposButtonProps {
   onClick: () => void;
@@ -10,9 +10,11 @@ export const ActiveReposButton: React.FC<ActiveReposButtonProps> = ({
   onClick,
 }) => {
   return (
-    <Button variant="outline" onClick={onClick}>
-      <Folders className="h-4 w-4 mr-2" />
-      Active repos
-    </Button>
+    <GenericButton
+      onClick={onClick}
+      icon={Folders}
+      text="Active repos"
+      variant="outline"
+    />
   );
 };

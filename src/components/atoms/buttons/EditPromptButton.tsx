@@ -1,6 +1,6 @@
 import React from 'react';
-import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
+import { GenericButton } from "./GenericButton";
 
 interface EditPromptButtonProps {
   onClick: () => void;
@@ -14,15 +14,14 @@ export const EditPromptButton: React.FC<EditPromptButtonProps> = ({
   title,
 }) => {
   return (
-    <Button
+    <GenericButton
+      onClick={onClick}
+      icon={Pencil}
+      text="Edit prompt"
       variant="outline"
       size="sm"
-      onClick={onClick}
       disabled={disabled}
       title={title}
-    >
-      <Pencil className="h-4 w-4" />
-      Edit prompt
-    </Button>
+    />
   );
 };

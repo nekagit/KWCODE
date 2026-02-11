@@ -5,7 +5,8 @@ import { FeatureInput } from "@/components/atoms/FeatureInput";
 import { TicketCheckboxGroup } from "@/components/atoms/TicketCheckboxGroup";
 import { PromptCheckboxGroup } from "@/components/atoms/PromptCheckboxGroup";
 import { ProjectCheckboxGroup } from "@/components/atoms/ProjectCheckboxGroup";
-import type { Feature, Ticket } from "@/components/organisms/HomePageContent";
+import type { Feature } from "@/types/project";
+import type { Ticket } from "@/types/ticket";
 
 interface FeatureAddFormProps {
   tickets: Ticket[];

@@ -1,6 +1,6 @@
 import React from 'react';
-import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { GenericButton } from "./GenericButton";
 
 interface AddTicketButtonProps {
   onClick: () => void;
@@ -10,9 +10,11 @@ export const AddTicketButton: React.FC<AddTicketButtonProps> = ({
   onClick,
 }) => {
   return (
-    <Button variant="default" onClick={onClick}>
-      <Plus className="h-4 w-4 mr-2" />
-      Add ticket
-    </Button>
+    <GenericButton
+      onClick={onClick}
+      icon={Plus}
+      text="Add ticket"
+      variant="default"
+    />
   );
 };

@@ -1,5 +1,4 @@
-import React from 'react';
-import { Button } from "@/components/ui/button";
+import { GenericButton } from "./GenericButton";
 import { Square } from "lucide-react";
 
 interface StopButtonProps {
@@ -12,9 +11,12 @@ export const StopButton: React.FC<StopButtonProps> = ({
   disabled,
 }) => {
   return (
-    <Button variant="destructive" onClick={onClick} disabled={disabled}>
-      <Square className="mr-2 h-4 w-4" />
-      Stop
-    </Button>
+    <GenericButton
+      variant="destructive"
+      onClick={onClick}
+      disabled={disabled}
+      icon={Square}
+      text="Stop"
+    />
   );
 };

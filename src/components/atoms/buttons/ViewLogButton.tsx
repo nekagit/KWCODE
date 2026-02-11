@@ -1,5 +1,4 @@
-import React from 'react';
-import { Button } from "@/components/ui/button";
+import { GenericButton } from "./GenericButton";
 import { ScrollText } from "lucide-react";
 import type { RunningRun } from "@/store/run-store";
 
@@ -14,16 +13,17 @@ export const ViewLogButton: React.FC<ViewLogButtonProps> = ({
   runningRuns,
   setSelectedRunId,
 }) => {
+  const handleViewLogClick = () => {
+    setSelectedRunId(runningRuns[runningRuns.length - 1]?.runId ?? null);
+    onClick();
+  };
+
   return (
-    <Button
+    <GenericButton
       variant="outline"
-      onClick={() => {
-        setSelectedRunId(runningRuns[runningRuns.length - 1]?.runId ?? null);
-        onClick();
-      }}
-    >
-      <ScrollText className="h-4 w-4 mr-2" />
-      View log
-    </Button>
+      onClick={handleViewLogClick}
+      icon={ScrollText}
+      text="View log"
+    />
   );
 };
