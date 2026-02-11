@@ -1,5 +1,5 @@
 import React from 'react';
-import { Badge } from "@/components/shadcn/badge";
+import { Badge } from "@/components/ui/badge";
 
 interface PriorityBadgeProps {
   priority: number;

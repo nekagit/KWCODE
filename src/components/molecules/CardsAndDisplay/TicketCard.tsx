@@ -1,6 +1,6 @@
 import { Trash2 } from "lucide-react";
-import { Button } from "@/components/shadcn/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/shadcn/tooltip";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Ticket, TicketStatus } from "@/app/page";
 import { Card } from "@/components/shared/Card";
 import { PriorityBadge } from "@/components/atoms/PriorityBadge";

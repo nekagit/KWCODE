@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Card } from "@/components/shared/Card";
-import { Button } from "@/components/shadcn/button";
+import { Button } from "@/components/ui/button";
 import { Folders, MessageSquare, Ticket as TicketIcon, Layers, Lightbulb, Palette } from "lucide-react";
 import type { Project } from "@/types/project";
 import type { Prompt } from "@/types/prompt";

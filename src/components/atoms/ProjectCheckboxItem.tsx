@@ -1,5 +1,5 @@
 import React from 'react';
-import { Checkbox } from "@/components/shadcn/checkbox";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Folders } from "lucide-react";
 
 interface ProjectCheckboxItemProps {

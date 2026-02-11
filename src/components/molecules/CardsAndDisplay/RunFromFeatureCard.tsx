@@ -6,7 +6,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/shadcn/select";
+} from "@/components/ui/select";
 import { Layers } from "lucide-react";
 import type { Feature } from "@/components/organisms/RunPageContent";
 import { Card } from "@/components/shared/Card";

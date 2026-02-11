@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button } from "@/components/shadcn/button";
+import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { FeatureInput } from "@/components/atoms/FeatureInput";
 import { TicketCheckboxGroup } from "@/components/atoms/TicketCheckboxGroup";

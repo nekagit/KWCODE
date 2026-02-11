@@ -9,8 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@/components/shadcn/dialog";
-import { ScrollArea } from "@/components/shadcn/scroll-area";
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useRunState } from "@/store/run-store";
 import RunPage from "@/app/run/page";
 import ConfigurationPage from "@/app/configuration/page";

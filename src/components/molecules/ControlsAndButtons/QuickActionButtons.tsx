@@ -1,6 +1,6 @@
 import { Play, Loader2, Plus, MessageSquare, Folders, Layers, ScrollText, Zap } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/shadcn/button";
+import { Button } from "@/components/ui/button";
 import type { Feature } from "@/types/project";
 import type { RunningRun } from "@/store/run-store";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";

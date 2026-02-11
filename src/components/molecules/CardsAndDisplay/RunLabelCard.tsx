@@ -1,6 +1,6 @@
 "use client";
 
-import { Input } from "@/components/shadcn/input";
+import { Input } from "@/components/ui/input";
 import { Card } from "@/components/shared/Card";
 
 interface RunLabelCardProps {

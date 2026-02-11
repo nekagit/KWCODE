@@ -1,8 +1,8 @@
 "use client";
 
 import { Card } from "@/components/shared/Card";
-import { Button } from "@/components/shadcn/button";
-import { ScrollArea } from "@/components/shadcn/scroll-area";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import { ProjectCheckboxListItem } from "@/components/atoms/ProjectCheckboxListItem";
 

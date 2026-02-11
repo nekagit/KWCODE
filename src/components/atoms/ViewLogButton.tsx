@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from "@/components/shadcn/button";
+import { Button } from "@/components/ui/button";
 import { ScrollText } from "lucide-react";
 import type { RunningRun } from "@/store/run-store";
 

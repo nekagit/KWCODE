@@ -1,4 +1,4 @@
-import { Card, CardProps } from "@/components/shadcn/card";
+import { Card, CardProps } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 interface GlassCardProps extends CardProps {}

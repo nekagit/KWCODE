@@ -1,6 +1,6 @@
 import React from 'react';
-import { Button } from "@/components/shadcn/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/shadcn/tooltip";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Minus, Play, Loader2, Plus, Trash2 } from "lucide-react";
 import type { Feature, Ticket } from "@/components/organisms/HomePageContent";
 

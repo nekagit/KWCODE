@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shadcn/card";
-import { Alert, AlertDescription } from "@/components/shadcn/alert";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
 import { useRunState } from "@/context/run-state";
 import { PromptActionButtons } from "@/components/molecules/ControlsAndButtons/PromptActionButtons/PromptActionButtons";

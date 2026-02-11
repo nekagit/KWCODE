@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Alert, AlertDescription } from "@/components/shadcn/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TicketManagementCard } from "@/components/molecules/CardsAndDisplay/TicketManagementCard/TicketManagementCard";
 import { AddTicketAccordion } from "@/components/molecules/FormsAndDialogs/AddTicketAccordion/AddTicketAccordion";
 import { TicketsDisplayTable } from "@/components/molecules/ListsAndTables/TicketsDisplayTable/TicketsDisplayTable";

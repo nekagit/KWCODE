@@ -1,10 +1,10 @@
 import React from 'react';
-import { Input } from "@/components/shadcn/input";
-import { Label } from "@/components/shadcn/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/shadcn/select";
-import { Textarea } from "@/components/shadcn/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import type { TicketStatus } from "@/app/page";
-import { Button } from "@/components/shadcn/button";
+import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
 interface TicketFormFieldsProps {

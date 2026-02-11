@@ -1,5 +1,5 @@
-import { Badge } from "@/components/shadcn/badge";
-import { ScrollArea } from "@/components/shadcn/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { TicketBoardLayout } from "@/components/molecules/LayoutAndNavigation/TicketBoardLayout/TicketBoardLayout";
 import { TicketCard } from "@/components/molecules/CardsAndDisplay/TicketCard/TicketCard";
 import type { Ticket, TicketStatus } from "@/types/ticket";

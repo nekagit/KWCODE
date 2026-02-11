@@ -1,6 +1,6 @@
 import React from 'react';
-import { Input } from "@/components/shadcn/input";
-import { Label } from "@/components/shadcn/label";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface FeatureInputProps {
   label: string;

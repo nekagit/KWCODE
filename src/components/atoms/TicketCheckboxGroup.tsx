@@ -1,6 +1,6 @@
 import React from 'react';
-import { Checkbox } from "@/components/shadcn/checkbox";
-import { Label } from "@/components/shadcn/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import type { Ticket } from "@/app/page";
 
 interface TicketCheckboxGroupProps {

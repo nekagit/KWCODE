@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { invoke, isTauri } from "@/lib/tauri";
-import { Alert, AlertDescription } from "@/components/shadcn/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useRunState } from "@/context/run-state";
 import { getApiErrorMessage } from "@/lib/utils";
 import { RunPageHeader } from "@/components/molecules/LayoutAndNavigation/RunPageHeader/RunPageHeader";

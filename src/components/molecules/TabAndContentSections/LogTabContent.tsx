@@ -2,7 +2,7 @@
 
 import { useRef, useEffect } from "react";
 import { Card } from "@/components/shared/Card";
-import { ScrollArea } from "@/components/shadcn/scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface LogTabContentProps {
   displayLogLines: string[];

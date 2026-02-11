@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from "@/components/shadcn/button";
+import { Button } from "@/components/ui/button";
 import { ListOrdered, Play, Loader2 } from "lucide-react";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 

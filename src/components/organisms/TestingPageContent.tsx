@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/shadcn/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   TestTube2,
   BookOpen,
@@ -9,7 +9,7 @@ import {
   BarChart3,
   FileCode,
 } from "lucide-react";
-import { PageHeader } from "@/components/molecules/LayoutAndNavigation/PageHeader/PageHeader";
+import { PageHeader } from "@/components/molecules/LayoutAndNavigation/PageHeader";
 import { TestingTemplatesTabContent } from "@/components/molecules/TabAndContentSections/TestingTemplatesTabContent/TestingTemplatesTabContent";
 import { TestingPracticesTabContent } from "@/components/molecules/TabAndContentSections/TestingPracticesTabContent/TestingPracticesTabContent";
 import { TestingPhasesTabContent } from "@/components/molecules/TabAndContentSections/TestingPhasesTabContent/TestingPhasesTabContent";

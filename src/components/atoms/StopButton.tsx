@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from "@/components/shadcn/button";
+import { Button } from "@/components/ui/button";
 import { Square } from "lucide-react";
 
 interface StopButtonProps {

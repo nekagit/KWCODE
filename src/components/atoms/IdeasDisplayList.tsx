@@ -1,7 +1,7 @@
 import React from 'react';
-import { ScrollArea } from "@/components/shadcn/scroll-area";
-import { Badge } from "@/components/shadcn/badge";
-import { Skeleton } from "@/components/shadcn/skeleton";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 
 interface IdeasDisplayListProps {

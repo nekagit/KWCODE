@@ -1,7 +1,7 @@
 import React from 'react';
-import { Checkbox } from "@/components/shadcn/checkbox";
-import { Label } from "@/components/shadcn/label";
-import { ScrollArea } from "@/components/shadcn/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ProjectCheckboxGroupProps {
   allProjects: string[];

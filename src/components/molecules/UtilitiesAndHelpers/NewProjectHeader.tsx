@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button } from "@/components/shadcn/button";
+import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 

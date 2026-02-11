@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams } from "next/navigation";
-import { Button } from "@/components/shadcn/button";
-import { Alert, AlertDescription } from "@/components/shadcn/alert";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertCircle } from "lucide-react";
 import type { Project, ProjectEntityCategories } from "@/types/project";
 import { getProjectResolved, getProjectExport } from "@/lib/api-projects";

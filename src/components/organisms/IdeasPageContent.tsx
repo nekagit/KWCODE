@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/shadcn/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Lightbulb } from "lucide-react";
 import { toast } from "sonner";
-import { PageHeader } from "@/components/molecules/LayoutAndNavigation/PageHeader/PageHeader";
+import { PageHeader } from "@/components/molecules/LayoutAndNavigation/PageHeader";
 import { IdeaTemplateCard } from "@/components/molecules/CardsAndDisplay/IdeaTemplateCard/IdeaTemplateCard";
 import { AiGeneratedIdeasCard } from "@/components/molecules/CardsAndDisplay/AiGeneratedIdeasCard/AiGeneratedIdeasCard";
 import { MyIdeasCard } from "@/components/molecules/CardsAndDisplay/MyIdeasCard/MyIdeasCard";

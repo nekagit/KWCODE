@@ -1,6 +1,6 @@
 "use client";
 
-import { ScrollArea } from "@/components/shadcn/scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageSquare } from "lucide-react";
 import { Card } from "@/components/shared/Card";
 import { TitleWithIcon } from "@/components/atoms/TitleWithIcon";

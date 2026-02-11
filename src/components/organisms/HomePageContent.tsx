@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { invoke, isTauri } from "@/lib/tauri";
-import { Tabs, TabsContent } from "@/components/shadcn/tabs";
-import { Alert, AlertDescription } from "@/components/shadcn/alert";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useRunState } from "@/context/run-state";
 import { toast } from "sonner";
 import type { Project } from "@/types/project";
@@ -13,7 +13,7 @@ import { ProjectsTabContent } from "@/components/molecules/TabAndContentSections
 import { AllDataTabContent } from "@/components/molecules/TabAndContentSections/AllDataTabContent/AllDataTabContent";
 import { DbDataTabContent } from "@/components/molecules/TabAndContentSections/DbDataTabContent/DbDataTabContent";
 import { LogTabContent } from "@/components/molecules/TabAndContentSections/LogTabContent/LogTabContent";
-import { ScrollArea, ScrollBar } from "@/components/shadcn/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { DashboardTabContent } from "@/components/molecules/TabAndContentSections/DashboardTabContent/DashboardTabContent";
 import { PromptsTabContent } from "@/components/molecules/TabAndContentSections/PromptsTabContent/PromptsTabContent";
 import { TicketsTabContent } from "@/components/molecules/TabAndContentSections/TicketsTabContent/TicketsTabContent";
