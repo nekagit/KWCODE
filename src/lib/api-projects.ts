@@ -44,7 +44,7 @@ export type ResolvedProject = Project & {
 
 /** Get one project with resolved prompts, tickets, features, ideas, designs, architectures. In Tauri uses same sources as dashboard (SQLite + JSON) so counts match "All data". */
 export async function getProjectResolved(id: string): Promise<ResolvedProject> {
-  if (isTauri()) {
+  if (isTauri) {
     return invoke("get_project_resolved", { id });
   } else {
     return fetchJson<ResolvedProject>(`/api/data/projects/${id}?resolve=1`);
@@ -52,7 +52,7 @@ export async function getProjectResolved(id: string): Promise<ResolvedProject> {
 }
 
 export async function listProjects(): Promise<Project[]> {
-  if (isTauri()) {
+  if (isTauri) {
     const paths = await invoke<string[]>("list_february_folders");
     return paths.map((path) => ({
       id: path,
@@ -68,7 +68,7 @@ export async function listProjects(): Promise<Project[]> {
 }
 
 export async function createProject(body: CreateProjectBody): Promise<Project> {
-  if (isTauri()) {
+  if (isTauri) {
     return invoke("create_project", { project: body });
   } else {
     return fetchJson<Project>("/api/data/projects", {
@@ -80,7 +80,7 @@ export async function createProject(body: CreateProjectBody): Promise<Project> {
 }
 
 export async function updateProject(id: string, body: Partial<CreateProjectBody>): Promise<Project> {
-  if (isTauri()) {
+  if (isTauri) {
     return invoke("update_project", { id, project: body });
   } else {
     return fetchJson<Project>(`/api/data/projects/${id}`, {
@@ -92,7 +92,7 @@ export async function updateProject(id: string, body: Partial<CreateProjectBody>
 }
 
 export async function deleteProject(id: string): Promise<void> {
-  if (isTauri()) {
+  if (isTauri) {
     return invoke("delete_project", { id });
   } else {
     return fetchJson<void>(`/api/data/projects/${id}`, { method: "DELETE" });
@@ -100,7 +100,7 @@ export async function deleteProject(id: string): Promise<void> {
 }
 
 export async function getProjectExport(id: string, category: keyof ResolvedProject): Promise<string> {
-  if (isTauri()) {
+  if (isTauri) {
     return invoke("get_project_export", { id, category });
   } else {
     return fetchJson<string>(`/api/data/projects/${id}/export/${category}`);

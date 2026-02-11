@@ -12,7 +12,7 @@ interface GeneratePromptRecordDialogProps {
   handleGenerate: () => Promise<void>;
   generateLoading: boolean;
   generateResult: { title: string; content: string } | null;
-  setGenerateResult: (result: { title: string; content: string } | null) => void;
+  setGenerateResult: React.Dispatch<React.SetStateAction<{ title: string; content: string } | null>>;
   useGeneratedAndCreate: () => void;
   saveGeneratedAsNew: () => Promise<void>;
   saveLoading: boolean;

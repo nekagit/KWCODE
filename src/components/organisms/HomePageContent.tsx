@@ -18,8 +18,11 @@ import { PromptsTabContent } from "@/components/molecules/TabAndContentSections/
 import { TicketsTabContent } from "@/components/molecules/TabAndContentSections/TicketsTabContent";
 import { FeatureTabContent } from "@/components/molecules/TabAndContentSections/FeatureTabContent";
 
-import type { Ticket, TicketStatus } from "@/types/ticket";
+import type { Ticket, TicketRow, TicketStatus } from "@/types/ticket";
 import type { Feature } from "@/types/project";
+
+/** Ticket shape from Tauri get_tickets (may include legacy prompt_ids/project_paths). */
+type TicketFromApi = TicketRow & { prompt_ids?: number[]; project_paths?: string[] };
 /** Minimal type for ideas from /api/data/ideas (All data tab). */
 interface IdeaRecord {
   id: number;
@@ -29,9 +32,9 @@ interface IdeaRecord {
   source?: string;
 }
 
-function tabFromParams(searchParams: ReturnType<typeof useSearchParams>): string {
-  const t = searchParams.get("tab");
-  return (["dashboard", "projects", "tickets", "feature", "all", "data", "log", "prompts"].includes(t as string) ? t : "dashboard") as string;
+function tabFromParams(searchParams: ReturnType<typeof useSearchParams> | null): string {
+  const t = searchParams?.get("tab") ?? null;
+  return (t && ["dashboard", "projects", "tickets", "feature", "all", "data", "log", "prompts"].includes(t) ? t : "dashboard") as string;
 }
 
 export function HomePageContent() {
@@ -67,13 +70,14 @@ export function HomePageContent() {
   const [dataKvEntries, setDataKvEntries] = useState<{ key: string; value: string }[]>([]);
   const [ideas, setIdeas] = useState<IdeaRecord[]>([]);
   const [ideasLoading, setIdeasLoading] = useState(false);
+  const [tabError, setTabError] = useState<string | null>(null);
   const running = runningRuns.some((r) => r.status === "running");
 
   const loadTicketsAndFeatures = useCallback(async () => {
-    if (!isTauri()) return;
+    if (!isTauri) return;
     try {
       const [ticketList, featureList] = await Promise.all([
-        invoke<Ticket[]>("get_tickets"),
+        invoke<TicketFromApi[]>("get_tickets"),
         invoke<Feature[]>("get_features"),
       ]);
       setTickets(ticketList);
@@ -92,7 +96,7 @@ export function HomePageContent() {
             created_at: now,
             updated_at: now,
           }));
-        const cleanTickets: Ticket[] = ticketList.map(({ prompt_ids, project_paths, ...t }) => t);
+        const cleanTickets: Ticket[] = ticketList.map(({ prompt_ids, project_paths, ...t }) => t as Ticket);
         await invoke("save_features", { features: newFeatures });
         await invoke("save_tickets", { tickets: cleanTickets });
         setFeatures(newFeatures);
@@ -104,12 +108,12 @@ export function HomePageContent() {
   }, []);
 
   useEffect(() => {
-    if (isTauri()) loadTicketsAndFeatures();
+    if (isTauri) loadTicketsAndFeatures();
   }, [loadTicketsAndFeatures]);
 
   // Browser: load tickets, features, and kv entries from /api/data (reads data/*.json)
   useEffect(() => {
-    if (isTauri() || isTauriEnv !== false || ticketsLoaded) return;
+    if (isTauri || isTauriEnv !== false || ticketsLoaded) return;
     let cancelled = false;
     fetch("/api/data")
       .then((res) => (res.ok ? res.json() : res.text().then((t) => Promise.reject(new Error(t)))))
@@ -180,8 +184,7 @@ export function HomePageContent() {
 
   const saveTickets = async (next: Ticket[]) => {
     try {
-      const clean = next.map(({ prompt_ids, project_paths, ...t }) => t);
-      await invoke("save_tickets", { tickets: clean });
+      await invoke("save_tickets", { tickets: next });
       setTickets(next);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -247,6 +250,7 @@ export function HomePageContent() {
             saveTickets={saveTickets}
             updateTicket={updateTicket}
             deleteTicket={deleteTicket}
+            setError={setTabError}
           />
         </TabsContent>
 
@@ -259,6 +263,7 @@ export function HomePageContent() {
             activeProjects={activeProjects}
             runningRuns={runningRuns}
             featureQueue={featureQueue as Feature[]}
+            setError={setTabError}
             addFeatureToQueue={addFeatureToQueue}
             removeFeatureFromQueue={removeFeatureFromQueue}
             clearFeatureQueue={clearFeatureQueue}

@@ -13,7 +13,7 @@ interface ProjectArchitectureTabProps {
   project: Project;
   projectId: string;
   exportLoading: boolean;
-  generateExport: (category: "architecture") => Promise<void>;
+  generateExport: (category: string) => Promise<void>;
 }
 
 export function ProjectArchitectureTab({

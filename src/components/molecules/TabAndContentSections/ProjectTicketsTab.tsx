@@ -25,7 +25,7 @@ interface ProjectTicketsTabProps {
   project: Project;
   projectId: string;
   exportLoading: boolean;
-  generateExport: (category: "tickets") => Promise<void>;
+  generateExport: (category: string) => Promise<void>;
   fetchProject: () => Promise<void>;
 }
 
@@ -94,16 +94,13 @@ export function ProjectTicketsTab({
   return (
     <div className="mt-4 space-y-6">
       <ProjectCategoryHeader
+        title="Tickets"
+        icon={<TicketIcon className="h-6 w-6" />}
         project={project}
         projectId={projectId}
         exportLoading={exportLoading}
         generateExport={generateExport}
-        categoryName="Tickets"
-        categoryIcon={TicketIcon}
-        categoryLength={project.ticketIds?.length || 0}
-        newHref={`/tickets?projectId=${projectId}`}
-        newButtonText="New ticket"
-        exportCategory="tickets"
+        category="tickets"
       />
 
       {showFeatureTicketWarning && (

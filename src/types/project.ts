@@ -55,3 +55,5 @@ export interface Feature {
 }
 
 export type ProjectTabCategory = "design" | "ideas" | "features" | "tickets" | "prompts" | "architecture";
+
+export type { PromptRecord } from "./prompt";

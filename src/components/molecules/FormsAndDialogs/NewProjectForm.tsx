@@ -24,8 +24,8 @@ export function NewProjectForm() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const repoPathFromQuery = searchParams.get("repoPath");
-    if (repoPathFromQuery) {
+    const repoPathFromQuery = searchParams?.get("repoPath") ?? null;
+    if (repoPathFromQuery != null) {
       setRepoPath(decodeURIComponent(repoPathFromQuery));
       if (!name) {
         const segment = repoPathFromQuery.split("/").filter(Boolean).pop() ?? "";

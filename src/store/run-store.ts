@@ -151,7 +151,7 @@ export const useRunStore = create<RunStore>()((set, get) => ({
   refreshData: async () => {
     set({ error: null, dataWarning: null });
     try {
-      if (isTauri()) {
+      if (isTauri) {
         const [all, active, promptList] = await Promise.all([
           invoke<string[]>("list_february_folders"),
           invoke<string[]>("get_active_projects"),

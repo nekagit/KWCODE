@@ -80,8 +80,8 @@ export function ArchitecturePageContent() {
     setFormAntiPatterns(record.anti_patterns ?? "");
     setFormExamples(record.examples ?? "");
     setFormExtraInputs(
-      record.extr-inputs
-        ? Object.entries(record.extr-inputs).map(([key, value]) => ({ key, value: value as string }))
+      record.extra_inputs
+        ? Object.entries(record.extra_inputs).map(([key, value]) => ({ key, value: value as string }))
         : []
     );
     setEditOpen(true);
@@ -166,7 +166,7 @@ export function ArchitecturePageContent() {
           references: formReferences.trim() || undefined,
           anti_patterns: formAntiPatterns.trim() || undefined,
           examples: formExamples.trim() || undefined,
-          "extr-inputs": Object.keys(extraaInputs).length ? extraaInputs : undefined,
+          extra_inputs: Object.keys(extraaInputs).length ? extraaInputs : undefined,
         }),
       });
       if (!res.ok) {

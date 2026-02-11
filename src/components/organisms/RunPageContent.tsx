@@ -45,7 +45,7 @@ export function RunPageContent() {
 
   const loadFeatures = useCallback(async () => {
     try {
-      if (isTauri()) {
+      if (isTauri) {
         const list = await invoke<Feature[]>("get_features");
         setFeatures(list);
       } else {

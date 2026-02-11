@@ -13,7 +13,7 @@ interface ProjectFeaturesTabProps {
   project: Project;
   projectId: string;
   exportLoading: boolean;
-  generateExport: (category: "features") => Promise<void>;
+  generateExport: (category: string) => Promise<void>;
 }
 
 export function ProjectFeaturesTab({
@@ -25,16 +25,13 @@ export function ProjectFeaturesTab({
   return (
     <div className="mt-4 space-y-6">
       <ProjectCategoryHeader
+        title="Features"
+        icon={<Layers className="h-6 w-6" />}
         project={project}
         projectId={projectId}
         exportLoading={exportLoading}
         generateExport={generateExport}
-        categoryName="Features"
-        categoryIcon={Layers}
-        categoryLength={project.featureIds?.length || 0}
-        newHref={`/feature?projectId=${projectId}`}
-        newButtonText="New feature"
-        exportCategory="features"
+        category="features"
       />
 
       {project.featureIds?.length === 0 ? (

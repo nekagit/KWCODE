@@ -14,7 +14,7 @@ export function LocalProjectsCard() {
 
   useEffect(() => {
     const loadLocalPaths = () => {
-      if (isTauri()) {
+      if (isTauri) {
         invoke<string[]>("list_february_folders")
           .then((paths) => setLocalPaths(Array.isArray(paths) ? paths : []))
           .catch(() => setLocalPaths([]));

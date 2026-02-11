@@ -19,7 +19,7 @@ type PromptRecord = {
 interface PromptTableRowProps {
   prompt: PromptRecord;
   selectedPromptIds: number[];
-  setSelectedPromptIds: (ids: number[]) => void;
+  setSelectedPromptIds: React.Dispatch<React.SetStateAction<number[]>>;
   handleDelete: (id: number) => void;
   setEditOpen: (open: boolean) => void;
   setFormId: (id: number | undefined) => void;

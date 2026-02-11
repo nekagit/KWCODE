@@ -1,18 +1,27 @@
-const IS_TAURI_BUILD = process.env.NEXT_PUBLIC_IS_TAURI === 'true';
+export const isTauri = process.env.NEXT_PUBLIC_IS_TAURI === 'true';
 
-let tauriInvoke;
-let tauriListen;
-let tauriOpen;
+type InvokeFn = (cmd: string, args?: Record<string, unknown>) => Promise<unknown>;
+type ListenFn = <T>(event: string, handler: (event: { payload: T }) => void) => Promise<() => void>;
+type OpenFn = (options?: { directory?: boolean; multiple?: boolean; title?: string }) => Promise<string | string[] | null>;
 
-if (IS_TAURI_BUILD) {
+let tauriInvoke: InvokeFn | undefined;
+let tauriListen: ListenFn | undefined;
+let tauriOpen: OpenFn | undefined;
+
+if (isTauri) {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/3a8fa5bb-85c1-4305-bdaa-558e16902420',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/lib/tauri.ts:7',message:'Entering Tauri block',data:{isTauriBuild:isTauri},timestamp:Date.now(),runId:'run1',hypothesisId:'H2'})}).catch(()=>{});
+  // #endregion
   // Dynamically import only when running in Tauri context
   import("@tauri-apps/api/core").then(module => tauriInvoke = module.invoke);
   import("@tauri-apps/api/event").then(module => tauriListen = module.listen);
-  import { open } from "@tauri-apps/api/dialog";
-tauriOpen = open;
+  import("@tauri-apps/api/dialog").then((m: { open: OpenFn }) => { tauriOpen = m.open; });
 } else {
+// #region agent log
+fetch('http://127.0.0.1:7242/ingest/3a8fa5bb-85c1-4305-bdaa-558e16902420',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/lib/tauri.ts:14',message:'Entering non-Tauri block',data:{isTauriBuild:isTauri},timestamp:Date.now(),runId:'run1',hypothesisId:'H2'})}).catch(()=>{});
+// #endregion
   // Fallback to no-op functions for non-Tauri builds
-  import("./noop-tauri-api").then(module => {
+  import("@/lib/noop-tauri-api").then(module => {
     tauriInvoke = module.invoke;
     tauriListen = module.listen;
     tauriOpen = module.open;
@@ -27,7 +36,7 @@ export const invoke = async <T>(cmd: string, args?: Record<string, unknown>): Pr
     console.warn(`Tauri 'invoke' API not available yet. Command: ${cmd}`);
     return Promise.reject(new Error(`Tauri 'invoke' API not available yet. Command: ${cmd}`));
   }
-  return tauriInvoke(cmd, args);
+  return tauriInvoke(cmd, args) as Promise<T>;
 };
 
 export const listen = async <T>(event: string, handler: (event: { payload: T }) => void): Promise<() => void> => {

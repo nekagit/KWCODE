@@ -1,11 +1,12 @@
 import { TicketManagement } from "@/components/organisms/TicketManagement";
-import type { TicketRow } from "@/types/ticket";
+import type { Ticket, TicketRow } from "@/types/ticket";
 
 interface TicketsTabContentProps {
   tickets: TicketRow[];
   saveTickets: (next: Ticket[]) => Promise<void>;
   updateTicket: (id: string, updates: Partial<TicketRow>) => Promise<void>;
   deleteTicket: (id: string) => Promise<void>;
+  setError: (error: string | null) => void;
 }
 
 export function TicketsTabContent({
@@ -13,6 +14,7 @@ export function TicketsTabContent({
   saveTickets,
   updateTicket,
   deleteTicket,
+  setError,
 }: TicketsTabContentProps) {
   return (
     <div className="mt-0">
@@ -21,6 +23,7 @@ export function TicketsTabContent({
         saveTickets={saveTickets}
         updateTicket={updateTicket}
         deleteTicket={deleteTicket}
+        setError={setError}
       />
     </div>
   );

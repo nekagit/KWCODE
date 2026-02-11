@@ -16,8 +16,8 @@ export function PromptsTabContent({
     <div className="mt-0 space-y-6">
       <PromptRecordsAndTiming
         prompts={prompts}
-        selectedPromptIds={selectedPromptRecordIds}
-        setSelectedPromptIds={setSelectedPromptRecordIds}
+        selectedPromptRecordIds={selectedPromptRecordIds}
+        setSelectedPromptRecordIds={setSelectedPromptRecordIds}
       />
     </div>
   );

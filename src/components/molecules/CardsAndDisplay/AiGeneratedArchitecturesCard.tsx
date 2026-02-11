@@ -8,7 +8,7 @@ import { Card } from "@/components/shared/Card";
 import { TitleWithIcon } from "@/components/atoms/headers/TitleWithIcon";
 import { LoadingState } from "@/components/shared/EmptyState";
 import { AiGeneratorInput } from "@/components/atoms/inputs/AiGeneratorInput";
-import { AiIdeaListItem } from "@/components/atoms/list-items/AiIdeaListItem";
+import { AiArchitectureListItem } from "@/components/atoms/list-items/AiArchitectureListItem";
 import type { ArchitectureRecord, ArchitectureCategory } from "@/types/architecture";
 
 type AiResult = ArchitectureRecord;
@@ -65,19 +65,11 @@ export function AiGeneratedArchitecturesCard({ CATEGORY_LABELS, addFromAi }: AiG
         <ScrollArea className="h-[400px] pr-4 mt-4">
           <ul className="space-y-3">
             {aiResults.map((item, i) => (
-              <AiIdeaListItem
-                key={i}
+              <AiArchitectureListItem
+                key={item.id ?? i}
                 item={item}
                 CATEGORY_LABELS={CATEGORY_LABELS}
-                onAddFromAi={async (item) => {
-                  const newItem = {
-                    ...item,
-                    id: crypto.randomUUID(),
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                  };
-                  await addFromAi(newItem);
-                }}
+                onAddFromAi={addFromAi}
               />
             ))}
           </ul>

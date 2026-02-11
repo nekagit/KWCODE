@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Copy } from "lucide-react";
 import { ListItemCard } from "@/components/shared/ListItemCard";
-import type { IdeaCategory } from "@/components/organisms/IdeasPageContent";
+import type { IdeaCategory } from "@/types/idea";
 
 interface IdeaTemplate {
   title: string;

@@ -13,12 +13,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
-import type { TodosKanbanData, ParsedFeature, ParsedTicket } from "@/lib/todos-kanban";
-
-interface KanbanColumn {
-  name: string;
-  items: ParsedTicket[];
-}
+import type { TodosKanbanData, ParsedFeature, ParsedTicket, KanbanColumn } from "@/lib/todos-kanban";
 
 interface ProjectTicketsKanbanColumnProps {
   columnId: string;

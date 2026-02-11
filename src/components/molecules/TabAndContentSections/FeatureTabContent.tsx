@@ -12,6 +12,7 @@ interface FeatureTabContentProps {
   activeProjects: string[];
   runningRuns: RunInfo[];
   featureQueue: Feature[];
+  setError: (error: string | null) => void;
   addFeatureToQueue: (feature: Feature) => void;
   removeFeatureFromQueue: (featureId: string) => void;
   clearFeatureQueue: () => void;
@@ -28,6 +29,7 @@ export function FeatureTabContent({
   activeProjects,
   runningRuns,
   featureQueue,
+  setError,
   addFeatureToQueue,
   removeFeatureFromQueue,
   clearFeatureQueue,
@@ -45,6 +47,7 @@ export function FeatureTabContent({
         activeProjects={activeProjects}
         runningRuns={runningRuns}
         featureQueue={featureQueue}
+        setError={setError}
         addFeatureToQueue={addFeatureToQueue}
         removeFeatureFromQueue={removeFeatureFromQueue}
         clearFeatureQueue={clearFeatureQueue}

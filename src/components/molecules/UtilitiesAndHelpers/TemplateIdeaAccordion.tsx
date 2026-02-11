@@ -15,37 +15,31 @@ export function TemplateIdeaAccordion({ setError }: TemplateIdeaAccordionProps) 
   const [generatingIdeaId, setGeneratingIdeaId] = useState<string | null>(null);
 
   return (
-    <Accordion
-      items={[
-        {
-          title: (
-            <span className="flex items-center gap-2">
-              <Lightbulb className="h-4 w-4 text-amber-500" />
-              Start from a template idea (AI generates full project)
-            </span>
-          ),
-          content: (
-            <>
-              <p className="text-muted-foreground text-sm mb-4">
-                Pick one of 10 template ideas. AI will create a project with prompts, tickets, features, one design, and one architecture linked to it.
-              </p>
-              <GridContainer>
-                {TEMPLATE_IDEAS.map((template) => (
-                  <TemplateIdeaCard
-                    key={template.id}
-                    template={template}
-                    generatingIdeaId={generatingIdeaId}
-                    setGeneratingIdeaId={setGeneratingIdeaId}
-                    setError={setError}
-                  />
-                ))}
-              </GridContainer>
-            </>
-          ),
-          defaultOpen: true,
-        },
-      ]}
-      initialActiveTab="Start from a template idea (AI generates full project)"
-    />
+    <Accordion type="single" collapsible defaultValue="template-ideas">
+      <AccordionItem value="template-ideas">
+        <AccordionTrigger>
+          <span className="flex items-center gap-2">
+            <Lightbulb className="h-4 w-4 text-amber-500" />
+            Start from a template idea (AI generates full project)
+          </span>
+        </AccordionTrigger>
+        <AccordionContent>
+          <p className="text-muted-foreground text-sm mb-4">
+            Pick one of 10 template ideas. AI will create a project with prompts, tickets, features, one design, and one architecture linked to it.
+          </p>
+          <GridContainer>
+            {TEMPLATE_IDEAS.map((template) => (
+              <TemplateIdeaCard
+                key={template.id}
+                template={template}
+                generatingIdeaId={generatingIdeaId}
+                setGeneratingIdeaId={setGeneratingIdeaId}
+                setError={setError}
+              />
+            ))}
+          </GridContainer>
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
   );
 }

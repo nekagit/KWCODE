@@ -21,7 +21,7 @@ interface AllDataTabContentProps {
   saveActiveProjects: () => Promise<void>;
   prompts: { id: number; title: string; description?: string }[];
   selectedPromptRecordIds: number[];
-  setSelectedPromptRecordIds: (ids: number[]) => void;
+  setSelectedPromptRecordIds: React.Dispatch<React.SetStateAction<number[]>>;
   tickets: { id: string; title: string; status: string; description?: string }[];
   features: { id: string; title: string; prompt_ids: number[]; project_paths: string[] }[];
   ideas: { id: number; title: string; description: string; category: string }[];

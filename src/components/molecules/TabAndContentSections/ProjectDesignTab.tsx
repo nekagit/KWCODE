@@ -13,7 +13,7 @@ interface ProjectDesignTabProps {
   project: Project;
   projectId: string;
   exportLoading: boolean;
-  generateExport: (category: "design") => Promise<void>;
+  generateExport: (category: string) => Promise<void>;
 }
 
 export function ProjectDesignTab({
@@ -25,16 +25,13 @@ export function ProjectDesignTab({
   return (
     <div className="mt-4 space-y-6">
       <ProjectCategoryHeader
+        title="Design"
+        icon={<Palette className="h-6 w-6" />}
         project={project}
         projectId={projectId}
         exportLoading={exportLoading}
         generateExport={generateExport}
-        categoryName="Design"
-        categoryIcon={Palette}
-        categoryLength={project.designIds?.length || 0}
-        newHref={`/design?projectId=${projectId}`}
-        newButtonText="New design"
-        exportCategory="design"
+        category="design"
       />
 
       {project.designIds?.length === 0 ? (

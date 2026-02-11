@@ -1,16 +1,22 @@
 import React from 'react';
 
 interface StateProps {
-  message: string;
-  icon?: React.ElementType;
+  message?: string;
+  title?: string;
+  description?: string;
+  icon?: React.ElementType | React.ReactNode;
   action?: React.ReactNode; // e.g., a button to create new item
 }
 
-export const EmptyState: React.FC<StateProps> = ({ message, icon: Icon, action }) => {
+export const EmptyState: React.FC<StateProps> = ({ message, title, description, icon, action }) => {
+  const displayMessage = message ?? title ?? "";
+  const Icon = typeof icon === "function" ? icon as React.ElementType : null;
   return (
     <div className="flex flex-col items-center justify-center p-8 text-center text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/20 rounded-lg">
       {Icon && <Icon className="w-12 h-12 mb-4" />}
-      <p className="text-lg font-medium mb-2">{message}</p>
+      {icon != null && typeof icon !== "function" && <div className="w-12 h-12 mb-4 flex items-center justify-center">{icon as React.ReactNode}</div>}
+      {title && <p className="text-lg font-medium mb-2">{title}</p>}
+      {(description || displayMessage) && <p className="text-muted-foreground mb-2">{description ?? displayMessage}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
   );

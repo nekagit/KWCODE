@@ -1,16 +1,42 @@
+const path = require('path');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  webpack: (config, { isServer, webpack }) => {
-    const IS_TAURI_BUILD = process.env.NEXT_PUBLIC_IS_TAURI === 'true';
-
-    if (IS_TAURI_BUILD) {
-      config.externals.push(
-        {
-          "@tauri-apps/api": "commonjs @tauri-apps/api",
-        }
-      );
-    }
-
+  webpack: (config, { webpack }) => {
+    config.plugins.push(
+      new webpack.NormalModuleReplacementPlugin(
+        /@tauri-apps\/api\/core/,
+        (resource) => {
+          if (process.env.NEXT_PUBLIC_IS_TAURI !== 'true') {
+            resource.request = path.resolve(__dirname, './src/lib/noop-tauri-api');
+          }
+        },
+      ),
+      new webpack.NormalModuleReplacementPlugin(
+        /@tauri-apps\/api\/event/,
+        (resource) => {
+          if (process.env.NEXT_PUBLIC_IS_TAURI !== 'true') {
+            resource.request = path.resolve(__dirname, './src/lib/noop-tauri-api');
+          }
+        },
+      ),
+      new webpack.NormalModuleReplacementPlugin(
+        /@tauri-apps\/api\/dialog/,
+        (resource) => {
+          if (process.env.NEXT_PUBLIC_IS_TAURI !== 'true') {
+            resource.request = path.resolve(__dirname, './src/lib/noop-tauri-api');
+          }
+        },
+      ),
+      new webpack.NormalModuleReplacementPlugin(
+        /@tauri-apps\/api\/tauri/,
+        (resource) => {
+          if (process.env.NEXT_PUBLIC_IS_TAURI !== 'true') {
+            resource.request = path.resolve(__dirname, './src/lib/noop-tauri-api');
+          }
+        },
+      ),
+    );
     return config;
   },
 };

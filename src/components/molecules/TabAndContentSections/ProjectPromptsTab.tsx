@@ -13,7 +13,7 @@ interface ProjectPromptRecordsTabProps {
   project: Project;
   projectId: string;
   exportLoading: boolean;
-  generateExport: (category: "prompts") => Promise<void>;
+  generateExport: (category: string) => Promise<void>;
 }
 
 export function ProjectPromptRecordsTab({
@@ -25,16 +25,13 @@ export function ProjectPromptRecordsTab({
   return (
     <div className="mt-4 space-y-6">
       <ProjectCategoryHeader
+        title="Prompts"
+        icon={<MessageSquare className="h-6 w-6" />}
         project={project}
         projectId={projectId}
         exportLoading={exportLoading}
         generateExport={generateExport}
-        categoryName="Prompts"
-        categoryIcon={MessageSquare}
-        categoryLength={project.promptIds?.length || 0}
-        newHref={`/prompts?projectId=${projectId}`}
-        newButtonText="New prompt"
-        exportCategory="prompts"
+        category="prompts"
       />
 
       {project.promptIds?.length === 0 ? (

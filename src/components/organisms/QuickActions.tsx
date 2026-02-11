@@ -13,7 +13,6 @@ interface QuickActionsProps {
 
 export function QuickActions({ features, navigateToTab, runForFeature, setSelectedRunId, router }: QuickActionsProps) {
   return (
-    <QuickActionCard>
-    </QuickActionCard>
+    <QuickActionCard>{null}</QuickActionCard>
   );
 }

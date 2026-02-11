@@ -59,11 +59,11 @@ export const ArchitectureDetailsDisplay: React.FC<ArchitectureDetailsDisplayProp
           </pre>
         </div>
       )}
-      {viewItem.extr-inputs && Object.keys(viewItem.extr-inputs).length > 0 && (
+      {viewItem.extra_inputs && Object.keys(viewItem.extra_inputs).length > 0 && (
         <div>
           <h4 className="text-sm font-medium mb-2">Additional inputs</h4>
           <ul className="space-y-2">
-            {Object.entries(viewItem.extr-inputs).map(([key, value]) => (
+            {Object.entries(viewItem.extra_inputs).map(([key, value]) => (
               <li key={key}>
                 <span className="text-sm font-medium text-muted-foreground">{key}:</span>
                 <pre className="text-sm whitespace-pre-wrap font-mono bg-muted/50 rounded-md p-2 mt-0.5 overflow-x-auto">
@@ -74,7 +74,7 @@ export const ArchitectureDetailsDisplay: React.FC<ArchitectureDetailsDisplayProp
           </ul>
         </div>
       )}
-      {!viewItem.practices && !viewItem.scenarios && !viewItem.references && !viewItem.anti_patterns && !viewItem.examples && !(viewItem.extr-inputs && Object.keys(viewItem.extr-inputs).length) && (
+      {!viewItem.practices && !viewItem.scenarios && !viewItem.references && !viewItem.anti_patterns && !viewItem.examples && !(viewItem.extra_inputs && Object.keys(viewItem.extra_inputs).length) && (
         <p className="text-muted-foreground text-sm">No content defined. Edit to add practices, scenarios, or more inputs.</p>
       )}
     </div>

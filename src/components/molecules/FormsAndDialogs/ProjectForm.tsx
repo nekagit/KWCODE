@@ -119,7 +119,7 @@ export function ProjectForm({
           id="name"
           label="Name"
           value={name}
-          onChange={setName}
+          onChange={(e) => setName(e.target.value)}
           placeholder="e.g. My SaaS app"
           required
         />
@@ -134,7 +134,7 @@ export function ProjectForm({
           id="repoPath"
           label="Repo path (optional)"
           value={repoPath}
-          onChange={setRepoPath}
+          onChange={(e) => setRepoPath(e.target.value)}
           placeholder="/path/to/repo"
           className="font-mono text-sm"
         />

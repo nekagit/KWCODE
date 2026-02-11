@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import type { Project } from "@/types/project";
 import { getProjectResolved } from "@/lib/api-projects";
-import { isTauri } from "@/lib/tauri";
+import { invoke, isTauri } from "@/lib/tauri";
 import { ProjectForm } from "@/components/molecules/FormsAndDialogs/ProjectForm";
 import { ProjectLoadingState } from "@/components/molecules/UtilitiesAndHelpers/ProjectLoadingState";
 import { EditProjectHeader } from "@/components/molecules/UtilitiesAndHelpers/EditProjectHeader";
@@ -40,8 +40,7 @@ export function EditProjectPageContent() {
     const fetchProjectData = async () => {
       try {
         let fetchedProject: ResolvedProject;
-        if (isTauri()) {
-          const { invoke } = await import("@tauri-apps/api/tauri");
+        if (isTauri) {
           fetchedProject = await invoke<ResolvedProject>("get_project_resolved", { id });
         } else {
           const res = await fetch(`/api/data/projects/${id}?resolve=1`);

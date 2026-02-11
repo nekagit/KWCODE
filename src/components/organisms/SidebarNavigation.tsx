@@ -30,14 +30,14 @@ function SidebarNavWithParams({
   pathname,
   sidebarCollapsed,
 }: {
-  pathname: string;
+  pathname: string | null;
   sidebarCollapsed: boolean;
 }) {
   const searchParams = useSearchParams();
-  const currentTab = pathname === "/" ? searchParams.get("tab") || "dashboard" : null;
+  const currentTab = pathname === "/" ? (searchParams?.get("tab") ?? "dashboard") : null;
   return (
     <SidebarNavigationContent
-      pathname={pathname}
+      pathname={pathname ?? ""}
       currentTab={currentTab}
       sidebarCollapsed={sidebarCollapsed}
     />
@@ -99,8 +99,8 @@ export function SidebarNavigation({ sidebarCollapsed }: { sidebarCollapsed: bool
   const pathname = usePathname();
   return (
     <nav className="flex flex-col flex-1 min-w-0 w-full px-2 gap-1">
-      <Suspense fallback={<SidebarNavigationContent pathname={pathname} currentTab="dashboard" sidebarCollapsed={sidebarCollapsed} />}>
-        <SidebarNavWithParams pathname={pathname} sidebarCollapsed={sidebarCollapsed} />
+      <Suspense fallback={<SidebarNavigationContent pathname={pathname ?? ""} currentTab="dashboard" sidebarCollapsed={sidebarCollapsed} />}>
+        <SidebarNavWithParams pathname={pathname ?? ""} sidebarCollapsed={sidebarCollapsed} />
       </Suspense>
     </nav>
   );

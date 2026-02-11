@@ -26,6 +26,9 @@ export interface Run {
   status: "running" | "done";
 }
 
+/** Alias for Run used by run store and UI. */
+export type RunInfo = Run;
+
 export interface FileEntry {
   name: string;
   path: string;

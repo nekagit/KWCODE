@@ -5,8 +5,8 @@ import type { TicketRow } from "@/types/ticket";
 
 interface TicketsDisplayListProps {
   tickets: TicketRow[];
-  onUpdateStatus: (id: string, updates: Partial<TicketRow>) => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
+  onUpdateStatus?: (id: string, updates: Partial<TicketRow>) => Promise<void>;
+  onDelete?: (id: string) => Promise<void>;
 }
 
 export const TicketsDisplayList: React.FC<TicketsDisplayListProps> = ({ tickets, onUpdateStatus, onDelete }) => {

@@ -16,8 +16,8 @@ type PromptRecordRecord = {
 
 interface PromptRecordTableProps {
   fullPromptRecords: PromptRecordRecord[];
-  selectedPromptIds: number[];
-  setSelectedPromptRecordIds: (ids: number[]) => void;
+  selectedPromptRecordIds: number[];
+  setSelectedPromptRecordIds: React.Dispatch<React.SetStateAction<number[]>>;
   handleDelete: (id: number) => void;
   setEditOpen: (open: boolean) => void;
   setFormId: (id: number | undefined) => void;
@@ -68,7 +68,7 @@ export function PromptRecordTable({
               key={p.id}
               prompt={p}
               selectedPromptIds={selectedPromptRecordIds}
-              setSelectedPromptRecordIds={setSelectedPromptRecordIds}
+              setSelectedPromptIds={setSelectedPromptRecordIds}
               handleDelete={handleDelete}
               setEditOpen={setEditOpen}
               setFormId={setFormId}

@@ -19,7 +19,7 @@ export function RunStoreHydration() {
 
   // Resolve Tauri vs browser quickly so refreshData runs without a long delay (was 2000ms, now 400ms).
   useEffect(() => {
-    const check = () => setIsTauriEnv(isTauri());
+    const check = () => setIsTauriEnv(isTauri);
     check();
     const t1 = setTimeout(check, 150);
     const t2 = setTimeout(() => {
@@ -42,12 +42,11 @@ export function RunStoreHydration() {
   useEffect(() => {
     if (isTauriEnv !== true) return;
     let cancelled = false;
-    listen<{ run_id: string; line: string }>("script-log", (payload) => {
+    listen<{ run_id: string; line: string }>("script-log", (event) => {
+      const { run_id, line } = event.payload;
       setRunInfos((prev) =>
         prev.map((r) =>
-          r.runId === payload.run_id
-            ? { ...r, logLines: [...r.logLines, payload.line] }
-            : r
+          r.runId === run_id ? { ...r, logLines: [...r.logLines, line] } : r
         )
       );
     }).then((fn) => {
@@ -63,14 +62,15 @@ export function RunStoreHydration() {
   useEffect(() => {
     if (isTauriEnv !== true) return;
     let cancelled = false;
-    listen<{ run_id: string }>("script-exited", (payload) => {
+    listen<{ run_id: string }>("script-exited", (event) => {
+      const { run_id } = event.payload;
       const store = useRunStore.getState();
       store.setRunInfos((prev) =>
         prev.map((r) =>
-          r.runId === payload.run_id ? { ...r, status: "done" as const } : r
+          r.runId === run_id ? { ...r, status: "done" as const } : r
         )
       );
-      store.runNextInQueue(payload.run_id);
+      store.runNextInQueue(run_id);
     }).then((fn) => {
       if (!cancelled) unlistenExitedRef.current = fn;
     });

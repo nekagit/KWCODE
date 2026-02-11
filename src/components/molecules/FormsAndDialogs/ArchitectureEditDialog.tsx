@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import React, { useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import type { ArchitectureCategory } from "@/types/architecture";
@@ -33,7 +33,7 @@ interface ArchitectureEditDialogProps {
   formExamples: string;
   setFormExamples: (examples: string) => void;
   formExtraInputs: ExtraInput[];
-  setFormExtraInputs: (inputs: ExtraInput[]) => void;
+  setFormExtraInputs: React.Dispatch<React.SetStateAction<ExtraInput[]>>;
   handleSaveEdit: () => Promise<void>;
   saveLoading: boolean;
   ALL_CATEGORIES: ArchitectureCategory[];

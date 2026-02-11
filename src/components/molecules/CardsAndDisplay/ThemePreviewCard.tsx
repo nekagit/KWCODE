@@ -2,7 +2,7 @@
 
 import { Check, AlertTriangle, Trash2, Info, Sparkles } from "lucide-react";
 import type { UIThemeTemplate } from "@/data/ui-theme-templates";
-import { ThemeNameHeader } from "@/components/atoms/headers/ThemeNameHeader";
+import ThemeNameHeader from "@/components/atoms/headers/ThemeNameHeader";
 import { ThemeColorSwatches } from "@/components/atoms/theme/ThemeColorSwatches";
 import { ThemeIconPreview } from "@/components/atoms/theme/ThemeIconPreview";
 import { ThemeButtonPreview } from "@/components/atoms/theme/ThemeButtonPreview";
@@ -41,7 +41,7 @@ export function ThemePreviewCard({
         borderColor: isSelected ? undefined : hsl(v.border),
       }}
     >
-      <ThemeNameHeader theme={theme} hsl={hsl} />
+      <ThemeNameHeader themeName={theme.name} />
 
       <div className="p-2 space-y-2">
         <ThemeColorSwatches theme={theme} hsl={hsl} />

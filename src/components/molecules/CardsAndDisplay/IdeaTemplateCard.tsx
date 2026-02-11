@@ -3,7 +3,7 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/shared/Card";
 import { IdeaTemplateListItem } from "@/components/atoms/list-items/IdeaTemplateListItem"; // Updated import
-import { IdeaCategory } from "@/components/organisms/IdeasPageContent";
+import type { IdeaCategory } from "@/types/idea";
 
 interface IdeaTemplateCardProps {
   TEMPLATE_IDEAS: { title: string; description: string; category: IdeaCategory; practices?: string; scenarios?: string }[];

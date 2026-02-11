@@ -6,7 +6,7 @@ import { ArrowRight } from "lucide-react";
 import { Card } from "@/components/shared/Card";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import type { Project } from "@/types/project";
-import type { IdeaRecord, IdeaCategory } from "@/components/organisms/IdeasPageContent";
+import type { IdeaRecord, IdeaCategory } from "@/types/idea";
 
 interface ProjectIdeaListItemProps {
   idea: IdeaRecord;

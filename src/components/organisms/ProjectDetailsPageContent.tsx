@@ -19,7 +19,7 @@ import type { ResolvedProject } from "@/lib/api-projects";
 
 export function ProjectDetailsPageContent() {
   const params = useParams();
-  const projectId = params.id as string;
+  const projectId = (params?.id as string) ?? "";
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

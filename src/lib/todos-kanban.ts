@@ -22,6 +22,12 @@ export type ParsedTicket = {
   status: "Todo" | "Done";
 };
 
+/** Kanban column for UI (e.g. backlog, in_progress, done, blocked). */
+export type KanbanColumn = {
+  name: string;
+  items: ParsedTicket[];
+};
+
 /**
  * JSON structure used for Kanban display and export.
  */
@@ -30,6 +36,8 @@ export type TodosKanbanData = {
   tickets: ParsedTicket[];
   /** ISO date when parsed (for display). */
   parsedAt: string;
+  /** Columns keyed by status (backlog, in_progress, done, blocked). */
+  columns: Record<string, KanbanColumn>;
 };
 
 const FEATURE_CHECKLIST_RE = /^-\s*\[([ x])\]\s+(.+)$/gm;
@@ -117,10 +125,17 @@ export function parseTodosToKanban(featureIds: string[] | undefined, ticketIds: 
   // For now, we'll return empty arrays or mock data until the parsing logic is aligned.
   // This needs to be resolved by ensuring project.ticketIds and project.featureIds are raw markdown content
   // or by providing a way to fetch the markdown content here.
+  const columns: Record<string, KanbanColumn> = {
+    backlog: { name: "Backlog", items: [] },
+    in_progress: { name: "In progress", items: [] },
+    done: { name: "Done", items: [] },
+    blocked: { name: "Blocked", items: [] },
+  };
   return {
     features: [],
     tickets: [],
     parsedAt: new Date().toISOString(),
+    columns,
   };
 }
 
