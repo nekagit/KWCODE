@@ -13,9 +13,7 @@ import { ProjectHeader } from "@/components/molecules/LayoutAndNavigation/Projec
 import { ProjectGitTab } from "@/components/molecules/TabAndContentSections/ProjectGitTab";
 import { ProjectDesignTab } from "@/components/molecules/TabAndContentSections/ProjectDesignTab";
 import { ProjectIdeasTab } from "@/components/molecules/TabAndContentSections/ProjectIdeasTab";
-import { ProjectFeaturesTab } from "@/components/molecules/TabAndContentSections/ProjectFeaturesTab";
 import { ProjectTicketsTab } from "@/components/molecules/TabAndContentSections/ProjectTicketsTab";
-import { ProjectPromptRecordsTab } from "@/components/molecules/TabAndContentSections/ProjectPromptRecordsTab";
 import { ProjectArchitectureTab } from "@/components/molecules/TabAndContentSections/ProjectArchitectureTab";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { getOrganismClasses } from "./organism-classes";
@@ -104,13 +102,13 @@ export function ProjectDetailsPageContent() {
           </TabsContent>
 
           <TabsContent value="todo" className={c["14"]}>
-            <ProjectTicketsTab
-              project={project}
-              projectId={projectId}
-              fetchProject={fetchProject}
-            />
-            <ProjectFeaturesTab project={project} projectId={projectId} />
-            <ProjectPromptRecordsTab project={project} projectId={projectId} />
+            <div className="min-w-0 flex flex-col rounded-lg border border-border bg-card/50 p-4 shadow-sm">
+              <ProjectTicketsTab
+                project={project}
+                projectId={projectId}
+                fetchProject={fetchProject}
+              />
+            </div>
           </TabsContent>
 
           <TabsContent value="setup" className={c["15"]}>

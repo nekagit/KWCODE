@@ -9,6 +9,8 @@ export default {
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/lib/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/store/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/components/molecules/tailwind-molecules.json",
+    "./src/components/organisms/tailwind-organisms.json",
   ],
   theme: {
   	extend: {

@@ -100,7 +100,7 @@ function ImplementAllTerminalsGrid() {
     implementAllRuns[implementAllRuns.length - 1] ?? null,
   ];
   return (
-    <div className={classes[0]}>
+    <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3 min-w-0">
       {runsForSlots.map((run, i) => (
         <ImplementAllTerminalSlot key={i} run={run} slotIndex={i} />
       ))}
@@ -700,7 +700,7 @@ export function ProjectTicketsTab({
   }, [project, loadKanbanFromMd]);
 
   return (
-    <div className={classes[27]}>
+    <div className={cn(classes[27], "w-full shrink-0 p-4 md:p-6")}>
       <ProjectCategoryHeader
         title="Kanban"
         icon={<TicketIcon className={classes[28]} />}
@@ -729,80 +729,7 @@ export function ProjectTicketsTab({
         <ErrorDisplay message={kanbanError} />
       ) : !kanbanData ? null : (
         <>
-          {kanbanData.features.length > 0 && (() => {
-            const ticketsByNumber = new Map(kanbanData.tickets.map((t) => [t.number, t]));
-            const inProgress: Array<{ feature: ParsedFeature; index: number }> = [];
-            const done: Array<{ feature: ParsedFeature; index: number; doneRefs: number[] }> = [];
-            kanbanData.features.forEach((f, idx) => {
-              const inProgressRefs = f.ticketRefs.filter((num) => {
-                const t = ticketsByNumber.get(num);
-                return t && !t.done;
-              });
-              const doneRefs = f.ticketRefs.filter((num) => {
-                const t = ticketsByNumber.get(num);
-                return t && t.done;
-              });
-              if (inProgressRefs.length > 0) inProgress.push({ feature: f, index: idx });
-              if (doneRefs.length > 0) done.push({ feature: f, index: idx, doneRefs });
-            });
-            return (
-              <div className={classes[61]}>
-                <h3 className={classes[33]}>
-                  <Layers className={classes[11]} />
-                  Features
-                </h3>
-                <div className="grid w-full grid-cols-2 gap-4">
-                  <div className={classes[34]}>
-                    <h4 className={classes[37]}>In progress</h4>
-                    <ul className={classes[38]}>
-                      {inProgress.map(({ feature: f, index: idx }) => {
-                        const colorClasses = getFeatureColorClasses(idx);
-                        return (
-                          <li key={`in-${f.id}`}>
-                            <span
-                              className={cn(classes[59], colorClasses)}
-                            >
-                              <span>{f.title}</span>
-                              <span className={classes[39]}>
-                                — {f.ticketRefs.map((n) => `#${n}`).join(", ")}
-                              </span>
-                            </span>
-                          </li>
-                        );
-                      })}
-                      {inProgress.length === 0 && (
-                        <li className={classes[40]}>None</li>
-                      )}
-                    </ul>
-                  </div>
-                  <div className={classes[34]}>
-                    <h4 className={classes[37]}>Done</h4>
-                    <ul className={classes[38]}>
-                      {done.map(({ feature: f, index: idx, doneRefs }) => {
-                        const colorClasses = getFeatureColorClasses(idx);
-                        return (
-                          <li key={`done-${f.id}`}>
-                            <span
-                              className={cn(classes[60], colorClasses)}
-                            >
-                              <span>{f.title}</span>
-                              <span className={classes[39]}>
-                                — {doneRefs.map((n) => `#${n}`).join(", ")}
-                              </span>
-                            </span>
-                          </li>
-                        );
-                      })}
-                      {done.length === 0 && (
-                        <li className={classes[40]}>None</li>
-                      )}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
-          <div className={classes[9]}>
+          <div className={cn(classes[9], "mb-4")}>
             <ButtonGroup alignment="left">
               <Button
                 variant="default"
@@ -827,105 +754,202 @@ export function ProjectTicketsTab({
               <ImplementAllToolbar projectPath={project.repoPath.trim()} kanbanData={kanbanData} />
             )}
           </div>
-          {isTauri && (
-            <div className={classes[63]}>
-              <ImplementAllTerminalsGrid />
+
+          <div className="flex w-full flex-col gap-4 shrink-0">
+            {/* 1. Kanban */}
+            <div className="flex min-h-0 min-w-0 flex-col rounded-lg bg-card p-4 shadow-sm overflow-auto">
+              <h3 className={classes[33]}>
+                <TicketIcon className={classes[11]} />
+                Kanban
+              </h3>
+              <div className={classes[52]} data-testid="kanban-columns-grid">
+                {(() => {
+                  const featureColorByTitle: Record<string, string> = {};
+                  kanbanData.features.forEach((f, i) => {
+                    featureColorByTitle[f.title] = getFeatureTicketBorderClasses(i);
+                  });
+                  const kanbanColumnOrder = ["backlog", "in_progress", "done"] as const;
+                  return kanbanColumnOrder.map((columnId) => {
+                    const column = kanbanData.columns[columnId];
+                    if (!column) return null;
+                    return (
+                      <KanbanColumnCard
+                        key={columnId}
+                        columnId={columnId}
+                        column={column}
+                        featureColorByTitle={featureColorByTitle}
+                        projectId={projectId}
+                        handleMarkDone={handleMarkDone}
+                        handleRedo={handleRedo}
+                        handleArchive={handleArchive}
+                      />
+                    );
+                  });
+                })()}
+              </div>
             </div>
-          )}
-          <div className={classes[51]}>
-            <div className={classes[52]} data-testid="kanban-columns-grid">
-              {(() => {
-                const featureColorByTitle: Record<string, string> = {};
-                kanbanData.features.forEach((f, i) => {
-                  featureColorByTitle[f.title] = getFeatureTicketBorderClasses(i);
-                });
-                return Object.entries(kanbanData.columns).map(([columnId, column]) => (
-                  <KanbanColumnCard
-                    key={columnId}
-                    columnId={columnId}
-                    column={column}
-                    featureColorByTitle={featureColorByTitle}
-                    projectId={projectId}
-                    handleMarkDone={handleMarkDone}
-                    handleRedo={handleRedo}
-                    handleArchive={handleArchive}
-                  />
-                ));
-              })()}
-            </div>
-          </div>
-          <div className={classes[61]}>
-            <h3 className={classes[33]}>
-              <TicketIcon className={classes[11]} />
-              Tickets
-            </h3>
-            {kanbanData.tickets.length === 0 ? (
-              <EmptyState
-                icon={<TicketIcon className={classes[28]} />}
-                title="No tickets yet"
-                description="Add a ticket above or add items to .cursor/tickets.md and .cursor/features.md in your repo."
-                action={
-                  <Button variant="default" size="sm" onClick={() => setAddTicketOpen(true)} className={classes[10]}>
-                    <Plus className={classes[11]} />
-                    Add ticket
-                  </Button>
-                }
-              />
-            ) : (
-              <div className={classes[62]}>
-                <div className="grid w-full grid-cols-2 gap-4">
-                  <div className={classes[34]}>
-                    <h4 className={classes[37]}>In progress</h4>
-                    <ul className={classes[38]}>
-                      {kanbanData.tickets
-                        .filter((t) => !t.done)
-                        .map((t) => {
-                          const featureIdx = kanbanData.features.findIndex((f) => f.title === t.featureName);
-                          const colorClasses = featureIdx >= 0 ? getFeatureColorClasses(featureIdx) : "";
-                          return (
-                            <li key={t.id}>
-                              <span className={cn(classes[59], colorClasses)}>
-                                <span>#{t.number} — {t.title}</span>
-                                {t.featureName ? (
-                                  <span className={classes[39]}> · {t.featureName}</span>
-                                ) : null}
-                              </span>
-                            </li>
-                          );
-                        })}
-                      {kanbanData.tickets.filter((t) => !t.done).length === 0 && (
-                        <li className={classes[40]}>None</li>
-                      )}
-                    </ul>
-                  </div>
-                  <div className={classes[32]}>
-                    <h4 className={classes[37]}>Done</h4>
-                    <ul className={classes[38]}>
-                      {kanbanData.tickets
-                        .filter((t) => t.done)
-                        .map((t) => {
-                          const featureIdx = kanbanData.features.findIndex((f) => f.title === t.featureName);
-                          const colorClasses = featureIdx >= 0 ? getFeatureColorClasses(featureIdx) : "";
-                          return (
-                            <li key={t.id}>
-                              <span className={cn(classes[60], colorClasses)}>
-                                <span>#{t.number} — {t.title}</span>
-                                {t.featureName ? (
-                                  <span className={classes[39]}> · {t.featureName}</span>
-                                ) : null}
-                              </span>
-                            </li>
-                          );
-                        })}
-                      {kanbanData.tickets.filter((t) => t.done).length === 0 && (
-                        <li className={classes[40]}>None</li>
-                      )}
-                    </ul>
-                  </div>
-                </div>
+
+            {/* 2. Terminals (Tauri only) */}
+            {isTauri && (
+              <div className="flex min-h-0 min-w-0 flex-col rounded-lg border border-border bg-card p-4 shadow-sm overflow-hidden">
+                <h3 className={classes[33]}>
+                  <Terminal className={classes[11]} />
+                  Terminals
+                </h3>
+                <ImplementAllTerminalsGrid />
               </div>
             )}
+
+            {/* 3. Features */}
+            <div className="relative z-10 flex min-h-0 min-w-0 flex-col rounded-lg border border-border bg-card p-4 shadow-sm overflow-auto">
+              <h3 className={classes[33]}>
+                <Layers className={classes[11]} />
+                Features
+              </h3>
+              {kanbanData.features.length > 0 ? (() => {
+                const ticketsByNumber = new Map(kanbanData.tickets.map((t) => [t.number, t]));
+                const inProgress: Array<{ feature: ParsedFeature; index: number }> = [];
+                const done: Array<{ feature: ParsedFeature; index: number; doneRefs: number[] }> = [];
+                kanbanData.features.forEach((f, idx) => {
+                  const inProgressRefs = f.ticketRefs.filter((num) => {
+                    const t = ticketsByNumber.get(num);
+                    return t && !t.done;
+                  });
+                  const doneRefs = f.ticketRefs.filter((num) => {
+                    const t = ticketsByNumber.get(num);
+                    return t && t.done;
+                  });
+                  if (inProgressRefs.length > 0) inProgress.push({ feature: f, index: idx });
+                  if (doneRefs.length > 0) done.push({ feature: f, index: idx, doneRefs });
+                });
+                return (
+                  <div className={classes[41]}>
+                    <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div className={classes[34]}>
+                        <h4 className={classes[37]}>In progress</h4>
+                        <ul className={cn(classes[38], "space-y-2")}>
+                          {inProgress.map(({ feature: f, index: idx }) => {
+                            const colorClasses = getFeatureColorClasses(idx);
+                            return (
+                              <li key={`in-${f.id}`}>
+                                <span className={cn(classes[59], colorClasses)}>
+                                  <span>{f.title}</span>
+                                  <span className={classes[39]}>
+                                    — {f.ticketRefs.map((n) => `#${n}`).join(", ")}
+                                  </span>
+                                </span>
+                              </li>
+                            );
+                          })}
+                          {inProgress.length === 0 && (
+                            <li className={classes[40]}>None</li>
+                          )}
+                        </ul>
+                      </div>
+                      <div className={classes[34]}>
+                        <h4 className={classes[37]}>Done</h4>
+                        <ul className={cn(classes[38], "space-y-2")}>
+                          {done.map(({ feature: f, index: idx, doneRefs }) => {
+                            const colorClasses = getFeatureColorClasses(idx);
+                            return (
+                              <li key={`done-${f.id}`}>
+                                <span className={cn(classes[60], colorClasses)}>
+                                  <span>{f.title}</span>
+                                  <span className={classes[39]}>
+                                    — {doneRefs.map((n) => `#${n}`).join(", ")}
+                                  </span>
+                                </span>
+                              </li>
+                            );
+                          })}
+                          {done.length === 0 && (
+                            <li className={classes[40]}>None</li>
+                          )}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })() : (
+                <p className={classes[40]}>No features yet.</p>
+              )}
+            </div>
+
+            {/* 4. Tickets (at bottom) */}
+            <div className="relative z-10 flex min-h-0 min-w-0 flex-col rounded-lg border border-border bg-card p-4 shadow-sm overflow-auto">
+              <h3 className={classes[33]}>
+                <TicketIcon className={classes[11]} />
+                Tickets
+              </h3>
+              {kanbanData.tickets.length === 0 ? (
+                <EmptyState
+                  icon={<TicketIcon className={classes[28]} />}
+                  title="No tickets yet"
+                  description="Add a ticket above or add items to .cursor/tickets.md and .cursor/features.md in your repo."
+                  action={
+                    <Button variant="default" size="sm" onClick={() => setAddTicketOpen(true)} className={classes[10]}>
+                      <Plus className={classes[11]} />
+                      Add ticket
+                    </Button>
+                  }
+                />
+              ) : (
+                <div className={classes[62]}>
+                  <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className={classes[34]}>
+                      <h4 className={classes[37]}>In progress</h4>
+                      <ul className={cn(classes[38], "space-y-2")}>
+                        {kanbanData.tickets
+                          .filter((t) => !t.done)
+                          .map((t) => {
+                            const featureIdx = kanbanData.features.findIndex((f) => f.title === t.featureName);
+                            const colorClasses = featureIdx >= 0 ? getFeatureColorClasses(featureIdx) : "";
+                            return (
+                              <li key={t.id}>
+                                <span className={cn(classes[59], colorClasses)}>
+                                  <span>#{t.number} — {t.title}</span>
+                                  {t.featureName ? (
+                                    <span className={classes[39]}> · {t.featureName}</span>
+                                  ) : null}
+                                </span>
+                              </li>
+                            );
+                          })}
+                        {kanbanData.tickets.filter((t) => !t.done).length === 0 && (
+                          <li className={classes[40]}>None</li>
+                        )}
+                      </ul>
+                    </div>
+                    <div className={classes[34]}>
+                      <h4 className={classes[37]}>Done</h4>
+                      <ul className={cn(classes[38], "space-y-2")}>
+                        {kanbanData.tickets
+                          .filter((t) => t.done)
+                          .map((t) => {
+                            const featureIdx = kanbanData.features.findIndex((f) => f.title === t.featureName);
+                            const colorClasses = featureIdx >= 0 ? getFeatureColorClasses(featureIdx) : "";
+                            return (
+                              <li key={t.id}>
+                                <span className={cn(classes[60], colorClasses)}>
+                                  <span>#{t.number} — {t.title}</span>
+                                  {t.featureName ? (
+                                    <span className={classes[39]}> · {t.featureName}</span>
+                                  ) : null}
+                                </span>
+                              </li>
+                            );
+                          })}
+                        {kanbanData.tickets.filter((t) => t.done).length === 0 && (
+                          <li className={classes[40]}>None</li>
+                        )}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
+
           {Object.keys(kanbanData.columns).every((key) => kanbanData.columns[key].items.length === 0) && (
             <EmptyState
               icon={<TicketIcon className={classes[28]} />}
