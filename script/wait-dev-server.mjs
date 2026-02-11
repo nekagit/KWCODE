@@ -5,6 +5,8 @@
  * Waits until the root returns 200 and at least one _next/static chunk is served (avoids 404s for main-app.js etc).
  */
 import { spawn } from "child_process";
+import { existsSync, unlinkSync } from "fs";
+import { join } from "path";
 
 const port = process.env.TAURI_DEV_PORT || "4000";
 const baseUrl = `http://127.0.0.1:${port}`;
@@ -89,6 +91,16 @@ async function waitForChunk() {
 // If something is already serving on the port (e.g. previous npm run dev), reuse it
 const alreadyUp = await check(devUrl);
 if (!alreadyUp) {
+  // Remove stale Next.js dev lock so the spawned dev server can start (avoids white screen)
+  const lockPath = join(process.cwd(), ".next", "dev", "lock");
+  if (existsSync(lockPath)) {
+    try {
+      unlinkSync(lockPath);
+      console.log("Removed stale .next/dev/lock");
+    } catch (e) {
+      // ignore
+    }
+  }
   const dev = spawn("npm", ["run", "dev"], {
     stdio: "inherit",
     shell: true,
@@ -96,6 +108,8 @@ if (!alreadyUp) {
     env: { ...process.env, FORCE_COLOR: "1", TAURI_DEV: "1" },
   });
   dev.unref();
+  // Give Next.js a moment to start and acquire the lock before we poll
+  await new Promise((r) => setTimeout(r, 3000));
 }
 
 const ready = await waitReady();

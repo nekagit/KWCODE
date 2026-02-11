@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { createProject } from "@/lib/api-projects";
-import { showOpenDirectoryDialog } from "@/lib/tauri";
+import { showOpenDirectoryDialog, isTauri } from "@/lib/tauri";
 import { Card } from "@/components/shared/Card";
 import { Form } from "@/components/shared/Form";
 import { ProjectInput } from "@/components/atoms/inputs/ProjectInput";
@@ -61,9 +62,17 @@ export function NewProjectForm() {
   };
 
   const handleBrowseRepoPath = async () => {
+    if (!isTauri) {
+      toast.info(
+        "Browse is only available in the desktop app. Type or paste the repo path in the field above."
+      );
+      return;
+    }
     const selectedPath = await showOpenDirectoryDialog();
     if (selectedPath) {
       setRepoPath(selectedPath);
+    } else {
+      toast.info("No folder selected.");
     }
   };
 

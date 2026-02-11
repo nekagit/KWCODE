@@ -2,6 +2,11 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+function isIconComponent(value: unknown): value is React.ElementType {
+  if (typeof value === "function") return true
+  return typeof value === "object" && value !== null && "$$typeof" in value
+}
+
 export interface EmptyProps extends React.HTMLAttributes<HTMLDivElement> {
   title?: string
   description?: string
@@ -9,6 +14,8 @@ export interface EmptyProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 function Empty({ className, title, description, icon, children, ...props }: EmptyProps) {
+  const IconComponent = icon != null && isIconComponent(icon) ? (icon as React.ElementType) : null
+  const iconNode = icon != null && !isIconComponent(icon) ? icon : null
   return (
     <div
       className={cn(
@@ -17,9 +24,9 @@ function Empty({ className, title, description, icon, children, ...props }: Empt
       )}
       {...props}
     >
-      {icon && (
+      {(IconComponent || iconNode) && (
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground [&>svg]:h-6 [&>svg]:w-6">
-          {icon}
+          {IconComponent ? <IconComponent /> : iconNode}
         </div>
       )}
       {title && (
