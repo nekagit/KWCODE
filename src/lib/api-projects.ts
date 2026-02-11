@@ -53,10 +53,7 @@ export async function getProjectResolved(id: string): Promise<ResolvedProject> {
 
 export async function listProjects(): Promise<Project[]> {
   if (isTauri) {
-    // In Tauri we only show explicitly created projects, not every February folder.
-    // Folder listing is shown separately in LocalReposSection. Return empty list
-    // until Tauri has a project store (e.g. data/projects.json or DB).
-    return [];
+    return invoke("list_projects", {});
   }
   return fetchJson<Project[]>("/api/data/projects");
 }

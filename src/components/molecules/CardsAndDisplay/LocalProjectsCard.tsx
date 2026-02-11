@@ -33,15 +33,15 @@ export function LocalProjectsCard() {
       title={<TitleWithIcon icon={FolderOpen} title="Local projects" className="text-lg" />}
       subtitle={
         <>
-          All folders in your <code className="text-xs bg-muted px-1 rounded">Documents/February</code> folder. Use a path to create a first-class project above or for runs.
+          All folders in the configured projects directory. Use a path to create a first-class project above or for runs.
         </>
       }
     >
       {localPaths.length === 0 ? (
         <EmptyState
           icon={FolderOpen}
-          message="No February folders"
-          action="No subfolders found in your Documents/February folder, or the app is not running from a project inside it."
+          message="No project folders"
+          action="No subfolders in the configured projects directory. Set data/february-dir.txt or FEBRUARY_DIR, or run from the Tauri app."
         />
       ) : (
         <ScrollArea className="h-[240px] rounded-md border p-3">

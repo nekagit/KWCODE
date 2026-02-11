@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 const KV_ALL_PROJECTS: &str = "all_projects";
 const KV_CURSOR_PROJECTS: &str = "cursor_projects";
 const KV_DATA_DIR: &str = "data_dir";
+const KV_PROJECTS: &str = "projects";
 
 pub fn open_db(db_path: &Path) -> Result<Connection, String> {
     if let Some(parent) = db_path.parent() {
@@ -113,6 +114,29 @@ pub fn get_all_projects(conn: &Connection) -> Result<Vec<String>, String> {
         Err(e) => return Err(e.to_string()),
     };
     serde_json::from_str(&content).map_err(|e| e.to_string())
+}
+
+/// Full projects list as JSON array (same shape as data/projects.json). Default "[]".
+pub fn get_projects_json(conn: &Connection) -> Result<String, String> {
+    let content: String = match conn.query_row(
+        "SELECT value FROM kv_store WHERE key = ?1",
+        params![KV_PROJECTS],
+        |row| row.get(0),
+    ) {
+        Ok(v) => v,
+        Err(rusqlite::Error::QueryReturnedNoRows) => return Ok("[]".to_string()),
+        Err(e) => return Err(e.to_string()),
+    };
+    Ok(content)
+}
+
+pub fn save_projects_json(conn: &Connection, json: &str) -> Result<(), String> {
+    conn.execute(
+        "INSERT OR REPLACE INTO kv_store (key, value) VALUES (?1, ?2)",
+        params![KV_PROJECTS, json],
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 /// Key-value pair for kv_store table (for Data view).

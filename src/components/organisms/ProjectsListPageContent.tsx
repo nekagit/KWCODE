@@ -6,7 +6,6 @@ import type { Project } from "@/types/project";
 import { listProjects, deleteProject } from "@/lib/api-projects";
 import { ProjectsHeader } from "@/components/molecules/LayoutAndNavigation/ProjectsHeader";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
-import { TemplateIdeaAccordion } from "@/components/molecules/UtilitiesAndHelpers/TemplateIdeaAccordion";
 import { NoProjectsFoundCard } from "@/components/molecules/CardsAndDisplay/NoProjectsFoundCard";
 import { ProjectLoadingState } from "@/components/molecules/UtilitiesAndHelpers/ProjectLoadingState";
 import { LocalReposSection } from "@/components/molecules/ListsAndTables/LocalReposSection";
@@ -91,9 +90,7 @@ export function ProjectsListPageContent() {
         />
       )}
 
-      <TemplateIdeaAccordion setError={setError} />
-
-      {/* Local repos: Documents/February folders — create a project from one without typing the path */}
+      {/* Local repos: configured projects directory — create a project from one without typing the path */}
       <LocalReposSection />
 
       {/* Existing projects: simple list to open them */}

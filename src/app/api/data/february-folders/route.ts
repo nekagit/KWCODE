@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 
-/** Collect full paths of all direct subdirectories; include dirs and symlinks so none are missed. */
+/** All direct subdirectories under dir. No filter by name—every folder is included. */
 function listSubdirPaths(dir: string): string[] {
   const folders: string[] = [];
   try {
@@ -24,10 +24,36 @@ function listSubdirPaths(dir: string): string[] {
   return folders;
 }
 
+function getDataDir(): string {
+  const cwd = process.cwd();
+  const inCwd = path.join(cwd, "data");
+  if (fs.existsSync(inCwd) && fs.statSync(inCwd).isDirectory()) return inCwd;
+  const inParent = path.join(cwd, "..", "data");
+  if (fs.existsSync(inParent) && fs.statSync(inParent).isDirectory()) return inParent;
+  return cwd;
+}
+
+/** Read projects root path from data/february-dir.txt (one line). Highest priority. */
+function februaryDirFromDataFile(): string | null {
+  const dataDir = getDataDir();
+  const filePath = path.join(dataDir, "february-dir.txt");
+  try {
+    if (!fs.existsSync(filePath)) return null;
+    const content = fs.readFileSync(filePath, "utf-8");
+    const line = content.split("\n")[0]?.trim();
+    if (!line) return null;
+    const resolved = path.resolve(line);
+    if (fs.existsSync(resolved) && fs.statSync(resolved).isDirectory()) return resolved;
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
 /**
  * GET /api/data/february-folders
- * Returns full paths of all subdirectories of the February folder(s).
- * Uses (1) FEBRUARY_DIR env, (2) ~/Documents/February, (3) parent of cwd. Merges all so none are missed.
+ * Returns all subdirectories of the configured projects root. No filter by name.
+ * Priority: data/february-dir.txt, then FEBRUARY_DIR env, then parent of cwd.
  */
 export async function GET() {
   try {
@@ -42,10 +68,14 @@ export async function GET() {
         if (fs.existsSync(abs) && fs.statSync(abs).isDirectory() && !candidates.includes(abs)) candidates.push(abs);
       }
     };
-    if (process.env.FEBRUARY_DIR) addCandidate(process.env.FEBRUARY_DIR);
-    const home = process.env.HOME || process.env.USERPROFILE;
-    if (home) addCandidate(path.join(home, "Documents", "February"));
-    addCandidate(path.resolve(process.cwd(), ".."));
+    const fromFile = februaryDirFromDataFile();
+    if (fromFile) addCandidate(fromFile);
+    if (candidates.length === 0 && process.env.FEBRUARY_DIR?.trim()) {
+      addCandidate(process.env.FEBRUARY_DIR.trim());
+    }
+    if (candidates.length === 0) {
+      addCandidate(path.resolve(process.cwd(), ".."));
+    }
 
     const seen = new Set<string>();
     const folders: string[] = [];
@@ -62,7 +92,7 @@ export async function GET() {
   } catch (e) {
     console.error("february-folders error:", e);
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Failed to list February folders" },
+      { error: e instanceof Error ? e.message : "Failed to list project folders" },
       { status: 500 }
     );
   }

@@ -739,12 +739,235 @@ fn resolve_data_dir() -> Result<PathBuf, String> {
     with_db(|conn| Ok(db::get_data_dir(conn, &fallback)))
 }
 
+/// Project record (camelCase for frontend). Stored in kv_store "projects" as JSON array.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Project {
+    pub id: String,
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub repo_path: Option<String>,
+    #[serde(default)]
+    pub prompt_ids: Vec<i64>,
+    #[serde(default)]
+    pub ticket_ids: Vec<String>,
+    #[serde(default)]
+    pub feature_ids: Vec<String>,
+    #[serde(default)]
+    pub idea_ids: Vec<i64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub design_ids: Option<Vec<String>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub architecture_ids: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub entity_categories: Option<serde_json::Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub spec_files: Option<Vec<serde_json::Value>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub spec_files_tickets: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub spec_files_features: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub created_at: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub updated_at: Option<String>,
+}
+
+fn list_projects_impl(conn: &rusqlite::Connection) -> Result<Vec<Project>, String> {
+    let json = db::get_projects_json(conn)?;
+    let arr: Vec<Project> = serde_json::from_str(&json).unwrap_or_default();
+    Ok(arr)
+}
+
+#[tauri::command]
+fn list_projects() -> Result<Vec<Project>, String> {
+    with_db(list_projects_impl)
+}
+
+#[tauri::command]
+fn get_project(id: String) -> Result<Option<Project>, String> {
+    with_db(|conn| {
+        let projects = list_projects_impl(conn)?;
+        Ok(projects.into_iter().find(|p| p.id == id))
+    })
+}
+
+#[tauri::command]
+fn create_project(project: Project) -> Result<Project, String> {
+    with_db(|conn| {
+        let mut projects = list_projects_impl(conn)?;
+        let now = now_iso();
+        let mut p = project;
+        if p.id.is_empty() {
+            p.id = uuid::Uuid::new_v4().to_string();
+        }
+        p.created_at.get_or_insert(now.clone());
+        p.updated_at = Some(now);
+        projects.push(p.clone());
+        let json = serde_json::to_string(&projects).map_err(|e| e.to_string())?;
+        db::save_projects_json(conn, &json)?;
+        Ok(p)
+    })
+}
+
+#[tauri::command]
+fn update_project(id: String, project: serde_json::Value) -> Result<Project, String> {
+    with_db(|conn| {
+        let mut projects = list_projects_impl(conn)?;
+        let idx = projects.iter().position(|p| p.id == id).ok_or("Project not found")?;
+        let now = now_iso();
+        let base = projects[idx].clone();
+        let updated: Project = serde_json::from_value(project).map_err(|e| e.to_string())?;
+        let merged = Project {
+            id: base.id,
+            name: if updated.name.is_empty() { base.name } else { updated.name },
+            description: updated.description.or(base.description),
+            repo_path: updated.repo_path.or(base.repo_path),
+            prompt_ids: if updated.prompt_ids.is_empty() { base.prompt_ids } else { updated.prompt_ids },
+            ticket_ids: if updated.ticket_ids.is_empty() { base.ticket_ids } else { updated.ticket_ids },
+            feature_ids: if updated.feature_ids.is_empty() { base.feature_ids } else { updated.feature_ids },
+            idea_ids: if updated.idea_ids.is_empty() { base.idea_ids } else { updated.idea_ids },
+            design_ids: updated.design_ids.or(base.design_ids),
+            architecture_ids: updated.architecture_ids.or(base.architecture_ids),
+            entity_categories: updated.entity_categories.or(base.entity_categories),
+            spec_files: updated.spec_files.or(base.spec_files),
+            spec_files_tickets: updated.spec_files_tickets.or(base.spec_files_tickets),
+            spec_files_features: updated.spec_files_features.or(base.spec_files_features),
+            created_at: base.created_at,
+            updated_at: Some(now),
+        };
+        projects[idx] = merged.clone();
+        let json = serde_json::to_string(&projects).map_err(|e| e.to_string())?;
+        db::save_projects_json(conn, &json)?;
+        Ok(merged)
+    })
+}
+
+#[tauri::command]
+fn delete_project(id: String) -> Result<(), String> {
+    with_db(|conn| {
+        let mut projects = list_projects_impl(conn)?;
+        let len = projects.len();
+        projects.retain(|p| p.id != id);
+        if projects.len() == len {
+            return Err("Project not found".to_string());
+        }
+        let json = serde_json::to_string(&projects).map_err(|e| e.to_string())?;
+        db::save_projects_json(conn, &json)?;
+        Ok(())
+    })
+}
+
+/// Resolved project: project + linked prompts, tickets, features, ideas (empty), designs, architectures (empty).
+#[tauri::command]
+fn get_project_resolved(id: String) -> Result<serde_json::Value, String> {
+    let project = with_db(|conn| {
+        let projects = list_projects_impl(conn)?;
+        projects.into_iter().find(|p| p.id == id).ok_or("Project not found".to_string())
+    })??;
+    let tickets = with_db(db::get_tickets).unwrap_or_default();
+    let features = with_db(db::get_features).unwrap_or_default();
+    let prompts = with_db(db::get_prompts).unwrap_or_default();
+    let designs = with_db(db::get_designs).unwrap_or_default();
+    let prompt_ids: Vec<i64> = project.prompt_ids.iter().copied().collect();
+    let ticket_ids: Vec<String> = project.ticket_ids.clone();
+    let feature_ids: Vec<String> = project.feature_ids.clone();
+    let design_ids: Vec<String> = project.design_ids.as_deref().unwrap_or(&[]).to_vec();
+    let prompts_resolved: Vec<serde_json::Value> = prompt_ids
+        .iter()
+        .filter_map(|pid| {
+            prompts.iter().find(|p| p.id.parse::<i64>().ok() == Some(*pid)).map(|p| {
+                serde_json::json!({
+                    "id": p.id.parse::<i64>().unwrap_or(0),
+                    "title": p.title,
+                    "content": p.content,
+                })
+            })
+        })
+        .collect();
+    let tickets_resolved: Vec<serde_json::Value> = ticket_ids
+        .iter()
+        .filter_map(|tid| {
+            tickets.iter().find(|t| t.id == *tid).map(|t| {
+                serde_json::json!({
+                    "id": t.id,
+                    "title": t.title,
+                    "status": t.status,
+                    "description": t.description,
+                })
+            })
+        })
+        .collect();
+    let features_resolved: Vec<serde_json::Value> = feature_ids
+        .iter()
+        .filter_map(|fid| {
+            features.iter().find(|f| f.id == *fid).map(|f| {
+                serde_json::json!({
+                    "id": f.id,
+                    "title": f.title,
+                    "prompt_ids": f.prompt_ids,
+                    "project_paths": f.project_paths,
+                })
+            })
+        })
+        .collect();
+    let designs_resolved: Vec<serde_json::Value> = design_ids
+        .iter()
+        .filter_map(|did| {
+            designs.iter().find(|d| d.id == *did).map(|d| {
+                serde_json::json!({ "id": d.id, "name": d.name })
+            })
+        })
+        .collect();
+    let resolved = serde_json::json!({
+        "id": project.id,
+        "name": project.name,
+        "description": project.description,
+        "repoPath": project.repo_path,
+        "promptIds": project.prompt_ids,
+        "ticketIds": project.ticket_ids,
+        "featureIds": project.feature_ids,
+        "ideaIds": project.idea_ids,
+        "designIds": project.design_ids,
+        "architectureIds": project.architecture_ids,
+        "entityCategories": project.entity_categories,
+        "prompts": prompts_resolved,
+        "tickets": tickets_resolved,
+        "features": features_resolved,
+        "ideas": [] as Vec<serde_json::Value>,
+        "designs": designs_resolved,
+        "architectures": [] as Vec<serde_json::Value>,
+    });
+    Ok(resolved)
+}
+
+#[tauri::command]
+fn get_project_export(id: String, category: String) -> Result<String, String> {
+    let resolved = get_project_resolved(id)?;
+    let value = match category.as_str() {
+        "prompts" => resolved.get("prompts"),
+        "tickets" => resolved.get("tickets"),
+        "features" => resolved.get("features"),
+        "ideas" => resolved.get("ideas"),
+        "designs" => resolved.get("designs"),
+        "architectures" => resolved.get("architectures"),
+        "project" => Some(&resolved),
+        _ => return Err(format!("Unknown category: {}", category)),
+    };
+    let out = value
+        .map(|v| serde_json::to_string(v).map_err(|e| e.to_string()))
+        .unwrap_or_else(|| Ok("[]".to_string()))?;
+    Ok(out)
+}
+
 #[tauri::command]
 fn get_all_projects() -> Result<Vec<String>, String> {
     with_db(db::get_all_projects)
 }
 
-/// Collect all direct subdirectory paths under `dir`. Includes dirs and symlinks (so we don't miss any).
+/// Collect all direct subdirectory paths under `dir`. No filter by name—every subdir and symlink is included.
 fn list_subdir_paths(dir: &Path) -> Result<Vec<String>, String> {
     let mut paths = vec![];
     for entry in std::fs::read_dir(dir).map_err(|e| e.to_string())? {
@@ -764,39 +987,148 @@ fn list_subdir_paths(dir: &Path) -> Result<Vec<String>, String> {
     Ok(paths)
 }
 
-/// List all subdirectories of the February folder. Used by Projects page Local repos card.
-/// Uses (1) FEBRUARY_DIR env if set, (2) ~/Documents/February, (3) parent of project root.
-/// Merges results from all that exist so no folders are missed.
+/// Parse FEBRUARY_DIR= value from a line of .env content.
+fn parse_february_dir_line(line: &str) -> Option<PathBuf> {
+    let line = line.trim();
+    if !line.starts_with("FEBRUARY_DIR=") {
+        return None;
+    }
+    let value = line["FEBRUARY_DIR=".len()..].trim().trim_matches('"').trim_matches('\'');
+    if value.is_empty() {
+        return None;
+    }
+    let pb = PathBuf::from(value);
+    if pb.is_absolute() {
+        Some(pb)
+    } else {
+        None
+    }
+}
+
+/// Read one line from path_file and return it as PathBuf if absolute and existing dir.
+fn read_february_dir_from_file(path_file: &Path) -> Option<PathBuf> {
+    let line = std::fs::read_to_string(path_file).ok()?.lines().next()?.trim().to_string();
+    if line.is_empty() {
+        return None;
+    }
+    let pb = PathBuf::from(line);
+    if pb.is_absolute() && pb.is_dir() {
+        Some(pb)
+    } else {
+        None
+    }
+}
+
+/// Read projects root path from data/february-dir.txt. Check project data dir, cwd/data, then walk up from exe.
+fn february_dir_from_data_file() -> Option<PathBuf> {
+    if let Ok(ws) = project_root() {
+        let data = data_dir(&ws);
+        let path_file = data.join("february-dir.txt");
+        if path_file.exists() {
+            if let Some(pb) = read_february_dir_from_file(&path_file) {
+                return Some(pb);
+            }
+        }
+    }
+    if let Ok(cwd) = std::env::current_dir() {
+        let path_file = cwd.join("data").join("february-dir.txt");
+        if path_file.exists() {
+            if let Some(pb) = read_february_dir_from_file(&path_file) {
+                return Some(pb);
+            }
+        }
+    }
+    if let Ok(exe) = std::env::current_exe() {
+        let mut dir = exe.parent().map(PathBuf::from).unwrap_or_default();
+        for _ in 0..15 {
+            if dir.as_os_str().is_empty() {
+                break;
+            }
+            let path_file = dir.join("data").join("february-dir.txt");
+            if path_file.exists() {
+                if let Some(pb) = read_february_dir_from_file(&path_file) {
+                    return Some(pb);
+                }
+            }
+            if let Some(p) = dir.parent() {
+                dir = p.to_path_buf();
+            } else {
+                break;
+            }
+        }
+    }
+    None
+}
+
+/// Read FEBRUARY_DIR from process env or from .env file (project root, cwd, or near executable).
+fn resolve_february_dir() -> Option<PathBuf> {
+    if let Some(pb) = february_dir_from_data_file() {
+        return Some(pb);
+    }
+    if let Some(pb) = std::env::var("FEBRUARY_DIR").ok().filter(|p| !p.trim().is_empty()).map(|p| PathBuf::from(p.trim())) {
+        if pb.is_absolute() {
+            return Some(pb);
+        }
+    }
+    let try_env_file = |path: &Path| -> Option<PathBuf> {
+        let content = std::fs::read_to_string(path).ok()?;
+        for line in content.lines() {
+            if let Some(pb) = parse_february_dir_line(line) {
+                return Some(pb);
+            }
+        }
+        None
+    };
+    if let Ok(ws) = project_root() {
+        if let Some(pb) = try_env_file(&ws.join(".env")) {
+            return Some(pb);
+        }
+    }
+    if let Ok(cwd) = std::env::current_dir() {
+        if let Some(pb) = try_env_file(&cwd.join(".env")) {
+            return Some(pb);
+        }
+    }
+    if let Ok(exe) = std::env::current_exe() {
+        let mut dir = exe.parent().map(PathBuf::from).unwrap_or_default();
+        for _ in 0..15 {
+            if dir.as_os_str().is_empty() {
+                break;
+            }
+            if let Some(pb) = try_env_file(&dir.join(".env")) {
+                return Some(pb);
+            }
+            if let Some(p) = dir.parent() {
+                dir = p.to_path_buf();
+            } else {
+                break;
+            }
+        }
+    }
+    None
+}
+
+/// List all subdirectories of the configured projects root. Used by Projects page Local repos card.
+/// No filter by name—every folder is included. Path from data file or FEBRUARY_DIR (env or .env); else parent of project root.
 #[tauri::command]
 fn list_february_folders() -> Result<Vec<String>, String> {
     let mut candidates: Vec<PathBuf> = vec![];
 
-    if let Ok(ref p) = std::env::var("FEBRUARY_DIR") {
-        let pb = PathBuf::from(p);
-        let pb_canon = pb.canonicalize().ok().unwrap_or(pb.clone());
-        if pb_canon.is_dir() && !candidates.iter().any(|c| c == &pb_canon) {
+    if let Some(pb) = resolve_february_dir() {
+        let pb_canon = pb.canonicalize().ok().unwrap_or(pb);
+        if pb_canon.is_dir() {
             candidates.push(pb_canon);
         }
     }
 
-    let home_dir = std::env::var("HOME")
-        .ok()
-        .map(PathBuf::from)
-        .or_else(|| std::env::var("USERPROFILE").ok().map(PathBuf::from));
-    if let Some(home) = home_dir {
-        let docs_feb = home.join("Documents").join("February");
-        let docs_feb_canon = docs_feb.canonicalize().ok().unwrap_or(docs_feb.clone());
-        if docs_feb_canon.is_dir() && !candidates.iter().any(|c| c == &docs_feb_canon) {
-            candidates.push(docs_feb_canon);
-        }
-    }
-
-    if let Ok(ws) = project_root() {
-        if let Some(parent) = ws.parent() {
-            let parent_buf = parent.to_path_buf();
-            let canonical_parent = parent_buf.canonicalize().ok().unwrap_or(parent_buf);
-            if canonical_parent.is_dir() && !candidates.iter().any(|c| c == &canonical_parent) {
-                candidates.push(canonical_parent);
+    if candidates.is_empty() {
+        if let Ok(ws) = project_root() {
+            if let Some(parent) = ws.parent() {
+                let parent_buf = parent.to_path_buf();
+                let canonical_parent = parent_buf.canonicalize().ok().unwrap_or(parent_buf);
+                if canonical_parent.is_dir() && !candidates.iter().any(|c| c == &canonical_parent) {
+                    candidates.push(canonical_parent);
+                }
             }
         }
     }
@@ -1250,6 +1582,13 @@ pub fn run() {
             git_commit,
             analyze_project_for_tickets,
             get_all_projects,
+            list_projects,
+            get_project,
+            create_project,
+            update_project,
+            delete_project,
+            get_project_resolved,
+            get_project_export,
             list_february_folders,
             get_active_projects,
             get_prompts,

@@ -9,7 +9,7 @@ import { TitleWithIcon } from "@/components/atoms/headers/TitleWithIcon";
 import { LocalProjectListItem } from "@/components/atoms/list-items/LocalProjectListItem";
 
 /**
- * Lists all folders in Documents/February so the user can create a project from a path
+ * Lists all folders in the configured projects root so the user can create a project from a path
  * without having to find or type it. Uses Tauri list_february_folders or /api/data/february-folders.
  */
 export function LocalReposSection() {
@@ -17,21 +17,30 @@ export function LocalReposSection() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const load = () => {
-      if (isTauri) {
+    const done = () => setLoading(false);
+    const apply = (paths: string[]) => setLocalPaths(Array.isArray(paths) ? paths : []);
+
+    const fetchFromApi = () =>
+      fetch("/api/data/february-folders")
+        .then((r) => (r.ok ? r.json() : { folders: [] }))
+        .then((data) => Array.isArray(data.folders) ? data.folders : [] as string[])
+        .catch(() => [] as string[]);
+
+    if (isTauri) {
+      fetchFromApi().then((folders) => {
+        if (folders.length > 0) {
+          apply(folders);
+          done();
+          return;
+        }
         invoke<string[]>("list_february_folders")
-          .then((paths) => setLocalPaths(Array.isArray(paths) ? paths : []))
-          .catch(() => setLocalPaths([]))
-          .finally(() => setLoading(false));
-      } else {
-        fetch("/api/data/february-folders")
-          .then((r) => (r.ok ? r.json() : { folders: [] }))
-          .then((data) => setLocalPaths(Array.isArray(data.folders) ? data.folders : []))
-          .catch(() => setLocalPaths([]))
-          .finally(() => setLoading(false));
-      }
-    };
-    load();
+          .then((paths) => apply(paths ?? []))
+          .catch(() => apply([]))
+          .finally(done);
+      });
+    } else {
+      fetchFromApi().then(apply).finally(done);
+    }
   }, []);
 
   if (loading) {
@@ -41,7 +50,7 @@ export function LocalReposSection() {
           <TitleWithIcon icon={FolderOpen} title="Local repos" className="text-lg" />
         </h2>
         <p className="text-sm text-muted-foreground">
-          Folders in <code className="text-xs bg-muted px-1 rounded">Documents/February</code>. Create a project from one to avoid typing the path.
+          Folders in the configured projects directory. Create a project from one to avoid typing the path.
         </p>
         <div className="py-8 text-center text-muted-foreground text-sm">Loading…</div>
       </section>
@@ -55,12 +64,12 @@ export function LocalReposSection() {
           <TitleWithIcon icon={FolderOpen} title="Local repos" className="text-lg" />
         </h2>
         <p className="text-sm text-muted-foreground">
-          Folders in <code className="text-xs bg-muted px-1 rounded">Documents/February</code>.
+          Folders in the configured projects directory.
         </p>
         <EmptyState
           icon={FolderOpen}
-          message="No February folders found"
-          description="No subfolders in Documents/February, or the app cannot read that path. Run from the Tauri desktop app for local paths."
+          message="No project folders found"
+          description="No subfolders in the configured projects directory, or the app cannot read that path. Set data/february-dir.txt or FEBRUARY_DIR, or run from the Tauri desktop app."
         />
       </section>
     );
@@ -72,9 +81,9 @@ export function LocalReposSection() {
         <TitleWithIcon icon={FolderOpen} title="Local repos" className="text-lg" />
       </h2>
       <p className="text-sm text-muted-foreground">
-        Folders in <code className="text-xs bg-muted px-1 rounded">Documents/February</code>. Create a project from one to avoid typing the path.
+        All {localPaths.length} folders in the configured projects directory. Create a project from one to avoid typing the path.
       </p>
-      <ScrollArea className="rounded-md border bg-muted/30 max-h-[480px]">
+      <ScrollArea className="rounded-md border bg-muted/30 max-h-[520px]">
         <ul className="p-2 space-y-0.5">
           {localPaths.map((path, i) => (
             <LocalProjectListItem key={i} path={path} />
