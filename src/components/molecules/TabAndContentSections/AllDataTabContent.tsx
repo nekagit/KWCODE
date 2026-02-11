@@ -13,6 +13,8 @@ import { PromptsDisplayList } from "@/components/molecules/Displays/PromptsDispl
 import { TicketsDisplayList } from "@/components/molecules/Displays/TicketsDisplayList";
 import { FeaturesDisplayList } from "@/components/molecules/Displays/FeaturesDisplayList";
 import { IdeasDisplayList } from "@/components/molecules/Displays/IdeasDisplayList";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("TabAndContentSections/AllDataTabContent.tsx");
 
 interface AllDataTabContentProps {
   allProjects: string[];
@@ -42,19 +44,19 @@ export function AllDataTabContent({
   ideasLoading,
 }: AllDataTabContentProps) {
   return (
-    <div className="space-y-6">
+    <div className={classes[0]}>
       <div>
-        <h2 className="text-lg font-semibold mb-1">Database</h2>
-        <p className="text-sm text-muted-foreground mb-4">
+        <h2 className={classes[1]}>Database</h2>
+        <p className={classes[2]}>
           Combined view: projects, prompts, tickets, features, ideas, and design. Use this as the big project page.
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className={classes[3]}>
         <Card
           title={
             <>
-              <Folders className="h-5 w-5 text-success/90" />
+              <Folders className={classes[4]} />
               Projects
             </>
           }
@@ -74,7 +76,7 @@ export function AllDataTabContent({
         <Card
           title={
             <>
-              <MessageSquare className="h-5 w-5 text-primary/90" />
+              <MessageSquare className={classes[5]} />
               PromptRecords
             </>
           }
@@ -85,42 +87,42 @@ export function AllDataTabContent({
             selectedPromptIds={selectedPromptRecordIds}
             setSelectedPromptIds={setSelectedPromptRecordIds}
           />
-          <p className="text-xs text-muted-foreground mt-2">Select prompts for Run. Edit on PromptRecords page.</p>
+          <p className={classes[6]}>Select prompts for Run. Edit on PromptRecords page.</p>
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className={classes[3]}>
         <Card
           title={
             <>
-              <TicketIcon className="h-5 w-5 text-warning/90" />
+              <TicketIcon className={classes[8]} />
               Tickets
             </>
           }
           subtitle={`${tickets.length} tickets`}
         >
           <TicketsDisplayList tickets={tickets as TicketRow[]} />
-          <p className="text-xs text-muted-foreground mt-2">Full list on Tickets tab.</p>
+          <p className={classes[6]}>Full list on Tickets tab.</p>
         </Card>
         <Card
           title={
             <>
-              <Layers className="h-5 w-5 text-info/90" />
+              <Layers className={classes[10]} />
               Features
             </>
           }
           subtitle={`${features.length} features (prompts + projects)`}
         >
           <FeaturesDisplayList features={features as Feature[]} />
-          <p className="text-xs text-muted-foreground mt-2">Configure on Feature tab.</p>
+          <p className={classes[6]}>Configure on Feature tab.</p>
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className={classes[3]}>
         <Card
           title={
             <>
-              <Lightbulb className="h-5 w-5 text-warning/90" />
+              <Lightbulb className={classes[8]} />
               Ideas
             </>
           }
@@ -131,13 +133,13 @@ export function AllDataTabContent({
         <Card
           title={
             <>
-              <Palette className="h-5 w-5 text-primary/90" />
+              <Palette className={classes[5]} />
               Design
             </>
           }
           subtitle="Design config and markdown spec"
         >
-          <p className="text-sm text-muted-foreground mb-3">
+          <p className={classes[15]}>
             Configure page layout, colors, typography, and sections. Generate markdown for implementation.
           </p>
           <Button asChild variant="outline" size="sm">

@@ -1,5 +1,7 @@
 import { ArchitectureRecord, ArchitectureCategory } from "@/types/architecture";
 import { MyDefinitionsCard } from "@/components/molecules/CardsAndDisplay/MyDefinitionsCard.tsx";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("TabAndContentSections/MyDefinitionsTabContent.tsx");
 
 interface MyDefinitionsTabContentProps {
   items: ArchitectureRecord[];
@@ -25,7 +27,7 @@ export function MyDefinitionsTabContent({
   handleDelete,
 }: MyDefinitionsTabContentProps) {
   return (
-    <div className="mt-6">
+    <div className={classes[0]}>
       <MyDefinitionsCard
         items={items}
         loading={loading}

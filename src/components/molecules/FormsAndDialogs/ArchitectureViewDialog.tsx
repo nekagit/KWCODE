@@ -6,6 +6,8 @@ import type { ArchitectureRecord, ArchitectureCategory } from "@/types/architect
 import { Dialog } from "@/components/shared/Dialog";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import { ArchitectureDetailsDisplay } from "@/components/atoms/architecture/ArchitectureDetailsDisplay";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("FormsAndDialogs/ArchitectureViewDialog.tsx");
 
 interface ArchitectureViewDialogProps {
   viewOpen: boolean;
@@ -42,11 +44,11 @@ export function ArchitectureViewDialog({
                 openEdit(viewItem);
               }}
             >
-              <Pencil className="h-4 w-4 mr-2" />
+              <Pencil className={classes[0]} />
               Edit
             </Button>
             <Button variant="destructive" onClick={() => handleDelete(viewItem.id)}>
-              <Trash2 className="h-4 w-4 mr-2" />
+              <Trash2 className={classes[0]} />
               Delete
             </Button>
           </ButtonGroup>

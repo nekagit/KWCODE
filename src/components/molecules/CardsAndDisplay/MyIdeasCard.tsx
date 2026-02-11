@@ -10,6 +10,8 @@ import { Card } from "@/components/shared/Card";
 import { EmptyState, LoadingState } from "@/components/shared/EmptyState";
 import { IdeaListItem } from "@/components/atoms/list-items/IdeaListItem";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("CardsAndDisplay/MyIdeasCard.tsx");
 
 interface IdeaCategoryLabels {
   saas: string;
@@ -82,7 +84,7 @@ export function MyIdeasCard({
       footerButtons={
         <ButtonGroup alignment="right">
           <Button onClick={openCreate}>
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className={classes[0]} />
             Add new idea
           </Button>
         </ButtonGroup>
@@ -94,15 +96,15 @@ export function MyIdeasCard({
         <EmptyState
           message="No ideas yet."
           action={
-            <Button variant="outline" className="mt-4" onClick={openCreate}>
-              <Plus className="h-4 w-4 mr-2" />
+            <Button variant="outline" className={classes[1]} onClick={openCreate}>
+              <Plus className={classes[0]} />
               Add new idea
             </Button>
           }
         />
       ) : (
-        <ScrollArea className="h-[calc(100vh-20rem)] pr-4">
-          <ul className="space-y-3">
+        <ScrollArea className={classes[3]}>
+          <ul className={classes[4]}>
             {myIdeas.map((idea) => (
               <IdeaListItem
                 key={idea.id}

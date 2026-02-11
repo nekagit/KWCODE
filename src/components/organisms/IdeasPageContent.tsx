@@ -8,7 +8,10 @@ import { MyIdeasCard } from "@/components/molecules/CardsAndDisplay/MyIdeasCard"
 import { IdeaFormDialog } from "@/components/molecules/FormsAndDialogs/IdeaFormDialog";
 import { AiGeneratedIdeasCard } from "@/components/molecules/CardsAndDisplay/AiGeneratedIdeasCard";
 import { ThreeTabResourcePageContent } from "@/components/organisms/ThreeTabResourcePageContent";
+import { getOrganismClasses } from "./organism-classes";
 import { IdeaCategory, IdeaRecord } from "@/types/idea";
+
+const c = getOrganismClasses("IdeasPageContent.tsx");
 
 type TemplateIdea = { title: string; description: string; category: IdeaCategory };
 
@@ -192,7 +195,7 @@ export function IdeasPageContent() {
   const config = {
     title: "Business ideas",
     description: "SaaS, IaaS, PaaS, websites, webapps, webshops — templates, AI-generated, or your own.",
-    icon: <Lightbulb className="text-warning/90" />,
+    icon: <Lightbulb className={c["0"]} />,
     tabLabels: ["Templates", "AI generated", "My ideas"] as [string, string, string],
   };
 

@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { PageHeader } from "@/components/molecules/LayoutAndNavigation/PageHeader";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("LayoutAndNavigation/PageWithHeader.tsx");
 
 interface PageWithHeaderProps {
   title: string | React.ReactNode;
@@ -19,12 +21,12 @@ export function PageWithHeader({
   children,
 }: PageWithHeaderProps) {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2">
+    <div className={classes[0]}>
+      <div className={classes[1]}>
         {backLink && (
           <Button variant="ghost" size="icon" asChild>
             <Link href={backLink}>
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className={classes[2]} />
             </Link>
           </Button>
         )}

@@ -15,6 +15,8 @@ import { FeatureFilterSelect } from "@/components/atoms/forms/FeatureFilterSelec
 import { FeatureQueueActions } from "@/components/atoms/buttons/FeatureQueueActions";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { FeatureListItem } from "@/components/atoms/list-items/FeatureListItem";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("CardsAndDisplay/FeatureManagementCard.tsx");
 
 interface FeatureManagementCardProps {
   features: Feature[];
@@ -113,7 +115,7 @@ export function FeatureManagementCard({
               ? "Feature"
               : `Feature ${featureProjectFilter ? `(${filteredFeatures.length} of ${features.length})` : `(${features.length})`}`
           }
-          className="text-lg"
+          className={classes[0]}
           iconClassName="text-info/90"
         />
       }
@@ -135,7 +137,7 @@ export function FeatureManagementCard({
           },
         ]}
       />
-      <div className="flex items-center gap-2 flex-wrap mt-4">
+      <div className={classes[1]}>
         <FeatureFilterSelect
           projectsList={projectsList}
           featureProjectFilter={featureProjectFilter}
@@ -143,7 +145,7 @@ export function FeatureManagementCard({
         />
         {features.length > 0 && (
           <Button type="button" variant="destructive" size="sm" onClick={deleteAllFeatures}>
-            <Trash2 className="h-4 w-4 mr-1" />
+            <Trash2 className={classes[2]} />
             Delete all
           </Button>
         )}
@@ -154,8 +156,8 @@ export function FeatureManagementCard({
           onClearQueue={clearFeatureQueue}
         />
       </div>
-      <ScrollArea className="min-h-[280px] h-[60vh] rounded-md border p-3 mt-4">
-        <div className="space-y-2">
+      <ScrollArea className={classes[3]}>
+        <div className={classes[4]}>
           {filteredFeatures.length === 0 ? (
             <EmptyState
               message={featureProjectFilter ? "No features in this project" : "No features yet"}

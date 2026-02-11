@@ -3,6 +3,8 @@
 import { useRef, useEffect } from "react";
 import { Card } from "@/components/shared/Card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("TabAndContentSections/LogTabContent.tsx");
 
 interface LogTabContentProps {
   displayLogLines: string[];
@@ -32,14 +34,14 @@ export function LogTabContent({
           : "Select a run from the top-right to view its output, or start a run from Feature or PromptRecords."
       }
     >
-      <ScrollArea className="h-[400px] rounded border bg-muted/30 p-3 font-mono text-sm">
+      <ScrollArea className={classes[0]}>
         {displayLogLines.length === 0 && !running ? (
-          <p className="text-muted-foreground">
+          <p className={classes[1]}>
             No output yet. Run a feature or start from the PromptRecords page, then open running terminals (top-right) to view.
           </p>
         ) : (
           displayLogLines.map((line, i) => (
-            <div key={i} className="whitespace-pre-wrap break-all">
+            <div key={i} className={classes[2]}>
               {line}
             </div>
           ))

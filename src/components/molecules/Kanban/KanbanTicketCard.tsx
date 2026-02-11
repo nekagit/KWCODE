@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Layers, ArrowRight, Archive, RotateCcw } from "lucide-react";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import type { ParsedTicket } from "@/lib/todos-kanban";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("Kanban/KanbanTicketCard.tsx");
 
 interface KanbanTicketCardProps {
   ticket: ParsedTicket;
@@ -26,24 +28,24 @@ export const KanbanTicketCard: React.FC<KanbanTicketCardProps> = ({
 }) => (
   <Card
     key={ticket.id}
-    className={`w-fit min-w-[200px] max-w-[240px] bg-muted/20 p-4 ${featureBorderClass ?? "border-2 border-border"}`}
+    className={classes[13]}
   >
-    <div className="pb-2">
-      <h4 className="text-sm font-semibold flex items-center justify-between gap-2">
-        <span className="truncate">{ticket.title}</span>
-        <Badge variant="secondary" className="shrink-0 text-xs">
+    <div className={classes[0]}>
+      <h4 className={classes[1]}>
+        <span className={classes[2]}>{ticket.title}</span>
+        <Badge variant="secondary" className={classes[3]}>
           {ticket.priority}
         </Badge>
       </h4>
-      <p className="line-clamp-2 text-xs text-muted-foreground">
+      <p className={classes[4]}>
         {ticket.description}
       </p>
     </div>
-    <div className="flex flex-wrap items-center gap-2 pt-0">
+    <div className={classes[5]}>
       {ticket.featureName && (
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Layers className="h-3 w-3" />
-          <Badge variant="outline" className="text-xs">
+        <div className={classes[6]}>
+          <Layers className={classes[7]} />
+          <Badge variant="outline" className={classes[8]}>
             {ticket.featureName}
           </Badge>
         </div>
@@ -57,7 +59,7 @@ export const KanbanTicketCard: React.FC<KanbanTicketCardProps> = ({
               onClick={() => onArchive(ticket.id)}
               title="Archive"
             >
-              <Archive className="h-3 w-3" />
+              <Archive className={classes[7]} />
             </Button>
             <Button
               size="sm"
@@ -65,7 +67,7 @@ export const KanbanTicketCard: React.FC<KanbanTicketCardProps> = ({
               onClick={() => onRedo(ticket.id)}
               title="Redo"
             >
-              <RotateCcw className="h-3 w-3" />
+              <RotateCcw className={classes[7]} />
             </Button>
           </>
         ) : (
@@ -76,11 +78,11 @@ export const KanbanTicketCard: React.FC<KanbanTicketCardProps> = ({
               onClick={() => onMarkDone(ticket.id)}
               title="Implement"
             >
-              <CheckCircle2 className="h-3 w-3" />
+              <CheckCircle2 className={classes[7]} />
             </Button>
             <Button variant="outline" size="sm" asChild>
               <Link href={`/tickets/${ticket.id}?projectId=${projectId}`} title="Open ticket">
-                <ArrowRight className="h-3 w-3" />
+                <ArrowRight className={classes[7]} />
               </Link>
             </Button>
           </>

@@ -4,6 +4,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/shared/Card";
 import { CuratedPracticeListItem } from "@/components/atoms/list-items/CuratedPracticeListItem";
 import { TEST_BEST_PRACTICES_LIST } from "@/data/test-best-practices";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("CardsAndDisplay/CuratedPracticesCard.tsx");
 
 export function CuratedPracticesCard() {
   return (
@@ -12,12 +14,12 @@ export function CuratedPracticesCard() {
       subtitle={
         <>
           Reference list for writing and reviewing tests. See also{" "}
-          <code className="rounded bg-muted px-1">.cursor/test-best-practices.md</code>.
+          <code className={classes[0]}>.cursor/test-best-practices.md</code>.
         </>
       }
     >
-      <ScrollArea className="h-[280px] pr-4">
-        <ul className="space-y-2">
+      <ScrollArea className={classes[1]}>
+        <ul className={classes[2]}>
           {TEST_BEST_PRACTICES_LIST.map((item, i) => (
             <CuratedPracticeListItem key={i} practice={item} />
           ))}

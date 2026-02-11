@@ -5,6 +5,8 @@ import { Card } from "@/components/shared/Card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { TEST_TEMPLATES } from "@/data/test-templates";
 import { TestTemplateListItem } from "@/components/atoms/list-items/TestTemplateListItem";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("ListsAndTables/TestTemplateList.tsx");
 
 interface TestTemplateListProps {
   copiedId: string | null;
@@ -17,8 +19,8 @@ export function TestTemplateList({ copiedId, setCopiedId }: TestTemplateListProp
       title="Test templates"
       subtitle="Copy a prompt to use with your AI assistant or Cursor to generate tests. Edit as needed for your stack."
     >
-      <ScrollArea className="h-[calc(100vh-22rem)] pr-4">
-        <ul className="space-y-3">
+      <ScrollArea className={classes[0]}>
+        <ul className={classes[1]}>
           {TEST_TEMPLATES.map((t) => (
             <TestTemplateListItem
               key={t.id}

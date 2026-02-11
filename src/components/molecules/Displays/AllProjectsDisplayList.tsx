@@ -2,6 +2,8 @@ import React from 'react';
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("Displays/AllProjectsDisplayList.tsx");
 
 interface AllProjectsDisplayListProps {
   allProjects: string[];
@@ -15,16 +17,16 @@ export const AllProjectsDisplayList: React.FC<AllProjectsDisplayListProps> = ({
   toggleProject,
 }) => {
   return (
-    <ScrollArea className="h-[200px] rounded border p-2">
-      <div className="space-y-1">
+    <ScrollArea className={classes[0]}>
+      <div className={classes[1]}>
         {allProjects.map((path) => {
           const name = path.split("/").pop() ?? path;
           const active = activeProjects.includes(path);
           return (
-            <div key={path} className="flex items-center gap-2 text-sm">
+            <div key={path} className={classes[2]}>
               <Checkbox checked={active} onCheckedChange={() => toggleProject(path)} />
-              <span className="truncate font-mono" title={path}>{name}</span>
-              {active && <Badge variant="secondary" className="text-xs">active</Badge>}
+              <span className={classes[3]} title={path}>{name}</span>
+              {active && <Badge variant="secondary" className={classes[4]}>active</Badge>}
             </div>
           );
         })}

@@ -7,8 +7,11 @@ import {
   applyUITheme,
   type UIThemeId,
 } from "@/data/ui-theme-templates";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
 import { useUITheme } from "@/context/ui-theme";
 import { ThemePreviewCard } from "@/components/molecules/CardsAndDisplay/ThemePreviewCard.tsx";
+
+const classes = getClasses("UtilitiesAndHelpers/ThemeSelector.tsx");
 
 interface ThemeSelectorProps {
   onThemeSelect: (id: UIThemeId) => void;
@@ -17,7 +20,7 @@ interface ThemeSelectorProps {
 
 export function ThemeSelector({ onThemeSelect, effectiveTheme }: ThemeSelectorProps) {
   return (
-    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    <div className={classes[0]}>
       {UI_THEME_TEMPLATES.map((theme) => (
         <ThemePreviewCard
           key={theme.id}

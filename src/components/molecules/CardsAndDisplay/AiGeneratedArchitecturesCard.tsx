@@ -10,6 +10,8 @@ import { LoadingState } from "@/components/shared/EmptyState";
 import { AiGeneratorInput } from "@/components/atoms/inputs/AiGeneratorInput";
 import { AiArchitectureListItem } from "@/components/atoms/list-items/AiArchitectureListItem";
 import type { ArchitectureRecord, ArchitectureCategory } from "@/types/architecture";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("CardsAndDisplay/AiGeneratedArchitecturesCard.tsx");
 
 type AiResult = ArchitectureRecord;
 
@@ -50,7 +52,7 @@ export function AiGeneratedArchitecturesCard({ CATEGORY_LABELS, addFromAi }: AiG
 
   return (
     <Card
-      title={<TitleWithIcon icon={Sparkles} title="AI generated" className="text-lg" iconClassName="text-primary/90" />}
+      title={<TitleWithIcon icon={Sparkles} title="AI generated" className={classes[0]} iconClassName="text-primary/90" />}
       subtitle="Enter a topic or scenario; we&apos;ll suggest architecture definitions you can add to My definitions."
     >
       <AiGeneratorInput
@@ -62,8 +64,8 @@ export function AiGeneratedArchitecturesCard({ CATEGORY_LABELS, addFromAi }: AiG
       {aiLoading ? (
         <LoadingState />
       ) : aiResults.length > 0 && (
-        <ScrollArea className="h-[400px] pr-4 mt-4">
-          <ul className="space-y-3">
+        <ScrollArea className={classes[1]}>
+          <ul className={classes[2]}>
             {aiResults.map((item, i) => (
               <AiArchitectureListItem
                 key={item.id ?? i}

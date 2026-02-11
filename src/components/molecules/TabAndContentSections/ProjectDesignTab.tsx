@@ -8,6 +8,8 @@ import type { Project } from "@/types/project";
 import { ProjectCategoryHeader } from "@/components/shared/ProjectCategoryHeader";
 import { ProjectDesignListItem } from "@/components/atoms/list-items/ProjectDesignListItem";
 import { GridContainer } from "@/components/shared/GridContainer";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("TabAndContentSections/ProjectDesignTab.tsx");
 
 interface ProjectDesignTabProps {
   project: Project;
@@ -19,22 +21,22 @@ export function ProjectDesignTab({
   projectId,
 }: ProjectDesignTabProps) {
   return (
-    <div className="mt-4 space-y-6">
+    <div className={classes[0]}>
       <ProjectCategoryHeader
         title="Design"
-        icon={<Palette className="h-6 w-6 text-primary/90" />}
+        icon={<Palette className={classes[1]} />}
         project={project}
       />
 
       {project.designIds?.length === 0 ? (
         <EmptyState
-          icon={<Palette className="h-6 w-6 text-primary/90" />}
+          icon={<Palette className={classes[1]} />}
           title="No designs yet"
           description="Create a design to define the look and feel of your project."
           action={
             <Button asChild>
               <Link href={`/design?projectId=${projectId}`}>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className={classes[3]} />
                 New design
               </Link>
             </Button>

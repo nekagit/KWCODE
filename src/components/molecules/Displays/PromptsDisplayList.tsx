@@ -2,6 +2,8 @@ import React from 'react';
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { PromptRecord } from "@/types/prompt";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("Displays/PromptsDisplayList.tsx");
 
 interface PromptsDisplayListProps {
   prompts: PromptRecord[];
@@ -15,10 +17,10 @@ export const PromptsDisplayList: React.FC<PromptsDisplayListProps> = ({
   setSelectedPromptIds,
 }) => {
   return (
-    <ScrollArea className="h-[200px] rounded border p-2">
-      <div className="space-y-1 text-sm">
+    <ScrollArea className={classes[0]}>
+      <div className={classes[1]}>
         {prompts.map((p) => (
-          <div key={p.id} className="flex items-center gap-2">
+          <div key={p.id} className={classes[2]}>
             <Checkbox
               checked={selectedPromptIds.includes(p.id)}
               onCheckedChange={(c) =>
@@ -26,7 +28,7 @@ export const PromptsDisplayList: React.FC<PromptsDisplayListProps> = ({
                   prev.includes(p.id) ? prev.filter((id: number) => id !== p.id) : [...prev, p.id]
                 )}
             />
-            <span className="truncate">{p.title || `#${p.id}`}</span>
+            <span className={classes[3]}>{p.title || `#${p.id}`}</span>
           </div>
         ))}
       </div>

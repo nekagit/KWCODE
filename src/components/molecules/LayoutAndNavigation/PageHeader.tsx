@@ -1,4 +1,6 @@
 import React from 'react';
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("LayoutAndNavigation/PageHeader.tsx");
 
 interface PageHeaderProps {
   title: string | React.ReactNode;
@@ -10,11 +12,11 @@ interface PageHeaderProps {
 export const PageHeader: React.FC<PageHeaderProps> = ({ title, description, subtitle, icon }) => {
   const desc = description ?? subtitle;
   return (
-    <div className="flex items-center space-x-2">
-      {icon && <div className="text-primary/90">{icon}</div>}
-      <div className="flex flex-col space-y-2">
-        {typeof title === 'string' ? <h1 className="text-3xl font-bold tracking-tight">{title}</h1> : title}
-        {desc && <p className="text-muted-foreground">{desc}</p>}
+    <div className={classes[0]}>
+      {icon && <div className={classes[1]}>{icon}</div>}
+      <div className={classes[2]}>
+        {typeof title === 'string' ? <h1 className={classes[3]}>{title}</h1> : title}
+        {desc && <p className={classes[4]}>{desc}</p>}
       </div>
     </div>
   );

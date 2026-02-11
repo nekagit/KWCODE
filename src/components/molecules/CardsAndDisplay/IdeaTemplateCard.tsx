@@ -4,6 +4,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/shared/Card";
 import { IdeaTemplateListItem } from "@/components/atoms/list-items/IdeaTemplateListItem"; // Updated import
 import type { IdeaCategory } from "@/types/idea";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("CardsAndDisplay/IdeaTemplateCard.tsx");
 
 interface IdeaTemplateCardProps {
   TEMPLATE_IDEAS: { title: string; description: string; category: IdeaCategory; practices?: string; scenarios?: string }[];
@@ -21,8 +23,8 @@ export function IdeaTemplateCard({
       title="Template ideas"
       subtitle="Pre-written ideas you can add to &quot;My ideas&quot; and edit."
     >
-      <ScrollArea className="h-[calc(100vh-20rem)] pr-4">
-        <ul className="space-y-3">
+      <ScrollArea className={classes[0]}>
+        <ul className={classes[1]}>
           {TEMPLATE_IDEAS.map((idea, i) => (
             <IdeaTemplateListItem
               key={i}

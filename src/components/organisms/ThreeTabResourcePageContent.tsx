@@ -3,6 +3,9 @@
 import React from "react";
 import { PageHeader } from "@/components/molecules/LayoutAndNavigation/PageHeader";
 import { ThreeTabLayout } from "@/components/molecules/LayoutAndNavigation/ThreeTabLayout";
+import { getOrganismClasses } from "./organism-classes";
+
+const c = getOrganismClasses("ThreeTabResourcePageContent.tsx");
 
 export interface ThreeTabResourceConfig {
   title: string;
@@ -30,7 +33,7 @@ export function ThreeTabResourcePageContent<TResource>({
   renderDialogs,
 }: ThreeTabResourcePageContentProps<TResource>) {
   return (
-    <div className="space-y-6">
+    <div className={c["0"]}>
       <PageHeader
         title={config.title}
         description={config.description}

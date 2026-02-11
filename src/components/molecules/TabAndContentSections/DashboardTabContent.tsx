@@ -4,6 +4,8 @@ import type { Feature } from "@/types/project";
 import type { TicketRow } from "@/types/ticket";
 import type { RunInfo } from "@/types/run";
 import { useRouter } from "next/navigation";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("TabAndContentSections/DashboardTabContent.tsx");
 
 interface DashboardTabContentProps {
   features: Feature[];
@@ -29,7 +31,7 @@ export function DashboardTabContent({
   router,
 }: DashboardTabContentProps) {
   return (
-    <div className="mt-0 space-y-6">
+    <div className={classes[0]}>
 
       <TicketBoard tickets={tickets} updateTicket={updateTicket} deleteTicket={deleteTicket} />
     </div>

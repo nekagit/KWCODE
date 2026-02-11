@@ -5,6 +5,8 @@ import type { Ticket, TicketStatus } from "@/types/ticket";
 import { Card } from "@/components/shared/Card";
 import { PriorityBadge } from "@/components/atoms/badges/PriorityBadge";
 import { DeleteButton } from "@/components/atoms/buttons/DeleteButton";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("CardsAndDisplay/TicketCard.tsx");
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -22,7 +24,7 @@ export function TicketCard({
       title={ticket.title}
       subtitle={ticket.description || undefined}
       footerButtons={
-        <div className="flex items-center justify-between w-full">
+        <div className={classes[0]}>
           <PriorityBadge priority={ticket.priority} />
           <Tooltip>
             <TooltipTrigger asChild>
@@ -40,7 +42,7 @@ export function TicketCard({
         e.dataTransfer.setData("application/x-ticket-id", ticket.id);
         e.dataTransfer.effectAllowed = "move";
       }}
-      className="rounded-md border bg-card p-3 cursor-grab active:cursor-grabbing hover:shadow-sm transition-shadow"
+      className={classes[1]}
     ><></></Card>
   );
 }

@@ -5,7 +5,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
 import { type TicketStatus } from "@/types/ticket";
+
+const classes = getClasses("FormsAndDialogs/TicketStatusUpdater.tsx");
 
 type TicketStatusUpdaterProps = {
   status: TicketStatus;
@@ -21,7 +24,7 @@ export function TicketStatusUpdater({
       value={status}
       onValueChange={(value) => onStatusChange(value as TicketStatus)}
     >
-      <SelectTrigger className="w-[120px] h-8 text-xs">
+      <SelectTrigger className={classes[0]}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

@@ -5,6 +5,8 @@ import { MessageSquare } from "lucide-react";
 import { Card } from "@/components/shared/Card";
 import { TitleWithIcon } from "@/components/atoms/headers/TitleWithIcon";
 import { PromptCheckboxItem } from "@/components/atoms/checkbox-groups/PromptCheckboxItem";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("CardsAndDisplay/PromptRecordSelectionCard.tsx");
 
 interface PromptRecordSelectionCardProps {
   prompts: { id: number; title: string }[];
@@ -25,15 +27,15 @@ export function PromptRecordSelectionCard({
 
   return (
     <Card
-      title={<TitleWithIcon icon={MessageSquare} title="PromptRecords" className="text-lg" iconClassName="text-primary/90" />}
+      title={<TitleWithIcon icon={MessageSquare} title="PromptRecords" className={classes[0]} iconClassName="text-primary/90" />}
       subtitle={
         <>
-          Select at least one prompt to run (script <code className="text-xs">-p ID ...</code>).
+          Select at least one prompt to run (script <code className={classes[1]}>-p ID ...</code>).
         </>
       }
     >
-      <ScrollArea className="h-[180px] rounded-md border p-3">
-        <div className="flex flex-wrap gap-2">
+      <ScrollArea className={classes[2]}>
+        <div className={classes[3]}>
           {prompts.map((p) => (
             <PromptCheckboxItem
               key={p.id}

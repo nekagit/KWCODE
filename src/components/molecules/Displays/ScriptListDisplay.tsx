@@ -1,6 +1,8 @@
 import React from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FileCode } from "lucide-react";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("Displays/ScriptListDisplay.tsx");
 
 interface ScriptListDisplayProps {
   dataScripts: { name: string; path: string }[];
@@ -18,18 +20,18 @@ export const ScriptListDisplay: React.FC<ScriptListDisplayProps> = ({
   dataSelectedPath,
 }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div className="space-y-2">
-        <p className="text-xs text-muted-foreground">script/</p>
-        <ScrollArea className="h-32 rounded border bg-muted/30 p-2">
+    <div className={classes[0]}>
+      <div className={classes[1]}>
+        <p className={classes[2]}>script/</p>
+        <ScrollArea className={classes[3]}>
           {dataScripts.length === 0 && !dataLoading ? (
-            <p className="text-muted-foreground text-sm">No scripts found.</p>
+            <p className={classes[4]}>No scripts found.</p>
           ) : (
             dataScripts.map((f) => (
               <button
                 key={f.path}
                 type="button"
-                className="block w-full text-left text-sm px-2 py-1.5 rounded hover:bg-muted truncate"
+                className={classes[5]}
                 onClick={() => readFileContent(f.path)}
               >
                 {f.name}
@@ -38,13 +40,13 @@ export const ScriptListDisplay: React.FC<ScriptListDisplayProps> = ({
           )}
         </ScrollArea>
       </div>
-      <div className="space-y-2">
-        <p className="text-xs text-muted-foreground">Content</p>
-        <ScrollArea className="h-48 rounded border bg-muted/30 p-3 font-mono text-xs whitespace-pre-wrap break-all">
+      <div className={classes[1]}>
+        <p className={classes[2]}>Content</p>
+        <ScrollArea className={classes[8]}>
           {dataSelectedPath && dataFileContent != null ? (
             dataFileContent
           ) : (
-            <span className="text-muted-foreground">Click a script to view content.</span>
+            <span className={classes[9]}>Click a script to view content.</span>
           )}
         </ScrollArea>
       </div>

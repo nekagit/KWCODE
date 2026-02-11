@@ -6,6 +6,8 @@ import { Folders } from "lucide-react";
 import { Card } from "@/components/shared/Card";
 import { TitleWithIcon } from "@/components/atoms/headers/TitleWithIcon";
 import { ProjectCheckboxItem } from "@/components/atoms/checkbox-groups/ProjectCheckboxItem";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("CardsAndDisplay/ProjectSelectionCard.tsx");
 
 interface ProjectSelectionCardProps {
   allProjects: string[];
@@ -20,11 +22,11 @@ export function ProjectSelectionCard({
 }: ProjectSelectionCardProps) {
   return (
     <Card
-      title={<TitleWithIcon icon={Folders} title="Projects" className="text-lg" iconClassName="text-success/90" />}
+      title={<TitleWithIcon icon={Folders} title="Projects" className={classes[0]} iconClassName="text-success/90" />}
       subtitle="Select at least one project to run the script against (Dashboard → Projects also saves this list)."
     >
-      <ScrollArea className="h-[180px] rounded-md border p-3">
-        <div className="flex flex-wrap gap-2">
+      <ScrollArea className={classes[1]}>
+        <div className={classes[2]}>
           {allProjects.map((path) => (
             <ProjectCheckboxItem
               key={path}

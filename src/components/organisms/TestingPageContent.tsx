@@ -14,7 +14,9 @@ import { TestingTemplatesTabContent } from "@/components/molecules/TabAndContent
 import { TestingPracticesTabContent } from "@/components/molecules/TabAndContentSections/TestingPracticesTabContent";
 import { TestingPhasesTabContent } from "@/components/molecules/TabAndContentSections/TestingPhasesTabContent";
 import { TestingCoverageTabContent } from "@/components/molecules/TabAndContentSections/TestingCoverageTabContent";
+import { getOrganismClasses } from "./organism-classes";
 
+const c = getOrganismClasses("TestingPageContent.tsx");
 const MY_TEST_PRACTICES_KEY = "testing-my-practices";
 
 export function TestingPageContent() {
@@ -77,34 +79,34 @@ export function TestingPageContent() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className={c["0"]}>
       <PageHeader
         title="Testing"
         description="AI test templates, best practices, automation phases, and test coverage dashboard."
-        icon={<TestTube2 className="h-6 w-6 text-info/90" />}
+        icon={<TestTube2 className={c["1"]} />}
       />
 
-      <Tabs defaultValue="templates" className="w-full">
-        <TabsList className="grid w-full max-w-2xl grid-cols-4">
-          <TabsTrigger value="templates" className="flex items-center gap-2">
-            <FileCode className="h-4 w-4" />
+      <Tabs defaultValue="templates" className={c["2"]}>
+        <TabsList className={c["3"]}>
+          <TabsTrigger value="templates" className={c["4"]}>
+            <FileCode className={c["5"]} />
             Templates
           </TabsTrigger>
-          <TabsTrigger value="practices" className="flex items-center gap-2">
-            <BookOpen className="h-4 w-4" />
+          <TabsTrigger value="practices" className={c["6"]}>
+            <BookOpen className={c["7"]} />
             Best practices
           </TabsTrigger>
-          <TabsTrigger value="phases" className="flex items-center gap-2">
-            <ListChecks className="h-4 w-4" />
+          <TabsTrigger value="phases" className={c["8"]}>
+            <ListChecks className={c["9"]} />
             Phases
           </TabsTrigger>
-          <TabsTrigger value="coverage" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
+          <TabsTrigger value="coverage" className={c["10"]}>
+            <BarChart3 className={c["11"]} />
             Coverage
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="templates" className="mt-6 space-y-6">
+        <TabsContent value="templates" className={c["12"]}>
           <TestingTemplatesTabContent
             aiPromptRecord={aiPromptRecord}
             setAiPromptRecord={setAiPromptRecord}
@@ -116,18 +118,18 @@ export function TestingPageContent() {
           />
         </TabsContent>
 
-        <TabsContent value="practices" className="mt-6 space-y-6">
+        <TabsContent value="practices" className={c["13"]}>
           <TestingPracticesTabContent
             myPractices={myPractices}
             saveMyPractices={saveMyPractices}
           />
         </TabsContent>
 
-        <TabsContent value="phases" className="mt-6">
+        <TabsContent value="phases" className={c["14"]}>
           <TestingPhasesTabContent />
         </TabsContent>
 
-        <TabsContent value="coverage" className="mt-6">
+        <TabsContent value="coverage" className={c["15"]}>
           <TestingCoverageTabContent />
         </TabsContent>
       </Tabs>

@@ -15,6 +15,8 @@ import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import { Dialog } from "@/components/shared/Dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("TabAndContentSections/ProjectGitTab.tsx");
 
 interface ProjectGitTabProps {
   project: Project;
@@ -148,15 +150,15 @@ export function ProjectGitTab({ project, projectId }: ProjectGitTabProps) {
 
   if (!repoPath) {
     return (
-      <div className="mt-4 space-y-6">
-        <div className="flex items-center gap-2 text-lg font-semibold">
-          <FolderGit2 className="h-6 w-6" />
+      <div className={classes[0]}>
+        <div className={classes[1]}>
+          <FolderGit2 className={classes[2]} />
           Git
         </div>
-        <Card className="p-6">
-          <p className="text-muted-foreground">
+        <Card className={classes[3]}>
+          <p className={classes[4]}>
             No repository path set. Set a repo path in{" "}
-            <Link href={`/projects/${projectId}/edit`} className="text-primary underline">
+            <Link href={`/projects/${projectId}/edit`} className={classes[5]}>
               Edit project
             </Link>{" "}
             to see git status, branches, and commits here.
@@ -168,13 +170,13 @@ export function ProjectGitTab({ project, projectId }: ProjectGitTabProps) {
 
   if (!isTauri) {
     return (
-      <div className="mt-4 space-y-6">
-        <div className="flex items-center gap-2 text-lg font-semibold">
-          <FolderGit2 className="h-6 w-6" />
+      <div className={classes[0]}>
+        <div className={classes[1]}>
+          <FolderGit2 className={classes[2]} />
           Git
         </div>
-        <Card className="p-6">
-          <p className="text-muted-foreground">
+        <Card className={classes[3]}>
+          <p className={classes[4]}>
             Git info (status, branches, remotes, commits) is only available when running the desktop app (Tauri).
           </p>
         </Card>
@@ -184,27 +186,27 @@ export function ProjectGitTab({ project, projectId }: ProjectGitTabProps) {
 
   if (loading && !gitInfo) {
     return (
-      <div className="mt-4 flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className={classes[11]}>
+        <Loader2 className={classes[12]} />
       </div>
     );
   }
 
   if (error && !gitInfo) {
     return (
-      <div className="mt-4 space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-lg font-semibold">
-            <FolderGit2 className="h-6 w-6" />
+      <div className={classes[0]}>
+        <div className={classes[14]}>
+          <div className={classes[1]}>
+            <FolderGit2 className={classes[2]} />
             Git
           </div>
           <Button variant="outline" size="sm" onClick={fetchGitInfo} disabled={loading}>
-            <RefreshCw className="h-4 w-4 mr-2" />
+            <RefreshCw className={classes[17]} />
             Refresh
           </Button>
         </div>
-        <Card className="p-6 border-destructive/50">
-          <p className="text-destructive">{error}</p>
+        <Card className={classes[18]}>
+          <p className={classes[19]}>{error}</p>
         </Card>
       </div>
     );
@@ -217,7 +219,7 @@ export function ProjectGitTab({ project, projectId }: ProjectGitTabProps) {
   const busy = loading || actionLoading !== null;
 
   return (
-    <div className="mt-4 space-y-6">
+    <div className={classes[0]}>
       <Dialog
         title="Commit"
         isOpen={commitDialogOpen}
@@ -233,14 +235,14 @@ export function ProjectGitTab({ project, projectId }: ProjectGitTabProps) {
               disabled={!commitMessage.trim() || actionLoading === "commit"}
             >
               {actionLoading === "commit" ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <Loader2 className={classes[21]} />
               ) : null}
               Commit
             </Button>
           </>
         }
       >
-        <div className="space-y-2">
+        <div className={classes[22]}>
           <Label htmlFor="commit-message">Commit message</Label>
           <Input
             id="commit-message"
@@ -256,7 +258,7 @@ export function ProjectGitTab({ project, projectId }: ProjectGitTabProps) {
           />
         </div>
       </Dialog>
-      <div className="flex items-center justify-end">
+      <div className={classes[23]}>
         <ButtonGroup alignment="right">
           <Button
             variant="outline"
@@ -266,11 +268,11 @@ export function ProjectGitTab({ project, projectId }: ProjectGitTabProps) {
             title="Pull"
           >
             {actionLoading === "pull" ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className={classes[24]} />
             ) : (
-              <GitPullRequest className="h-4 w-4" />
+              <GitPullRequest className={classes[25]} />
             )}
-            <span className="sr-only sm:not-sr-only sm:ml-2">Pull</span>
+            <span className={classes[26]}>Pull</span>
           </Button>
           <Button
             variant="outline"
@@ -280,11 +282,11 @@ export function ProjectGitTab({ project, projectId }: ProjectGitTabProps) {
             title="Commit"
           >
             {actionLoading === "commit" ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className={classes[24]} />
             ) : (
-              <GitCommit className="h-4 w-4" />
+              <GitCommit className={classes[25]} />
             )}
-            <span className="sr-only sm:not-sr-only sm:ml-2">Commit</span>
+            <span className={classes[26]}>Commit</span>
           </Button>
           <Button
             variant="outline"
@@ -294,51 +296,51 @@ export function ProjectGitTab({ project, projectId }: ProjectGitTabProps) {
             title="Push"
           >
             {actionLoading === "push" ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className={classes[24]} />
             ) : (
-              <Upload className="h-4 w-4" />
+              <Upload className={classes[25]} />
             )}
-            <span className="sr-only sm:not-sr-only sm:ml-2">Push</span>
+            <span className={classes[26]}>Push</span>
           </Button>
           <Button variant="outline" size="sm" onClick={fetchGitInfo} disabled={busy}>
             {loading ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              <Loader2 className={classes[33]} />
             ) : (
-              <RefreshCw className="h-4 w-4 mr-2" />
+              <RefreshCw className={classes[17]} />
             )}
             Refresh
           </Button>
         </ButtonGroup>
       </div>
 
-      <div className="space-y-4">
+      <div className={classes[35]}>
         {/* Focus: repo path + current branch */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Card className="p-4">
-            <h3 className="text-xs font-medium text-muted-foreground mb-2">Repository path</h3>
-            <div className="rounded-md border border-border bg-muted/30 p-3">
-              <p className="font-mono text-xs break-all line-clamp-2">{project.repoPath}</p>
+        <div className={classes[36]}>
+          <Card className={classes[37]}>
+            <h3 className={classes[38]}>Repository path</h3>
+            <div className={classes[39]}>
+              <p className={classes[40]}>{project.repoPath}</p>
             </div>
           </Card>
           {gitInfo?.current_branch && (
-            <Card className="p-4">
-              <h3 className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-2">
-                <GitBranch className="h-3.5 w-3.5" />
+            <Card className={classes[37]}>
+              <h3 className={classes[42]}>
+                <GitBranch className={classes[43]} />
                 Current branch
               </h3>
-              <div className="rounded-md border border-border bg-muted/30 p-3">
-                <p className="font-mono text-xs text-primary font-medium truncate">{gitInfo.current_branch}</p>
+              <div className={classes[39]}>
+                <p className={classes[45]}>{gitInfo.current_branch}</p>
               </div>
             </Card>
           )}
         </div>
 
         {/* Changed files — primary focus */}
-        <Card className="p-4">
-          <h3 className="text-sm font-medium text-muted-foreground mb-2">Changed files</h3>
+        <Card className={classes[37]}>
+          <h3 className={classes[47]}>Changed files</h3>
           {changedFiles.length > 0 ? (
-            <ScrollArea className="h-[200px] w-full rounded-md border border-border p-0">
-              <ul className="font-mono text-xs">
+            <ScrollArea className={classes[48]}>
+              <ul className={classes[49]}>
                 {changedFiles.map((line, i) => {
                   const status = line.slice(0, 2);
                   const path = line.slice(2).trim() || line;
@@ -346,65 +348,65 @@ export function ProjectGitTab({ project, projectId }: ProjectGitTabProps) {
                   return (
                     <li
                       key={i}
-                      className="flex items-center gap-2 border-b border-border px-3 py-2 last:border-b-0"
+                      className={classes[50]}
                     >
                       <span
-                        className={`shrink-0 w-8 rounded px-1.5 py-0.5 text-center tabular-nums ${className}`}
+                        className={classes[84]}
                         title={status === "??" ? "Untracked" : status.includes("M") ? "Modified" : status.includes("D") ? "Deleted" : status.includes("A") ? "Added" : status.includes("R") ? "Renamed" : status.includes("U") ? "Unmerged" : "Changed"}
                       >
                         {label}
                       </span>
-                      <span className="break-all text-foreground">{path}</span>
+                      <span className={classes[51]}>{path}</span>
                     </li>
                   );
                 })}
               </ul>
             </ScrollArea>
           ) : (
-            <div className="rounded-md border border-border bg-muted/30 p-4 text-center text-sm text-muted-foreground">
+            <div className={classes[52]}>
               No changed files
             </div>
           )}
         </Card>
 
         {/* Additional information — collapsible */}
-        <Accordion type="single" collapsible className="w-full">
-          <AccordionItem value="additional-info" className="border rounded-md">
-            <AccordionTrigger className="px-4 py-3 hover:no-underline">
+        <Accordion type="single" collapsible className={classes[53]}>
+          <AccordionItem value="additional-info" className={classes[54]}>
+            <AccordionTrigger className={classes[55]}>
               Additional information
             </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+            <AccordionContent className={classes[56]}>
+              <div className={classes[57]}>
                 {/* Status */}
                 {branchLine && (
-                  <Card className="p-4">
-                    <h3 className="text-xs font-medium text-muted-foreground mb-2">Status</h3>
-                    <div className="rounded-md border border-border bg-muted/30 p-3">
-                      <p className="font-mono text-xs whitespace-pre-wrap break-all line-clamp-2">{branchLine}</p>
+                  <Card className={classes[37]}>
+                    <h3 className={classes[38]}>Status</h3>
+                    <div className={classes[39]}>
+                      <p className={classes[61]}>{branchLine}</p>
                     </div>
                   </Card>
                 )}
 
                 {/* HEAD ref */}
                 {gitInfo?.head_ref && (
-                  <Card className="p-4">
-                    <h3 className="text-xs font-medium text-muted-foreground mb-2">HEAD</h3>
-                    <div className="rounded-md border border-border bg-muted/30 p-3">
-                      <p className="font-mono text-xs break-all line-clamp-2">{gitInfo.head_ref}</p>
+                  <Card className={classes[37]}>
+                    <h3 className={classes[38]}>HEAD</h3>
+                    <div className={classes[39]}>
+                      <p className={classes[40]}>{gitInfo.head_ref}</p>
                     </div>
                   </Card>
                 )}
 
                 {/* Branches */}
                 {gitInfo?.branches && gitInfo.branches.length > 0 && (
-                  <Card className="p-4">
-                    <h3 className="text-xs font-medium text-muted-foreground mb-2">Branches</h3>
-                    <ScrollArea className="h-[120px] w-full rounded-md border border-border p-0">
-                      <ul className="font-mono text-xs">
+                  <Card className={classes[37]}>
+                    <h3 className={classes[38]}>Branches</h3>
+                    <ScrollArea className={classes[68]}>
+                      <ul className={classes[49]}>
                         {gitInfo.branches.map((b, i) => (
                           <li
                             key={i}
-                            className="border-b border-border px-3 py-2 last:border-b-0 truncate"
+                            className={classes[70]}
                           >
                             {b}
                           </li>
@@ -416,24 +418,24 @@ export function ProjectGitTab({ project, projectId }: ProjectGitTabProps) {
 
                 {/* Remotes */}
                 {gitInfo?.remotes?.trim() && (
-                  <Card className="p-4">
-                    <h3 className="text-xs font-medium text-muted-foreground mb-2">Remotes</h3>
-                    <div className="rounded-md border border-border bg-muted/30 p-3">
-                      <pre className="font-mono text-xs whitespace-pre-wrap break-all line-clamp-4">{gitInfo.remotes}</pre>
+                  <Card className={classes[37]}>
+                    <h3 className={classes[38]}>Remotes</h3>
+                    <div className={classes[39]}>
+                      <pre className={classes[74]}>{gitInfo.remotes}</pre>
                     </div>
                   </Card>
                 )}
 
                 {/* Last 30 commits */}
                 {gitInfo?.last_commits && gitInfo.last_commits.length > 0 && (
-                  <Card className="p-4 sm:col-span-2">
-                    <h3 className="text-xs font-medium text-muted-foreground mb-2">Last 30 commits</h3>
-                    <ScrollArea className="h-[160px] w-full rounded-md border border-border p-0">
-                      <ul className="font-mono text-xs">
+                  <Card className={classes[75]}>
+                    <h3 className={classes[38]}>Last 30 commits</h3>
+                    <ScrollArea className={classes[77]}>
+                      <ul className={classes[49]}>
                         {gitInfo.last_commits.map((c, i) => (
                           <li
                             key={i}
-                            className="border-b border-border px-3 py-2 last:border-b-0 break-all"
+                            className={classes[79]}
                           >
                             {c}
                           </li>
@@ -445,10 +447,10 @@ export function ProjectGitTab({ project, projectId }: ProjectGitTabProps) {
 
                 {/* Config preview */}
                 {gitInfo?.config_preview?.trim() && (
-                  <Card className="p-4">
-                    <h3 className="text-xs font-medium text-muted-foreground mb-2">.git/config (preview)</h3>
-                    <ScrollArea className="h-[120px] w-full rounded-md border border-border p-3">
-                      <pre className="font-mono text-xs whitespace-pre-wrap break-all text-muted-foreground">
+                  <Card className={classes[37]}>
+                    <h3 className={classes[38]}>.git/config (preview)</h3>
+                    <ScrollArea className={classes[82]}>
+                      <pre className={classes[83]}>
                         {gitInfo.config_preview}
                       </pre>
                     </ScrollArea>

@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Sparkles } from "lucide-react";
 import { TitleWithIcon } from "@/components/atoms/headers/TitleWithIcon";
 import { AiGeneratorInput } from "@/components/atoms/inputs/AiGeneratorInput";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("CardsAndDisplay/TestGenerationCard.tsx");
 
 interface TestGenerationCardProps {
   aiPromptRecord: string;
@@ -23,7 +25,7 @@ export function TestGenerationCard({
 }: TestGenerationCardProps) {
   return (
     <Card
-      title={<TitleWithIcon icon={Sparkles} title="AI test generation" className="text-lg" iconClassName="text-primary/90" />}
+      title={<TitleWithIcon icon={Sparkles} title="AI test generation" className={classes[0]} iconClassName="text-primary/90" />}
       subtitle="Describe what you want to test; we generate a short test plan or outline (uses prompt API)."
     >
       <AiGeneratorInput
@@ -34,7 +36,7 @@ export function TestGenerationCard({
         loading={aiLoading}
       />
       {aiResult && (
-        <div className="rounded-lg border bg-muted/30 p-4 text-sm whitespace-pre-wrap mt-4">
+        <div className={classes[1]}>
           {aiResult}
         </div>
       )}

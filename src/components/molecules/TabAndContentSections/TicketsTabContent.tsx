@@ -1,5 +1,7 @@
 import { TicketManagement } from "@/components/organisms/TicketManagement";
 import type { Ticket, TicketRow } from "@/types/ticket";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("TabAndContentSections/TicketsTabContent.tsx");
 
 interface TicketsTabContentProps {
   tickets: TicketRow[];
@@ -17,7 +19,7 @@ export function TicketsTabContent({
   setError,
 }: TicketsTabContentProps) {
   return (
-    <div className="mt-0">
+    <div className={classes[0]}>
       <TicketManagement
         tickets={tickets}
         saveTickets={saveTickets}

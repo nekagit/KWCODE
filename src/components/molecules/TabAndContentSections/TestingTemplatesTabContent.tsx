@@ -1,5 +1,7 @@
 import { TestGenerationCard } from "@/components/molecules/CardsAndDisplay/TestGenerationCard.tsx";
 import { TestTemplateList } from "@/components/molecules/ListsAndTables/TestTemplateList.tsx";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("TabAndContentSections/TestingTemplatesTabContent.tsx");
 
 interface TestingTemplatesTabContentProps {
   aiPromptRecord: string;
@@ -21,7 +23,7 @@ export function TestingTemplatesTabContent({
   setCopiedId,
 }: TestingTemplatesTabContentProps) {
   return (
-    <div className="mt-6 space-y-6">
+    <div className={classes[0]}>
       <TestGenerationCard
         aiPromptRecord={aiPromptRecord}
         setAiPromptRecord={setAiPromptRecord}

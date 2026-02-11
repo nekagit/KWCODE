@@ -5,7 +5,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
 import { type Table } from "@tanstack/react-table";
+
+const classes = getClasses("ControlsAndButtons/RowsPerPageSelector.tsx");
 
 type RowsPerPageSelectorProps<TData> = {
   table: Table<TData>;
@@ -13,13 +16,13 @@ type RowsPerPageSelectorProps<TData> = {
 
 export function RowsPerPageSelector<TData>({ table }: RowsPerPageSelectorProps<TData>) {
   return (
-    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+    <div className={classes[0]}>
       <span>Rows per page</span>
       <Select
         value={String(table.getState().pagination.pageSize)}
         onValueChange={(v) => table.setPageSize(Number(v))}
       >
-        <SelectTrigger className="h-8 w-[70px]">
+        <SelectTrigger className={classes[1]}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

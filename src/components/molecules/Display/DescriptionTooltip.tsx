@@ -1,4 +1,6 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("Display/DescriptionTooltip.tsx");
 
 type DescriptionTooltipProps = {
   description: string;
@@ -9,19 +11,19 @@ export function DescriptionTooltip({
   description,
   maxLength = 60,
 }: DescriptionTooltipProps) {
-  if (!description) return <span className="text-muted-foreground text-xs">—</span>;
+  if (!description) return <span className={classes[0]}>—</span>;
 
   const truncated = description.length > maxLength ? description.slice(0, maxLength) + "…" : description;
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className="text-muted-foreground text-xs max-w-[240px] truncate block cursor-default">
+        <span className={classes[1]}>
           {truncated}
         </span>
       </TooltipTrigger>
-      <TooltipContent side="bottom" className="max-w-sm">
-        <p className="whitespace-pre-wrap text-xs">{description}</p>
+      <TooltipContent side="bottom" className={classes[2]}>
+        <p className={classes[3]}>{description}</p>
       </TooltipContent>
     </Tooltip>
   );

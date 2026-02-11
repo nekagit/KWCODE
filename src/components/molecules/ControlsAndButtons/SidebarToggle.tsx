@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("ControlsAndButtons/SidebarToggle.tsx");
 
 type SidebarToggleProps = {
   sidebarCollapsed: boolean;
@@ -22,9 +24,9 @@ export function SidebarToggle({
           aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {sidebarCollapsed ? (
-            <PanelLeftOpen className="h-4 w-4" />
+            <PanelLeftOpen className={classes[0]} />
           ) : (
-            <PanelLeftClose className="h-4 w-4" />
+            <PanelLeftClose className={classes[0]} />
           )}
         </Button>
       </TooltipTrigger>

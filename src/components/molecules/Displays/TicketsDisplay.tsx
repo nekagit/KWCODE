@@ -1,6 +1,8 @@
 import React from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { TicketRow } from "@/types/ticket";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("Displays/TicketsDisplay.tsx");
 
 interface TicketsDisplayProps {
   tickets: TicketRow[];
@@ -9,8 +11,8 @@ interface TicketsDisplayProps {
 export const TicketsDisplay: React.FC<TicketsDisplayProps> = ({ tickets }) => {
   return (
     <div>
-      <p className="text-xs text-muted-foreground mb-2">tickets ({tickets.length})</p>
-      <ScrollArea className="h-48 rounded border bg-muted/30 p-3 font-mono text-xs whitespace-pre-wrap">
+      <p className={classes[0]}>tickets ({tickets.length})</p>
+      <ScrollArea className={classes[1]}>
         <pre>{JSON.stringify(tickets, null, 2)}</pre>
       </ScrollArea>
     </div>

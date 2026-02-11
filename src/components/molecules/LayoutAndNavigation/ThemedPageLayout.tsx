@@ -4,6 +4,8 @@ import React from "react";
 import { Card } from "@/components/shared/Card";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { AlertCircle } from "lucide-react";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("LayoutAndNavigation/ThemedPageLayout.tsx");
 
 interface ThemedPageLayoutProps {
   title: string;
@@ -23,12 +25,12 @@ export function ThemedPageLayout({
   alertVariant = "destructive",
 }: ThemedPageLayoutProps) {
   return (
-    <div className="space-y-6">
+    <div className={classes[0]}>
       {error && (
         <ErrorDisplay
           message={error}
           variant={alertVariant === "destructive" ? "destructive" : "default"}
-          icon={<AlertCircle className="h-4 w-4" />}
+          icon={<AlertCircle className={classes[1]} />}
         />
       )}
       <Card

@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { type Table } from "@tanstack/react-table";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("ControlsAndButtons/PaginationControls.tsx");
 
 type PaginationControlsProps<TData> = {
   table: Table<TData>;
@@ -8,27 +10,27 @@ type PaginationControlsProps<TData> = {
 
 export function PaginationControls<TData>({ table }: PaginationControlsProps<TData>) {
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-sm text-muted-foreground">
+    <div className={classes[0]}>
+      <span className={classes[1]}>
         Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
       </span>
       <Button
         variant="outline"
         size="sm"
-        className="h-8 w-8 p-0"
+        className={classes[2]}
         onClick={() => table.previousPage()}
         disabled={!table.getCanPreviousPage()}
       >
-        <ChevronLeft className="h-4 w-4" />
+        <ChevronLeft className={classes[3]} />
       </Button>
       <Button
         variant="outline"
         size="sm"
-        className="h-8 w-8 p-0"
+        className={classes[2]}
         onClick={() => table.nextPage()}
         disabled={!table.getCanNextPage()}
       >
-        <ChevronRight className="h-4 w-4" />
+        <ChevronRight className={classes[3]} />
       </Button>
     </div>
   );

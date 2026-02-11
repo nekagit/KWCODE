@@ -1,5 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { type Table } from "@tanstack/react-table";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("FormsAndDialogs/TicketSearchInput.tsx");
 
 type TicketSearchInputProps<TData> = {
   table: Table<TData>;
@@ -13,14 +15,14 @@ export function TicketSearchInput<TData>({
   setGlobalFilter,
 }: TicketSearchInputProps<TData>) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className={classes[0]}>
       <Input
         placeholder="Search tickets (title, description…)"
         value={globalFilter ?? ""}
         onChange={(e) => setGlobalFilter(e.target.value)}
-        className="max-w-sm h-9"
+        className={classes[1]}
       />
-      <span className="text-sm text-muted-foreground">
+      <span className={classes[2]}>
         {table.getFilteredRowModel().rows.length} of {table.getRowCount()} ticket{table.getRowCount() !== 1 ? "s" : ""}
       </span>
     </div>

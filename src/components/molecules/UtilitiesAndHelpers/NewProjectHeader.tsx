@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { PageHeader } from "@/components/molecules/LayoutAndNavigation/PageHeader";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("UtilitiesAndHelpers/NewProjectHeader.tsx");
 
 interface NewProjectHeaderProps {
   title: string;
@@ -10,11 +12,11 @@ interface NewProjectHeaderProps {
 
 export function NewProjectHeader({ title, description }: NewProjectHeaderProps) {
   return (
-    <div className="space-y-6 max-w-xl">
-      <div className="flex items-center gap-2">
+    <div className={classes[0]}>
+      <div className={classes[1]}>
         <Button variant="ghost" size="icon" asChild>
           <Link href="/projects">
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className={classes[2]} />
           </Link>
         </Button>
         <PageHeader title={title} subtitle={description} />

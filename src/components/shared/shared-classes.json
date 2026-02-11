@@ -30,7 +30,8 @@
   },
   "ButtonComponent": {
     "iconLeft": "h-4 w-4 mr-2 transition-transform group-hover:scale-110 duration-200",
-    "iconRight": "h-4 w-4 ml-2 transition-transform group-hover:scale-110 duration-200"
+    "iconRight": "h-4 w-4 ml-2 transition-transform group-hover:scale-110 duration-200",
+    "purple": "bg-gradient-to-r from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700 shadow-purple-500/25"
   },
   "Card": {
     "root": "bg-gradient-to-br from-white to-gray-50/30 dark:from-gray-900 dark:to-gray-800/50 backdrop-blur-sm shadow-xl shadow-gray-200/50 dark:shadow-none rounded-2xl p-8 mb-6 border border-gray-200/60 dark:border-gray-700/60 hover:shadow-2xl hover:shadow-gray-300/50 dark:hover:shadow-none transition-all duration-300 hover:-translate-y-1",

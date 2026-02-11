@@ -6,6 +6,8 @@ import { Folders, Plus, Sparkles, Loader2 } from "lucide-react";
 import { Card } from "@/components/shared/Card";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("CardsAndDisplay/NoProjectsFoundCard.tsx");
 
 interface NoProjectsFoundCardProps {
   seeding: boolean;
@@ -25,12 +27,12 @@ export function NoProjectsFoundCard({
             disabled={seeding}
             onClick={seedTemplateProject}
           >
-            {seeding ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
+            {seeding ? <Loader2 className={classes[0]} /> : <Sparkles className={classes[1]} />}
             Seed template project
           </Button>
           <Button asChild>
             <Link href="/projects/new">
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className={classes[1]} />
               New project
             </Link>
           </Button>

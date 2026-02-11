@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import { ProjectCheckboxListItem } from "@/components/atoms/list-items/ProjectCheckboxListItem";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("TabAndContentSections/ProjectsTabContent.tsx");
 
 interface ProjectsTabContentProps {
   allProjects: string[];
@@ -31,8 +33,8 @@ export function ProjectsTabContent({
         </ButtonGroup>
       }
     >
-      <ScrollArea className="h-[280px] rounded-md border p-3">
-        <div className="space-y-2">
+      <ScrollArea className={classes[0]}>
+        <div className={classes[1]}>
           {allProjects.map((path) => {
             const name = path.split("/").pop() ?? path;
             return (

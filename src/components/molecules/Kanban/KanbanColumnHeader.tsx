@@ -5,7 +5,10 @@ import {
   CheckCircle2,
   TestTube2,
 } from "lucide-react";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
 import type { KanbanColumn } from "@/lib/todos-kanban";
+
+const classes = getClasses("Kanban/KanbanColumnHeader.tsx");
 
 interface KanbanColumnHeaderProps {
   columnId: string;
@@ -16,12 +19,12 @@ export const KanbanColumnHeader: React.FC<KanbanColumnHeaderProps> = ({
   columnId,
   column,
 }) => (
-  <div className="pb-4">
-    <h3 className="text-base font-semibold flex items-center gap-2">
-      {columnId === "backlog" && <ListTodo className="h-4 w-4" />}
-      {columnId === "in_progress" && <Play className="h-4 w-4" />}
-      {columnId === "done" && <CheckCircle2 className="h-4 w-4" />}
-      {columnId === "testing" && <TestTube2 className="h-4 w-4" />}
+  <div className={classes[0]}>
+    <h3 className={classes[1]}>
+      {columnId === "backlog" && <ListTodo className={classes[2]} />}
+      {columnId === "in_progress" && <Play className={classes[2]} />}
+      {columnId === "done" && <CheckCircle2 className={classes[2]} />}
+      {columnId === "testing" && <TestTube2 className={classes[2]} />}
       {column.name} ({column.items.length})
     </h3>
   </div>

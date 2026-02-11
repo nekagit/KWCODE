@@ -5,6 +5,9 @@ import { Card } from "@/components/shared/Card";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { AlertCircle } from "lucide-react";
 import { PageWithHeader } from "@/components/molecules/LayoutAndNavigation/PageWithHeader";
+import { getOrganismClasses } from "./organism-classes";
+
+const c = getOrganismClasses("SingleContentPage.tsx");
 
 export type SingleContentPageLayout = "simple" | "card";
 
@@ -31,7 +34,7 @@ export function SingleContentPage({
 }: SingleContentPageProps) {
   if (layout === "simple") {
     return (
-      <div className={className ?? "space-y-6"}>
+      <div className={className ?? c["1"]}>
         <PageWithHeader title={title} description={description} icon={icon} backLink={backLink}>
           {children}
         </PageWithHeader>
@@ -40,12 +43,12 @@ export function SingleContentPage({
   }
 
   return (
-    <div className={className ?? "space-y-6"}>
+    <div className={className ?? c["1"]}>
       {error && (
         <ErrorDisplay
           message={error}
           variant="destructive"
-          icon={<AlertCircle className="h-4 w-4" />}
+          icon={<AlertCircle className={c["0"]} />}
         />
       )}
       <Card

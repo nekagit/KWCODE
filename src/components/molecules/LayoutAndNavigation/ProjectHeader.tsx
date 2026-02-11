@@ -5,6 +5,8 @@ import { Trash2 } from "lucide-react";
 import type { Project } from "@/types/project";
 import { deleteProject } from "@/lib/api-projects";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("LayoutAndNavigation/ProjectHeader.tsx");
 
 interface ProjectHeaderProps {
   project: Project;
@@ -13,7 +15,7 @@ interface ProjectHeaderProps {
 
 export function ProjectHeader({ project, projectId }: ProjectHeaderProps) {
   return (
-    <div className="flex items-center justify-end">
+    <div className={classes[0]}>
       <ButtonGroup alignment="right">
         <Button
           variant="destructive"
@@ -24,7 +26,7 @@ export function ProjectHeader({ project, projectId }: ProjectHeaderProps) {
             }
           }}
         >
-          <Trash2 className="h-4 w-4 mr-2" />
+          <Trash2 className={classes[1]} />
           Delete
         </Button>
       </ButtonGroup>

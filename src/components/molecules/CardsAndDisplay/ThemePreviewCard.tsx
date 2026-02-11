@@ -6,6 +6,8 @@ import ThemeNameHeader from "@/components/atoms/headers/ThemeNameHeader";
 import { ThemeColorSwatches } from "@/components/atoms/theme/ThemeColorSwatches";
 import { ThemeIconPreview } from "@/components/atoms/theme/ThemeIconPreview";
 import { ThemeButtonPreview } from "@/components/atoms/theme/ThemeButtonPreview";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("CardsAndDisplay/ThemePreviewCard.tsx");
 
 /** Parse HSL string "H S% L%" or "H S% L% / A" and return lightness 0–100. */
 function parseHslLightness(hsl: string): number {
@@ -62,12 +64,12 @@ export function ThemePreviewCard({
         borderColor: isSelected ? undefined : hsl(v.border),
       }}
     >
-      <div className="px-4 pt-4 pb-2">
+      <div className={classes[0]}>
         <ThemeNameHeader themeName={theme.name} />
       </div>
 
       <div
-        className="px-4 pb-4 space-y-3"
+        className={classes[1]}
         style={{
           background: contentBg,
           color: contentFg,
@@ -92,7 +94,7 @@ export function ThemePreviewCard({
       </div>
 
       <span
-        className="block px-4 py-3 text-[11px] line-clamp-2"
+        className={classes[2]}
         style={{ color: mutedFg, background: mutedBg }}
       >
         {theme.description}

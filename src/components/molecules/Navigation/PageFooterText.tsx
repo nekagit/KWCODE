@@ -1,5 +1,7 @@
 import React from 'react';
 import Link from "next/link";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("Navigation/PageFooterText.tsx");
 
 interface PageFooterTextProps {
   text: string;
@@ -13,9 +15,9 @@ export const PageFooterText: React.FC<PageFooterTextProps> = ({
   linkText,
 }) => {
   return (
-    <p className="text-xs text-muted-foreground">
+    <p className={classes[0]}>
       {text}{" "}
-      <Link href={linkHref} className="underline hover:text-foreground">
+      <Link href={linkHref} className={classes[1]}>
         {linkText}
       </Link>
       .

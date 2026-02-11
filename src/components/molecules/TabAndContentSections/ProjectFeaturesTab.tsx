@@ -8,6 +8,8 @@ import type { Project } from "@/types/project";
 import { ProjectCategoryHeader } from "@/components/shared/ProjectCategoryHeader";
 import { ProjectFeatureListItem } from "@/components/atoms/list-items/ProjectFeatureListItem";
 import { GridContainer } from "@/components/shared/GridContainer";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("TabAndContentSections/ProjectFeaturesTab.tsx");
 
 interface ProjectFeaturesTabProps {
   project: Project;
@@ -19,22 +21,22 @@ export function ProjectFeaturesTab({
   projectId,
 }: ProjectFeaturesTabProps) {
   return (
-    <div className="mt-4 space-y-6">
+    <div className={classes[0]}>
       <ProjectCategoryHeader
         title="Features"
-        icon={<Layers className="h-6 w-6 text-info/90" />}
+        icon={<Layers className={classes[1]} />}
         project={project}
       />
 
       {project.featureIds?.length === 0 ? (
         <EmptyState
-          icon={<Layers className="h-6 w-6 text-info/90" />}
+          icon={<Layers className={classes[1]} />}
           title="No features yet"
           description="Create features to group tickets and prompts for specific functionalities."
           action={
             <Button asChild>
               <Link href={`/feature?projectId=${projectId}`}>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className={classes[3]} />
                 New feature
               </Link>
             </Button>

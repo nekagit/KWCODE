@@ -10,6 +10,9 @@ import { PromptRecordTable } from "@/components/molecules/ListsAndTables/PromptR
 import { PromptRecordFormDialog } from "@/components/molecules/FormsAndDialogs/PromptRecordFormDialog";
 import { GeneratePromptRecordDialog } from "@/components/molecules/FormsAndDialogs/GeneratePromptRecordDialog";
 import { toast } from "sonner"; // Added import for toast, if not already imported elsewhere
+import { getOrganismClasses } from "./organism-classes";
+
+const c = getOrganismClasses("PromptRecordsPageContent.tsx");
 
 type PromptRecordRecord = {
   id: number;
@@ -249,7 +252,7 @@ export function PromptRecordsPageContent() {
   );
 
   return (
-    <div className="space-y-4">
+    <div className={c["0"]}>
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
@@ -257,18 +260,18 @@ export function PromptRecordsPageContent() {
       )}
       <Card>
         <CardHeader>
-          <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className={c["1"]}>
             <div>
-              <CardTitle className="text-base">All prompts data</CardTitle>
-              <CardDescription className="mt-1">
+              <CardTitle className={c["2"]}>All prompts data</CardTitle>
+              <CardDescription className={c["3"]}>
                 Full list of prompts with id, title, category, tags, dates, and content preview.
-                Select in the table for run (script <code className="text-xs">-p ID ...</code>); go
+                Select in the table for run (script <code className={c["4"]}>-p ID ...</code>); go
                 to the{" "}
-                <Link href="/run" className="underline hover:text-foreground">
+                <Link href="/run" className={c["5"]}>
                   Run
                 </Link>{" "}
                 page to set prompts and run. Edit or delete from the table. Configure timing on the{" "}
-                <Link href="/configuration" className="underline hover:text-foreground">
+                <Link href="/configuration" className={c["6"]}>
                   Configuration
                 </Link>{" "}
                 page.
@@ -284,7 +287,7 @@ export function PromptRecordsPageContent() {
         </CardHeader>
         <CardContent>
           {tableLoading ? (
-            <p className="text-sm text-muted-foreground py-4">Loading prompts…</p>
+            <p className={c["7"]}>Loading prompts…</p>
           ) : (
             <PromptRecordTable
               fullPromptRecords={fullPromptRecords}

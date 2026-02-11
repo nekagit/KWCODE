@@ -2,6 +2,9 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { Building2 } from "lucide-react";
+import { getOrganismClasses } from "./organism-classes";
+
+const c = getOrganismClasses("ArchitecturePageContent.tsx");
 import { toast } from "sonner";
 import type { ArchitectureRecord, ArchitectureCategory } from "@/types/architecture";
 import { ArchitectureEditDialog } from "@/components/molecules/FormsAndDialogs/ArchitectureEditDialog";
@@ -217,7 +220,7 @@ export function ArchitecturePageContent() {
   const config = {
     title: "Architecture & best practices",
     description: "Select from templates or generate with AI, then edit and add more input. You cannot create from scratch—only add from templates or AI.",
-    icon: <Building2 className="text-primary/90" />,
+    icon: <Building2 className={c["0"]} />,
     tabLabels: ["Templates", "AI generated", "My definitions"] as [string, string, string],
     tabListClassName: "grid w-full max-w-2xl grid-cols-3",
   };

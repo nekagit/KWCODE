@@ -11,6 +11,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+
+const classes = getClasses("Tables/DataTableLayout.tsx");
 
 type DataTableLayoutProps<TData> = {
   table: ReactTable<TData>;
@@ -56,7 +59,7 @@ export function DataTableLayout<TData>({
             <TableRow>
               <TableCell
                 colSpan={columns.length}
-                className="h-24 text-center text-muted-foreground"
+                className={classes[0]}
               >
                 {emptyMessage}
               </TableCell>

@@ -8,6 +8,8 @@ import type { Project } from "@/types/project";
 import { ProjectCategoryHeader } from "@/components/shared/ProjectCategoryHeader";
 import { ProjectIdeaListItem } from "@/components/atoms/list-items/ProjectIdeaListItem";
 import { GridContainer } from "@/components/shared/GridContainer";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("TabAndContentSections/ProjectIdeasTab.tsx");
 
 interface ProjectIdeasTabProps {
   project: Project;
@@ -19,22 +21,22 @@ export function ProjectIdeasTab({
   projectId,
 }: ProjectIdeasTabProps) {
   return (
-    <div className="mt-4 space-y-6">
+    <div className={classes[0]}>
       <ProjectCategoryHeader
         title="Ideas"
-        icon={<Lightbulb className="h-6 w-6 text-warning/90" />}
+        icon={<Lightbulb className={classes[1]} />}
         project={project}
       />
 
       {project.ideaIds?.length === 0 ? (
         <EmptyState
-          icon={<Lightbulb className="h-6 w-6 text-warning/90" />}
+          icon={<Lightbulb className={classes[1]} />}
           title="No ideas yet"
           description="Generate new ideas or add existing ones to your project."
           action={
             <Button asChild>
               <Link href={`/ideas?projectId=${projectId}`}>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className={classes[3]} />
                 New idea
               </Link>
             </Button>

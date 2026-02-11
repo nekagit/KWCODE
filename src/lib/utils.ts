@@ -5,18 +5,28 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+const FRIENDLY_500 = "Server error loading data";
+
 /** Parse error message from an API response (JSON body or status text). Avoids showing raw JSON or generic "Internal Server Error". */
 export async function getApiErrorMessage(res: Response): Promise<string> {
   const text = await res.text();
   try {
     const j = JSON.parse(text) as { error?: string; detail?: string };
-    if (j?.error && typeof j.error === "string") return j.error;
-    if (j?.detail && typeof j.detail === "string") return j.detail;
+    const msg = (j?.error && typeof j.error === "string" ? j.error : null) ?? (j?.detail && typeof j.detail === "string" ? j.detail : null);
+    if (msg) {
+      // Normalize generic server message so UI never shows "Internal Server Error"
+      if (msg.trim() === "Internal Server Error") return FRIENDLY_500;
+      return msg;
+    }
   } catch {
     // not JSON
   }
-  if (text?.trim()) return text.trim().slice(0, 200);
-  return res.status === 500 ? "Server error loading data" : res.statusText || "Request failed";
+  if (text?.trim()) {
+    const trimmed = text.trim().slice(0, 200);
+    if (trimmed === "Internal Server Error") return FRIENDLY_500;
+    return trimmed;
+  }
+  return res.status === 500 ? FRIENDLY_500 : res.statusText || "Request failed";
 }
 
 /** Pseudo-random 0..1 from index (different primes to avoid column/row patterns). */

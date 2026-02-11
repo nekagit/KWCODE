@@ -1,10 +1,12 @@
 import { RaindropCircle } from "@/components/atoms/visual-effects/RaindropCircle";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("VisualEffects/RainEffect.tsx");
 
 const RAIN_COUNT = 80;
 
 export function RainEffect() {
   return (
-    <div className="kwcode-load-rain absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
+    <div className={classes[0]} aria-hidden>
       {Array.from({ length: RAIN_COUNT }, (_, i) => (
         <RaindropCircle key={i} index={i} />
       ))}

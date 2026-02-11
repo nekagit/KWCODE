@@ -1,15 +1,17 @@
 import { LoadingPulseDot } from "@/components/atoms/visual-effects/LoadingPulseDot";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("Display/KwcodeBranding.tsx");
 
 export function KwcodeBranding() {
   return (
-    <div className="relative z-10 flex flex-col items-center justify-center gap-2 pointer-events-none" aria-label="Loading">
+    <div className={classes[0]} aria-label="Loading">
       <span
-        className="text-4xl font-bold tracking-tight text-white drop-shadow-lg sm:text-5xl"
+        className={classes[1]}
         style={{ fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.02em" }}
       >
         kwcode
       </span>
-      <div className="flex gap-1.5">
+      <div className={classes[2]}>
         {[0, 1, 2].map((i) => (
           <LoadingPulseDot key={i} index={i} />
         ))}

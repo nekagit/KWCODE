@@ -3,7 +3,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { TicketBoardLayout } from "@/components/molecules/LayoutAndNavigation/TicketBoardLayout";
 import { TicketCard } from "@/components/molecules/CardsAndDisplay/TicketCard";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { getOrganismClasses } from "./organism-classes";
 import type { Ticket, TicketStatus } from "@/types/ticket";
+
+const c = getOrganismClasses("TicketBoard.tsx");
 
 interface TicketBoardProps {
   tickets: Ticket[];
@@ -19,7 +22,7 @@ export function TicketBoard({ tickets, updateTicket, deleteTicket }: TicketBoard
       {(["backlog", "in_progress", "done", "blocked"] as const).map((status) => (
         <div
           key={status}
-          className="rounded-lg border bg-muted/20 min-h-[320px] flex flex-col"
+          className={c["0"]}
           onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("ring-2", "ring-primary/30"); }}
           onDragLeave={(e) => { e.currentTarget.classList.remove("ring-2", "ring-primary/30"); }}
           onDrop={(e) => {
@@ -29,16 +32,16 @@ export function TicketBoard({ tickets, updateTicket, deleteTicket }: TicketBoard
             if (id) updateTicket(id, { status });
           }}
         >
-          <div className="px-3 py-2 border-b bg-muted/40 rounded-t-lg flex items-center justify-between gap-2">
-            <Badge variant="secondary" className="capitalize font-medium">
+          <div className={c["1"]}>
+            <Badge variant="secondary" className={c["2"]}>
               {status === "in_progress" ? "In progress" : status}
             </Badge>
-            <span className="text-xs text-muted-foreground">
+            <span className={c["3"]}>
               {tickets.filter((t) => t.status === status).length}
             </span>
           </div>
-          <ScrollArea className="flex-1 p-2">
-            <div className="space-y-2">
+          <ScrollArea className={c["4"]}>
+            <div className={c["5"]}>
               {tickets
                 .filter((t) => t.status === status)
                 .map((t) => (

@@ -12,6 +12,7 @@
     "tauri:build": "node script/tauri-with-local-target.mjs build --bundles app",
     "scaffold:cursor-md": "node script/scaffold-cursor-md.mjs",
     "extract:tailwind-classes": "node script/extract-tailwind-classes.mjs",
+    "extract:tailwind-molecules": "node script/extract-tailwind-molecules.mjs",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },

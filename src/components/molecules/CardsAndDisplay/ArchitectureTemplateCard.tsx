@@ -6,6 +6,8 @@ import { TitleWithIcon } from "@/components/atoms/headers/TitleWithIcon";
 import { ArchitectureTemplateListItem } from "@/components/atoms/list-items/ArchitectureTemplateListItem";
 import type { ArchitectureCategory } from "@/types/architecture";
 import { ARCHITECTURE_TEMPLATES } from "@/data/architecture-templates";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("CardsAndDisplay/ArchitectureTemplateCard.tsx");
 
 interface ArchitectureTemplateCardProps {
   CATEGORY_LABELS: Record<ArchitectureCategory, string>;
@@ -18,8 +20,8 @@ export function ArchitectureTemplateCard({ CATEGORY_LABELS, addFromTemplate }: A
       title="Template architectures"
       subtitle="Pre-defined patterns and best practices. Add any to &quot;My definitions&quot; and edit or add more inputs there."
     >
-      <ScrollArea className="h-[calc(100vh-20rem)] pr-4">
-        <ul className="space-y-3">
+      <ScrollArea className={classes[0]}>
+        <ul className={classes[1]}>
           {ARCHITECTURE_TEMPLATES.map((t, i) => (
             <ArchitectureTemplateListItem
               key={i}

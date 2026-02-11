@@ -8,6 +8,8 @@ import type { Project } from "@/types/project";
 import { ProjectCategoryHeader } from "@/components/shared/ProjectCategoryHeader";
 import { ProjectPromptRecordListItem } from "@/components/atoms/list-items/ProjectPromptListItem";
 import { GridContainer } from "@/components/shared/GridContainer";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("TabAndContentSections/ProjectPromptRecordsTab.tsx");
 
 interface ProjectPromptRecordsTabProps {
   project: Project;
@@ -19,22 +21,22 @@ export function ProjectPromptRecordsTab({
   projectId,
 }: ProjectPromptRecordsTabProps) {
   return (
-    <div className="mt-4 space-y-6">
+    <div className={classes[0]}>
       <ProjectCategoryHeader
         title="Prompts"
-        icon={<MessageSquare className="h-6 w-6 text-primary/90" />}
+        icon={<MessageSquare className={classes[1]} />}
         project={project}
       />
 
       {project.promptIds?.length === 0 ? (
         <EmptyState
-          icon={<MessageSquare className="h-6 w-6 text-primary/90" />}
+          icon={<MessageSquare className={classes[1]} />}
           title="No prompts yet"
           description="Create prompts to guide AI models for code generation, documentation, and more."
           action={
             <Button asChild>
               <Link href={`/prompts?projectId=${projectId}`}>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className={classes[3]} />
                 New prompt
               </Link>
             </Button>

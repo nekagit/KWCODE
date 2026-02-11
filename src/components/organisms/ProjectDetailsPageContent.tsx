@@ -18,6 +18,9 @@ import { ProjectTicketsTab } from "@/components/molecules/TabAndContentSections/
 import { ProjectPromptRecordsTab } from "@/components/molecules/TabAndContentSections/ProjectPromptRecordsTab";
 import { ProjectArchitectureTab } from "@/components/molecules/TabAndContentSections/ProjectArchitectureTab";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { getOrganismClasses } from "./organism-classes";
+
+const c = getOrganismClasses("ProjectDetailsPageContent.tsx");
 
 export function ProjectDetailsPageContent() {
   const params = useParams();
@@ -53,17 +56,17 @@ export function ProjectDetailsPageContent() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary/80" />
+      <div className={c["0"]}>
+        <Loader2 className={c["1"]} />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="space-y-4">
+      <div className={c["2"]}>
         <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4 text-destructive/90" />
+          <AlertCircle className={c["3"]} />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
         <Button onClick={() => setError(null)}>Clear error</Button>
@@ -77,30 +80,30 @@ export function ProjectDetailsPageContent() {
 
   return (
     <ErrorBoundary fallbackTitle="Project detail error">
-      <div className="space-y-6" data-testid="project-detail-page">
+      <div className={c["4"]} data-testid="project-detail-page">
         <ProjectHeader project={project} projectId={projectId} />
 
-        <Tabs defaultValue="todo" className="w-full" data-testid="project-detail-tabs">
-          <TabsList className="mx-auto grid w-full max-w-2xl grid-cols-3" aria-label="Project sections">
-            <TabsTrigger value="git" className="flex items-center gap-2" data-testid="tab-git">
-              <FolderGit2 className="h-4 w-4 text-destructive" />
+        <Tabs defaultValue="todo" className={c["5"]} data-testid="project-detail-tabs">
+          <TabsList className={c["6"]} aria-label="Project sections">
+            <TabsTrigger value="git" className={c["7"]} data-testid="tab-git">
+              <FolderGit2 className={c["8"]} />
               Git & Testing
             </TabsTrigger>
-            <TabsTrigger value="todo" className="flex items-center gap-2" data-testid="tab-todo">
-              <ListTodo className="h-4 w-4 text-info/90" />
+            <TabsTrigger value="todo" className={c["9"]} data-testid="tab-todo">
+              <ListTodo className={c["10"]} />
               Todo
             </TabsTrigger>
-            <TabsTrigger value="setup" className="flex items-center gap-2" data-testid="tab-setup">
-              <Settings className="h-4 w-4 text-success/90" />
+            <TabsTrigger value="setup" className={c["11"]} data-testid="tab-setup">
+              <Settings className={c["12"]} />
               Setup
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="git" className="mt-4">
+          <TabsContent value="git" className={c["13"]}>
             <ProjectGitTab project={project} projectId={projectId} />
           </TabsContent>
 
-          <TabsContent value="todo" className="mt-4 flex min-h-[calc(100vh-14rem)] flex-col gap-6">
+          <TabsContent value="todo" className={c["14"]}>
             <ProjectTicketsTab
               project={project}
               projectId={projectId}
@@ -110,19 +113,19 @@ export function ProjectDetailsPageContent() {
             <ProjectPromptRecordsTab project={project} projectId={projectId} />
           </TabsContent>
 
-          <TabsContent value="setup" className="mt-4 space-y-6">
+          <TabsContent value="setup" className={c["15"]}>
             <Card>
-              <CardContent className="pt-6">
+              <CardContent className={c["16"]}>
                 <ProjectDesignTab project={project} projectId={projectId} />
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="pt-6">
+              <CardContent className={c["17"]}>
                 <ProjectIdeasTab project={project} projectId={projectId} />
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="pt-6">
+              <CardContent className={c["18"]}>
                 <ProjectArchitectureTab project={project} projectId={projectId} />
               </CardContent>
             </Card>

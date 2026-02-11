@@ -4,6 +4,8 @@ import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/shared/Card";
 import { TitleWithIcon } from "@/components/atoms/headers/TitleWithIcon";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("CardsAndDisplay/AiGeneratedIdeasCard.tsx");
 fetch('http://127.0.0.1:7242/ingest/3a8fa5bb-85c1-4305-bdaa-558e16902420',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/components/molecules/CardsAndDisplay/AiGeneratedIdeasCard.tsx:6',message:'TitleWithIcon imported in AiGeneratedIdeasCard',data:{typeofTitleWithIcon:typeof TitleWithIcon},timestamp:Date.now(),hypothesisId:'B'})}).catch(()=>{});
 import { LoadingState } from "@/components/shared/EmptyState";
 import { AiGeneratorInput } from "@/components/atoms/inputs/AiGeneratorInput";
@@ -48,7 +50,7 @@ export function AiGeneratedIdeasCard({ CATEGORY_LABELS, addToMyIdeas }: AiGenera
 
   return (
     <Card
-      title={<TitleWithIcon icon={Sparkles} title="AI generated ideas" className="text-lg" iconClassName="text-primary/90" />}
+      title={<TitleWithIcon icon={Sparkles} title="AI generated ideas" className={classes[0]} iconClassName="text-primary/90" />}
       subtitle="Enter a topic or scenario; we&apos;ll suggest business ideas you can add to My ideas."
     >
       <AiGeneratorInput
@@ -60,8 +62,8 @@ export function AiGeneratedIdeasCard({ CATEGORY_LABELS, addToMyIdeas }: AiGenera
       {aiLoading ? (
         <LoadingState />
       ) : aiResults.length > 0 && (
-        <ScrollArea className="h-[400px] pr-4 mt-4">
-          <ul className="space-y-3">
+        <ScrollArea className={classes[1]}>
+          <ul className={classes[2]}>
             {aiResults.map((item, i) => (
               <AiIdeaListItem
                 key={i}

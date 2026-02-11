@@ -3,6 +3,8 @@ import type { TicketRow } from "@/types/ticket";
 import { FeatureManagementCard } from "@/components/molecules/CardsAndDisplay/FeatureManagementCard";
 import type { RunInfo } from "@/types/run";
 import { useRunState } from "@/context/run-state";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("TabAndContentSections/FeatureTabContent.tsx");
 
 interface FeatureTabContentProps {
   features: Feature[];
@@ -41,7 +43,7 @@ export function FeatureTabContent({
   saveFeatures,
 }: FeatureTabContentProps) {
   return (
-    <div className="mt-0">
+    <div className={classes[0]}>
       <FeatureManagementCard
         features={features}
         tickets={tickets}

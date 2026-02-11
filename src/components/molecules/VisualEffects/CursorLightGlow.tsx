@@ -1,3 +1,5 @@
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("VisualEffects/CursorLightGlow.tsx");
 type CursorLightGlowProps = {
   x: number;
   y: number;
@@ -6,7 +8,7 @@ type CursorLightGlowProps = {
 export function CursorLightGlow({ x, y }: CursorLightGlowProps) {
   return (
     <div
-      className="pointer-events-none absolute inset-0 z-[1]"
+      className={classes[0]}
       aria-hidden
       style={{
         background: `radial-gradient(

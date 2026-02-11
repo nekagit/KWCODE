@@ -8,6 +8,9 @@ import { CursorLightGlow } from "@/components/molecules/VisualEffects/CursorLigh
 import { StarField } from "@/components/molecules/VisualEffects/StarField";
 import { MoonGraphic } from "@/components/molecules/VisualEffects/MoonGraphic";
 import { KwcodeBranding } from "@/components/molecules/Display/KwcodeBranding";
+import { getOrganismClasses } from "./organism-classes";
+
+const c = getOrganismClasses("LoadingScreenPageContent.tsx");
 
 /**
  * Full-page Loading Screen (moon and stars): same look as the root loading overlay,
@@ -26,7 +29,7 @@ export function LoadingScreenPageContent() {
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center z-0"
+      className={c["0"]}
       style={{ background: "#000" }}
       onMouseMove={onMouseMove}
       onMouseLeave={onMouseLeave}
@@ -39,10 +42,10 @@ export function LoadingScreenPageContent() {
 
       <Link
         href="/"
-        className="absolute top-4 left-4 z-[10] flex items-center justify-center w-10 h-10 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+        className={c["1"]}
         aria-label="Go back"
       >
-        <ArrowLeft className="h-5 w-5" />
+        <ArrowLeft className={c["2"]} />
       </Link>
     </div>
   );

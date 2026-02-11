@@ -1,4 +1,6 @@
 import { ChevronDown, ChevronRight, Folder, FolderOpen } from "lucide-react";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("Navigation/FolderTreeItem.tsx");
 
 type FolderTreeItemProps = {
   nodeName: string;
@@ -18,28 +20,28 @@ export function FolderTreeItem({
   const indent = depth * 16;
 
   return (
-    <div className="select-none">
+    <div className={classes[0]}>
       <button
         type="button"
         onClick={() => onToggle(nodePath)}
-        className="flex items-center gap-2 w-full rounded px-2 py-1.5 hover:bg-muted/50 text-left text-sm font-mono min-w-0"
+        className={classes[1]}
         style={{ paddingLeft: 8 + indent }}
       >
-        <span className="shrink-0 text-muted-foreground">
+        <span className={classes[2]}>
           {isExpanded ? (
-            <ChevronDown className="h-4 w-4" />
+            <ChevronDown className={classes[3]} />
           ) : (
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className={classes[3]} />
           )}
         </span>
-        <span className="shrink-0 text-muted-foreground">
+        <span className={classes[2]}>
           {isExpanded ? (
-            <FolderOpen className="h-4 w-4" />
+            <FolderOpen className={classes[3]} />
           ) : (
-            <Folder className="h-4 w-4" />
+            <Folder className={classes[3]} />
           )}
         </span>
-        <span className="truncate" title={nodePath}>
+        <span className={classes[8]} title={nodePath}>
           {nodeName}
         </span>
       </button>

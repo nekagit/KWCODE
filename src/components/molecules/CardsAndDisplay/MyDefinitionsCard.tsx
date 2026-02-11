@@ -7,6 +7,8 @@ import type { ArchitectureRecord, ArchitectureCategory } from "@/types/architect
 import { DefinitionCategorySelect } from "@/components/atoms/forms/DefinitionCategorySelect";
 import { DefinitionListItem } from "@/components/atoms/list-items/DefinitionListItem";
 import { LoadingState, EmptyState } from "@/components/shared/EmptyState";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("CardsAndDisplay/MyDefinitionsCard.tsx");
 
 interface MyDefinitionsCardProps {
   items: ArchitectureRecord[];
@@ -59,8 +61,8 @@ export function MyDefinitionsCard({
           action="Add from Templates or generate with AI, then edit here."
         />
       ) : (
-        <ScrollArea className="h-[calc(100vh-20rem)] pr-4">
-          <ul className="space-y-3">
+        <ScrollArea className={classes[0]}>
+          <ul className={classes[1]}>
             {filteredItems.map((record) => (
               <DefinitionListItem
                 key={record.id}

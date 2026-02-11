@@ -17,8 +17,11 @@ import { DashboardTabContent } from "@/components/molecules/TabAndContentSection
 import { PromptsTabContent } from "@/components/molecules/TabAndContentSections/PromptsTabContent"; // Corrected import
 import { TicketsTabContent } from "@/components/molecules/TabAndContentSections/TicketsTabContent";
 import { FeatureTabContent } from "@/components/molecules/TabAndContentSections/FeatureTabContent";
+import { getOrganismClasses } from "./organism-classes";
 
 import type { Ticket, TicketRow, TicketStatus } from "@/types/ticket";
+
+const c = getOrganismClasses("HomePageContent.tsx");
 import type { Feature } from "@/types/project";
 
 /** Ticket shape from Tauri get_tickets (may include legacy prompt_ids/project_paths). */
@@ -230,16 +233,16 @@ export function HomePageContent() {
       : runningRuns[runningRuns.length - 1]?.logLines ?? [];
 
   return (
-    <Tabs value={tab} onValueChange={(v) => navigateToTab(v as string)} className="flex flex-1 flex-col" data-testid="home-page-tabs">
-      <div className="flex-1 flex flex-col min-w-0 overflow-auto">
-        <div className="mb-4 flex items-center justify-between gap-4">
+    <Tabs value={tab} onValueChange={(v) => navigateToTab(v as string)} className={c["0"]} data-testid="home-page-tabs">
+      <div className={c["1"]}>
+        <div className={c["2"]}>
         </div>
 
-        <ScrollArea className="w-full whitespace-nowrap pb-2">
+        <ScrollArea className={c["3"]}>
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
 
-        <TabsContent value="dashboard" className="mt-0 space-y-6">
+        <TabsContent value="dashboard" className={c["4"]}>
           <DashboardTabContent
             features={features}
             runningRuns={runningRuns}
@@ -253,7 +256,7 @@ export function HomePageContent() {
           />
         </TabsContent>
 
-        <TabsContent value="prompts" className="mt-0 space-y-6">
+        <TabsContent value="prompts" className={c["5"]}>
           <PromptsTabContent
             prompts={prompts}
             selectedPromptRecordIds={selectedPromptRecordIds}
@@ -261,7 +264,7 @@ export function HomePageContent() {
           />
         </TabsContent>
 
-        <TabsContent value="tickets" className="mt-0">
+        <TabsContent value="tickets" className={c["6"]}>
           <TicketsTabContent
             tickets={tickets}
             saveTickets={saveTickets}
@@ -271,7 +274,7 @@ export function HomePageContent() {
           />
         </TabsContent>
 
-        <TabsContent value="feature" className="mt-0">
+        <TabsContent value="feature" className={c["7"]}>
           <FeatureTabContent
             features={features}
             tickets={tickets}
@@ -291,7 +294,7 @@ export function HomePageContent() {
           />
         </TabsContent>
 
-        <TabsContent value="projects" className="mt-0">
+        <TabsContent value="projects" className={c["8"]}>
           <ProjectsTabContent
             allProjects={allProjects}
             activeProjects={activeProjects}
@@ -300,7 +303,7 @@ export function HomePageContent() {
           />
         </TabsContent>
 
-        <TabsContent value="all" className="mt-0 space-y-6">
+        <TabsContent value="all" className={c["9"]}>
           <AllDataTabContent
             allProjects={allProjects}
             activeProjects={activeProjects}
@@ -316,7 +319,7 @@ export function HomePageContent() {
           />
         </TabsContent>
 
-        <TabsContent value="data" className="mt-0 space-y-6">
+        <TabsContent value="data" className={c["10"]}>
           <DatabaseDataTabContent
             isTauriEnv={isTauriEnv}
             tickets={tickets}
@@ -326,7 +329,7 @@ export function HomePageContent() {
           />
         </TabsContent>
 
-        <TabsContent value="log" className="mt-0">
+        <TabsContent value="log" className={c["11"]}>
           <LogTabContent
             displayLogLines={displayLogLines}
             selectedRunId={selectedRunId}

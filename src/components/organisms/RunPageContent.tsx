@@ -12,8 +12,12 @@ import { ProjectSelectionCard } from "@/components/molecules/CardsAndDisplay/Pro
 import { RunLabelCard } from "@/components/molecules/CardsAndDisplay/RunLabelCard";
 import { RunControls } from "@/components/molecules/ControlsAndButtons/RunControls";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { getOrganismClasses } from "./organism-classes";
 
 import type { Feature } from "@/types/project";
+
+const c = getOrganismClasses("RunPageContent.tsx");
+
 export function RunPageContent() {
   const {
     error,
@@ -107,7 +111,7 @@ export function RunPageContent() {
 
   return (
     <ErrorBoundary fallbackTitle="Run page error">
-      <div className="space-y-6" data-testid="run-page">
+      <div className={c["0"]} data-testid="run-page">
         <RunPageHeader />
 
         {error && (
@@ -117,7 +121,7 @@ export function RunPageContent() {
         )}
 
         {dataWarning && !error && (
-          <Alert variant="default" className="border-amber-500/50 bg-amber-500/10">
+          <Alert variant="default" className={c["1"]}>
             <AlertDescription>{dataWarning}</AlertDescription>
           </Alert>
         )}

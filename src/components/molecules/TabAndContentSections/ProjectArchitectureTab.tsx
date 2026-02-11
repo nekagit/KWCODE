@@ -8,6 +8,8 @@ import type { Project } from "@/types/project";
 import { ProjectCategoryHeader } from "@/components/shared/ProjectCategoryHeader";
 import { ProjectArchitectureListItem } from "@/components/atoms/list-items/ProjectArchitectureListItem";
 import { GridContainer } from "@/components/shared/GridContainer";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("TabAndContentSections/ProjectArchitectureTab.tsx");
 
 interface ProjectArchitectureTabProps {
   project: Project;
@@ -19,22 +21,22 @@ export function ProjectArchitectureTab({
   projectId,
 }: ProjectArchitectureTabProps) {
   return (
-    <div className="mt-4 space-y-6">
+    <div className={classes[0]}>
       <ProjectCategoryHeader
         title="Architectures"
-        icon={<Building2 className="h-6 w-6 text-primary/90" />}
+        icon={<Building2 className={classes[1]} />}
         project={project}
       />
 
       {project.architectureIds?.length === 0 ? (
         <EmptyState
-          icon={<Building2 className="h-6 w-6 text-primary/90" />}
+          icon={<Building2 className={classes[1]} />}
           title="No architectures yet"
           description="Define the high-level structure and components of your project."
           action={
             <Button asChild>
               <Link href={`/architecture?projectId=${projectId}`}>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className={classes[3]} />
                 New architecture
               </Link>
             </Button>

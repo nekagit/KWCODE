@@ -5,6 +5,8 @@ import { Dialog } from "@/components/shared/Dialog";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import { PromptFormFields } from "@/components/atoms/forms/PromptFormFields";
 import { Loader2 } from "lucide-react";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("FormsAndDialogs/PromptRecordFormDialog.tsx");
 
 interface PromptRecordFormDialogProps {
   open: boolean;
@@ -42,7 +44,7 @@ export function PromptRecordFormDialog({
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={!formTitle.trim() || saveLoading}>
-            {saveLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+            {saveLoading ? <Loader2 className={classes[0]} /> : null}
             Save
           </Button>
         </ButtonGroup>

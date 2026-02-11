@@ -49,7 +49,9 @@ import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { ProjectCategoryHeader } from "@/components/shared/ProjectCategoryHeader";
 import { KanbanColumnCard } from "@/components/molecules/Kanban/KanbanColumnCard";
 import { GenerateKanbanPromptSection } from "@/components/atoms/forms/GenerateKanbanPromptSection";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
 
+const classes = getClasses("TabAndContentSections/ProjectTicketsTab.tsx");
 const PRIORITIES: Array<"P0" | "P1" | "P2" | "P3"> = ["P0", "P1", "P2", "P3"];
 
 /** Tailwind border/text classes per feature index so features and their tickets share the same color. */
@@ -97,7 +99,7 @@ function ImplementAllTerminalsGrid() {
     implementAllRuns[implementAllRuns.length - 1] ?? null,
   ];
   return (
-    <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
+    <div className={classes[0]}>
       {runsForSlots.map((run, i) => (
         <ImplementAllTerminalSlot key={i} run={run} slotIndex={i} />
       ))}
@@ -155,25 +157,25 @@ function ImplementAllTerminalSlot({
 
   return (
     <Card title={`Terminal ${slotIndex + 1}`} subtitle={subtitle}>
-      <div className="relative">
+      <div className={classes[1]}>
         {running && (
-          <div className="absolute right-2 top-2 z-10 flex items-center gap-2 rounded bg-muted/80 px-2 py-1 font-mono text-sm tabular-nums">
-            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          <div className={classes[2]}>
+            <Loader2 className={classes[3]} />
             <span>{formatElapsed(elapsedSeconds)}</span>
           </div>
         )}
-        <ScrollArea className="h-[50vh] min-h-[200px] rounded border bg-muted/30 p-3 font-mono text-sm">
+        <ScrollArea className={classes[4]}>
           {displayLogLines.length === 0 && !running && (
-            <p className="text-muted-foreground text-sm">No output yet.</p>
+            <p className={classes[5]}>No output yet.</p>
           )}
           {displayLogLines.length === 0 && running && (
-            <p className="flex items-center gap-2 text-muted-foreground text-sm">
-              <Loader2 className="h-4 w-4 animate-spin" />
+            <p className={classes[6]}>
+              <Loader2 className={classes[7]} />
               (waiting for output…)
             </p>
           )}
           {displayLogLines.map((line, i) => (
-            <div key={i} className="whitespace-pre-wrap break-all">
+            <div key={i} className={classes[8]}>
               {line}
             </div>
           ))}
@@ -244,15 +246,15 @@ function ImplementAllToolbar({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className={classes[9]}>
       <Button
         variant="default"
         size="sm"
         onClick={handleOpenInSystemTerminal}
-        className="gap-2"
+        className={classes[10]}
         title="Opens 3 Terminal.app windows with cd + agent. Interactive Cursor CLI (no prompt required)."
       >
-        <Terminal className="h-4 w-4" />
+        <Terminal className={classes[11]} />
         Open in system terminal
       </Button>
       <Button
@@ -260,14 +262,14 @@ function ImplementAllToolbar({
         size="sm"
         onClick={handleImplementAll}
         disabled={loading}
-        className="gap-2 bg-emerald-500 text-white hover:bg-emerald-600"
+        className={classes[12]}
         title="Runs in app; agent needs a prompt (print mode). For interactive agent use Open in system terminal."
       >
-        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+        {loading ? <Loader2 className={classes[7]} /> : <Play className={classes[11]} />}
         Implement All
       </Button>
       <Select value={selectedPromptId ?? ""} onValueChange={(v) => setSelectedPromptId(v || null)}>
-        <SelectTrigger className="w-[200px] bg-violet-500 text-white hover:bg-violet-600" aria-label="Select one prompt">
+        <SelectTrigger className={classes[15]} aria-label="Select one prompt">
           <SelectValue placeholder="Select one prompt" />
         </SelectTrigger>
         <SelectContent>
@@ -280,9 +282,9 @@ function ImplementAllToolbar({
       </Select>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="default" size="sm" className="gap-1 bg-violet-500 text-white hover:bg-violet-600">
+          <Button variant="default" size="sm" className={classes[16]}>
             Add prompt
-            <ChevronDown className="h-4 w-4" />
+            <ChevronDown className={classes[11]} />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
@@ -299,27 +301,27 @@ function ImplementAllToolbar({
         size="sm"
         onClick={handleStopAll}
         disabled={!anyRunning}
-        className="gap-2 bg-red-500 text-white hover:bg-red-600"
+        className={classes[18]}
       >
-        <Square className="h-4 w-4" />
+        <Square className={classes[11]} />
         Stop all
       </Button>
       <Button
         variant="default"
         size="sm"
         onClick={clearImplementAllLogs}
-        className="gap-2 bg-amber-500 text-white hover:bg-amber-600"
+        className={classes[20]}
       >
-        <Eraser className="h-4 w-4" />
+        <Eraser className={classes[11]} />
         Clear
       </Button>
       <Button
         variant="default"
         size="sm"
         onClick={archiveImplementAllLogs}
-        className="gap-2 bg-cyan-500 text-white hover:bg-cyan-600"
+        className={classes[22]}
       >
-        <Archive className="h-4 w-4" />
+        <Archive className={classes[11]} />
         Archive
       </Button>
       <AddPromptDialog open={addPromptOpen} onOpenChange={setAddPromptOpen} />
@@ -398,7 +400,7 @@ function AddPromptDialog({
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={!title.trim() || !value.trim() || saving}>
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            {saving ? <Loader2 className={classes[7]} /> : null}
             Save
           </Button>
         </ButtonGroup>
@@ -419,11 +421,11 @@ function AddPromptDialog({
           onChange={(e) => setValue(e.target.value)}
           placeholder={isSelf ? "Enter your prompt…" : "Generate or paste prompt…"}
           rows={5}
-          className="min-h-[120px] font-mono text-sm"
+          className={classes[25]}
         />
         {isAI && (
           <Button variant="outline" size="sm" onClick={handleGenerate} disabled={generating}>
-            {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            {generating ? <Loader2 className={classes[7]} /> : null}
             Generate
           </Button>
         )}
@@ -697,10 +699,10 @@ export function ProjectTicketsTab({
   }, [project, loadKanbanFromMd]);
 
   return (
-    <div className="mt-0 flex min-h-0 flex-1 flex-col gap-6">
+    <div className={classes[27]}>
       <ProjectCategoryHeader
         title="Tickets"
-        icon={<TicketIcon className="h-6 w-6 text-warning/90" />}
+        icon={<TicketIcon className={classes[28]} />}
         project={project}
       />
 
@@ -708,18 +710,18 @@ export function ProjectTicketsTab({
         <ErrorDisplay
           title="Feature-Ticket Mismatch"
           message="Some features reference tickets that do not exist or are not linked to this project. Consider editing your features."
-          icon={<AlertCircle className="h-4 w-4 text-destructive/90" />}
+          icon={<AlertCircle className={classes[29]} />}
         />
       )}
 
       {!project.repoPath?.trim() ? (
         <EmptyState
-          icon={<TicketIcon className="h-6 w-6 text-warning/90" />}
+          icon={<TicketIcon className={classes[28]} />}
           title="No repo path"
           description="Set a repo path for this project to load tickets and features from .cursor/tickets.md and .cursor/features.md."
         />
       ) : kanbanLoading ? (
-        <div className="flex items-center justify-center py-12">
+        <div className={classes[31]}>
           <LoadingState />
         </div>
       ) : kanbanError ? (
@@ -743,24 +745,24 @@ export function ProjectTicketsTab({
               if (doneRefs.length > 0) done.push({ feature: f, index: idx, doneRefs });
             });
             return (
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium flex items-center gap-2">
-                  <Layers className="h-4 w-4" />
+              <div className={classes[32]}>
+                <h3 className={classes[33]}>
+                  <Layers className={classes[11]} />
                   Features
                 </h3>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">In progress</h4>
-                    <ul className="flex flex-wrap gap-2">
+                <div className={classes[35]}>
+                  <div className={classes[32]}>
+                    <h4 className={classes[37]}>In progress</h4>
+                    <ul className={classes[38]}>
                       {inProgress.map(({ feature: f, index: idx }) => {
                         const colorClasses = getFeatureColorClasses(idx);
                         return (
                           <li key={`in-${f.id}`}>
                             <span
-                              className={`inline-flex items-center gap-2 rounded-md border-2 bg-background px-2 py-1 text-xs ${colorClasses}`}
+                              className={classes[59]}
                             >
                               <span>{f.title}</span>
-                              <span className="opacity-80">
+                              <span className={classes[39]}>
                                 — {f.ticketRefs.map((n) => `#${n}`).join(", ")}
                               </span>
                             </span>
@@ -768,22 +770,22 @@ export function ProjectTicketsTab({
                         );
                       })}
                       {inProgress.length === 0 && (
-                        <li className="text-xs text-muted-foreground">None</li>
+                        <li className={classes[40]}>None</li>
                       )}
                     </ul>
                   </div>
-                  <div className="space-y-2">
-                    <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Done</h4>
-                    <ul className="flex flex-wrap gap-2">
+                  <div className={classes[32]}>
+                    <h4 className={classes[37]}>Done</h4>
+                    <ul className={classes[38]}>
                       {done.map(({ feature: f, index: idx, doneRefs }) => {
                         const colorClasses = getFeatureColorClasses(idx);
                         return (
                           <li key={`done-${f.id}`}>
                             <span
-                              className={`inline-flex items-center gap-2 rounded-md border-2 bg-muted/50 line-through opacity-90 px-2 py-1 text-xs ${colorClasses}`}
+                              className={classes[60]}
                             >
                               <span>{f.title}</span>
-                              <span className="opacity-80">
+                              <span className={classes[39]}>
                                 — {doneRefs.map((n) => `#${n}`).join(", ")}
                               </span>
                             </span>
@@ -791,7 +793,7 @@ export function ProjectTicketsTab({
                         );
                       })}
                       {done.length === 0 && (
-                        <li className="text-xs text-muted-foreground">None</li>
+                        <li className={classes[40]}>None</li>
                       )}
                     </ul>
                   </div>
@@ -799,24 +801,24 @@ export function ProjectTicketsTab({
               </div>
             );
           })()}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className={classes[9]}>
             <ButtonGroup alignment="left">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setAddTicketOpen(true)}
-                className="gap-2"
+                className={classes[10]}
               >
-                <Plus className="h-4 w-4" />
+                <Plus className={classes[11]} />
                 Add ticket
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setAddFeatureOpen(true)}
-                className="gap-2"
+                className={classes[10]}
               >
-                <Layers className="h-4 w-4" />
+                <Layers className={classes[11]} />
                 Add feature
               </Button>
             </ButtonGroup>
@@ -825,8 +827,8 @@ export function ProjectTicketsTab({
             )}
           </div>
           {isTauri && <ImplementAllTerminalsGrid />}
-          <div className="flex min-h-0 w-full flex-1 flex-col rounded-lg p-4">
-            <div className="grid h-full min-h-0 w-full flex-1 grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4" data-testid="kanban-columns-grid">
+          <div className={classes[51]}>
+            <div className={classes[52]} data-testid="kanban-columns-grid">
               {(() => {
                 const featureColorByTitle: Record<string, string> = {};
                 kanbanData.features.forEach((f, i) => {
@@ -849,12 +851,12 @@ export function ProjectTicketsTab({
           </div>
           {Object.keys(kanbanData.columns).every((key) => kanbanData.columns[key].items.length === 0) && (
             <EmptyState
-              icon={<TicketIcon className="h-6 w-6 text-warning/90" />}
+              icon={<TicketIcon className={classes[28]} />}
               title="No tickets yet"
               description="Add a ticket above or add items to .cursor/tickets.md and .cursor/features.md in your repo."
               action={
-                <Button variant="outline" size="sm" onClick={() => setAddTicketOpen(true)} className="gap-2">
-                  <Plus className="h-4 w-4" />
+                <Button variant="outline" size="sm" onClick={() => setAddTicketOpen(true)} className={classes[10]}>
+                  <Plus className={classes[11]} />
                   Add ticket
                 </Button>
               }
@@ -873,7 +875,7 @@ export function ProjectTicketsTab({
               Cancel
             </Button>
             <Button onClick={handleAddTicket} disabled={saving || !addTicketTitle.trim()}>
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              {saving ? <Loader2 className={classes[7]} /> : null}
               Add
             </Button>
           </ButtonGroup>
@@ -911,7 +913,7 @@ export function ProjectTicketsTab({
               </SelectContent>
             </Select>
           </FormField>
-          <div className="grid gap-2">
+          <div className={classes[57]}>
             <GenericInputWithLabel
               id="ticket-feature"
               label="Feature (existing or new)"
@@ -939,7 +941,7 @@ export function ProjectTicketsTab({
               Cancel
             </Button>
             <Button onClick={handleAddFeature} disabled={saving || !addFeatureTitle.trim()}>
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              {saving ? <Loader2 className={classes[7]} /> : null}
               Add
             </Button>
           </ButtonGroup>

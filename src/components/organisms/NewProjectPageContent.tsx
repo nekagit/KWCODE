@@ -2,6 +2,9 @@
 
 import { NewProjectForm } from "@/components/molecules/FormsAndDialogs/NewProjectForm";
 import { SingleContentPage } from "@/components/organisms/SingleContentPage";
+import { getOrganismClasses } from "./organism-classes";
+
+const c = getOrganismClasses("NewProjectPageContent.tsx");
 
 export function NewProjectPageContent() {
   return (
@@ -10,7 +13,7 @@ export function NewProjectPageContent() {
       description="Create a project to group design, ideas, features, tickets, and prompts. You can add links to prompts, tickets, features, and ideas from the project details page."
       backLink="/projects"
       layout="simple"
-      className="space-y-6 max-w-xl"
+      className={c["0"]}
     >
       <NewProjectForm />
     </SingleContentPage>

@@ -8,6 +8,8 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { TitleWithIcon } from "@/components/atoms/headers/TitleWithIcon";
 import { LocalProjectListItem } from "@/components/atoms/list-items/LocalProjectListItem";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("ListsAndTables/LocalReposSection.tsx");
 
 /**
  * Lists all folders in the configured projects root so the user can create a project from a path
@@ -54,17 +56,17 @@ export function LocalReposSection() {
     if (loading) {
       return (
         <>
-          <p className="text-sm text-muted-foreground">
+          <p className={classes[0]}>
             Folders in the configured projects directory. Create a project from one to avoid typing the path.
           </p>
-          <div className="py-8 text-center text-muted-foreground text-sm">Loading…</div>
+          <div className={classes[1]}>Loading…</div>
         </>
       );
     }
     if (localPaths.length === 0) {
       return (
         <>
-          <p className="text-sm text-muted-foreground">
+          <p className={classes[0]}>
             Folders in the configured projects directory.
           </p>
           <EmptyState
@@ -77,11 +79,11 @@ export function LocalReposSection() {
     }
     return (
       <>
-        <p className="text-sm text-muted-foreground">
+        <p className={classes[0]}>
           All {localPaths.length} folders in the configured projects directory. Create a project from one to avoid typing the path.
         </p>
-        <ScrollArea className="rounded-md border bg-muted/30 max-h-[520px]">
-          <ul className="p-2 space-y-0.5">
+        <ScrollArea className={classes[4]}>
+          <ul className={classes[5]}>
             {localPaths.map((path, i) => (
               <LocalProjectListItem key={i} path={path} />
             ))}
@@ -92,12 +94,12 @@ export function LocalReposSection() {
   };
 
   return (
-    <Accordion type="single" collapsible className="w-full">
-      <AccordionItem value="local-repos" className="border-b">
-        <AccordionTrigger className="text-lg font-semibold py-4 hover:no-underline">
-          <TitleWithIcon icon={FolderOpen} title={triggerLabel} className="text-lg" iconClassName="text-success/90" />
+    <Accordion type="single" collapsible className={classes[6]}>
+      <AccordionItem value="local-repos" className={classes[7]}>
+        <AccordionTrigger className={classes[8]}>
+          <TitleWithIcon icon={FolderOpen} title={triggerLabel} className={classes[9]} iconClassName="text-success/90" />
         </AccordionTrigger>
-        <AccordionContent className="space-y-3">
+        <AccordionContent className={classes[10]}>
           {renderContent()}
         </AccordionContent>
       </AccordionItem>

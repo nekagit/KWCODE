@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Folders, Plus, Sparkles, FolderOpen, Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/molecules/LayoutAndNavigation/PageHeader";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("LayoutAndNavigation/ProjectsHeader.tsx");
 
 interface ProjectsHeaderProps {
   seeding: boolean;
@@ -16,7 +18,7 @@ export function ProjectsHeader({
   seedTemplateProject,
 }: ProjectsHeaderProps) {
   return (
-    <div className="flex items-center justify-between">
+    <div className={classes[0]}>
       <PageHeader
         title="Projects"
         description={
@@ -29,12 +31,12 @@ export function ProjectsHeader({
           disabled={seeding}
           onClick={seedTemplateProject}
         >
-          {seeding ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
+          {seeding ? <Loader2 className={classes[1]} /> : <Sparkles className={classes[2]} />}
           Seed template project
         </Button>
         <Button asChild>
           <Link href="/projects/new">
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className={classes[2]} />
             New project
           </Link>
         </Button>

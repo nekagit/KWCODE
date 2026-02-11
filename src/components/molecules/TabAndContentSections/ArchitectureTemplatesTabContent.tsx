@@ -1,5 +1,7 @@
 import { ArchitectureCategory } from "@/types/architecture";
 import { ArchitectureTemplateCard } from "@/components/molecules/CardsAndDisplay/ArchitectureTemplateCard.tsx";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("TabAndContentSections/ArchitectureTemplatesTabContent.tsx");
 
 interface ArchitectureTemplatesTabContentProps {
   CATEGORY_LABELS: Record<ArchitectureCategory, string>;
@@ -11,7 +13,7 @@ export function ArchitectureTemplatesTabContent({
   addFromTemplate,
 }: ArchitectureTemplatesTabContentProps) {
   return (
-    <div className="mt-6">
+    <div className={classes[0]}>
       <ArchitectureTemplateCard CATEGORY_LABELS={CATEGORY_LABELS} addFromTemplate={addFromTemplate} />
     </div>
   );

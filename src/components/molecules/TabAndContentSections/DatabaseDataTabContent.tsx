@@ -15,6 +15,8 @@ import { TicketsDisplay } from "@/components/molecules/Displays/TicketsDisplay";
 import { FeaturesDisplay } from "@/components/molecules/Displays/FeaturesDisplay";
 import { AllProjectsDisplay } from "@/components/molecules/Displays/AllProjectsDisplay";
 import { ActiveProjectsDisplay } from "@/components/molecules/Displays/ActiveProjectsDisplay";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("TabAndContentSections/DatabaseDataTabContent.tsx");
 
 interface DatabaseDataTabContentProps {
   isTauriEnv: boolean | null;
@@ -110,19 +112,19 @@ export function DatabaseDataTabContent({
     <Card
       title={
         <>
-          <Database className="h-5 w-5" />
+          <Database className={classes[0]} />
           DB Data
         </>
       }
       subtitle={
         <>
-          <span className="block">Scripts in script/, JSON files in data/, and DB data (kv_store, tickets, features).</span>
+          <span className={classes[1]}>Scripts in script/, JSON files in data/, and DB data (kv_store, tickets, features).</span>
           {isTauriEnv ? (
-            <span className="block text-muted-foreground text-xs mt-1">
+            <span className={classes[2]}>
               SQLite: data/app.db (created on first run; migrated from data/*.json). All app data is read/written via the DB.
             </span>
           ) : (
-            <span className="block text-muted-foreground text-xs mt-1">
+            <span className={classes[2]}>
               Browser: data is read from data/*.json via API. Scripts and JSON list from project root. Saves require the Tauri app.
             </span>
           )}
@@ -133,15 +135,15 @@ export function DatabaseDataTabContent({
         <ErrorDisplay message={dataError} />
       )}
       {dataLoading && (
-        <p className="text-sm text-muted-foreground flex items-center gap-2 mt-4">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+        <p className={classes[4]}>
+          <Loader2 className={classes[5]} /> Loading…
         </p>
       )}
 
-      <Accordion type="multiple" className="w-full glasgmorphism" defaultValue={["scripts", "json", "db"]}>
+      <Accordion type="multiple" className={classes[6]} defaultValue={["scripts", "json", "db"]}>
         <AccordionItem value="scripts">
-          <AccordionTrigger className="flex items-center gap-2">
-            <FileCode className="h-4 w-4" />
+          <AccordionTrigger className={classes[7]}>
+            <FileCode className={classes[8]} />
             Scripts ({dataScripts.length})
           </AccordionTrigger>
           <AccordionContent>
@@ -156,8 +158,8 @@ export function DatabaseDataTabContent({
         </AccordionItem>
 
         <AccordionItem value="json">
-          <AccordionTrigger className="flex items-center gap-2">
-            <Braces className="h-4 w-4" />
+          <AccordionTrigger className={classes[7]}>
+            <Braces className={classes[8]} />
             JSON files ({dataJsonFiles.length})
           </AccordionTrigger>
           <AccordionContent>
@@ -172,11 +174,11 @@ export function DatabaseDataTabContent({
         </AccordionItem>
 
         <AccordionItem value="db">
-          <AccordionTrigger className="flex items-center gap-2">
-            <Database className="h-5 w-5" />
+          <AccordionTrigger className={classes[7]}>
+            <Database className={classes[0]} />
             DB Data (kv_store, tickets, features)
           </AccordionTrigger>
-          <AccordionContent className="space-y-4">
+          <AccordionContent className={classes[13]}>
             <KvStoreDisplay dataKvEntries={dataKvEntries} dataLoading={dataLoading} />
             <TicketsDisplay tickets={tickets as TicketRow[]} />
             <FeaturesDisplay features={features} />

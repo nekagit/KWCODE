@@ -7,6 +7,8 @@ import type { ArchitectureCategory } from "@/types/architecture";
 import { Dialog } from "@/components/shared/Dialog";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import { ArchitectureEditForm } from "@/components/atoms/architecture/ArchitectureEditForm";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("FormsAndDialogs/ArchitectureEditDialog.tsx");
 
 interface ExtraInput {
   key: string;
@@ -77,13 +79,13 @@ export function ArchitectureEditDialog({
             Cancel
           </Button>
           <Button onClick={handleSaveEdit} disabled={saveLoading || !formName.trim()}>
-            {saveLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+            {saveLoading ? <Loader2 className={classes[0]} /> : null}
             Save
           </Button>
         </ButtonGroup>
       }
     >
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+      <p className={classes[1]}>
         Update fields and add more inputs: references, anti-patterns, examples, or custom key-value inputs.
       </p>
       <ArchitectureEditForm

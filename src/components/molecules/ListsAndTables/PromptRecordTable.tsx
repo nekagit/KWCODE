@@ -3,6 +3,8 @@
 import React from 'react';
 import { TableHead, TableHeader, TableRow, TableBody, TableCell, Table } from "@/components/ui/table";
 import { PromptTableRow } from "@/components/atoms/list-items/PromptTableRow";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("ListsAndTables/PromptRecordTable.tsx");
 
 type PromptRecordRecord = {
   id: number;
@@ -58,7 +60,7 @@ export function PromptRecordTable({
       <TableBody>
         {fullPromptRecords.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+            <TableCell colSpan={9} className={classes[0]}>
               No prompts. Create one above.
             </TableCell>
           </TableRow>

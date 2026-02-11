@@ -1,5 +1,7 @@
 import React from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("Displays/KvStoreDisplay.tsx");
 
 interface KvStoreDisplayProps {
   dataKvEntries: { key: string; value: string }[];
@@ -12,15 +14,15 @@ export const KvStoreDisplay: React.FC<KvStoreDisplayProps> = ({
 }) => {
   return (
     <div>
-      <p className="text-xs text-muted-foreground mb-2">kv_store</p>
-      <ScrollArea className="h-40 rounded border bg-muted/30 p-3 font-mono text-xs">
+      <p className={classes[0]}>kv_store</p>
+      <ScrollArea className={classes[1]}>
         {dataKvEntries.length === 0 && !dataLoading ? (
-          <p className="text-muted-foreground">No kv entries.</p>
+          <p className={classes[2]}>No kv entries.</p>
         ) : (
           dataKvEntries.map((e) => (
-            <div key={e.key} className="mb-3">
-              <span className="font-semibold text-foreground">{e.key}</span>
-              <pre className="mt-1 whitespace-pre-wrap break-all text-muted-foreground">{e.value}</pre>
+            <div key={e.key} className={classes[3]}>
+              <span className={classes[4]}>{e.key}</span>
+              <pre className={classes[5]}>{e.value}</pre>
             </div>
           ))
         )}

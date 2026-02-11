@@ -14,6 +14,8 @@ import { ProjectInput } from "@/components/atoms/inputs/ProjectInput";
 import { ProjectTextarea } from "@/components/atoms/inputs/ProjectTextarea";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("FormsAndDialogs/NewProjectForm.tsx");
 
 export function NewProjectForm() {
   const router = useRouter();
@@ -103,7 +105,7 @@ export function NewProjectForm() {
           value={repoPath}
           onChange={(e) => setRepoPath(e.target.value)}
           placeholder="/path/to/repo"
-          className="font-mono text-sm"
+          className={classes[0]}
           onBrowse={handleBrowseRepoPath}
         />
         {error && (
@@ -113,7 +115,7 @@ export function NewProjectForm() {
           <Button type="submit" disabled={loading}>
             {loading ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className={classes[1]} />
                 Creating…
               </>
             ) : (

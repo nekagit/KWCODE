@@ -1,5 +1,7 @@
 import { PromptRecordSelectionCard } from "@/components/molecules/CardsAndDisplay/PromptRecordSelectionCard";
 import type { PromptRecord } from "@/types/prompt";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("TabAndContentSections/PromptsTabContent.tsx");
 
 interface PromptsTabContentProps {
   prompts: PromptRecord[];
@@ -13,7 +15,7 @@ export function PromptsTabContent({
   setSelectedPromptRecordIds,
 }: PromptsTabContentProps) {
   return (
-    <div className="mt-0 space-y-6">
+    <div className={classes[0]}>
       <PromptRecordSelectionCard
         prompts={prompts}
         selectedPromptRecordIds={selectedPromptRecordIds}

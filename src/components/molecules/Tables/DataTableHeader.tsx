@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown } from "lucide-react";
 import { type Column } from "@tanstack/react-table";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("Tables/DataTableHeader.tsx");
 
 type DataTableHeaderProps<TData, TValue> = {
   column: Column<TData, TValue>;
@@ -15,11 +17,11 @@ export function DataTableHeader<TData, TValue>({
     <Button
       variant="ghost"
       size="sm"
-      className="-ml-2 h-8"
+      className={classes[0]}
       onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
     >
       {title}
-      <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
+      <ArrowUpDown className={classes[1]} />
     </Button>
   );
 }

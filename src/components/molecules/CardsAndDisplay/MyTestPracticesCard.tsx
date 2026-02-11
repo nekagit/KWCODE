@@ -2,6 +2,8 @@
 
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/shared/Card";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("CardsAndDisplay/MyTestPracticesCard.tsx");
 
 interface MyTestPracticesCardProps {
   myPractices: string;
@@ -18,7 +20,7 @@ export function MyTestPracticesCard({ myPractices, saveMyPractices }: MyTestPrac
         placeholder="e.g. Always use data-testid for E2E; our unit tests use Vitest and @testing-library/react..."
         value={myPractices}
         onChange={(e) => saveMyPractices(e.target.value)}
-        className="min-h-[180px] font-mono text-sm"
+        className={classes[0]}
       />
     </Card>
   );

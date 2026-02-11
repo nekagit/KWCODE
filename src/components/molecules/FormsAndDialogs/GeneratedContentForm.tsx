@@ -5,6 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("FormsAndDialogs/GeneratedContentForm.tsx");
 
 interface GeneratedContentFormProps {
   generateResult: { title: string; content: string };
@@ -23,7 +25,7 @@ export const GeneratedContentForm: React.FC<GeneratedContentFormProps> = ({
 }) => {
   return (
     <>
-      <div className="grid gap-2">
+      <div className={classes[0]}>
         <Label>Generated title</Label>
         <Input
           value={generateResult.title}
@@ -33,7 +35,7 @@ export const GeneratedContentForm: React.FC<GeneratedContentFormProps> = ({
             )}
         />
       </div>
-      <div className="grid gap-2">
+      <div className={classes[0]}>
         <Label>Generated content</Label>
         <Textarea
           value={generateResult.content}
@@ -42,7 +44,7 @@ export const GeneratedContentForm: React.FC<GeneratedContentFormProps> = ({
               r ? { ...r, content: e.target.value } : null
             )}
           rows={10}
-          className="min-h-[200px]"
+          className={classes[2]}
         />
       </div>
       <ButtonGroup alignment="right">
@@ -56,7 +58,7 @@ export const GeneratedContentForm: React.FC<GeneratedContentFormProps> = ({
           onClick={saveGeneratedAsNew}
           disabled={!generateResult.title.trim() || saveLoading}
         >
-          {saveLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+          {saveLoading ? <Loader2 className={classes[3]} /> : null}
           Save as new prompt
         </Button>
       </ButtonGroup>

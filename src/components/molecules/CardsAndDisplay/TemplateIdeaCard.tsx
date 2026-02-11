@@ -7,6 +7,8 @@ import { Loader2, Wand2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { TEMPLATE_IDEAS } from "@/data/template-ideas";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
+const classes = getClasses("CardsAndDisplay/TemplateIdeaCard.tsx");
 
 interface TemplateIdeaCardProps {
   template: typeof TEMPLATE_IDEAS[number];
@@ -57,23 +59,23 @@ export const TemplateIdeaCard: React.FC<TemplateIdeaCardProps> = ({
     <Card
       title={template.title}
       subtitle={template.description}
-      className="flex flex-col"
+      className={classes[0]}
       footerButtons={
         <ButtonGroup alignment="left">
-          <Badge variant="secondary" className="shrink-0 text-xs">
+          <Badge variant="secondary" className={classes[1]}>
             {template.category}
           </Badge>
           <Button
             size="sm"
             variant="default"
-            className="w-full"
+            className={classes[2]}
             disabled={generatingIdeaId !== null}
             onClick={handleGenerate}
           >
             {generatingIdeaId === template.id ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <Loader2 className={classes[3]} />
             ) : (
-              <Wand2 className="h-4 w-4 mr-2" />
+              <Wand2 className={classes[4]} />
             )}
             Generate with AI
           </Button>

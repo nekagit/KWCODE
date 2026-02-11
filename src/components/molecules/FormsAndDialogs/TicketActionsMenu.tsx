@@ -5,7 +5,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { getClasses } from "@/components/molecules/tailwind-molecules";
 import { MoreHorizontal, Trash2 } from "lucide-react";
+
+const classes = getClasses("FormsAndDialogs/TicketActionsMenu.tsx");
 
 type TicketActionsMenuProps = {
   onDelete: () => void;
@@ -15,16 +18,16 @@ export function TicketActionsMenu({ onDelete }: TicketActionsMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <MoreHorizontal className="h-4 w-4" />
+        <Button variant="ghost" size="icon" className={classes[0]}>
+          <MoreHorizontal className={classes[1]} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem
-          className="text-destructive focus:text-destructive"
+          className={classes[2]}
           onClick={onDelete}
         >
-          <Trash2 className="h-4 w-4 mr-2" />
+          <Trash2 className={classes[3]} />
           Delete
         </DropdownMenuItem>
       </DropdownMenuContent>

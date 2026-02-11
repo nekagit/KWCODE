@@ -10,6 +10,9 @@ import { NoProjectsFoundCard } from "@/components/molecules/CardsAndDisplay/NoPr
 import { ProjectLoadingState } from "@/components/molecules/UtilitiesAndHelpers/ProjectLoadingState";
 import { LocalReposSection } from "@/components/molecules/ListsAndTables/LocalReposSection";
 import { ProjectListContainer } from "@/components/molecules/ListsAndTables/ProjectListContainer";
+import { getOrganismClasses } from "./organism-classes";
+
+const c = getOrganismClasses("ProjectsListPageContent.tsx");
 
 export function ProjectsListPageContent() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -73,7 +76,7 @@ export function ProjectsListPageContent() {
   }, [refetch]);
 
   return (
-    <div className="space-y-6">
+    <div className={c["0"]}>
       <ProjectsHeader
         seeding={seeding}
         seedTemplateProject={seedTemplateProject}
@@ -99,19 +102,19 @@ export function ProjectsListPageContent() {
       ) : projects.length === 0 ? (
         <NoProjectsFoundCard seeding={seeding} seedTemplateProject={seedTemplateProject} />
       ) : (
-        <section className="space-y-3" data-testid="projects-list">
-          <h2 className="text-lg font-semibold">Your projects</h2>
+        <section className={c["1"]} data-testid="projects-list">
+          <h2 className={c["2"]}>Your projects</h2>
           <ProjectListContainer>
-            <ul className="space-y-1 rounded-md border bg-muted/30 p-2">
+            <ul className={c["3"]}>
               {projects.map((project) => (
-                <li key={project.id} className="flex items-center justify-between gap-2 py-1.5 px-2 rounded hover:bg-muted/50 group">
-                  <Link href={`/projects/${project.id}`} className="flex-1 min-w-0 truncate font-medium text-primary hover:underline">
+                <li key={project.id} className={c["4"]}>
+                  <Link href={`/projects/${project.id}`} className={c["5"]}>
                     {project.name}
                   </Link>
                   <button
                     type="button"
                     onClick={(e: React.MouseEvent) => handleDelete(project.id, e)}
-                    className="text-xs text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                    className={c["6"]}
                     title="Delete project"
                   >
                     Delete

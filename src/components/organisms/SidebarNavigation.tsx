@@ -5,36 +5,43 @@ import { NavLinkItem } from "@/components/molecules/Navigation/NavLinkItem";
 import { useQuickActions } from "@/context/quick-actions-context";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { getOrganismClasses } from "./organism-classes";
+
+const c = getOrganismClasses("SidebarNavigation.tsx");
 
 type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; tab?: string; iconClassName?: string };
 
-const dashboardNavItem: NavItem = {
-  href: "/",
-  label: "Dashboard",
-  icon: LayoutDashboard,
-  tab: "dashboard",
-  iconClassName: "text-success/90",
-};
-
-const toolsNavItems: NavItem[] = [
-  { href: "/testing", label: "Testing", icon: TestTube2, iconClassName: "text-info/90" },
-  { href: "/architecture", label: "Architecture", icon: Building2, iconClassName: "text-primary/90" },
-  { href: "/?tab=all", label: "Database", icon: LayoutGrid, tab: "all", iconClassName: "text-destructive/90" },
-  { href: "/ideas", label: "Ideas", icon: Lightbulb, iconClassName: "text-warning/90" },
-];
-
-const workNavItems: NavItem[] = [
-  { href: "/projects", label: "Projects", icon: Folders, iconClassName: "text-success/90" },
-  { href: "/?tab=tickets", label: "Tickets", icon: TicketIcon, tab: "tickets", iconClassName: "text-warning/90" },
-  { href: "/?tab=feature", label: "Feature", icon: Layers, tab: "feature", iconClassName: "text-info/90" },
-  { href: "/prompts", label: "Prompts", icon: MessageSquare, iconClassName: "text-primary/90" },
-];
-
-const bottomNavItems: NavItem[] = [
-  { href: "/run", label: "Run", icon: Play, iconClassName: "text-destructive/90" },
-  { href: "/configuration", label: "Configuration", icon: Settings, iconClassName: "text-success/90" },
-  { href: "/loading-screen", label: "LS", icon: Moon, iconClassName: "text-muted-foreground" },
-];
+const getNavItems = (): {
+  dashboardNavItem: NavItem;
+  toolsNavItems: NavItem[];
+  workNavItems: NavItem[];
+  bottomNavItems: NavItem[];
+} => ({
+  dashboardNavItem: {
+    href: "/",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    tab: "dashboard",
+    iconClassName: c["14"],
+  },
+  toolsNavItems: [
+    { href: "/testing", label: "Testing", icon: TestTube2, iconClassName: c["15"] },
+    { href: "/architecture", label: "Architecture", icon: Building2, iconClassName: c["16"] },
+    { href: "/?tab=all", label: "Database", icon: LayoutGrid, tab: "all", iconClassName: c["17"] },
+    { href: "/ideas", label: "Ideas", icon: Lightbulb, iconClassName: c["18"] },
+  ],
+  workNavItems: [
+    { href: "/projects", label: "Projects", icon: Folders, iconClassName: c["14"] },
+    { href: "/?tab=tickets", label: "Tickets", icon: TicketIcon, tab: "tickets", iconClassName: c["18"] },
+    { href: "/?tab=feature", label: "Feature", icon: Layers, tab: "feature", iconClassName: c["15"] },
+    { href: "/prompts", label: "Prompts", icon: MessageSquare, iconClassName: c["16"] },
+  ],
+  bottomNavItems: [
+    { href: "/run", label: "Run", icon: Play, iconClassName: c["17"] },
+    { href: "/configuration", label: "Configuration", icon: Settings, iconClassName: c["14"] },
+    { href: "/loading-screen", label: "LS", icon: Moon, iconClassName: c["19"] },
+  ],
+});
 
 function SidebarNavWithParams({
   pathname,
@@ -64,6 +71,7 @@ function SidebarNavigationContent({
   sidebarCollapsed: boolean;
 }) {
   const { openLogModal } = useQuickActions();
+  const { dashboardNavItem, toolsNavItems, workNavItems, bottomNavItems } = getNavItems();
 
   const renderItem = (item: NavItem) => {
     const { href, label, icon, tab, iconClassName } = item;
@@ -86,26 +94,26 @@ function SidebarNavigationContent({
   return (
     <>
       {renderItem(dashboardNavItem)}
-      <div className="flex flex-col flex-1 min-h-0 gap-4 mt-4">
-        <div className="flex flex-col flex-1 min-h-0 border-t border-primary/30 pt-4 gap-1">
+      <div className={c["0"]}>
+        <div className={c["1"]}>
           {!sidebarCollapsed && (
-            <p className="px-3 mb-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80 shrink-0">
+            <p className={c["2"]}>
               Testing · Architecture · Data
             </p>
           )}
           {toolsNavItems.map(renderItem)}
         </div>
-        <div className="flex flex-col flex-1 min-h-0 border-t border-primary/30 pt-4 gap-1">
+        <div className={c["3"]}>
           {!sidebarCollapsed && (
-            <p className="px-3 mb-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80 shrink-0">
+            <p className={c["4"]}>
               Projects · Tickets · Features
             </p>
           )}
           {workNavItems.map(renderItem)}
         </div>
-        <div className="flex flex-col flex-1 min-h-0 border-t border-primary/30 pt-4 gap-1 mt-auto">
+        <div className={c["5"]}>
           {!sidebarCollapsed && (
-            <p className="px-3 mb-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80 shrink-0">
+            <p className={c["6"]}>
               Log · Run · Configuration · LS
             </p>
           )}
@@ -116,13 +124,10 @@ function SidebarNavigationContent({
                 <button
                   type="button"
                   onClick={() => openLogModal()}
-                  className={cn(
-                    "flex items-center gap-2 rounded-md py-2.5 w-full text-sm font-medium transition-colors justify-center px-0",
-                    "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                  )}
+                  className={cn(c["11"], c["12"])}
                   aria-label="Open log"
                 >
-                  <ScrollText className="h-4 w-4 shrink-0 text-info/80" />
+                  <ScrollText className={c["7"]} />
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right">Log</TooltipContent>
@@ -131,13 +136,10 @@ function SidebarNavigationContent({
             <button
               type="button"
               onClick={() => openLogModal()}
-              className={cn(
-                "flex items-center gap-2 rounded-md py-2.5 w-full text-sm font-medium transition-colors px-3",
-                "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-              )}
+              className={cn(c["13"], c["12"])}
             >
-              <ScrollText className="h-4 w-4 shrink-0 text-info/80" />
-              <span className="truncate">Log</span>
+              <ScrollText className={c["8"]} />
+              <span className={c["9"]}>Log</span>
             </button>
           )}
           {bottomNavItems.map(renderItem)}
@@ -150,7 +152,7 @@ function SidebarNavigationContent({
 export function SidebarNavigation({ sidebarCollapsed }: { sidebarCollapsed: boolean }) {
   const pathname = usePathname();
   return (
-    <nav className="flex flex-col flex-1 min-w-0 w-full px-2 gap-1">
+    <nav className={c["10"]}>
       <Suspense fallback={<SidebarNavigationContent pathname={pathname ?? ""} currentTab="dashboard" sidebarCollapsed={sidebarCollapsed} />}>
         <SidebarNavWithParams pathname={pathname ?? ""} sidebarCollapsed={sidebarCollapsed} />
       </Suspense>
