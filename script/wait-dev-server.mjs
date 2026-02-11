@@ -19,6 +19,8 @@ const readyDelayMs = 2000;
 // Max time to wait for a chunk URL to return 200 (Next compiles on first request)
 const chunkReadyMaxMs = 90_000;
 const chunkPollMs = 1000;
+// First request can trigger compilation; use longer timeout so we don't abort too early
+const fetchTimeoutMs = 30_000;
 
 function check(urlToCheck) {
   return fetch(urlToCheck, { method: "GET", signal: AbortSignal.timeout(3000) })
@@ -59,7 +61,7 @@ async function waitForChunk() {
   while (Date.now() < deadline) {
     try {
       console.log("Fetching devUrl: ", devUrl);
-      const res = await fetch(devUrl, { method: "GET", signal: AbortSignal.timeout(5000) });
+      const res = await fetch(devUrl, { method: "GET", signal: AbortSignal.timeout(fetchTimeoutMs) });
       console.log("DevUrl response status: ", res.status);
       if (!res.ok) {
         await new Promise((r) => setTimeout(r, chunkPollMs));
@@ -74,7 +76,7 @@ async function waitForChunk() {
       }
       const chunkUrl = resolveChunkUrl(src);
       console.log("Checking chunk URL: ", chunkUrl);
-      const chunkRes = await fetch(chunkUrl, { method: "GET", signal: AbortSignal.timeout(5000) });
+      const chunkRes = await fetch(chunkUrl, { method: "GET", signal: AbortSignal.timeout(fetchTimeoutMs) });
       console.log("Chunk URL response status: ", chunkRes.status);
       if (chunkRes.ok) {
         console.log("Chunk URL is ready!");
@@ -105,7 +107,7 @@ if (!alreadyUp) {
     stdio: "inherit",
     shell: true,
     detached: true,
-    env: { ...process.env, FORCE_COLOR: "1", TAURI_DEV: "1" },
+    env: { ...process.env, FORCE_COLOR: "1", TAURI_DEV: "1", NEXT_PUBLIC_IS_TAURI: "true" },
   });
   dev.unref();
   // Give Next.js a moment to start and acquire the lock before we poll

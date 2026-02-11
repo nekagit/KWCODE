@@ -15,7 +15,7 @@ if (isTauri) {
   // Dynamically import only when running in Tauri context
   import("@tauri-apps/api/core").then(module => tauriInvoke = module.invoke);
   import("@tauri-apps/api/event").then(module => tauriListen = module.listen);
-  import("@tauri-apps/api/dialog").then((m: { open: OpenFn }) => { tauriOpen = m.open; });
+  import("@tauri-apps/plugin-dialog").then((m: { open: OpenFn }) => { tauriOpen = m.open; });
 } else {
 // #region agent log
 fetch('http://127.0.0.1:7242/ingest/3a8fa5bb-85c1-4305-bdaa-558e16902420',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/lib/tauri.ts:14',message:'Entering non-Tauri block',data:{isTauriBuild:isTauri},timestamp:Date.now(),runId:'run1',hypothesisId:'H2'})}).catch(()=>{});

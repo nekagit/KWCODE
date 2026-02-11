@@ -1,19 +1,18 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { Project } from "@/types/project";
 import { listProjects, deleteProject } from "@/lib/api-projects";
 import { ProjectsHeader } from "@/components/molecules/LayoutAndNavigation/ProjectsHeader";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { TemplateIdeaAccordion } from "@/components/molecules/UtilitiesAndHelpers/TemplateIdeaAccordion";
 import { NoProjectsFoundCard } from "@/components/molecules/CardsAndDisplay/NoProjectsFoundCard";
-import { ProjectListContainer } from "@/components/molecules/ListsAndTables/ProjectListContainer";
 import { ProjectLoadingState } from "@/components/molecules/UtilitiesAndHelpers/ProjectLoadingState";
-import { ProjectCard } from "@/components/molecules/CardsAndDisplay/ProjectCard";
+import { LocalReposSection } from "@/components/molecules/ListsAndTables/LocalReposSection";
+import { ProjectListContainer } from "@/components/molecules/ListsAndTables/ProjectListContainer";
 
 export function ProjectsListPageContent() {
-  const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -94,21 +93,37 @@ export function ProjectsListPageContent() {
 
       <TemplateIdeaAccordion setError={setError} />
 
+      {/* Local repos: Documents/February folders — create a project from one without typing the path */}
+      <LocalReposSection />
 
+      {/* Existing projects: simple list to open them */}
       {loading ? (
         <ProjectLoadingState />
       ) : projects.length === 0 ? (
         <NoProjectsFoundCard seeding={seeding} seedTemplateProject={seedTemplateProject} />
       ) : (
-        <ProjectListContainer>
-          {projects.map((project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              onDelete={handleDelete}
-            />
-          ))}
-        </ProjectListContainer>
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">Your projects</h2>
+          <ProjectListContainer>
+            <ul className="space-y-1 rounded-md border bg-muted/30 p-2">
+              {projects.map((project) => (
+                <li key={project.id} className="flex items-center justify-between gap-2 py-1.5 px-2 rounded hover:bg-muted/50 group">
+                  <Link href={`/projects/${project.id}`} className="flex-1 min-w-0 truncate font-medium text-primary hover:underline">
+                    {project.name}
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={(e: React.MouseEvent) => handleDelete(project.id, e)}
+                    className="text-xs text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Delete project"
+                  >
+                    Delete
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </ProjectListContainer>
+        </section>
       )}
     </div>
   );

@@ -3,7 +3,7 @@ mod db;
 use base64::Engine;
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
@@ -744,24 +744,70 @@ fn get_all_projects() -> Result<Vec<String>, String> {
     with_db(db::get_all_projects)
 }
 
-/// List all subdirectories of the parent of project root (Documents/February). Used by Projects page Local projects card.
-#[tauri::command]
-fn list_february_folders() -> Result<Vec<String>, String> {
-    let ws = project_root()?;
-    let february_dir = ws
-        .parent()
-        .ok_or_else(|| "Project root has no parent (February folder)".to_string())?;
-    if !february_dir.is_dir() {
-        return Ok(vec![]);
-    }
+/// Collect all direct subdirectory paths under `dir`. Includes dirs and symlinks (so we don't miss any).
+fn list_subdir_paths(dir: &Path) -> Result<Vec<String>, String> {
     let mut paths = vec![];
-    for entry in std::fs::read_dir(february_dir).map_err(|e| e.to_string())? {
+    for entry in std::fs::read_dir(dir).map_err(|e| e.to_string())? {
         let entry = entry.map_err(|e| e.to_string())?;
         let path = entry.path();
-        if path.is_dir() {
-            if let Ok(canonical) = path.canonicalize() {
-                if let Some(s) = canonical.to_str() {
-                    paths.push(s.to_string());
+        let is_dir = path.is_dir();
+        let is_symlink = entry.file_type().map(|ft| ft.is_symlink()).unwrap_or(false);
+        if is_dir || is_symlink {
+            let path_str = path
+                .canonicalize()
+                .ok()
+                .and_then(|c| c.to_str().map(String::from))
+                .unwrap_or_else(|| path.to_string_lossy().to_string());
+            paths.push(path_str);
+        }
+    }
+    Ok(paths)
+}
+
+/// List all subdirectories of the February folder. Used by Projects page Local repos card.
+/// Uses (1) FEBRUARY_DIR env if set, (2) ~/Documents/February, (3) parent of project root.
+/// Merges results from all that exist so no folders are missed.
+#[tauri::command]
+fn list_february_folders() -> Result<Vec<String>, String> {
+    let mut candidates: Vec<PathBuf> = vec![];
+
+    if let Ok(ref p) = std::env::var("FEBRUARY_DIR") {
+        let pb = PathBuf::from(p);
+        let pb_canon = pb.canonicalize().ok().unwrap_or(pb.clone());
+        if pb_canon.is_dir() && !candidates.iter().any(|c| c == &pb_canon) {
+            candidates.push(pb_canon);
+        }
+    }
+
+    let home_dir = std::env::var("HOME")
+        .ok()
+        .map(PathBuf::from)
+        .or_else(|| std::env::var("USERPROFILE").ok().map(PathBuf::from));
+    if let Some(home) = home_dir {
+        let docs_feb = home.join("Documents").join("February");
+        let docs_feb_canon = docs_feb.canonicalize().ok().unwrap_or(docs_feb.clone());
+        if docs_feb_canon.is_dir() && !candidates.iter().any(|c| c == &docs_feb_canon) {
+            candidates.push(docs_feb_canon);
+        }
+    }
+
+    if let Ok(ws) = project_root() {
+        if let Some(parent) = ws.parent() {
+            let parent_buf = parent.to_path_buf();
+            let canonical_parent = parent_buf.canonicalize().ok().unwrap_or(parent_buf);
+            if canonical_parent.is_dir() && !candidates.iter().any(|c| c == &canonical_parent) {
+                candidates.push(canonical_parent);
+            }
+        }
+    }
+
+    let mut seen = HashSet::new();
+    let mut paths = vec![];
+    for dir in &candidates {
+        if let Ok(subdirs) = list_subdir_paths(dir) {
+            for s in subdirs {
+                if seen.insert(s.clone()) {
+                    paths.push(s);
                 }
             }
         }
