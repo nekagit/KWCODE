@@ -206,7 +206,7 @@ export function IdeasPageContent() {
       <PageHeader
         title="Business ideas"
         description="SaaS, IaaS, PaaS, websites, webapps, webshops — templates, AI-generated, or your own."
-        icon={Lightbulb} // Pass the component directly
+        icon={<Lightbulb />} // Pass the component directly
       />
 
       <Tabs defaultValue="templates" className="w-full">
