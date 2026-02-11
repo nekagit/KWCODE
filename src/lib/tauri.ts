@@ -8,7 +8,8 @@ if (IS_TAURI_BUILD) {
   // Dynamically import only when running in Tauri context
   import("@tauri-apps/api/core").then(module => tauriInvoke = module.invoke);
   import("@tauri-apps/api/event").then(module => tauriListen = module.listen);
-  import("@tauri-apps/api/dialog").then(module => tauriOpen = module.open);
+  import { open } from "@tauri-apps/api/dialog";
+tauriOpen = open;
 } else {
   // Fallback to no-op functions for non-Tauri builds
   import("./noop-tauri-api").then(module => {
