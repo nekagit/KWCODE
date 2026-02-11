@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Lightbulb } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import type { Project } from "@/types/project";
-import { ProjectHeader } from "@/components/shared/ProjectHeader";
+import { ProjectCategoryHeader } from "@/components/shared/ProjectCategoryHeader";
 import { ProjectIdeaListItem } from "@/components/atoms/list-items/ProjectIdeaListItem";
 import { GridContainer } from "@/components/shared/GridContainer";
 
@@ -24,7 +24,7 @@ export function ProjectIdeasTab({
 }: ProjectIdeasTabProps) {
   return (
     <div className="mt-4 space-y-6">
-      <ProjectHeader
+      <ProjectCategoryHeader
         project={project}
         projectId={projectId}
         exportLoading={exportLoading}

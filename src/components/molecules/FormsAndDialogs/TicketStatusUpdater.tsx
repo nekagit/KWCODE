@@ -5,7 +5,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { type TicketStatus } from "@/components/tickets-data-table";
+import { type TicketStatus } from "@/types/ticket";
 
 type TicketStatusUpdaterProps = {
   status: TicketStatus;

@@ -19,7 +19,7 @@ export interface PromptRecordItem {
   content: string;
 }
 
-export interface RunInfo {
+export interface Run {
   runId: string;
   label: string;
   logLines: string[];

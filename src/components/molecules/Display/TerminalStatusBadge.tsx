@@ -29,7 +29,6 @@ export function TerminalStatusBadge({
           </Badge>
         </button>
       </PopoverTrigger>
-      {/* PopoverContent will be rendered by the organism */}
     </Popover>
   );
 }

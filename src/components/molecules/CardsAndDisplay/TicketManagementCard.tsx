@@ -2,10 +2,10 @@ import { ReactNode } from "react";
 import { Card } from "@/components/shared/Card";
 import { TitleWithIcon } from "@/components/atoms/headers/TitleWithIcon";
 import { Ticket as TicketIcon } from "lucide-react";
-import type { Ticket } from "@/types/ticket";
+import type { TicketRow } from "@/types/ticket";
 
 interface TicketManagementCardProps {
-  tickets: Ticket[];
+  tickets: TicketRow[];
   children: ReactNode;
 }
 

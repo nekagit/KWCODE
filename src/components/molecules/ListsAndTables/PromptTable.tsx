@@ -16,7 +16,7 @@ type PromptRecordRecord = {
 
 interface PromptRecordTableProps {
   fullPromptRecords: PromptRecordRecord[];
-  selectedPromptRecordIds: number[];
+  selectedPromptIds: number[];
   setSelectedPromptRecordIds: (ids: number[]) => void;
   handleDelete: (id: number) => void;
   setEditOpen: (open: boolean) => void;
@@ -67,7 +67,7 @@ export function PromptRecordTable({
             <PromptTableRow
               key={p.id}
               prompt={p}
-              selectedPromptRecordIds={selectedPromptRecordIds}
+              selectedPromptIds={selectedPromptRecordIds}
               setSelectedPromptRecordIds={setSelectedPromptRecordIds}
               handleDelete={handleDelete}
               setEditOpen={setEditOpen}

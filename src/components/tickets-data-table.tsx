@@ -20,8 +20,8 @@ import { StatusBadge } from "@/components/molecules/Display/StatusBadge";
 import { DescriptionTooltip } from "@/components/molecules/Display/DescriptionTooltip";
 import { TicketActionsMenu } from "@/components/molecules/FormsAndDialogs/TicketActionsMenu";
 import { TicketStatusUpdater } from "@/components/molecules/FormsAndDialogs/TicketStatusUpdater";
-import { TicketsTable } from "@/components/organisms/Tables/TicketsTable";
-import { TicketsTableControls } from "@/components/organisms/Controls/TicketsTableControls";
+import { TicketsTable } from "@/components/organisms/TicketsTable";
+import { TicketsTableControls } from "@/components/organisms/TicketsTableControls";
 import { formatDate } from "@/lib/utils";
 import { type TicketRow, type TicketStatus } from "@/types/ticket";
 

@@ -1,11 +1,11 @@
 import React from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import type { Ticket } from "@/types/ticket";
+import type { TicketRow } from "@/types/ticket";
 
 interface TicketsDisplayListProps {
-  tickets: Ticket[];
-  onUpdateStatus: (id: string, updates: Partial<Ticket>) => Promise<void>;
+  tickets: TicketRow[];
+  onUpdateStatus: (id: string, updates: Partial<TicketRow>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }
 

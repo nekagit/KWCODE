@@ -1,26 +1,14 @@
-"use client";
-
 import { useState, useCallback, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/molecules/LayoutAndNavigation/PageHeader";
 import { IdeaTemplateCard } from "@/components/molecules/CardsAndDisplay/IdeaTemplateCard";
-import { AiGeneratedIdeasCard } from "@/components/molecules/CardsAndDisplay/AiGeneratedIdeasCard";
 import { MyIdeasCard } from "@/components/molecules/CardsAndDisplay/MyIdeasCard";
 import { IdeaFormDialog } from "@/components/molecules/FormsAndDialogs/IdeaFormDialog";
+import { IdeaCategory, IdeaRecord } from "@/types/idea";
+import { AiGeneratedIdeasCard } from "@/components/molecules/CardsAndDisplay/AiGeneratedIdeasCard";
 
-export type IdeaCategory = "saas" | "iaas" | "paas" | "website" | "webapp" | "webshop" | "other";
-
-export type IdeaRecord = {
-  id: number;
-  title: string;
-  description: string;
-  category: IdeaCategory;
-  source: "template" | "ai" | "manual";
-  created_at?: string;
-  updated_at?: string;
-};
 
 type TemplateIdea = { title: string; description: string; category: IdeaCategory };
 

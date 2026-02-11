@@ -2,13 +2,13 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Copy } from "lucide-react";
 
-import type { ArchitectureRecord, ArchitectureCategory } from "@/types/architecture";
+import type { IdeaRecord, IdeaCategory } from "@/types/idea";
 import { ListItemCard } from "@/components/shared/ListItemCard";
 
 interface AiIdeaListItemProps {
-  item: ArchitectureRecord;
-  CATEGORY_LABELS: Record<ArchitectureCategory, string>;
-  onAddFromAi: (item: ArchitectureRecord) => Promise<void>;
+  item: IdeaRecord;
+  CATEGORY_LABELS: Record<IdeaCategory, string>;
+  onAddFromAi: (item: IdeaRecord) => Promise<void>;
 }
 
 export const AiIdeaListItem: React.FC<AiIdeaListItemProps> = ({
@@ -18,8 +18,8 @@ export const AiIdeaListItem: React.FC<AiIdeaListItemProps> = ({
 }) => {
   return (
     <ListItemCard
-      id={item.name}
-      title={item.name}
+      id={item.id.toString()}
+      title={item.title}
       subtitle={item.description}
       badge={CATEGORY_LABELS[item.category]}
       footerButtons={

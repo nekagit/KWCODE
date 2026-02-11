@@ -1,9 +1,9 @@
 import React from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { Ticket } from "@/types/ticket";
+import type { TicketRow } from "@/types/ticket";
 
 interface TicketsDisplayProps {
-  tickets: Ticket[];
+  tickets: TicketRow[];
 }
 
 export const TicketsDisplay: React.FC<TicketsDisplayProps> = ({ tickets }) => {

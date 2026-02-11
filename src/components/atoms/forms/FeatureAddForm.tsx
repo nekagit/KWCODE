@@ -4,10 +4,10 @@ import { Plus } from "lucide-react";
 import { CheckboxGroup } from "@/components/shared/CheckboxGroup";
 import { GenericInputWithLabel } from "@/components/shared/inputs/GenericInputWithLabel";
 import type { Feature } from "@/types/project";
-import type { Ticket } from "@/types/ticket";
+import type { TicketRow } from "@/types/ticket";
 
 interface FeatureAddFormProps {
-  tickets: Ticket[];
+  tickets: TicketRow[];
   prompts: { id: number; title: string }[];
   allProjects: string[];
   onAddFeature: (feature: Omit<Feature, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;

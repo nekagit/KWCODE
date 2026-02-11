@@ -19,8 +19,12 @@ export const ProjectArchitectureListItem: React.FC<ProjectArchitectureListItemPr
           className="hover:bg-muted/50 transition-colors flex justify-between items-center bg-muted/30"
           title={architecture.name}
           subtitle={architecture.description}
-          rightSection={<ChevronRight className="h-5 w-5 text-muted-foreground" />}
-        />
+        >
+          <div className="flex items-center">
+            {/* The rightSection content */}
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          </div>
+        </Card>
       </Link>
     </li>
   );

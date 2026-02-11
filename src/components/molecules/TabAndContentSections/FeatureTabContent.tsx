@@ -1,12 +1,12 @@
 import type { Project, PromptRecord, Feature } from "@/types/project";
-import type { Ticket } from "@/types/ticket";
-import { FeatureManagementCard } from "@/components/molecules/CardsAndDisplay/FeatureManagementCard.tsx";
+import type { TicketRow } from "@/types/ticket";
+import { FeatureManagementCard } from "@/components/molecules/CardsAndDisplay/FeatureManagementCard";
 import type { RunInfo } from "@/types/run";
 import { useRunState } from "@/context/run-state";
 
 interface FeatureTabContentProps {
   features: Feature[];
-  tickets: Ticket[];
+  tickets: TicketRow[];
   prompts: PromptRecord[];
   allProjects: string[];
   activeProjects: string[];

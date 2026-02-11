@@ -1,5 +1,5 @@
 import type { Project, Feature } from "@/types/project";
-import type { Ticket } from "@/types/ticket";
+import type { TicketRow } from "@/types/ticket";
 import type { PromptRecord } from "@/types/prompt";
 import type { RunInfo } from "@/types/run";
 import { useRunState } from "@/context/run-state";
@@ -7,7 +7,7 @@ import { FeatureManagementCard } from "@/components/molecules/CardsAndDisplay/Fe
 
 interface FeatureTabContentProps {
   features: Feature[];
-  tickets: Ticket[];
+  tickets: TicketRow[];
   prompts: PromptRecord[];
   allProjects: string[];
   activeProjects: string[];

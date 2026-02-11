@@ -1,7 +1,7 @@
 import { QuickActions } from "@/components/organisms/QuickActions";
 import { TicketBoard } from "@/components/organisms/TicketBoard";
 import type { Feature } from "@/types/project";
-import type { Ticket } from "@/types/ticket";
+import type { TicketRow } from "@/types/ticket";
 import type { RunInfo } from "@/types/run";
 import { useRouter } from "next/navigation";
 
@@ -11,8 +11,8 @@ interface DashboardTabContentProps {
   navigateToTab: (tab: string) => void;
   runForFeature: (feature: Feature) => Promise<void>;
   setSelectedRunId: (id: string | null) => void;
-  tickets: Ticket[];
-  updateTicket: (id: string, updates: Partial<Ticket>) => Promise<void>;
+  tickets: TicketRow[];
+  updateTicket: (id: string, updates: Partial<TicketRow>) => Promise<void>;
   deleteTicket: (id: string) => Promise<void>;
   router: ReturnType<typeof useRouter>;
 }

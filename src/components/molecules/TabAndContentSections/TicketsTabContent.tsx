@@ -1,10 +1,10 @@
-import { TicketManagement } from "@/components/organisms/TicketManagement.tsx";
-import type { Ticket } from "@/types/ticket";
+import { TicketManagement } from "@/components/organisms/TicketManagement";
+import type { TicketRow } from "@/types/ticket";
 
 interface TicketsTabContentProps {
-  tickets: Ticket[];
+  tickets: TicketRow[];
   saveTickets: (next: Ticket[]) => Promise<void>;
-  updateTicket: (id: string, updates: Partial<Ticket>) => Promise<void>;
+  updateTicket: (id: string, updates: Partial<TicketRow>) => Promise<void>;
   deleteTicket: (id: string) => Promise<void>;
 }
 

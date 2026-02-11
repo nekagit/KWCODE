@@ -17,8 +17,8 @@ import {
 import { buildKanbanContextBlock } from "@/lib/analysis-prompt";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
-import { ProjectHeader } from "@/components/shared/ProjectHeader";
-import { ProjectTicketsKanbanColumn } from "@/components/organisms/Display/ProjectTicketsKanbanColumn";
+import { ProjectCategoryHeader } from "@/components/shared/ProjectCategoryHeader";
+import { ProjectTicketsKanbanColumn } from "@/components/organisms/ProjectTicketsKanbanColumn";
 import { GenerateKanbanPromptSection } from "@/components/atoms/forms/GenerateKanbanPromptSection";
 
 interface ProjectTicketsTabProps {
@@ -39,8 +39,8 @@ export function ProjectTicketsTab({
   const [kanbanData, setKanbanData] = useState<TodosKanbanData | null>(null);
   const [kanbanLoading, setKanbanLoading] = useState(false);
   const [kanbanError, setKanbanError] = useState<string | null>(null);
-  const [kanbanPromptRecord, setKanbanPromptRecord] = useState("");
-  const [kanbanPromptRecordLoading, setKanbanPromptRecordLoading] = useState(false);
+  const [kanbanPrompt, setKanbanPrompt] = useState("");
+  const [kanbanPromptLoading, setKanbanPromptLoading] = useState(false);
   const [showFeatureTicketWarning, setShowFeatureTicketWarning] = useState(false);
 
   const generateKanban = useCallback(async () => {
@@ -59,17 +59,17 @@ export function ProjectTicketsTab({
     }
   }, [project]);
 
-  const generateKanbanPromptRecord = useCallback(async () => {
+  const generateKanbanPrompt = useCallback(async () => {
     if (!project || !kanbanData) return;
-    setKanbanPromptRecordLoading(true);
+    setKanbanPromptLoading(true);
     setKanbanError(null);
     try {
       const block = buildKanbanContextBlock(kanbanData);
-      setKanbanPromptRecord(block);
+      setKanbanPrompt(block);
     } catch (e) {
       setKanbanError(e instanceof Error ? e.message : String(e));
     } finally {
-      setKanbanPromptRecordLoading(false);
+      setKanbanPromptLoading(false);
     }
   }, [project, kanbanData]);
 
@@ -93,7 +93,7 @@ export function ProjectTicketsTab({
 
   return (
     <div className="mt-4 space-y-6">
-      <ProjectHeader
+      <ProjectCategoryHeader
         project={project}
         projectId={projectId}
         exportLoading={exportLoading}
@@ -149,11 +149,11 @@ export function ProjectTicketsTab({
         </div>
       )}
 
-      <GenerateKanbanPromptRecordSection
+      <GenerateKanbanPromptSection
         kanbanData={kanbanData}
-        kanbanPromptRecord={kanbanPromptRecord}
-        kanbanPromptRecordLoading={kanbanPromptRecordLoading}
-        generateKanbanPromptRecord={generateKanbanPromptRecord}
+        kanbanPrompt={kanbanPrompt}
+        kanbanPromptLoading={kanbanPromptLoading}
+        generateKanbanPrompt={generateKanbanPrompt}
       />
     </div>
   );

@@ -3,7 +3,6 @@
 import { useState, Suspense } from "react";
 import { usePathname } from "next/navigation";
 import { TerminalStatusBadge } from "@/components/molecules/Display/TerminalStatusBadge";
-import { RunningTerminalsPopover } from "@/components/organisms/RunningTerminalsPopover";
 import { SidebarNavigation } from "@/components/organisms/SidebarNavigation";
 import { SidebarToggle } from "@/components/molecules/ControlsAndButtons/SidebarToggle";
 import { useRunState } from "@/context/run-state";
@@ -11,7 +10,6 @@ import { QuickActionsFAB, useQuickActions } from "@/context/quick-actions-contex
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [runningTerminalsOpen, setRunningTerminalsOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const {
     runningRuns,
@@ -24,11 +22,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen overflow-hidden relative bg-transparent">
       {/* Running terminals widget */}
-      <TerminalStatusBadge
-        runningRuns={runningRuns}
-        onOpenChange={setRunningTerminalsOpen}
-        open={runningTerminalsOpen}
-      />
 
       {/* Sidebar: collapsible, fixed height. useSearchParams only inside Suspense so shell never suspends. */}
       <aside

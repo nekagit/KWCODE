@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Plus, MessageSquare } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import type { Project } from "@/types/project";
-import { ProjectHeader } from "@/components/shared/ProjectHeader";
-import { ProjectPromptListItem } from "@/components/atoms/list-items/ProjectPromptListItem";
+import { ProjectCategoryHeader } from "@/components/shared/ProjectCategoryHeader";
+import { ProjectPromptRecordListItem } from "@/components/atoms/list-items/ProjectPromptListItem";
 import { GridContainer } from "@/components/shared/GridContainer";
 
 interface ProjectPromptRecordsTabProps {
@@ -24,7 +24,7 @@ export function ProjectPromptRecordsTab({
 }: ProjectPromptRecordsTabProps) {
   return (
     <div className="mt-4 space-y-6">
-      <ProjectHeader
+      <ProjectCategoryHeader
         project={project}
         projectId={projectId}
         exportLoading={exportLoading}

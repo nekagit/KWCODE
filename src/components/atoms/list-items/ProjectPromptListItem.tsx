@@ -28,7 +28,9 @@ export const ProjectPromptRecordListItem: React.FC<ProjectPromptRecordListItemPr
             </Link>
           </Button>
         }
-      />
+      >
+        <></>
+      </Card>
     </li>
   );
 };

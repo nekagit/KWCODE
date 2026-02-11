@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import React, { ReactNode } from "react";
 import { GridContainer } from "@/components/shared/GridContainer";
 
 interface ProjectListContainerProps {

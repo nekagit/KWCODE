@@ -9,7 +9,7 @@ import { Layers, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Project } from "@/types/project";
 import type { Feature } from "@/types/project";
-import type { Ticket } from "@/types/ticket";
+import type { TicketRow } from "@/types/ticket";
 import { TitleWithIcon } from "@/components/atoms/headers/TitleWithIcon";
 import { FeatureAddForm } from "@/components/atoms/forms/FeatureAddForm";
 import { FeatureFilterSelect } from "@/components/atoms/forms/FeatureFilterSelect";
@@ -19,7 +19,7 @@ import { FeatureListItem } from "@/components/atoms/list-items/FeatureListItem";
 
 interface FeatureManagementCardProps {
   features: Feature[];
-  tickets: Ticket[];
+  tickets: TicketRow[];
   prompts: { id: number; title: string }[];
   allProjects: string[];
   activeProjects: string[];

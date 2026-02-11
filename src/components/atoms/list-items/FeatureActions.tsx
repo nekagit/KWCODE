@@ -7,7 +7,7 @@ import type { TicketRow } from "@/types/ticket";
 
 interface FeatureActionsProps {
   feature: Feature;
-  tickets: Ticket[];
+  tickets: TicketRow[];
   inQueue: boolean;
   running: boolean;
   onAddFeatureToQueue: (feature: Feature) => void;

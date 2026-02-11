@@ -7,15 +7,11 @@ import { PageHeader } from "@/components/molecules/LayoutAndNavigation/PageHeade
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 
 interface ProjectsHeaderProps {
-  showLocalProjects: boolean;
-  setShowLocalProjects: React.Dispatch<React.SetStateAction<boolean>>;
   seeding: boolean;
   seedTemplateProject: () => Promise<void>;
 }
 
 export function ProjectsHeader({
-  showLocalProjects,
-  setShowLocalProjects,
   seeding,
   seedTemplateProject,
 }: ProjectsHeaderProps) {
@@ -28,14 +24,6 @@ export function ProjectsHeader({
         }
       />
       <ButtonGroup alignment="right">
-        <Button
-          variant="outline"
-          onClick={() => setShowLocalProjects((v: boolean) => !v)}
-          className={showLocalProjects ? "bg-accent" : ""}
-        >
-          <FolderOpen className="h-4 w-4 mr-2" />
-          Local projects
-        </Button>
         <Button
           variant="outline"
           disabled={seeding}

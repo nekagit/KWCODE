@@ -7,7 +7,6 @@ import { listProjects, deleteProject } from "@/lib/api-projects";
 import { ProjectsHeader } from "@/components/molecules/LayoutAndNavigation/ProjectsHeader";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { TemplateIdeaAccordion } from "@/components/molecules/UtilitiesAndHelpers/TemplateIdeaAccordion";
-import { LocalProjectsCard } from "@/components/molecules/CardsAndDisplay/LocalProjectsCard";
 import { NoProjectsFoundCard } from "@/components/molecules/CardsAndDisplay/NoProjectsFoundCard";
 import { ProjectListContainer } from "@/components/molecules/ListsAndTables/ProjectListContainer";
 import { ProjectLoadingState } from "@/components/molecules/UtilitiesAndHelpers/ProjectLoadingState";
@@ -19,7 +18,6 @@ export function ProjectsListPageContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [seeding, setSeeding] = useState(false);
-  const [showLocalProjects, setShowLocalProjects] = useState(false);
 
   const refetch = useCallback(() => {
     listProjects()
@@ -79,8 +77,6 @@ export function ProjectsListPageContent() {
   return (
     <div className="space-y-6">
       <ProjectsHeader
-        showLocalProjects={showLocalProjects}
-        setShowLocalProjects={setShowLocalProjects}
         seeding={seeding}
         seedTemplateProject={seedTemplateProject}
       />
@@ -98,7 +94,6 @@ export function ProjectsListPageContent() {
 
       <TemplateIdeaAccordion setError={setError} />
 
-      {showLocalProjects && <LocalProjectsCard />}
 
       {loading ? (
         <ProjectLoadingState />

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { createProject } from "@/lib/api-projects";
+import { showOpenDirectoryDialog } from "@/lib/electron";
 import { Card } from "@/components/shared/Card";
 import { Form } from "@/components/shared/Form";
 import { ProjectInput } from "@/components/atoms/inputs/ProjectInput";
@@ -59,6 +60,13 @@ export function NewProjectForm() {
     }
   };
 
+  const handleBrowseRepoPath = async () => {
+    const selectedPath = await showOpenDirectoryDialog();
+    if (selectedPath) {
+      setRepoPath(selectedPath);
+    }
+  };
+
   return (
     <Card
       title="Project"
@@ -69,7 +77,7 @@ export function NewProjectForm() {
           id="name"
           label="Name"
           value={name}
-          onChange={setName}
+          onChange={(e) => setName(e.target.value)}
           placeholder="e.g. My SaaS app"
           required
         />
@@ -84,9 +92,10 @@ export function NewProjectForm() {
           id="repoPath"
           label="Repo path (optional)"
           value={repoPath}
-          onChange={setRepoPath}
+          onChange={(e) => setRepoPath(e.target.value)}
           placeholder="/path/to/repo"
           className="font-mono text-sm"
+          onBrowse={handleBrowseRepoPath}
         />
         {error && (
           <ErrorDisplay message={error} />

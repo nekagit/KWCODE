@@ -4,9 +4,9 @@ import Link from "next/link";
 import { Card } from "@/components/shared/Card";
 import { Button } from "@/components/ui/button";
 import { Folders, MessageSquare, Ticket as TicketIcon, Layers, Lightbulb, Palette } from "lucide-react";
-import type { Project } from "@/types/project";
+import type { Project, Feature } from "@/types/project";
 import type { PromptRecord } from "@/types/prompt";
-import type { Ticket } from "@/types/ticket";
+import type { TicketRow } from "@/types/ticket";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import { AllProjectsDisplayList } from "@/components/molecules/Displays/AllProjectsDisplayList";
 import { PromptsDisplayList } from "@/components/molecules/Displays/PromptsDisplayList";
@@ -99,7 +99,7 @@ export function AllDataTabContent({
           }
           subtitle={`${tickets.length} tickets`}
         >
-          <TicketsDisplayList tickets={tickets as Ticket[]} />
+          <TicketsDisplayList tickets={tickets as TicketRow[]} />
           <p className="text-xs text-muted-foreground mt-2">Full list on Tickets tab.</p>
         </Card>
         <Card

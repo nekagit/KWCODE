@@ -6,7 +6,7 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { Loader2, Database, FileCode, Braces } from "lucide-react";
 import { invoke, isTauri } from "@/lib/tauri";
-import type { Ticket } from "@/types/ticket";
+import type { TicketRow } from "@/types/ticket";
 import type { Feature } from "@/types/project";
 import { ScriptListDisplay } from "@/components/molecules/Displays/ScriptListDisplay";
 import { JsonFileListDisplay } from "@/components/molecules/Displays/JsonFileListDisplay";
@@ -18,7 +18,7 @@ import { ActiveProjectsDisplay } from "@/components/molecules/Displays/ActivePro
 
 interface DbDataTabContentProps {
   isTauriEnv: boolean | null;
-  tickets: Ticket[];
+  tickets: TicketRow[];
   features: Feature[];
   allProjects: string[];
   activeProjects: string[];
@@ -178,7 +178,7 @@ export function DbDataTabContent({
           </AccordionTrigger>
           <AccordionContent className="space-y-4">
             <KvStoreDisplay dataKvEntries={dataKvEntries} dataLoading={dataLoading} />
-            <TicketsDisplay tickets={tickets} />
+            <TicketsDisplay tickets={tickets as TicketRow[]} />
             <FeaturesDisplay features={features} />
             <AllProjectsDisplay allProjects={allProjects} />
             <ActiveProjectsDisplay activeProjects={activeProjects} />

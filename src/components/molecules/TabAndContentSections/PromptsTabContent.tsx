@@ -14,7 +14,7 @@ export function PromptsTabContent({
 }: PromptsTabContentProps) {
   return (
     <div className="mt-0 space-y-6">
-      <PromptsAndTiming
+      <PromptRecordsAndTiming
         prompts={prompts}
         selectedPromptIds={selectedPromptRecordIds}
         setSelectedPromptIds={setSelectedPromptRecordIds}

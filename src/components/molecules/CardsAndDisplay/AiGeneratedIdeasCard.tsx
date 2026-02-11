@@ -1,27 +1,28 @@
-"use client";
-
 import { useState, useCallback } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/shared/Card";
-import { TitleWithIcon } from "@/components/shared/TitleWithIcon";
-import { AiGeneratorInput } from "@/components/atoms/inputs/AiGeneratorInput";
+import { TitleWithIcon } from "@/components/atoms/headers/TitleWithIcon";
+fetch('http://127.0.0.1:7242/ingest/3a8fa5bb-85c1-4305-bdaa-558e16902420',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/components/molecules/CardsAndDisplay/AiGeneratedIdeasCard.tsx:6',message:'TitleWithIcon imported in AiGeneratedIdeasCard',data:{typeofTitleWithIcon:typeof TitleWithIcon},timestamp:Date.now(),hypothesisId:'B'})}).catch(()=>{});
 import { LoadingState } from "@/components/shared/EmptyState";
-import { IdeaCategory, IdeaRecord } from "@/components/organisms/IdeasPageContent";
-import { IdeaListItem } from "@/components/atoms/list-items/IdeaListItem";
+import { AiGeneratorInput } from "@/components/atoms/inputs/AiGeneratorInput";
+import { AiIdeaListItem } from "@/components/atoms/list-items/AiIdeaListItem";
+
+import type { IdeaCategory, IdeaRecord } from "@/types/idea";
 
 interface AiGeneratedIdeasCardProps {
   CATEGORY_LABELS: Record<IdeaCategory, string>;
-  addToMyIdeas: (item: { title: string; description: string; category: IdeaCategory }, source: "template" | "ai") => Promise<void>;
+  addToMyIdeas: (item: IdeaRecord, source: "ai") => Promise<void>;
 }
 
 export function AiGeneratedIdeasCard({ CATEGORY_LABELS, addToMyIdeas }: AiGeneratedIdeasCardProps) {
   const [aiTopic, setAiTopic] = useState("");
+  const [aiCount, setAiCount] = useState(3);
   const [aiLoading, setAiLoading] = useState(false);
-  const [aiResults, setAiResults] = useState<{ title: string; description: string; category: IdeaCategory }[]>([]);
+  const [aiResults, setAiResults] = useState<IdeaRecord[]>([]);
 
-  const handleGenerate = useCallback(async () => {
+  const handleAiGenerate = useCallback(async () => {
     if (!aiTopic.trim()) return;
     setAiLoading(true);
     setAiResults([]);
@@ -29,7 +30,7 @@ export function AiGeneratedIdeasCard({ CATEGORY_LABELS, addToMyIdeas }: AiGenera
       const res = await fetch("/api/generate-ideas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic: aiTopic.trim(), count: 5 }),
+        body: JSON.stringify({ topic: aiTopic.trim(), count: aiCount }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -37,45 +38,23 @@ export function AiGeneratedIdeasCard({ CATEGORY_LABELS, addToMyIdeas }: AiGenera
       }
       const data = await res.json();
       setAiResults(Array.isArray(data.ideas) ? data.ideas : []);
-      if (!data.ideas?.length) toast.info("No ideas returned. Try another topic.");
+      if (!data.ideas?.length) toast.info("No results. Try another topic.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Generation failed");
     } finally {
       setAiLoading(false);
     }
-  }, [aiTopic]);
-
-  const handleGenerateProject = async (ideaId: number) => {
-    // This component does not directly handle project generation.
-    // The parent (IdeasPageContent) is responsible for this.
-    // For now, we'll log a message.
-    console.log(`Generate project for idea ID: ${ideaId}`);
-  };
-
-  const handleOpenEdit = (idea: IdeaRecord) => {
-    // This component does not directly handle editing.
-    // The parent (IdeasPageContent) is responsible for this.
-    // For now, we'll log a message.
-    console.log(`Open edit for idea: ${idea.title}`);
-  };
-
-  const handleDelete = async (ideaId: number) => {
-    // This component does not directly handle deletion.
-    // The parent (IdeasPageContent) is responsible for this.
-    // For now, we'll log a message.
-    console.log(`Delete idea ID: ${ideaId}`);
-  };
+  }, [aiTopic, aiCount]);
 
   return (
     <Card
       title={<TitleWithIcon icon={Sparkles} title="AI generated ideas" className="text-lg" />}
-      subtitle="Enter a topic or niche; we&apos;ll suggest ideas you can add to My ideas."
+      subtitle="Enter a topic or scenario; we&apos;ll suggest business ideas you can add to My ideas."
     >
       <AiGeneratorInput
-        placeholder="e.g. developer tools, fitness apps, B2B HR"
         value={aiTopic}
         onChange={setAiTopic}
-        onGenerate={handleGenerate}
+        onGenerate={handleAiGenerate}
         loading={aiLoading}
       />
       {aiLoading ? (
@@ -83,15 +62,20 @@ export function AiGeneratedIdeasCard({ CATEGORY_LABELS, addToMyIdeas }: AiGenera
       ) : aiResults.length > 0 && (
         <ScrollArea className="h-[400px] pr-4 mt-4">
           <ul className="space-y-3">
-            {aiResults.map((idea, i) => (
-              <IdeaListItem
+            {aiResults.map((item, i) => (
+              <AiIdeaListItem
                 key={i}
-                idea={{ ...idea, id: i, source: "ai" }} // Provide a unique ID and source
+                item={item}
                 CATEGORY_LABELS={CATEGORY_LABELS}
-                generatingProjectIdeaId={null} // Or connect to actual state if exists
-                onGenerateProject={handleGenerateProject}
-                onOpenEdit={handleOpenEdit} // Pass the placeholder for now
-                onDelete={handleDelete} // Pass the placeholder for now
+                onAddFromAi={async (item) => {
+                  const newItem = {
+                    ...item,
+                    id: Math.floor(Math.random() * 1000000), // temp ID, replace with real ID from backend
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  };
+                  await addToMyIdeas(newItem, "ai");
+                }}
               />
             ))}
           </ul>
