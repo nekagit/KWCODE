@@ -69,6 +69,7 @@ export interface RunActions {
   setAllProjects: (v: string[]) => void;
   setActiveProjectsSync: (v: string[]) => void;
   setPromptRecords: (v: PromptRecordItem[]) => void;
+  addPrompt: (title: string, content: string) => void;
 }
 
 export type RunStore = RunState & RunActions;
@@ -166,17 +167,35 @@ export const useRunStore = create<RunStore>()((set, get) => ({
         ]);
         set({ allProjects: all, activeProjects: active, prompts: promptList });
       } else {
-        const res = await fetch("/api/data");
-        if (!res.ok) throw new Error(await getApiErrorMessage(res));
-        const data = await res.json();
+        const [dataRes, promptsRes] = await Promise.all([
+          fetch("/api/data"),
+          fetch("/api/data/prompts"),
+        ]);
+        if (!dataRes.ok) throw new Error(await getApiErrorMessage(dataRes));
+        const data = await dataRes.json();
         const warning =
           typeof (data as { _warning?: string })._warning === "string"
             ? (data as { _warning: string })._warning
             : null;
+        let prompts: PromptRecordItem[] = Array.isArray(data.prompts) ? data.prompts : [];
+        if (promptsRes.ok) {
+          try {
+            const promptsList = await promptsRes.json();
+            if (Array.isArray(promptsList)) {
+              prompts = promptsList.map((p: { id: number; title: string; content?: string }) => ({
+                id: p.id,
+                title: p.title ?? "",
+                content: p.content ?? "",
+              }));
+            }
+          } catch {
+            // keep prompts from /api/data if prompts fetch fails
+          }
+        }
         set({
           allProjects: Array.isArray(data.allProjects) ? data.allProjects : [],
           activeProjects: Array.isArray(data.activeProjects) ? data.activeProjects : [],
-          prompts: Array.isArray(data.prompts) ? data.prompts : [],
+          prompts,
           dataWarning: warning ?? null,
         });
       }
@@ -355,23 +374,24 @@ export const useRunStore = create<RunStore>()((set, get) => ({
       return null;
     }
     set({ error: null });
+    const runIds: string[] = [];
     try {
-      const { run_id } = await invoke<{ run_id: string }>("run_implement_all", {
-        projectPath: path,
-      });
-      set((s) => ({
-        runningRuns: [
-          ...s.runningRuns,
-          {
-            runId: run_id,
-            label: "Implement All",
-            logLines: [],
-            status: "running",
-          },
-        ],
-        selectedRunId: run_id,
-      }));
-      return run_id;
+      for (const slot of [1, 2, 3] as const) {
+        const { run_id } = await invoke<{ run_id: string }>("run_implement_all", {
+          projectPath: path,
+          slot,
+        });
+        runIds.push(run_id);
+        const label = `Implement All (Terminal ${slot})`;
+        set((s) => ({
+          runningRuns: [
+            ...s.runningRuns,
+            { runId: run_id, label, logLines: [], status: "running" as const },
+          ],
+          selectedRunId: run_id,
+        }));
+      }
+      return runIds[0] ?? null;
     } catch (e) {
       set({ error: e instanceof Error ? e.message : String(e) });
       return null;
@@ -393,8 +413,10 @@ export const useRunStore = create<RunStore>()((set, get) => ({
 
   stopAllImplementAll: async () => {
     const { runningRuns, stopRun } = get();
+    const isImplementAll = (r: RunInfo) =>
+      r.label === "Implement All" || r.label.startsWith("Implement All (");
     const implementAllRunning = runningRuns.filter(
-      (r) => r.label === "Implement All" && r.status === "running"
+      (r) => isImplementAll(r) && r.status === "running"
     );
     for (const r of implementAllRunning) {
       await stopRun(r.runId);
@@ -402,16 +424,20 @@ export const useRunStore = create<RunStore>()((set, get) => ({
   },
 
   clearImplementAllLogs: () => {
+    const isImplementAll = (r: RunInfo) =>
+      r.label === "Implement All" || r.label.startsWith("Implement All (");
     set((s) => ({
       runningRuns: s.runningRuns.map((r) =>
-        r.label === "Implement All" ? { ...r, logLines: [] } : r
+        isImplementAll(r) ? { ...r, logLines: [] } : r
       ),
     }));
   },
 
   archiveImplementAllLogs: () => {
+    const isImplementAll = (r: RunInfo) =>
+      r.label === "Implement All" || r.label.startsWith("Implement All (");
     set((s) => {
-      const implementAllRuns = s.runningRuns.filter((r) => r.label === "Implement All");
+      const implementAllRuns = s.runningRuns.filter((r) => isImplementAll(r));
       const allLogLines = implementAllRuns.flatMap((r) =>
         r.logLines.length ? [`--- ${r.label} (${r.runId}) ---`, ...r.logLines] : []
       );
@@ -435,6 +461,23 @@ export const useRunStore = create<RunStore>()((set, get) => ({
   setAllProjects: (v) => set({ allProjects: v }),
   setActiveProjectsSync: (v) => set({ activeProjects: v }),
   setPromptRecords: (v) => set({ prompts: v }),
+
+  addPrompt: (title, content) => {
+    const trimmed = title.trim();
+    if (!trimmed) return;
+    set((s) => {
+      const nextId =
+        s.prompts.length === 0
+          ? 1
+          : Math.max(...s.prompts.map((p) => p.id), 0) + 1;
+      return {
+        prompts: [
+          ...s.prompts,
+          { id: nextId, title: trimmed, content: content || "" },
+        ],
+      };
+    });
+  },
 }));
 
 /** Hook with same API as legacy useRunState from context. Use anywhere run state is needed. */

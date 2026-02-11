@@ -1,0 +1,11 @@
+[
+  {
+    "id": 1,
+    "title": "Implement all prompt",
+    "content": "Impelent following ticket to you best knowledge of best practices, according to the architecture and design of the app, follwo the documentation in .cursor folder",
+    "category": null,
+    "tags": null,
+    "created_at": "2026-02-11T19:24:33.925Z",
+    "updated_at": "2026-02-11T19:24:33.925Z"
+  }
+]

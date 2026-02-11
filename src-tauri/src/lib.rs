@@ -1172,6 +1172,28 @@ fn save_prompts(prompts: Vec<Prompt>) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn add_prompt(title: String, content: String) -> Result<Prompt, String> {
+    let mut prompts = with_db(db::get_prompts).map_err(|e| e.to_string())?;
+    let next_id: i64 = prompts
+        .iter()
+        .filter_map(|p| p.id.parse().ok())
+        .max()
+        .map(|n: i64| n + 1)
+        .unwrap_or(1);
+    let now = now_iso();
+    let new_prompt = Prompt {
+        id: next_id.to_string(),
+        title: title.trim().to_string(),
+        content,
+        created_at: now.clone(),
+        updated_at: now,
+    };
+    prompts.push(new_prompt.clone());
+    with_db(|conn| db::save_prompts(conn, &prompts))?;
+    Ok(new_prompt)
+}
+
+#[tauri::command]
 fn get_designs() -> Result<Vec<Design>, String> {
     with_db(db::get_designs)
 }
@@ -1467,6 +1489,7 @@ fn run_implement_all_script_inner(
     run_id: String,
     run_label: String,
     project_path: String,
+    slot: Option<u8>,
 ) -> Result<(), String> {
     let run_label_clone = run_label.clone();
     let script = implement_all_script_path(&ws);
@@ -1479,8 +1502,13 @@ fn run_implement_all_script_inner(
     let mut cmd = Command::new("bash");
     cmd.arg(script.as_os_str())
         .arg("-P")
-        .arg(project_path.as_str())
-        .current_dir(&ws)
+        .arg(project_path.as_str());
+    if let Some(s) = slot {
+        if (1..=3).contains(&s) {
+            cmd.arg("-S").arg(s.to_string());
+        }
+    }
+    cmd.current_dir(&ws)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
     #[cfg(unix)]
@@ -1570,11 +1598,17 @@ async fn run_implement_all(
     app: AppHandle,
     state: State<'_, RunningState>,
     project_path: String,
+    slot: Option<u8>,
 ) -> Result<RunIdResponse, String> {
     let ws = project_root()?;
     let run_id = gen_run_id();
-    let label = "Implement All".to_string();
-    run_implement_all_script_inner(app, state, ws, run_id.clone(), label, project_path)?;
+    let label = match slot {
+        Some(1) => "Implement All (Terminal 1)".to_string(),
+        Some(2) => "Implement All (Terminal 2)".to_string(),
+        Some(3) => "Implement All (Terminal 3)".to_string(),
+        _ => "Implement All".to_string(),
+    };
+    run_implement_all_script_inner(app, state, ws, run_id.clone(), label, project_path, slot)?;
     Ok(RunIdResponse { run_id })
 }
 
@@ -1719,6 +1753,7 @@ pub fn run() {
             get_active_projects,
             get_prompts,
             save_prompts,
+            add_prompt,
             get_designs,
             save_designs,
             save_active_projects,

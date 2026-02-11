@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -29,7 +30,7 @@ import { Loader2, Plus, Ticket as TicketIcon, AlertCircle, Layers, Play, Chevron
 import { toast } from "sonner";
 import type { Project } from "@/types/project";
 import { readProjectFile, writeProjectFile } from "@/lib/api-projects";
-import { isTauri } from "@/lib/tauri";
+import { isTauri, invoke } from "@/lib/tauri";
 import { useRunStore } from "@/store/run-store";
 import { Card } from "@/components/shared/Card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -87,6 +88,27 @@ function getFeatureTicketBorderClasses(index: number): string {
   return FEATURE_TICKET_BORDER_CLASSES[index % FEATURE_TICKET_BORDER_CLASSES.length];
 }
 
+const isImplementAllRun = (r: { label: string }) =>
+  r.label === "Implement All" || r.label.startsWith("Implement All (");
+
+/** Grid of 3 terminal slots (last 3 Implement All runs). Full width, each slot 50vh. */
+function ImplementAllTerminalsGrid() {
+  const runningRuns = useRunStore((s) => s.runningRuns);
+  const implementAllRuns = runningRuns.filter(isImplementAllRun);
+  const runsForSlots = [
+    implementAllRuns[implementAllRuns.length - 3] ?? null,
+    implementAllRuns[implementAllRuns.length - 2] ?? null,
+    implementAllRuns[implementAllRuns.length - 1] ?? null,
+  ];
+  return (
+    <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
+      {runsForSlots.map((run, i) => (
+        <ImplementAllTerminalSlot key={i} run={run} slotIndex={i} />
+      ))}
+    </div>
+  );
+}
+
 /** Single terminal slot: shows one run's logs or empty state. Height half viewport. */
 function ImplementAllTerminalSlot({
   run,
@@ -95,13 +117,8 @@ function ImplementAllTerminalSlot({
   run: { runId: string; label: string; logLines: string[]; status: "running" | "done" } | null;
   slotIndex: number;
 }) {
-  const logEndRef = useRef<HTMLDivElement>(null);
   const displayLogLines = run?.logLines ?? [];
   const running = run?.status === "running";
-
-  useEffect(() => {
-    logEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [displayLogLines.length]);
 
   return (
     <Card
@@ -122,23 +139,24 @@ function ImplementAllTerminalSlot({
             </div>
           ))
         )}
-        <div ref={logEndRef} />
       </ScrollArea>
     </Card>
   );
 }
 
-/** Toolbar: Implement All button, Add prompt dropdown, Stop / Clear / Archive. */
+/** Toolbar: Implement All button, prompt selector, Add prompt dropdown, Stop / Clear / Archive. */
 function ImplementAllToolbar({ projectPath }: { projectPath: string }) {
   const runImplementAll = useRunStore((s) => s.runImplementAll);
   const stopAllImplementAll = useRunStore((s) => s.stopAllImplementAll);
   const clearImplementAllLogs = useRunStore((s) => s.clearImplementAllLogs);
   const archiveImplementAllLogs = useRunStore((s) => s.archiveImplementAllLogs);
   const runningRuns = useRunStore((s) => s.runningRuns);
+  const prompts = useRunStore((s) => s.prompts);
   const [loading, setLoading] = useState(false);
   const [addPromptOpen, setAddPromptOpen] = useState<"self" | "ai" | null>(null);
+  const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null);
 
-  const implementAllRuns = runningRuns.filter((r) => r.label === "Implement All");
+  const implementAllRuns = runningRuns.filter(isImplementAllRun);
   const anyRunning = implementAllRuns.some((r) => r.status === "running");
 
   const handleImplementAll = async () => {
@@ -174,6 +192,18 @@ function ImplementAllToolbar({ projectPath }: { projectPath: string }) {
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
         Implement All
       </Button>
+      <Select value={selectedPromptId ?? ""} onValueChange={(v) => setSelectedPromptId(v || null)}>
+        <SelectTrigger className="w-[200px]" aria-label="Select one prompt">
+          <SelectValue placeholder="Select one prompt" />
+        </SelectTrigger>
+        <SelectContent>
+          {prompts.map((p) => (
+            <SelectItem key={p.id} value={String(p.id)}>
+              {p.title || `Prompt ${p.id}`}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm" className="gap-1">
@@ -213,7 +243,7 @@ function ImplementAllToolbar({ projectPath }: { projectPath: string }) {
   );
 }
 
-/** Dialog for self-written or AI-generated prompt. */
+/** Dialog for self-written or AI-generated prompt. Adds to run store so prompt appears in dropdown. */
 function AddPromptDialog({
   open,
   onOpenChange,
@@ -221,22 +251,50 @@ function AddPromptDialog({
   open: "self" | "ai" | null;
   onOpenChange: (v: "self" | "ai" | null) => void;
 }) {
+  const addPrompt = useRunStore((s) => s.addPrompt);
+  const refreshData = useRunStore((s) => s.refreshData);
+  const [title, setTitle] = useState("");
   const [value, setValue] = useState("");
   const [generating, setGenerating] = useState(false);
+  const [saving, setSaving] = useState(false);
   const isSelf = open === "self";
   const isAI = open === "ai";
 
-  const handleSave = useCallback(() => {
-    if (!value.trim()) return;
-    toast.success(isAI ? "AI prompt saved." : "Prompt saved.");
-    setValue("");
-    onOpenChange(null);
-  }, [value, isAI, onOpenChange]);
+  const handleSave = useCallback(async () => {
+    const t = title.trim();
+    const c = value.trim();
+    if (!t || !c) return;
+    setSaving(true);
+    try {
+      if (isTauri) {
+        await invoke("add_prompt", { title: t, content: c });
+        await refreshData();
+        toast.success("Prompt saved. It will appear in the dropdown.");
+      } else {
+        addPrompt(t, c);
+        toast.success("Prompt saved. It will appear in the dropdown.");
+        try {
+          const res = await fetch("/api/data/prompts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title: t, content: c }),
+          });
+          if (res.ok) await refreshData();
+        } catch {
+          // Store already updated
+        }
+      }
+      setTitle("");
+      setValue("");
+      onOpenChange(null);
+    } finally {
+      setSaving(false);
+    }
+  }, [title, value, addPrompt, refreshData, onOpenChange]);
 
   const handleGenerate = useCallback(async () => {
     setGenerating(true);
     try {
-      // Placeholder: could call an API to generate a prompt
       setValue("Generated prompt placeholder. Wire to your AI API.");
       toast.info("Generate prompt: connect to your AI API.");
     } finally {
@@ -252,9 +310,18 @@ function AddPromptDialog({
         </DialogHeader>
         <div className="grid gap-4 py-2">
           <div className="grid gap-2">
+            <Label htmlFor="add-prompt-title">Title</Label>
+            <Input
+              id="add-prompt-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Prompt title (shown in dropdown)"
+            />
+          </div>
+          <div className="grid gap-2">
             <Label>Prompt</Label>
-            <textarea
-              className="min-h-[120px] w-full rounded-md border bg-background px-3 py-2 font-mono text-sm"
+            <Textarea
+              className="min-h-[120px] font-mono text-sm"
               value={value}
               onChange={(e) => setValue(e.target.value)}
               placeholder={isSelf ? "Enter your prompt…" : "Generate or paste prompt…"}
@@ -268,10 +335,11 @@ function AddPromptDialog({
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(null)}>
+          <Button variant="outline" onClick={() => onOpenChange(null)} disabled={saving}>
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={!value.trim()}>
+          <Button onClick={handleSave} disabled={!title.trim() || !value.trim() || saving}>
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             Save
           </Button>
         </DialogFooter>
@@ -670,17 +738,7 @@ export function ProjectTicketsTab({
               <ImplementAllToolbar projectPath={project.repoPath.trim()} />
             )}
           </div>
-          {isTauri && (
-            <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
-              {[0, 1, 2].map((i) => {
-                const implementAllRuns = useRunStore.getState().runningRuns.filter(
-                  (r) => r.label === "Implement All"
-                );
-                const run = implementAllRuns[implementAllRuns.length - 1 - i] ?? null;
-                return <ImplementAllTerminalSlot key={i} run={run} slotIndex={i} />;
-              })}
-            </div>
-          )}
+          {isTauri && <ImplementAllTerminalsGrid />}
           <div className="flex min-h-0 w-full flex-1 flex-col rounded-lg p-4">
             <div className="grid h-full min-h-0 w-full flex-1 grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
               {(() => {

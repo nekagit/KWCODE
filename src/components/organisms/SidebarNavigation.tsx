@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { LayoutDashboard, MessageSquare, Terminal, Folders, Ticket as TicketIcon, Layers, Lightbulb, LayoutGrid, Building2, PanelLeftClose, PanelLeftOpen, TestTube2, ScrollText, Play, Settings } from "lucide-react";
+import { LayoutDashboard, MessageSquare, Terminal, Folders, Ticket as TicketIcon, Layers, Lightbulb, LayoutGrid, Building2, PanelLeftClose, PanelLeftOpen, TestTube2, ScrollText, Play, Settings, Moon } from "lucide-react";
 import { NavLinkItem } from "@/components/molecules/Navigation/NavLinkItem";
 import { useQuickActions } from "@/context/quick-actions-context";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -33,6 +33,7 @@ const workNavItems: NavItem[] = [
 const bottomNavItems: NavItem[] = [
   { href: "/run", label: "Run", icon: Play, iconClassName: "text-destructive/90" },
   { href: "/configuration", label: "Configuration", icon: Settings, iconClassName: "text-success/90" },
+  { href: "/loading-screen", label: "LS", icon: Moon, iconClassName: "text-muted-foreground" },
 ];
 
 function SidebarNavWithParams({
@@ -105,7 +106,7 @@ function SidebarNavigationContent({
         <div className="flex flex-col flex-1 min-h-0 border-t border-primary/30 pt-4 gap-1 mt-auto">
           {!sidebarCollapsed && (
             <p className="px-3 mb-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80 shrink-0">
-              Log · Run · Configuration
+              Log · Run · Configuration · LS
             </p>
           )}
           {/* Log: opens modal (no page) */}

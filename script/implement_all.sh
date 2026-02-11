@@ -1,22 +1,25 @@
 #!/bin/bash
 # Implement All: store project path from current open project details (-P).
-# Runs "agent" in-process (cd to project path, then agent). All output streams to the
-# Tauri app's terminal card in project details — no separate Terminal window.
-# Ticket list is read from PROJECT_PATH/.cursor/tickets.md (for validation only).
+# Optional -S 1|2|3: terminal slot in the project details 3-split terminal section.
+# Runs "agent" in-process (cd to project path, then agent). Output streams to the
+# Tauri app terminal card for this slot. Ticket list from .cursor/tickets.md (validation only).
 
 set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 usage() {
-    echo "Usage: $0 -P /path/to/project"
+    echo "Usage: $0 -P /path/to/project [-S 1|2|3]"
     echo "  -P /path   Project root (required). Uses .cursor/tickets.md for ticket list."
+    echo "  -S 1|2|3   Terminal slot (optional). Matches the 3 split terminals in project details."
 }
 
 PROJECT_PATH=""
+SLOT=""
 while [ $# -gt 0 ]; do
     case "$1" in
         -h|--help) usage; exit 0 ;;
         -P) shift; [ $# -gt 0 ] && PROJECT_PATH="$1" && shift ;;
+        -S) shift; [ $# -gt 0 ] && SLOT="$1" && shift ;;
         *) echo "Unknown option: $1"; usage; exit 1 ;;
     esac
 done
@@ -41,9 +44,19 @@ if [ "$TICKET_COUNT" -eq 0 ]; then
     exit 1
 fi
 
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "Implement All – $TICKET_COUNT ticket(s)"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+if [ -n "$SLOT" ]; then
+  case "$SLOT" in
+    1|2|3) ;;
+    *) echo "Error: -S must be 1, 2, or 3"; usage; exit 1 ;;
+  esac
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "Implement All – Terminal slot $SLOT of 3"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+else
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "Implement All – $TICKET_COUNT ticket(s)"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+fi
 echo "Project: $PROJECT_PATH"
 echo "  Running agent in-app; output appears in this terminal card."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
