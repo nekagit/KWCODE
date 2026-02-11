@@ -1,5 +1,7 @@
 "use client";
 
+"use client";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { invoke, isTauri } from "@/lib/tauri";
