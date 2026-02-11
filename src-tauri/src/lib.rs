@@ -743,6 +743,8 @@ fn resolve_data_dir() -> Result<PathBuf, String> {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Project {
+    /// Optional on create; generated if missing or empty.
+    #[serde(default)]
     pub id: String,
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -866,7 +868,7 @@ fn get_project_resolved(id: String) -> Result<serde_json::Value, String> {
     let project = with_db(|conn| {
         let projects = list_projects_impl(conn)?;
         projects.into_iter().find(|p| p.id == id).ok_or("Project not found".to_string())
-    })??;
+    })?;
     let tickets = with_db(db::get_tickets).unwrap_or_default();
     let features = with_db(db::get_features).unwrap_or_default();
     let prompts = with_db(db::get_prompts).unwrap_or_default();
@@ -921,6 +923,8 @@ fn get_project_resolved(id: String) -> Result<serde_json::Value, String> {
             })
         })
         .collect();
+    let ideas_empty: Vec<serde_json::Value> = vec![];
+    let architectures_empty: Vec<serde_json::Value> = vec![];
     let resolved = serde_json::json!({
         "id": project.id,
         "name": project.name,
@@ -936,9 +940,9 @@ fn get_project_resolved(id: String) -> Result<serde_json::Value, String> {
         "prompts": prompts_resolved,
         "tickets": tickets_resolved,
         "features": features_resolved,
-        "ideas": [] as Vec<serde_json::Value>,
+        "ideas": ideas_empty,
         "designs": designs_resolved,
-        "architectures": [] as Vec<serde_json::Value>,
+        "architectures": architectures_empty,
     });
     Ok(resolved)
 }

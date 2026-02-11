@@ -7,6 +7,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { invoke, isTauri } from "@/lib/tauri";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useRunState } from "@/context/run-state";
+import { listProjects } from "@/lib/api-projects";
 import type { Project } from "@/types/project";
 import { ProjectsTabContent } from "@/components/molecules/TabAndContentSections/ProjectsTabContent";
 import { AllDataTabContent } from "@/components/molecules/TabAndContentSections/AllDataTabContent";
@@ -71,6 +72,7 @@ export function HomePageContent() {
   const [ideas, setIdeas] = useState<IdeaRecord[]>([]);
   const [ideasLoading, setIdeasLoading] = useState(false);
   const [tabError, setTabError] = useState<string | null>(null);
+  const [registeredProjects, setRegisteredProjects] = useState<Project[]>([]);
   const running = runningRuns.some((r) => r.status === "running");
 
   const loadTicketsAndFeatures = useCallback(async () => {
@@ -131,6 +133,22 @@ export function HomePageContent() {
       cancelled = true;
     };
   }, [isTauriEnv, ticketsLoaded]);
+
+  // Feature tab: fetch registered projects for filter dropdown (only app-registered projects)
+  useEffect(() => {
+    if (tab !== "feature") return;
+    let cancelled = false;
+    listProjects()
+      .then((data: Project[]) => {
+        if (!cancelled) setRegisteredProjects(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (!cancelled) setRegisteredProjects([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [tab]);
 
   // All data tab: fetch ideas from API
   useEffect(() => {
@@ -260,6 +278,7 @@ export function HomePageContent() {
             tickets={tickets}
             prompts={prompts}
             allProjects={allProjects}
+            registeredProjects={registeredProjects}
             activeProjects={activeProjects}
             runningRuns={runningRuns}
             featureQueue={featureQueue as Feature[]}

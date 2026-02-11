@@ -10,6 +10,8 @@ interface FeatureTabContentProps {
   tickets: TicketRow[];
   prompts: PromptRecord[];
   allProjects: string[];
+  /** App-registered projects (from listProjects); used for filter-by-project dropdown only. */
+  registeredProjects: Project[];
   activeProjects: string[];
   runningRuns: RunInfo[];
   featureQueue: Feature[];
@@ -27,6 +29,7 @@ export function FeatureTabContent({
   tickets,
   prompts,
   allProjects,
+  registeredProjects,
   activeProjects,
   runningRuns,
   featureQueue,
@@ -45,6 +48,7 @@ export function FeatureTabContent({
         tickets={tickets}
         prompts={prompts}
         allProjects={allProjects}
+        registeredProjects={registeredProjects}
         activeProjects={activeProjects}
         runningRuns={runningRuns}
         featureQueue={featureQueue}

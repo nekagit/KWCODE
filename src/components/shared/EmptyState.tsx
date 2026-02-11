@@ -8,10 +8,16 @@ interface StateProps {
   action?: React.ReactNode; // e.g., a button to create new item
 }
 
-/** Treat Lucide/forwardRef components (object with $$typeof) or functions as components, not as renderable children. */
+/** Treat as component (render <Icon />): function or forwardRef-like object. Treat as node: React elements (<Lightbulb />), strings, etc. */
 function isIconComponent(value: unknown): value is React.ElementType {
   if (typeof value === "function") return true;
-  return typeof value === "object" && value !== null && "$$typeof" in value;
+  // forwardRef / memo components are objects with a render function
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "render" in value &&
+    typeof (value as { render: unknown }).render === "function"
+  );
 }
 
 export const EmptyState: React.FC<StateProps> = ({ message, title, description, icon, action }) => {
@@ -20,7 +26,7 @@ export const EmptyState: React.FC<StateProps> = ({ message, title, description, 
   const iconAsNode = icon != null && !isIconComponent(icon) ? (icon as React.ReactNode) : null;
   return (
     <div className="flex flex-col items-center justify-center p-8 text-center text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/20 rounded-lg">
-      {Icon && <Icon className="w-12 h-12 mb-4" />}
+      {Icon != null && <Icon className="w-12 h-12 mb-4" />}
       {iconAsNode != null && <div className="w-12 h-12 mb-4 flex items-center justify-center">{iconAsNode}</div>}
       {title && <p className="text-lg font-medium mb-2">{title}</p>}
       {(description || displayMessage) && <p className="text-muted-foreground mb-2">{description ?? displayMessage}</p>}

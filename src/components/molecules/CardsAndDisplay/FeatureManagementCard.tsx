@@ -7,8 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Layers, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import type { Project } from "@/types/project";
-import type { Feature } from "@/types/project";
+import type { Project, Feature } from "@/types/project";
 import type { TicketRow } from "@/types/ticket";
 import { TitleWithIcon } from "@/components/atoms/headers/TitleWithIcon";
 import { FeatureAddForm } from "@/components/atoms/forms/FeatureAddForm";
@@ -22,6 +21,8 @@ interface FeatureManagementCardProps {
   tickets: TicketRow[];
   prompts: { id: number; title: string }[];
   allProjects: string[];
+  /** App-registered projects; used for filter-by-project dropdown (only these are shown). When set, overrides allProjects for the dropdown. */
+  registeredProjects?: Project[];
   activeProjects: string[];
   runningRuns: any[];
   featureQueue: any[];
@@ -39,6 +40,7 @@ export function FeatureManagementCard({
   tickets,
   prompts,
   allProjects,
+  registeredProjects = [],
   activeProjects,
   runningRuns,
   featureQueue,
@@ -52,7 +54,16 @@ export function FeatureManagementCard({
 }: FeatureManagementCardProps) {
   const [featureProjectFilter, setFeatureProjectFilter] = useState<string>("");
 
-  const projectsList = allProjects.map(path => ({ id: path, name: path.split('/').pop() || path }));
+  // Filter dropdown: only app-registered projects (so e.g. one project "kwcode" is shown, not all local repos)
+  const projectsList = useMemo(() => {
+    if (registeredProjects.length > 0) {
+      return registeredProjects.map((p) => ({
+        id: p.repoPath ?? p.id,
+        name: p.name,
+      }));
+    }
+    return allProjects.map((path) => ({ id: path, name: path.split("/").pop() || path }));
+  }, [registeredProjects, allProjects]);
 
   const filteredFeatures = useMemo(() => {
     if (!featureProjectFilter) return features;
@@ -98,7 +109,9 @@ export function FeatureManagementCard({
         <TitleWithIcon
           icon={Layers}
           title={
-            `Feature ${features.length > 0 && (featureProjectFilter ? `(${filteredFeatures.length} of ${features.length})` : `(${features.length})`)}`
+            features.length === 0
+              ? "Feature"
+              : `Feature ${featureProjectFilter ? `(${filteredFeatures.length} of ${features.length})` : `(${features.length})`}`
           }
           className="text-lg"
         />
