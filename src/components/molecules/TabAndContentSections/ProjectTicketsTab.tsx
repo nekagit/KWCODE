@@ -3,16 +3,6 @@
 import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -26,6 +16,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Dialog as SharedDialog } from "@/components/shared/Dialog";
+import { ButtonGroup } from "@/components/shared/ButtonGroup";
+import { Form } from "@/components/shared/Form";
+import { GenericInputWithLabel } from "@/components/shared/GenericInputWithLabel";
+import { GenericTextareaWithLabel } from "@/components/shared/GenericTextareaWithLabel";
+import { FormField } from "@/components/shared/FormField";
 import { Loader2, Plus, Ticket as TicketIcon, AlertCircle, Layers, Play, ChevronDown, Square, Eraser, Archive, Terminal } from "lucide-react";
 import { toast } from "sonner";
 import type { Project } from "@/types/project";
@@ -48,7 +44,7 @@ import {
   type ParsedFeature,
 } from "@/lib/todos-kanban";
 import { buildKanbanContextBlock, combinePromptRecordWithKanban } from "@/lib/analysis-prompt";
-import { EmptyState } from "@/components/shared/EmptyState";
+import { EmptyState, LoadingState } from "@/components/shared/EmptyState";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { ProjectCategoryHeader } from "@/components/shared/ProjectCategoryHeader";
 import { KanbanColumnCard } from "@/components/molecules/Kanban/KanbanColumnCard";
@@ -390,39 +386,14 @@ function AddPromptDialog({
     }
   }, []);
 
+  const dialogTitle = isAI ? "AI generation prompt" : "Self-written prompt";
   return (
-    <Dialog open={open != null} onOpenChange={(o) => onOpenChange(o ? open : null)}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{isAI ? "AI generation prompt" : "Self-written prompt"}</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-2">
-          <div className="grid gap-2">
-            <Label htmlFor="add-prompt-title">Title</Label>
-            <Input
-              id="add-prompt-title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Prompt title (shown in dropdown)"
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label>Prompt</Label>
-            <Textarea
-              className="min-h-[120px] font-mono text-sm"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              placeholder={isSelf ? "Enter your prompt…" : "Generate or paste prompt…"}
-            />
-          </div>
-          {isAI && (
-            <Button variant="outline" size="sm" onClick={handleGenerate} disabled={generating}>
-              {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              Generate
-            </Button>
-          )}
-        </div>
-        <DialogFooter>
+    <SharedDialog
+      isOpen={open != null}
+      title={dialogTitle}
+      onClose={() => onOpenChange(null)}
+      actions={
+        <ButtonGroup alignment="right">
           <Button variant="outline" onClick={() => onOpenChange(null)} disabled={saving}>
             Cancel
           </Button>
@@ -430,9 +401,34 @@ function AddPromptDialog({
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             Save
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </ButtonGroup>
+      }
+    >
+      <Form onSubmit={(e) => { e.preventDefault(); if (title.trim() && value.trim()) handleSave(); }}>
+        <GenericInputWithLabel
+          id="add-prompt-title"
+          label="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Prompt title (shown in dropdown)"
+        />
+        <GenericTextareaWithLabel
+          id="add-prompt-body"
+          label="Prompt"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder={isSelf ? "Enter your prompt…" : "Generate or paste prompt…"}
+          rows={5}
+          className="min-h-[120px] font-mono text-sm"
+        />
+        {isAI && (
+          <Button variant="outline" size="sm" onClick={handleGenerate} disabled={generating}>
+            {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            Generate
+          </Button>
+        )}
+      </Form>
+    </SharedDialog>
   );
 }
 
@@ -724,7 +720,7 @@ export function ProjectTicketsTab({
         />
       ) : kanbanLoading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <LoadingState />
         </div>
       ) : kanbanError ? (
         <ErrorDisplay message={kanbanError} />
@@ -804,24 +800,26 @@ export function ProjectTicketsTab({
             );
           })()}
           <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setAddTicketOpen(true)}
-              className="gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Add ticket
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setAddFeatureOpen(true)}
-              className="gap-2"
-            >
-              <Layers className="h-4 w-4" />
-              Add feature
-            </Button>
+            <ButtonGroup alignment="left">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setAddTicketOpen(true)}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Add ticket
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setAddFeatureOpen(true)}
+                className="gap-2"
+              >
+                <Layers className="h-4 w-4" />
+                Add feature
+              </Button>
+            </ButtonGroup>
             {isTauri && project.repoPath?.trim() && (
               <ImplementAllToolbar projectPath={project.repoPath.trim()} kanbanData={kanbanData} />
             )}
@@ -865,65 +863,12 @@ export function ProjectTicketsTab({
         </>
       )}
 
-      <Dialog open={addTicketOpen} onOpenChange={setAddTicketOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add ticket</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-2">
-            <div className="grid gap-2">
-              <Label htmlFor="ticket-title">Title</Label>
-              <Input
-                id="ticket-title"
-                value={addTicketTitle}
-                onChange={(e) => setAddTicketTitle(e.target.value)}
-                placeholder="Ticket title"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="ticket-desc">Description (optional)</Label>
-              <Input
-                id="ticket-desc"
-                value={addTicketDesc}
-                onChange={(e) => setAddTicketDesc(e.target.value)}
-                placeholder="Short description"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>Priority</Label>
-              <Select
-                value={addTicketPriority}
-                onValueChange={(v) => setAddTicketPriority(v as "P0" | "P1" | "P2" | "P3")}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PRIORITIES.map((p) => (
-                    <SelectItem key={p} value={p}>
-                      {p}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="ticket-feature">Feature (existing or new)</Label>
-              <Input
-                id="ticket-feature"
-                value={addTicketFeature}
-                onChange={(e) => setAddTicketFeature(e.target.value)}
-                placeholder="e.g. Testing & quality"
-                list="ticket-feature-list"
-              />
-              <datalist id="ticket-feature-list">
-                {kanbanData?.features.map((f) => (
-                  <option key={f.id} value={f.title} />
-                ))}
-              </datalist>
-            </div>
-          </div>
-          <DialogFooter>
+      <SharedDialog
+        isOpen={addTicketOpen}
+        title="Add ticket"
+        onClose={() => setAddTicketOpen(false)}
+        actions={
+          <ButtonGroup alignment="right">
             <Button variant="outline" onClick={() => setAddTicketOpen(false)}>
               Cancel
             </Button>
@@ -931,36 +876,65 @@ export function ProjectTicketsTab({
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Add
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={addFeatureOpen} onOpenChange={setAddFeatureOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add feature</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-2">
-            <div className="grid gap-2">
-              <Label htmlFor="feature-title">Feature name</Label>
-              <Input
-                id="feature-title"
-                value={addFeatureTitle}
-                onChange={(e) => setAddFeatureTitle(e.target.value)}
-                placeholder="Feature name"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="feature-refs">Ticket refs (#1, #2, …)</Label>
-              <Input
-                id="feature-refs"
-                value={addFeatureRefs}
-                onChange={(e) => setAddFeatureRefs(e.target.value)}
-                placeholder="#1, #2, #3"
-              />
-            </div>
+          </ButtonGroup>
+        }
+      >
+        <Form onSubmit={(e) => { e.preventDefault(); handleAddTicket(); }}>
+          <GenericInputWithLabel
+            id="ticket-title"
+            label="Title"
+            value={addTicketTitle}
+            onChange={(e) => setAddTicketTitle(e.target.value)}
+            placeholder="Ticket title"
+          />
+          <GenericInputWithLabel
+            id="ticket-desc"
+            label="Description (optional)"
+            value={addTicketDesc}
+            onChange={(e) => setAddTicketDesc(e.target.value)}
+            placeholder="Short description"
+          />
+          <FormField htmlFor="ticket-priority" label="Priority">
+            <Select
+              value={addTicketPriority}
+              onValueChange={(v) => setAddTicketPriority(v as "P0" | "P1" | "P2" | "P3")}
+            >
+              <SelectTrigger id="ticket-priority">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PRIORITIES.map((p) => (
+                  <SelectItem key={p} value={p}>
+                    {p}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormField>
+          <div className="grid gap-2">
+            <GenericInputWithLabel
+              id="ticket-feature"
+              label="Feature (existing or new)"
+              value={addTicketFeature}
+              onChange={(e) => setAddTicketFeature(e.target.value)}
+              placeholder="e.g. Testing & quality"
+              list="ticket-feature-list"
+            />
+            <datalist id="ticket-feature-list">
+              {kanbanData?.features.map((f) => (
+                <option key={f.id} value={f.title} />
+              ))}
+            </datalist>
           </div>
-          <DialogFooter>
+        </Form>
+      </SharedDialog>
+
+      <SharedDialog
+        isOpen={addFeatureOpen}
+        title="Add feature"
+        onClose={() => setAddFeatureOpen(false)}
+        actions={
+          <ButtonGroup alignment="right">
             <Button variant="outline" onClick={() => setAddFeatureOpen(false)}>
               Cancel
             </Button>
@@ -968,9 +942,26 @@ export function ProjectTicketsTab({
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Add
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ButtonGroup>
+        }
+      >
+        <Form onSubmit={(e) => { e.preventDefault(); handleAddFeature(); }}>
+          <GenericInputWithLabel
+            id="feature-title"
+            label="Feature name"
+            value={addFeatureTitle}
+            onChange={(e) => setAddFeatureTitle(e.target.value)}
+            placeholder="Feature name"
+          />
+          <GenericInputWithLabel
+            id="feature-refs"
+            label="Ticket refs (#1, #2, …)"
+            value={addFeatureRefs}
+            onChange={(e) => setAddFeatureRefs(e.target.value)}
+            placeholder="#1, #2, #3"
+          />
+        </Form>
+      </SharedDialog>
 
       <GenerateKanbanPromptSection
         kanbanData={kanbanData}
