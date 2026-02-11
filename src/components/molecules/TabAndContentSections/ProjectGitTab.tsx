@@ -122,9 +122,11 @@ export function ProjectGitTab({ project, projectId }: ProjectGitTabProps) {
     }
   }, [repoPath, fetchGitInfo]);
 
+  const DEFAULT_COMMIT_MESSAGE = "Update";
+
   const openCommitDialog = useCallback(() => {
     if (!repoPath) return;
-    setCommitMessage("");
+    setCommitMessage(DEFAULT_COMMIT_MESSAGE);
     setCommitDialogOpen(true);
   }, [repoPath]);
 

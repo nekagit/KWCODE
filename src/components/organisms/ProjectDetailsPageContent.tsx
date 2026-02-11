@@ -16,6 +16,7 @@ import { ProjectIdeasTab } from "@/components/molecules/TabAndContentSections/Pr
 import { ProjectTicketsTab } from "@/components/molecules/TabAndContentSections/ProjectTicketsTab";
 import { ProjectRunTab } from "@/components/molecules/TabAndContentSections/ProjectRunTab";
 import { ProjectArchitectureTab } from "@/components/molecules/TabAndContentSections/ProjectArchitectureTab";
+import { ProjectTestingTab } from "@/components/molecules/TabAndContentSections/ProjectTestingTab";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { getOrganismClasses } from "./organism-classes";
 import { cn } from "@/lib/utils";
@@ -117,6 +118,11 @@ export function ProjectDetailsPageContent() {
             <Card>
               <CardContent className={c["18"]}>
                 <ProjectArchitectureTab project={project} projectId={projectId} />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className={c["19"]}>
+                <ProjectTestingTab project={project} projectId={projectId} />
               </CardContent>
             </Card>
           </TabsContent>

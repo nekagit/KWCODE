@@ -663,6 +663,12 @@
       "h-6 w-6 text-primary/90",
       "h-4 w-4 mr-2"
     ],
+    "TabAndContentSections/ProjectTestingTab.tsx": [
+      "mt-4 space-y-6",
+      "h-6 w-6 text-primary/90",
+      "h-6 w-6 text-primary/90",
+      "h-4 w-4 mr-2"
+    ],
     "TabAndContentSections/ProjectDesignTab.tsx": [
       "mt-4 space-y-6",
       "h-6 w-6 text-primary/90",
