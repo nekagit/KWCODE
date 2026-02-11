@@ -98,7 +98,11 @@ export async function getProjectExport(id: string, category: keyof ResolvedProje
   }
 }
 
-/** Read a file from the project repo (e.g. .cursor/tickets.md). In Tauri pass repoPath; in browser uses projectId. Returns "" on 404. */
+/**
+ * Read a file from the project repo (e.g. .cursor/tickets.md).
+ * In Tauri pass repoPath; in browser uses projectId.
+ * Throws with a clear message when the file is missing or repo path is invalid (reliable read; clear errors when missing).
+ */
 export async function readProjectFile(
   projectId: string,
   relativePath: string,
@@ -110,19 +114,38 @@ export async function readProjectFile(
         root: repoPath,
         path: relativePath,
       });
-    } catch {
-      return "";
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (/no such file|not a file|not found|does not exist/i.test(msg)) {
+        throw new Error(`${relativePath}: file not found or not accessible. ${msg}`);
+      }
+      if (/canonicalize|permission denied|not a directory/i.test(msg)) {
+        throw new Error(`Repo path invalid or not accessible. ${msg}`);
+      }
+      throw new Error(`${relativePath}: ${msg}`);
     }
   }
-  try {
-    const res = await fetch(
-      `/api/data/projects/${projectId}/file?path=${encodeURIComponent(relativePath)}`
-    );
-    if (!res.ok) return "";
-    return await res.text();
-  } catch {
-    return "";
+  const res = await fetch(
+    `/api/data/projects/${projectId}/file?path=${encodeURIComponent(relativePath)}`
+  );
+  const text = await res.text();
+  if (!res.ok) {
+    let errorMsg: string;
+    try {
+      const j = JSON.parse(text) as { error?: string };
+      errorMsg = j.error ?? res.statusText;
+    } catch {
+      errorMsg = text || res.statusText;
+    }
+    if (res.status === 404) {
+      throw new Error(`${relativePath}: file not found. ${errorMsg}`);
+    }
+    if (res.status === 400 || res.status === 403) {
+      throw new Error(`${relativePath}: ${errorMsg}`);
+    }
+    throw new Error(`${relativePath}: ${errorMsg}`);
   }
+  return text;
 }
 
 /** Write a file under the project repo. In Tauri pass repoPath; in browser uses projectId. */

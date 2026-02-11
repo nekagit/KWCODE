@@ -24,7 +24,7 @@ export const KanbanColumnCard: React.FC<KanbanColumnCardProps> = ({
   handleRedo,
   handleArchive,
 }) => (
-  <Card key={columnId} className="kanban-column-card flex min-h-[320px] w-full flex-col border-2 border-blue-500 p-5">
+  <Card key={columnId} className="kanban-column-card flex min-h-[320px] w-full flex-col border-2 border-blue-500 p-5" data-testid={`kanban-column-${columnId}`}>
     <KanbanColumnHeader columnId={columnId} column={column} />
     <ScrollArea className="min-h-0 flex-1 px-1 pb-4 pt-1">
       <div className="flex flex-col items-center gap-2">

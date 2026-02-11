@@ -230,7 +230,7 @@ export function HomePageContent() {
       : runningRuns[runningRuns.length - 1]?.logLines ?? [];
 
   return (
-    <Tabs value={tab} onValueChange={(v) => navigateToTab(v as string)} className="flex flex-1 flex-col">
+    <Tabs value={tab} onValueChange={(v) => navigateToTab(v as string)} className="flex flex-1 flex-col" data-testid="home-page-tabs">
       <div className="flex-1 flex flex-col min-w-0 overflow-auto">
         <div className="mb-4 flex items-center justify-between gap-4">
         </div>

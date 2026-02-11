@@ -21,7 +21,7 @@ export function RunControls({
   running,
 }: RunControlsProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="run-page-controls">
       <ButtonGroup alignment="left">
         <StartButton onClick={handleStart} disabled={!canStart} />
         <StopButton onClick={handleStop} disabled={!running} />

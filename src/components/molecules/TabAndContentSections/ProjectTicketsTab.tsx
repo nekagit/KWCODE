@@ -26,7 +26,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Loader2, Plus, Ticket as TicketIcon, AlertCircle, Layers, Play, ChevronDown, Square, Eraser, Archive } from "lucide-react";
+import { Loader2, Plus, Ticket as TicketIcon, AlertCircle, Layers, Play, ChevronDown, Square, Eraser, Archive, Terminal } from "lucide-react";
 import { toast } from "sonner";
 import type { Project } from "@/types/project";
 import { readProjectFile, writeProjectFile } from "@/lib/api-projects";
@@ -47,7 +47,7 @@ import {
   type ParsedTicket,
   type ParsedFeature,
 } from "@/lib/todos-kanban";
-import { buildKanbanContextBlock } from "@/lib/analysis-prompt";
+import { buildKanbanContextBlock, combinePromptRecordWithKanban } from "@/lib/analysis-prompt";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { ProjectCategoryHeader } from "@/components/shared/ProjectCategoryHeader";
@@ -109,43 +109,92 @@ function ImplementAllTerminalsGrid() {
   );
 }
 
-/** Single terminal slot: shows one run's logs or empty state. Height half viewport. */
+/** Format seconds as m:ss or s. */
+function formatElapsed(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+/** Single terminal slot: shows one run's logs, loading animation, and elapsed timer. */
 function ImplementAllTerminalSlot({
   run,
   slotIndex,
 }: {
-  run: { runId: string; label: string; logLines: string[]; status: "running" | "done" } | null;
+  run: {
+    runId: string;
+    label: string;
+    logLines: string[];
+    status: "running" | "done";
+    startedAt?: number;
+    doneAt?: number;
+  } | null;
   slotIndex: number;
 }) {
   const displayLogLines = run?.logLines ?? [];
   const running = run?.status === "running";
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  useEffect(() => {
+    if (!run?.startedAt) return;
+    if (run.status === "done" && run.doneAt != null) {
+      setElapsedSeconds((run.doneAt - run.startedAt) / 1000);
+      return;
+    }
+    const tick = () =>
+      setElapsedSeconds(Math.floor((Date.now() - run.startedAt!) / 1000));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [run?.runId, run?.status, run?.startedAt, run?.doneAt]);
+
+  const subtitle = run
+    ? running
+      ? `${run.label} — Running… ${formatElapsed(elapsedSeconds)}`
+      : run.doneAt != null && run.startedAt != null
+        ? `${run.label} — Done in ${formatElapsed((run.doneAt - run.startedAt) / 1000)}`
+        : `${run.label} — Done`
+    : "No run yet.";
 
   return (
-    <Card
-      title={`Terminal ${slotIndex + 1}`}
-      subtitle={
-        run
-          ? `${run.label} — ${run.status === "running" ? "Running…" : "Done"}`
-          : "No run yet."
-      }
-    >
-      <ScrollArea className="h-[50vh] min-h-[200px] rounded border bg-muted/30 p-3 font-mono text-sm">
-        {displayLogLines.length === 0 && !running ? (
-          <p className="text-muted-foreground text-sm">No output yet.</p>
-        ) : (
-          displayLogLines.map((line, i) => (
+    <Card title={`Terminal ${slotIndex + 1}`} subtitle={subtitle}>
+      <div className="relative">
+        {running && (
+          <div className="absolute right-2 top-2 z-10 flex items-center gap-2 rounded bg-muted/80 px-2 py-1 font-mono text-sm tabular-nums">
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            <span>{formatElapsed(elapsedSeconds)}</span>
+          </div>
+        )}
+        <ScrollArea className="h-[50vh] min-h-[200px] rounded border bg-muted/30 p-3 font-mono text-sm">
+          {displayLogLines.length === 0 && !running && (
+            <p className="text-muted-foreground text-sm">No output yet.</p>
+          )}
+          {displayLogLines.length === 0 && running && (
+            <p className="flex items-center gap-2 text-muted-foreground text-sm">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              (waiting for output…)
+            </p>
+          )}
+          {displayLogLines.map((line, i) => (
             <div key={i} className="whitespace-pre-wrap break-all">
               {line}
             </div>
-          ))
-        )}
-      </ScrollArea>
+          ))}
+        </ScrollArea>
+      </div>
     </Card>
   );
 }
 
-/** Toolbar: Implement All button, prompt selector, Add prompt dropdown, Stop / Clear / Archive. */
-function ImplementAllToolbar({ projectPath }: { projectPath: string }) {
+/** Toolbar: Implement All button (print mode: selected prompt + ticket info), prompt selector, Stop / Clear / Archive. */
+function ImplementAllToolbar({
+  projectPath,
+  kanbanData,
+}: {
+  projectPath: string;
+  kanbanData: TodosKanbanData | null;
+}) {
   const runImplementAll = useRunStore((s) => s.runImplementAll);
   const stopAllImplementAll = useRunStore((s) => s.stopAllImplementAll);
   const clearImplementAllLogs = useRunStore((s) => s.clearImplementAllLogs);
@@ -160,10 +209,19 @@ function ImplementAllToolbar({ projectPath }: { projectPath: string }) {
   const anyRunning = implementAllRuns.some((r) => r.status === "running");
 
   const handleImplementAll = async () => {
+    const prompt = selectedPromptId != null ? prompts.find((p) => String(p.id) === selectedPromptId) : null;
+    const userPrompt = prompt?.content?.trim() ?? "";
+    const kanbanContext = kanbanData ? buildKanbanContextBlock(kanbanData) : "";
+    const combinedPrompt = combinePromptRecordWithKanban(kanbanContext, userPrompt);
+    const promptContent = combinedPrompt.trim() || undefined;
     setLoading(true);
     try {
-      await runImplementAll(projectPath);
-      toast.success("Implement All started. Check the terminals below for logs.");
+      await runImplementAll(projectPath, promptContent);
+      toast.success(
+        promptContent
+          ? "Implement All started (selected prompt + ticket info). Check the terminals below."
+          : "Implement All started. For interactive agent (no prompt), use Open in system terminal."
+      );
     } catch {
       toast.error("Failed to start Implement All");
     } finally {
@@ -180,20 +238,40 @@ function ImplementAllToolbar({ projectPath }: { projectPath: string }) {
     }
   };
 
+  const handleOpenInSystemTerminal = async () => {
+    try {
+      await invoke("open_implement_all_in_system_terminal", { projectPath });
+      toast.success("Opened 3 Terminal.app windows with agent (interactive, like your MacBook).");
+    } catch (e) {
+      toast.error(String(e));
+    }
+  };
+
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Button
-        variant="outline"
+        variant="default"
+        size="sm"
+        onClick={handleOpenInSystemTerminal}
+        className="gap-2"
+        title="Opens 3 Terminal.app windows with cd + agent. Interactive Cursor CLI (no prompt required)."
+      >
+        <Terminal className="h-4 w-4" />
+        Open in system terminal
+      </Button>
+      <Button
+        variant="default"
         size="sm"
         onClick={handleImplementAll}
         disabled={loading}
-        className="gap-2"
+        className="gap-2 bg-emerald-500 text-white hover:bg-emerald-600"
+        title="Runs in app; agent needs a prompt (print mode). For interactive agent use Open in system terminal."
       >
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
         Implement All
       </Button>
       <Select value={selectedPromptId ?? ""} onValueChange={(v) => setSelectedPromptId(v || null)}>
-        <SelectTrigger className="w-[200px]" aria-label="Select one prompt">
+        <SelectTrigger className="w-[200px] bg-violet-500 text-white hover:bg-violet-600" aria-label="Select one prompt">
           <SelectValue placeholder="Select one prompt" />
         </SelectTrigger>
         <SelectContent>
@@ -206,7 +284,7 @@ function ImplementAllToolbar({ projectPath }: { projectPath: string }) {
       </Select>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-1">
+          <Button variant="default" size="sm" className="gap-1 bg-violet-500 text-white hover:bg-violet-600">
             Add prompt
             <ChevronDown className="h-4 w-4" />
           </Button>
@@ -221,20 +299,30 @@ function ImplementAllToolbar({ projectPath }: { projectPath: string }) {
         </DropdownMenuContent>
       </DropdownMenu>
       <Button
-        variant="outline"
+        variant="default"
         size="sm"
         onClick={handleStopAll}
         disabled={!anyRunning}
-        className="gap-2 text-destructive"
+        className="gap-2 bg-red-500 text-white hover:bg-red-600"
       >
         <Square className="h-4 w-4" />
         Stop all
       </Button>
-      <Button variant="outline" size="sm" onClick={clearImplementAllLogs} className="gap-2">
+      <Button
+        variant="default"
+        size="sm"
+        onClick={clearImplementAllLogs}
+        className="gap-2 bg-amber-500 text-white hover:bg-amber-600"
+      >
         <Eraser className="h-4 w-4" />
         Clear
       </Button>
-      <Button variant="outline" size="sm" onClick={archiveImplementAllLogs} className="gap-2">
+      <Button
+        variant="default"
+        size="sm"
+        onClick={archiveImplementAllLogs}
+        className="gap-2 bg-cyan-500 text-white hover:bg-cyan-600"
+      >
         <Archive className="h-4 w-4" />
         Archive
       </Button>
@@ -735,12 +823,12 @@ export function ProjectTicketsTab({
               Add feature
             </Button>
             {isTauri && project.repoPath?.trim() && (
-              <ImplementAllToolbar projectPath={project.repoPath.trim()} />
+              <ImplementAllToolbar projectPath={project.repoPath.trim()} kanbanData={kanbanData} />
             )}
           </div>
           {isTauri && <ImplementAllTerminalsGrid />}
           <div className="flex min-h-0 w-full flex-1 flex-col rounded-lg p-4">
-            <div className="grid h-full min-h-0 w-full flex-1 grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid h-full min-h-0 w-full flex-1 grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4" data-testid="kanban-columns-grid">
               {(() => {
                 const featureColorByTitle: Record<string, string> = {};
                 kanbanData.features.forEach((f, i) => {

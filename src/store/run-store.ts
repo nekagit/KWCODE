@@ -58,7 +58,7 @@ export interface RunActions {
   runNextInQueue: (exitedRunId: string) => void;
   stopScript: () => Promise<void>;
   stopRun: (runId: string) => Promise<void>;
-  runImplementAll: (projectPath: string) => Promise<string | null>;
+  runImplementAll: (projectPath: string, promptContent?: string) => Promise<string | null>;
   stopAllImplementAll: () => Promise<void>;
   clearImplementAllLogs: () => void;
   archiveImplementAllLogs: () => void;
@@ -366,7 +366,7 @@ export const useRunStore = create<RunStore>()((set, get) => ({
     }
   },
 
-  runImplementAll: async (projectPath) => {
+  runImplementAll: async (projectPath, promptContent) => {
     const { setError } = get();
     const path = projectPath?.trim();
     if (!path) {
@@ -380,16 +380,26 @@ export const useRunStore = create<RunStore>()((set, get) => ({
         const { run_id } = await invoke<{ run_id: string }>("run_implement_all", {
           projectPath: path,
           slot,
+          promptContent: promptContent ?? null,
         });
         runIds.push(run_id);
         const label = `Implement All (Terminal ${slot})`;
         set((s) => ({
           runningRuns: [
             ...s.runningRuns,
-            { runId: run_id, label, logLines: [], status: "running" as const },
+            {
+              runId: run_id,
+              label,
+              logLines: [],
+              status: "running" as const,
+              startedAt: Date.now(),
+            },
           ],
           selectedRunId: run_id,
         }));
+        if (slot < 3) {
+          await new Promise((r) => setTimeout(r, 400));
+        }
       }
       return runIds[0] ?? null;
     } catch (e) {
@@ -403,7 +413,9 @@ export const useRunStore = create<RunStore>()((set, get) => ({
       await invoke("stop_run", { runId });
       set((s) => ({
         runningRuns: s.runningRuns.map((r) =>
-          r.runId === runId ? { ...r, status: "done" as const } : r
+          r.runId === runId
+            ? { ...r, status: "done" as const, doneAt: Date.now() }
+            : r
         ),
       }));
     } catch (e) {

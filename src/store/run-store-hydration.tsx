@@ -65,9 +65,12 @@ export function RunStoreHydration() {
     listen<{ run_id: string }>("script-exited", (event) => {
       const { run_id } = event.payload;
       const store = useRunStore.getState();
+      const now = Date.now();
       store.setRunInfos((prev) =>
         prev.map((r) =>
-          r.runId === run_id ? { ...r, status: "done" as const } : r
+          r.runId === run_id
+            ? { ...r, status: "done" as const, doneAt: now }
+            : r
         )
       );
       store.runNextInQueue(run_id);

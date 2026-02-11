@@ -1490,6 +1490,7 @@ fn run_implement_all_script_inner(
     run_label: String,
     project_path: String,
     slot: Option<u8>,
+    prompt_content: Option<String>,
 ) -> Result<(), String> {
     let run_label_clone = run_label.clone();
     let script = implement_all_script_path(&ws);
@@ -1499,6 +1500,14 @@ fn run_implement_all_script_inner(
             script.to_string_lossy()
         ));
     }
+    let prompt_path: Option<PathBuf> = match &prompt_content {
+        Some(content) => {
+            let p = std::env::temp_dir().join(format!("kw_implement_all_prompt_{}.txt", run_id));
+            std::fs::write(&p, content).map_err(|e| e.to_string())?;
+            Some(p)
+        }
+        None => None,
+    };
     let mut cmd = Command::new("bash");
     cmd.arg(script.as_os_str())
         .arg("-P")
@@ -1507,6 +1516,9 @@ fn run_implement_all_script_inner(
         if (1..=3).contains(&s) {
             cmd.arg("-S").arg(s.to_string());
         }
+    }
+    if let Some(ref path) = prompt_path {
+        cmd.arg("-F").arg(path.as_os_str());
     }
     cmd.current_dir(&ws)
         .stdout(Stdio::piped())
@@ -1593,12 +1605,44 @@ fn run_implement_all_script_inner(
     Ok(())
 }
 
+/// Opens 3 Terminal.app windows (macOS only), each running `cd project_path && agent`.
+/// Gives you a real TTY so Cursor CLI runs in interactive mode instead of "print mode".
+#[tauri::command]
+async fn open_implement_all_in_system_terminal(project_path: String) -> Result<(), String> {
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = project_path;
+        return Err("Open in system terminal is only supported on macOS.".to_string());
+    }
+    #[cfg(target_os = "macos")]
+    {
+        // Escape path for shell: single-quote wrap, inner ' → '\''
+        let path_escaped = project_path.replace('\'', "'\\''");
+        let shell_cmd = format!("cd '{}' && agent", path_escaped);
+        // Escape for AppleScript string: \ → \\, " → \"
+        let as_escaped = shell_cmd.replace('\\', "\\\\").replace('"', "\\\"");
+        let script = format!(
+            "tell application \"Terminal\" to do script \"{}\"",
+            as_escaped
+        );
+        for _ in 0..3 {
+            Command::new("osascript")
+                .arg("-e")
+                .arg(&script)
+                .spawn()
+                .map_err(|e| format!("Failed to open Terminal: {}", e))?;
+        }
+        Ok(())
+    }
+}
+
 #[tauri::command]
 async fn run_implement_all(
     app: AppHandle,
     state: State<'_, RunningState>,
     project_path: String,
     slot: Option<u8>,
+    prompt_content: Option<String>,
 ) -> Result<RunIdResponse, String> {
     let ws = project_root()?;
     let run_id = gen_run_id();
@@ -1608,7 +1652,7 @@ async fn run_implement_all(
         Some(3) => "Implement All (Terminal 3)".to_string(),
         _ => "Implement All".to_string(),
     };
-    run_implement_all_script_inner(app, state, ws, run_id.clone(), label, project_path, slot)?;
+    run_implement_all_script_inner(app, state, ws, run_id.clone(), label, project_path, slot, prompt_content)?;
     Ok(RunIdResponse { run_id })
 }
 
@@ -1764,6 +1808,7 @@ pub fn run() {
             run_script,
             run_analysis_script,
             run_implement_all,
+            open_implement_all_in_system_terminal,
             list_running_runs,
             stop_run,
             stop_script,

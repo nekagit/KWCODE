@@ -105,7 +105,7 @@ export function RunPageContent() {
   const canStart = selectedPromptRecordIds.length > 0 && activeProjects.length > 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="run-page">
       <RunPageHeader />
 
       {error && (

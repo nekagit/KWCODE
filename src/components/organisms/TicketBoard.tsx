@@ -12,7 +12,8 @@ interface TicketBoardProps {
 
 export function TicketBoard({ tickets, updateTicket, deleteTicket }: TicketBoardProps) {
   return (
-    <TicketBoardLayout>
+    <div data-testid="kanban-board">
+      <TicketBoardLayout>
       {(["backlog", "in_progress", "done", "blocked"] as const).map((status) => (
         <div
           key={status}
@@ -50,6 +51,7 @@ export function TicketBoard({ tickets, updateTicket, deleteTicket }: TicketBoard
           </ScrollArea>
         </div>
       ))}
-    </TicketBoardLayout>
+      </TicketBoardLayout>
+    </div>
   );
 }

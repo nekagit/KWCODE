@@ -10,7 +10,9 @@
     "lint": "next lint",
     "tauri": "node script/tauri-with-local-target.mjs",
     "tauri:build": "node script/tauri-with-local-target.mjs build --bundles app",
-    "scaffold:cursor-md": "node script/scaffold-cursor-md.mjs"
+    "scaffold:cursor-md": "node script/scaffold-cursor-md.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@next/swc-darwin-arm64": "^16.1.6",
@@ -50,6 +52,7 @@
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.0",
     "@tauri-apps/cli": "^2.1.0",
     "@types/node": "^22.10.1",
     "@types/react": "^18.3.12",

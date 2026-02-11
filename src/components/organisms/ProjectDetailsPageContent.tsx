@@ -75,20 +75,20 @@ export function ProjectDetailsPageContent() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="project-detail-page">
       <ProjectHeader project={project} projectId={projectId} />
 
-      <Tabs defaultValue="todo" className="w-full">
-        <TabsList className="mx-auto grid w-full max-w-2xl grid-cols-3">
-          <TabsTrigger value="git" className="flex items-center gap-2">
+      <Tabs defaultValue="todo" className="w-full" data-testid="project-detail-tabs">
+        <TabsList className="mx-auto grid w-full max-w-2xl grid-cols-3" aria-label="Project sections">
+          <TabsTrigger value="git" className="flex items-center gap-2" data-testid="tab-git">
             <FolderGit2 className="h-4 w-4 text-destructive" />
             Git & Testing
           </TabsTrigger>
-          <TabsTrigger value="todo" className="flex items-center gap-2">
+          <TabsTrigger value="todo" className="flex items-center gap-2" data-testid="tab-todo">
             <ListTodo className="h-4 w-4 text-info/90" />
             Todo
           </TabsTrigger>
-          <TabsTrigger value="setup" className="flex items-center gap-2">
+          <TabsTrigger value="setup" className="flex items-center gap-2" data-testid="tab-setup">
             <Settings className="h-4 w-4 text-success/90" />
             Setup
           </TabsTrigger>
