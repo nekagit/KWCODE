@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Empty } from "@/components/ui/empty";
 import { Folders, Plus, Sparkles, Loader2 } from "lucide-react";
+import { Card } from "@/components/shared/Card";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ButtonGroup } from "@/components/shared/ButtonGroup";
 
 interface NoProjectsFoundCardProps {
   seeding: boolean;
@@ -16,14 +17,9 @@ export function NoProjectsFoundCard({
   seedTemplateProject,
 }: NoProjectsFoundCardProps) {
   return (
-    <Card>
-      <CardContent className="py-12">
-        <Empty
-          icon={<Folders className="h-6 w-6" />}
-          title="No projects yet"
-          description="Create a project to group design, ideas, features, tickets, and prompts in one place."
-        />
-        <div className="flex flex-wrap gap-2 mt-4">
+    <Card
+      footerButtons={
+        <ButtonGroup alignment="right">
           <Button
             variant="outline"
             disabled={seeding}
@@ -38,8 +34,14 @@ export function NoProjectsFoundCard({
               New project
             </Link>
           </Button>
-        </div>
-      </CardContent>
+        </ButtonGroup>
+      }
+    >
+      <EmptyState
+        icon={Folders}
+        message="No projects yet"
+        action="Create a project to group design, ideas, features, tickets, and prompts in one place."
+      />
     </Card>
   );
 }

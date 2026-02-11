@@ -1,17 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Dialog } from "@/components/shared/Dialog";
+import { ButtonGroup } from "@/components/shared/ButtonGroup";
+import { PromptFormFields } from "@/components/atoms/PromptFormFields";
+import { Loader2 } from "lucide-react";
 
 interface PromptFormDialogProps {
   open: boolean;
@@ -39,43 +32,29 @@ export function PromptFormDialog({
   saveLoading,
 }: PromptFormDialogProps) {
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-2">
-          <div className="grid gap-2">
-            <Label htmlFor="prompt-title">Title</Label>
-            <Input
-              id="prompt-title"
-              value={formTitle}
-              onChange={(e) => setFormTitle(e.target.value)}
-              placeholder="e.g. Run 3000"
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="prompt-content">Content</Label>
-            <Textarea
-              id="prompt-content"
-              value={formContent}
-              onChange={(e) => setFormContent(e.target.value)}
-              placeholder="Instructions for the AI..."
-              rows={12}
-              className="min-h-[200px]"
-            />
-          </div>
-        </div>
-        <DialogFooter>
+    <Dialog
+      title={title}
+      onClose={() => setOpen(false)}
+      isOpen={open}
+      description={description}
+      actions={
+        <ButtonGroup alignment="right">
           <Button variant="outline" onClick={() => setOpen(false)}>
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={!formTitle.trim() || saveLoading}>
-            {saveLoading ? "Saving..." : "Save"}
+            {saveLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+            Save
           </Button>
-        </DialogFooter>
-      </DialogContent>
+        </ButtonGroup>
+      }
+    >
+      <PromptFormFields
+        formTitle={formTitle}
+        setFormTitle={setFormTitle}
+        formContent={formContent}
+        setFormContent={setFormContent}
+      />
     </Dialog>
   );
 }

@@ -1,5 +1,5 @@
-import { TicketManagement } from "@/components/organisms/TicketManagement";
-import type { Ticket } from "@/app/page";
+import { TicketManagement } from "@/components/organisms/TicketManagement.tsx";
+import type { Ticket } from "@/types/ticket";
 
 interface TicketsTabContentProps {
   tickets: Ticket[];

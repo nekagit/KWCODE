@@ -1,11 +1,10 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shadcn/card";
+import { Card } from "@/components/shared/Card";
 import { Button } from "@/components/shadcn/button";
-import { Checkbox } from "@/components/shadcn/checkbox";
-import { Label } from "@/components/shadcn/label";
 import { ScrollArea } from "@/components/shadcn/scroll-area";
-import { Folders } from "lucide-react";
+import { ButtonGroup } from "@/components/shared/ButtonGroup";
+import { ProjectCheckboxListItem } from "@/components/atoms/ProjectCheckboxListItem";
 
 interface ProjectsTabContentProps {
   allProjects: string[];
@@ -21,37 +20,33 @@ export function ProjectsTabContent({
   saveActiveProjects,
 }: ProjectsTabContentProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Active repos (for this run)</CardTitle>
-        <CardDescription className="text-base">
-          Check repo paths to include when running prompts. Order is preserved. Save writes cursor_projects.json. For project pages (design, ideas, features, tickets, prompts), use <strong>Projects</strong> in the sidebar.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <ScrollArea className="h-[280px] rounded-md border p-3">
-          <div className="space-y-2">
-            {allProjects.map((path) => {
-              const name = path.split("/").pop() ?? path;
-              return (
-                <label
-                  key={path}
-                  className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-muted/50"
-                >
-                  <Checkbox
-                    checked={activeProjects.includes(path)}
-                    onCheckedChange={() => toggleProject(path)}
-                  />
-                  <span className="truncate text-sm font-mono" title={path}>
-                    {name}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        </ScrollArea>
-        <Button onClick={saveActiveProjects}>Save active to cursor_projects.json</Button>
-      </CardContent>
+    <Card
+      title="Active repos (for this run)"
+      subtitle={
+        "Check repo paths to include when running prompts. Order is preserved. Save writes cursor_projects.json. For project pages (design, ideas, features, tickets, prompts), use Projects in the sidebar."
+      }
+      footerButtons={
+        <ButtonGroup alignment="right">
+          <Button onClick={() => saveActiveProjects(activeProjects)}>Save active to cursor_projects.json</Button>
+        </ButtonGroup>
+      }
+    >
+      <ScrollArea className="h-[280px] rounded-md border p-3">
+        <div className="space-y-2">
+          {allProjects.map((path) => {
+            const name = path.split("/").pop() ?? path;
+            return (
+              <ProjectCheckboxListItem
+                key={path}
+                path={path}
+                name={name}
+                isChecked={activeProjects.includes(path)}
+                onToggle={toggleProject}
+              />
+            );
+          })}
+        </div>
+      </ScrollArea>
     </Card>
   );
 }

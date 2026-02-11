@@ -1,0 +1,48 @@
+import React, { useState } from 'react';
+
+interface AccordionItemProps {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}
+
+const AccordionItem: React.FC<AccordionItemProps> = ({ title, children, defaultOpen = false }) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <div className="border-b border-gray-200 dark:border-gray-700 last:border-b-0">
+      <button
+        className="flex justify-between items-center w-full py-4 text-left font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700/50"
+        onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+      >
+        {title}
+        <svg
+          className={`w-4 h-4 transform transition-transform ${isOpen ? 'rotate-180' : 'rotate-0'}`}
+          fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
+      </button>
+      {isOpen && (
+        <div className="pb-4 text-gray-700 dark:text-gray-300">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+};
+
+interface AccordionProps {
+  items: AccordionItemProps[];
+}
+
+export const Accordion: React.FC<AccordionProps> = ({ items }) => {
+  return (
+    <div className="w-full rounded-lg bg-white dark:bg-gray-800 shadow">
+      {items.map((item, index) => (
+        <AccordionItem key={index} {...item} />
+      ))}
+    </div>
+  );
+};

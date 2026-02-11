@@ -2,17 +2,23 @@
 
 import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, MessageSquare, Ticket as TicketIcon, Layers, Lightbulb, Palette, Building2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import type { Project } from "@/types/project";
 import { updateProject } from "@/lib/api-projects";
 import { useRouter } from "next/navigation";
+import { Card } from "@/components/shared/Card";
+import { Form } from "@/components/shared/Form";
+import { ProjectInput } from "@/components/atoms/ProjectInput";
+import { ProjectTextarea } from "@/components/atoms/ProjectTextarea";
+import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
+import { ButtonGroup } from "@/components/shared/ButtonGroup";
+import { ProjectPromptCheckboxGroup } from "@/components/atoms/ProjectPromptCheckboxGroup";
+import { ProjectTicketCheckboxGroup } from "@/components/atoms/ProjectTicketCheckboxGroup";
+import { ProjectFeatureCheckboxGroup } from "@/components/atoms/ProjectFeatureCheckboxGroup";
+import { ProjectIdeaCheckboxGroup } from "@/components/atoms/ProjectIdeaCheckboxGroup";
+import { ProjectDesignCheckboxGroup } from "@/components/atoms/ProjectDesignCheckboxGroup";
+import { ProjectArchitectureCheckboxGroup } from "@/components/atoms/ProjectArchitectureCheckboxGroup";
 
 type PromptItem = { id: number; title: string };
 type TicketItem = { id: string; title: string; status?: string };
@@ -49,9 +55,6 @@ export function ProjectForm({
   const [designIds, setDesignIds] = useState<string[]>(project.designIds ?? []);
   const [architectureIds, setArchitectureIds] = useState<string[]>(project.architectureIds ?? []);
 
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
   const togglePrompt = useCallback((pid: number) => {
     setPromptIds((prev) =>
       prev.includes(pid) ? prev.filter((id) => id !== pid) : [...prev, pid]
@@ -83,6 +86,9 @@ export function ProjectForm({
     );
   }, []);
 
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!project.id || !name.trim()) return;
@@ -109,199 +115,87 @@ export function ProjectForm({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Project</CardTitle>
-        <CardDescription>Name, description, repo path, and links to prompts, tickets, features, and ideas.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. My SaaS app"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Short description"
-              rows={3}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="repoPath">Repo path (optional)</Label>
-            <Input
-              id="repoPath"
-              value={repoPath}
-              onChange={(e) => setRepoPath(e.target.value)}
-              placeholder="/path/to/repo"
-              className="font-mono text-sm"
-            />
-          </div>
+    <Card
+      title="Project"
+      subtitle="Name, description, repo path, and links to prompts, tickets, features, and ideas."
+    >
+      <Form onSubmit={handleSubmit}>
+        <ProjectInput
+          id="name"
+          label="Name"
+          value={name}
+          onChange={setName}
+          placeholder="e.g. My SaaS app"
+          required
+        />
+        <ProjectTextarea
+          id="description"
+          label="Description"
+          value={description}
+          onChange={setDescription}
+          placeholder="Short description"
+        />
+        <ProjectInput
+          id="repoPath"
+          label="Repo path (optional)"
+          value={repoPath}
+          onChange={setRepoPath}
+          placeholder="/path/to/repo"
+          className="font-mono text-sm"
+        />
 
-          <div className="grid gap-4 sm:grid-cols-2 pt-4 border-t">
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
-                Prompts ({promptIds.length} linked)
-              </Label>
-              <ScrollArea className="h-[180px] rounded border p-2">
-                <div className="space-y-2">
-                  {prompts.map((p) => (
-                    <label key={p.id} className="flex items-center gap-2 cursor-pointer text-sm rounded px-2 py-1 hover:bg-muted/50">
-                      <Checkbox
-                        checked={promptIds.includes(p.id)}
-                        onCheckedChange={() => togglePrompt(p.id)}
-                      />
-                      <span className="truncate">{p.title || `#${p.id}`}</span>
-                    </label>
-                  ))}
-                  {prompts.length === 0 && (
-                    <p className="text-xs text-muted-foreground p-2">No prompts. Add some on the Prompts page.</p>
-                  )}
-                </div>
-              </ScrollArea>
-            </div>
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <TicketIcon className="h-4 w-4" />
-                Tickets ({ticketIds.length} linked)
-              </Label>
-              <ScrollArea className="h-[180px] rounded border p-2">
-                <div className="space-y-2">
-                  {tickets.map((t) => (
-                    <label key={t.id} className="flex items-center gap-2 cursor-pointer text-sm rounded px-2 py-1 hover:bg-muted/50">
-                      <Checkbox
-                        checked={ticketIds.includes(t.id)}
-                        onCheckedChange={() => toggleTicket(t.id)}
-                      />
-                      <span className="truncate">{t.title}</span>
-                    </label>
-                  ))}
-                  {tickets.length === 0 && (
-                    <p className="text-xs text-muted-foreground p-2">No tickets. Add some on the Dashboard Tickets tab.</p>
-                  )}
-                </div>
-              </ScrollArea>
-            </div>
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Layers className="h-4 w-4" />
-                Features ({featureIds.length} linked)
-              </Label>
-              <ScrollArea className="h-[180px] rounded border p-2">
-                <div className="space-y-2">
-                  {features.map((f) => (
-                    <label key={f.id} className="flex items-center gap-2 cursor-pointer text-sm rounded px-2 py-1 hover:bg-muted/50">
-                      <Checkbox
-                        checked={featureIds.includes(f.id)}
-                        onCheckedChange={() => toggleFeature(f.id)}
-                      />
-                      <span className="truncate">{f.title}</span>
-                    </label>
-                  ))}
-                  {features.length === 0 && (
-                    <p className="text-xs text-muted-foreground p-2">No features. Add some on the Feature tab.</p>
-                  )}
-                </div>
-              </ScrollArea>
-            </div>
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Lightbulb className="h-4 w-4" />
-                Ideas ({ideaIds.length} linked)
-              </Label>
-              <ScrollArea className="h-[180px] rounded border p-2">
-                <div className="space-y-2">
-                  {ideas.map((i) => (
-                    <label key={i.id} className="flex items-center gap-2 cursor-pointer text-sm rounded px-2 py-1 hover:bg-muted/50">
-                      <Checkbox
-                        checked={ideaIds.includes(i.id)}
-                        onCheckedChange={() => toggleIdea(i.id)}
-                      />
-                      <span className="truncate">{i.title}</span>
-                    </label>
-                  ))}
-                  {ideas.length === 0 && (
-                    <p className="text-xs text-muted-foreground p-2">No ideas. Add some on the Ideas page.</p>
-                  )}
-                </div>
-              </ScrollArea>
-            </div>
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Palette className="h-4 w-4" />
-                Designs ({designIds.length} linked)
-              </Label>
-              <ScrollArea className="h-[180px] rounded border p-2">
-                <div className="space-y-2">
-                  {designs.map((d) => (
-                    <label key={d.id} className="flex items-center gap-2 cursor-pointer text-sm rounded px-2 py-1 hover:bg-muted/50">
-                      <Checkbox
-                        checked={designIds.includes(d.id)}
-                        onCheckedChange={() => toggleDesign(d.id)}
-                      />
-                      <span className="truncate">{d.name}</span>
-                    </label>
-                  ))}
-                  {designs.length === 0 && (
-                    <p className="text-xs text-muted-foreground p-2">No designs. Save from Design page first.</p>
-                  )}
-                </div>
-              </ScrollArea>
-            </div>
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Building2 className="h-4 w-4" />
-                Architecture ({architectureIds.length} linked)
-              </Label>
-              <ScrollArea className="h-[180px] rounded border p-2">
-                <div className="space-y-2">
-                  {architectures.map((a) => (
-                    <label key={a.id} className="flex items-center gap-2 cursor-pointer text-sm rounded px-2 py-1 hover:bg-muted/50">
-                      <Checkbox
-                        checked={architectureIds.includes(a.id)}
-                        onCheckedChange={() => toggleArchitecture(a.id)}
-                      />
-                      <span className="truncate">{a.name}</span>
-                    </label>
-                  ))}
-                  {architectures.length === 0 && (
-                    <p className="text-xs text-muted-foreground p-2">No architectures. Add from Architecture page first.</p>
-                  )}
-                </div>
-              </ScrollArea>
-            </div>
-          </div>
+        <div className="grid gap-4 sm:grid-cols-2 pt-4 border-t">
+          <ProjectPromptCheckboxGroup
+            prompts={prompts}
+            selectedPromptIds={promptIds}
+            onTogglePrompt={togglePrompt}
+          />
+          <ProjectTicketCheckboxGroup
+            tickets={tickets}
+            selectedTicketIds={ticketIds}
+            onToggleTicket={toggleTicket}
+          />
+          <ProjectFeatureCheckboxGroup
+            features={features}
+            selectedFeatureIds={featureIds}
+            onToggleFeature={toggleFeature}
+          />
+          <ProjectIdeaCheckboxGroup
+            ideas={ideas}
+            selectedIdeaIds={ideaIds}
+            onToggleIdea={toggleIdea}
+          />
+          <ProjectDesignCheckboxGroup
+            designs={designs}
+            selectedDesignIds={designIds}
+            onToggleDesign={toggleDesign}
+          />
+          <ProjectArchitectureCheckboxGroup
+            architectures={architectures}
+            selectedArchitectureIds={architectureIds}
+            onToggleArchitecture={toggleArchitecture}
+          />
+        </div>
 
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
-          <div className="flex gap-2 pt-2">
-            <Button type="submit" disabled={saving}>
-              {saving ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Saving…
-                </>
-              ) : (
-                "Save"
-              )}
-            </Button>
-            <Button type="button" variant="outline" asChild>
-              <Link href={`/projects/${project.id}`}>Cancel</Link>
-            </Button>
-          </div>
-        </form>
-      </CardContent>
+        {error && (
+          <ErrorDisplay message={error} />
+        )}
+        <ButtonGroup alignment="left">
+          <Button type="submit" disabled={saving}>
+            {saving ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Saving…
+              </>
+            ) : (
+              "Save"
+            )}
+          </Button>
+          <Button type="button" variant="outline" asChild>
+            <Link href={`/projects/${project.id}`}>Cancel</Link>
+          </Button>
+        </ButtonGroup>
+      </Form>
     </Card>
   );
 }

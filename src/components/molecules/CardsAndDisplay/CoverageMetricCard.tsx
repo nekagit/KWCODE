@@ -1,8 +1,9 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ReactNode } from "react";
+import { Card } from "@/components/shared/Card";
+import { TitleWithIcon } from "@/components/atoms/TitleWithIcon";
 
 interface CoverageMetricCardProps {
   title: string;
@@ -20,18 +21,12 @@ export function CoverageMetricCard({
   icon,
 }: CoverageMetricCardProps) {
   return (
-    <Card className="bg-muted/30">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-          {icon}
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        <Progress value={progress} className="mt-2 h-2" />
-        <p className="text-xs text-muted-foreground mt-1">Target: {target}</p>
-      </CardContent>
+    <Card
+      title={<TitleWithIcon icon={icon} title={title} className="text-sm font-medium text-muted-foreground" />}
+      subtitle={<p className="text-xs text-muted-foreground">Target: {target}</p>}
+    >
+      <div className="text-2xl font-bold">{value}</div>
+      <Progress value={progress} className="mt-2 h-2" />
     </Card>
   );
 }

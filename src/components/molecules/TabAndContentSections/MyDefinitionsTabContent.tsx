@@ -1,5 +1,5 @@
 import { ArchitectureRecord, ArchitectureCategory } from "@/types/architecture";
-import { MyDefinitionsCard } from "@/components/molecules/CardsAndDisplay/MyDefinitionsCard/MyDefinitionsCard";
+import { MyDefinitionsCard } from "@/components/molecules/CardsAndDisplay/MyDefinitionsCard.tsx";
 
 interface MyDefinitionsTabContentProps {
   items: ArchitectureRecord[];

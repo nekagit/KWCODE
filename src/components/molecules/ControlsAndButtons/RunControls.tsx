@@ -1,8 +1,11 @@
 "use client";
 
-import { Button } from "@/components/shadcn/button";
 import { Play, Square } from "lucide-react";
 import Link from "next/link";
+import { ButtonGroup } from "@/components/shared/ButtonGroup";
+import { StartButton } from "@/components/atoms/StartButton";
+import { StopButton } from "@/components/atoms/StopButton";
+import { PageFooterText } from "@/components/atoms/PageFooterText";
 
 interface RunControlsProps {
   handleStart: () => Promise<void>;
@@ -19,33 +22,26 @@ export function RunControls({
 }: RunControlsProps) {
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-2">
-        <Button onClick={handleStart} disabled={!canStart}>
-          <Play className="mr-2 h-4 w-4" />
-          Start
-        </Button>
-        <Button variant="destructive" onClick={handleStop} disabled={!running}>
-          <Square className="mr-2 h-4 w-4" />
-          Stop
-        </Button>
+      <ButtonGroup alignment="left">
+        <StartButton onClick={handleStart} disabled={!canStart} />
+        <StopButton onClick={handleStop} disabled={!running} />
         {!canStart && (
           <span className="text-sm text-muted-foreground">
             Select at least one prompt and one project to run.
           </span>
         )}
-      </div>
+      </ButtonGroup>
 
-      <p className="text-xs text-muted-foreground">
-        Timing (delays between operations) is configured on the{" "}
-        <Link href="/configuration" className="underline hover:text-foreground">
-          Configuration
-        </Link>{" "}
-        page. View output in the{" "}
-        <Link href="/?tab=log" className="underline hover:text-foreground">
-          Log
-        </Link>{" "}
-        tab.
-      </p>
+      <PageFooterText
+        text="Timing (delays between operations) is configured on the"
+        linkHref="/configuration"
+        linkText="Configuration"
+      />
+      <PageFooterText
+        text="View output in the"
+        linkHref="/?tab=log"
+        linkText="Log"
+      />
     </div>
   );
 }

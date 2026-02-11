@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/shadcn/button";
 import { ArrowLeft } from "lucide-react";
+import { PageHeader } from "@/components/shared/PageHeader";
 
 interface EditProjectHeaderProps {
   projectId: string;
@@ -14,7 +15,7 @@ export function EditProjectHeader({ projectId }: EditProjectHeaderProps) {
           <ArrowLeft className="h-4 w-4" />
         </Link>
       </Button>
-      <h1 className="text-2xl font-semibold tracking-tight">Edit project</h1>
+      <PageHeader title="Edit project" />
     </div>
   );
 }

@@ -1,16 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ClipboardCopy } from "lucide-react";
+import { Dialog } from "@/components/shared/Dialog";
+import { ButtonGroup } from "@/components/shared/ButtonGroup";
 
 interface ExportContentDialogProps {
   showExportDialog: boolean;
@@ -24,16 +18,12 @@ export function ExportContentDialog({
   exportContent,
 }: ExportContentDialogProps) {
   return (
-    <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
-      <DialogContent className="max-w-4xl">
-        <DialogHeader>
-          <DialogTitle>Export Content</DialogTitle>
-          <DialogDescription>Copy the generated markdown content below.</DialogDescription>
-        </DialogHeader>
-        <ScrollArea className="h-[400px] rounded-md border bg-muted/30 p-4 font-mono text-sm">
-          <pre className="whitespace-pre-wrap break-all">{exportContent}</pre>
-        </ScrollArea>
-        <DialogFooter>
+    <Dialog
+      title="Export Content"
+      onClose={() => setShowExportDialog(false)}
+      isOpen={showExportDialog}
+      actions={
+        <ButtonGroup alignment="right">
           <Button
             type="button"
             variant="secondary"
@@ -43,8 +33,13 @@ export function ExportContentDialog({
             Copy to clipboard
           </Button>
           <Button type="button" onClick={() => setShowExportDialog(false)}>Close</Button>
-        </DialogFooter>
-      </DialogContent>
+        </ButtonGroup>
+      }
+    >
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Copy the generated markdown content below.</p>
+      <ScrollArea className="h-[400px] rounded-md border bg-muted/30 p-4 font-mono text-sm">
+        <pre className="whitespace-pre-wrap break-all">{exportContent}</pre>
+      </ScrollArea>
     </Dialog>
   );
 }

@@ -1,25 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
+import { Dialog } from "@/components/shared/Dialog";
+import { ButtonGroup } from "@/components/shared/ButtonGroup";
+import { IdeaFormFields } from "@/components/atoms/IdeaFormFields";
 
 interface IdeaCategoryLabels {
   saas: string;
@@ -63,58 +48,32 @@ export function IdeaFormDialog({
   CATEGORY_LABELS,
 }: IdeaFormDialogProps) {
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="idea-title">Title</Label>
-            <Input
-              id="idea-title"
-              value={formTitle}
-              onChange={(e) => setFormTitle(e.target.value)}
-              placeholder="e.g. API usage dashboard"
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="idea-desc">Description</Label>
-            <Textarea
-              id="idea-desc"
-              value={formDescription}
-              onChange={(e) => setFormDescription(e.target.value)}
-              placeholder="Short description and who it's for"
-              rows={3}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label>Category</Label>
-            <Select value={formCategory} onValueChange={(v) => setFormCategory(v as keyof IdeaCategoryLabels)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {(Object.keys(CATEGORY_LABELS) as Array<keyof IdeaCategoryLabels>).map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {CATEGORY_LABELS[cat]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <DialogFooter>
+    <Dialog
+      title={title}
+      onClose={() => setOpen(false)}
+      isOpen={open}
+      actions={
+        <ButtonGroup alignment="right">
           <Button variant="outline" onClick={() => setOpen(false)}>
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={saveLoading || !formTitle.trim()}>
-            {saveLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            {saveLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
             Save
           </Button>
-        </DialogFooter>
-      </DialogContent>
+        </ButtonGroup>
+      }
+    >
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{description}</p>
+      <IdeaFormFields
+        formTitle={formTitle}
+        setFormTitle={setFormTitle}
+        formDescription={formDescription}
+        setFormDescription={setFormDescription}
+        formCategory={formCategory}
+        setFormCategory={setFormCategory}
+        CATEGORY_LABELS={CATEGORY_LABELS}
+      />
     </Dialog>
   );
 }

@@ -1,5 +1,5 @@
 import { ArchitectureCategory } from "@/types/architecture";
-import { ArchitectureTemplateCard } from "@/components/molecules/CardsAndDisplay/ArchitectureTemplateCard/ArchitectureTemplateCard";
+import { ArchitectureTemplateCard } from "@/components/molecules/CardsAndDisplay/ArchitectureTemplateCard.tsx";
 
 interface ArchitectureTemplatesTabContentProps {
   CATEGORY_LABELS: Record<ArchitectureCategory, string>;

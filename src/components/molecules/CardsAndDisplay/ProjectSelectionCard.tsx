@@ -1,9 +1,11 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shadcn/card";
 import { Checkbox } from "@/components/shadcn/checkbox";
 import { ScrollArea } from "@/components/shadcn/scroll-area";
 import { Folders } from "lucide-react";
+import { Card } from "@/components/shared/Card";
+import { TitleWithIcon } from "@/components/atoms/TitleWithIcon";
+import { ProjectCheckboxItem } from "@/components/atoms/ProjectCheckboxItem";
 
 interface ProjectSelectionCardProps {
   allProjects: string[];
@@ -17,37 +19,22 @@ export function ProjectSelectionCard({
   toggleProject,
 }: ProjectSelectionCardProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <Folders className="h-4 w-4" />
-          Projects
-        </CardTitle>
-        <CardDescription>
-          Select at least one project to run the script against (Dashboard → Projects also saves
-          this list).
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-[180px] rounded-md border p-3">
-          <div className="flex flex-wrap gap-2">
-            {allProjects.map((path) => (
-              <label
-                key={path}
-                className="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 hover:bg-muted/50"
-              >
-                <Checkbox
-                  checked={activeProjects.includes(path)}
-                  onCheckedChange={() => toggleProject(path)}
-                />
-                <span className="text-sm truncate max-w-[320px]" title={path}>
-                  {path.split("/").pop() ?? path}
-                </span>
-              </label>
-            ))}
-          </div>
-        </ScrollArea>
-      </CardContent>
+    <Card
+      title={<TitleWithIcon icon={Folders} title="Projects" className="text-lg" />}
+      subtitle="Select at least one project to run the script against (Dashboard → Projects also saves this list)."
+    >
+      <ScrollArea className="h-[180px] rounded-md border p-3">
+        <div className="flex flex-wrap gap-2">
+          {allProjects.map((path) => (
+            <ProjectCheckboxItem
+              key={path}
+              path={path}
+              isChecked={activeProjects.includes(path)}
+              onToggle={toggleProject}
+            />
+          ))}
+        </div>
+      </ScrollArea>
     </Card>
   );
 }

@@ -1,13 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shadcn/card";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/shadcn/accordion";
-import { ScrollArea } from "@/components/shadcn/scroll-area";
-import { Alert, AlertDescription } from "@/components/shadcn/alert";
+import { useState, useEffect, useCallback } from "react";
+import { Card } from "@/components/shared/Card";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/shared/Accordion";
+import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { Loader2, Database, FileCode, Braces } from "lucide-react";
 import { invoke, isTauri } from "@/lib/tauri";
-import type { Ticket, Feature } from "@/components/organisms/HomePageContent"; // Assuming these types are available or re-defined
+import type { Ticket } from "@/types/ticket";
+import type { Feature } from "@/types/project";
+import { ScriptListDisplay } from "@/components/atoms/ScriptListDisplay";
+import { JsonFileListDisplay } from "@/components/atoms/JsonFileListDisplay";
+import { KvStoreDisplay } from "@/components/atoms/KvStoreDisplay";
+import { TicketsDisplay } from "@/components/atoms/TicketsDisplay";
+import { FeaturesDisplay } from "@/components/atoms/FeaturesDisplay";
+import { AllProjectsDisplay } from "@/components/atoms/AllProjectsDisplay";
+import { ActiveProjectsDisplay } from "@/components/atoms/ActiveProjectsDisplay";
 
 interface DbDataTabContentProps {
   isTauriEnv: boolean | null;
@@ -100,13 +107,15 @@ export function DbDataTabContent({
   }, [isTauriEnv]);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
+    <Card
+      title={
+        <>
           <Database className="h-5 w-5" />
           DB Data
-        </CardTitle>
-        <CardDescription className="space-y-1 text-base">
+        </>
+      }
+      subtitle={
+        <>
           <span className="block">Scripts in script/, JSON files in data/, and DB data (kv_store, tickets, features).</span>
           {isTauriEnv ? (
             <span className="block text-muted-foreground text-xs mt-1">
@@ -117,147 +126,65 @@ export function DbDataTabContent({
               Browser: data is read from data/*.json via API. Scripts and JSON list from project root. Saves require the Tauri app.
             </span>
           )}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {dataError && (
-          <Alert variant="destructive">
-            <AlertDescription>{dataError}</AlertDescription>
-          </Alert>
-        )}
-        {dataLoading && (
-          <p className="text-sm text-muted-foreground flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" /> Loading…
-          </p>
-        )}
+        </>
+      }
+    >
+      {dataError && (
+        <ErrorDisplay message={dataError} />
+      )}
+      {dataLoading && (
+        <p className="text-sm text-muted-foreground flex items-center gap-2 mt-4">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+        </p>
+      )}
 
-        <Accordion type="multiple" className="w-full glasgmorphism" defaultValue={["scripts", "json", "db"]}>
-          <AccordionItem value="scripts">
-            <AccordionTrigger className="flex items-center gap-2">
-              <FileCode className="h-4 w-4" />
-              Scripts ({dataScripts.length})
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">script/</p>
-                  <ScrollArea className="h-32 rounded border bg-muted/30 p-2">
-                    {dataScripts.length === 0 && !dataLoading && (
-                      <p className="text-muted-foreground text-sm">No scripts found.</p>
-                    )}
-                    {dataScripts.map((f) => (
-                      <button
-                        key={f.path}
-                        type="button"
-                        className="block w-full text-left text-sm px-2 py-1.5 rounded hover:bg-muted truncate"
-                        onClick={() => readFileContent(f.path)}
-                      >
-                        {f.name}
-                      </button>
-                    ))}
-                  </ScrollArea>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">Content</p>
-                  <ScrollArea className="h-48 rounded border bg-muted/30 p-3 font-mono text-xs whitespace-pre-wrap break-all">
-                    {dataSelectedPath && dataFileContent != null ? (
-                      dataFileContent
-                    ) : (
-                      <span className="text-muted-foreground">Click a script to view content.</span>
-                    )}
-                  </ScrollArea>
-                </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
+      <Accordion type="multiple" className="w-full glasgmorphism" defaultValue={["scripts", "json", "db"]}>
+        <AccordionItem value="scripts">
+          <AccordionTrigger className="flex items-center gap-2">
+            <FileCode className="h-4 w-4" />
+            Scripts ({dataScripts.length})
+          </AccordionTrigger>
+          <AccordionContent>
+            <ScriptListDisplay
+              dataScripts={dataScripts}
+              dataLoading={dataLoading}
+              readFileContent={readFileContent}
+              dataFileContent={dataFileContent}
+              dataSelectedPath={dataSelectedPath}
+            />
+          </AccordionContent>
+        </AccordionItem>
 
-          <AccordionItem value="json">
-            <AccordionTrigger className="flex items-center gap-2">
-              <Braces className="h-4 w-4" />
-              JSON files ({dataJsonFiles.length})
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">data/*.json</p>
-                  <ScrollArea className="h-32 rounded border bg-muted/30 p-2">
-                    {dataJsonFiles.length === 0 && !dataLoading && (
-                      <p className="text-muted-foreground text-sm">No JSON files.</p>
-                    )}
-                    {dataJsonFiles.map((f) => (
-                      <button
-                        key={f.path}
-                        type="button"
-                        className="block w-full text-left text-sm px-2 py-1.5 rounded hover:bg-muted truncate"
-                        onClick={() => readFileContent(f.path)}
-                      >
-                        {f.name}
-                      </button>
-                    ))}
-                  </ScrollArea>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">Content</p>
-                  <ScrollArea className="h-48 rounded border bg-muted/30 p-3 font-mono text-xs whitespace-pre-wrap break-all">
-                    {dataSelectedPath && dataFileContent != null ? (
-                      dataFileContent
-                    ) : (
-                      <span className="text-muted-foreground">Click a JSON file to view content.</span>
-                    )}
-                  </ScrollArea>
-                </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
+        <AccordionItem value="json">
+          <AccordionTrigger className="flex items-center gap-2">
+            <Braces className="h-4 w-4" />
+            JSON files ({dataJsonFiles.length})
+          </AccordionTrigger>
+          <AccordionContent>
+            <JsonFileListDisplay
+              dataJsonFiles={dataJsonFiles}
+              dataLoading={dataLoading}
+              readFileContent={readFileContent}
+              dataFileContent={dataFileContent}
+              dataSelectedPath={dataSelectedPath}
+            />
+          </AccordionContent>
+        </AccordionItem>
 
-          <AccordionItem value="db">
-            <AccordionTrigger className="flex items-center gap-2">
-              <Database className="h-5 w-5" />
-              DB Data (kv_store, tickets, features)
-            </AccordionTrigger>
-            <AccordionContent className="space-y-4">
-              <div>
-                <p className="text-xs text-muted-foreground mb-2">kv_store</p>
-                <ScrollArea className="h-40 rounded border bg-muted/30 p-3 font-mono text-xs">
-                  {dataKvEntries.length === 0 && !dataLoading && (
-                    <p className="text-muted-foreground">No kv entries.</p>
-                  )}
-                  {dataKvEntries.map((e) => (
-                    <div key={e.key} className="mb-3">
-                      <span className="font-semibold text-foreground">{e.key}</span>
-                      <pre className="mt-1 whitespace-pre-wrap break-all text-muted-foreground">{e.value}</pre>
-                    </div>
-                  ))}
-                </ScrollArea>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground mb-2">tickets ({tickets.length})</p>
-                <ScrollArea className="h-48 rounded border bg-muted/30 p-3 font-mono text-xs whitespace-pre-wrap">
-                  <pre>{JSON.stringify(tickets, null, 2)}</pre>
-                </ScrollArea>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground mb-2">features ({features.length})</p>
-                <ScrollArea className="h-48 rounded border bg-muted/30 p-3 font-mono text-xs whitespace-pre-wrap">
-                  <pre>{JSON.stringify(features, null, 2)}</pre>
-                </ScrollArea>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground mb-2">all_projects ({allProjects.length})</p>
-                <ScrollArea className="h-24 rounded border bg-muted/30 p-3 font-mono text-xs">
-                  <pre>{JSON.stringify(allProjects, null, 2)}</pre>
-                </ScrollArea>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground mb-2">cursor_projects / active ({activeProjects.length})</p>
-                <ScrollArea className="h-24 rounded border bg-muted/30 p-3 font-mono text-xs">
-                  <pre>{JSON.stringify(activeProjects, null, 2)}</pre>
-                </ScrollArea>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      </CardContent>
+        <AccordionItem value="db">
+          <AccordionTrigger className="flex items-center gap-2">
+            <Database className="h-5 w-5" />
+            DB Data (kv_store, tickets, features)
+          </AccordionTrigger>
+          <AccordionContent className="space-y-4">
+            <KvStoreDisplay dataKvEntries={dataKvEntries} dataLoading={dataLoading} />
+            <TicketsDisplay tickets={tickets} />
+            <FeaturesDisplay features={features} />
+            <AllProjectsDisplay allProjects={allProjects} />
+            <ActiveProjectsDisplay activeProjects={activeProjects} />
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </Card>
   );
 }

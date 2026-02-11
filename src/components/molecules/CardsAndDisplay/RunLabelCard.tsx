@@ -1,7 +1,7 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shadcn/card";
 import { Input } from "@/components/shadcn/input";
+import { Card } from "@/components/shared/Card";
 
 interface RunLabelCardProps {
   runLabel: string;
@@ -13,21 +13,16 @@ export function RunLabelCard({
   setRunLabel,
 }: RunLabelCardProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Run label</CardTitle>
-        <CardDescription>
-          Optional name for this run (shown in running terminals and log).
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Input
-          placeholder="e.g. Manual run"
-          value={runLabel}
-          onChange={(e) => setRunLabel(e.target.value)}
-          className="max-w-md"
-        />
-      </CardContent>
+    <Card
+      title="Run label"
+      subtitle="Optional name for this run (shown in running terminals and log)."
+    >
+      <Input
+        placeholder="e.g. Manual run"
+        value={runLabel}
+        onChange={(e) => setRunLabel(e.target.value)}
+        className="max-w-md"
+      />
     </Card>
   );
 }

@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { GridContainer } from "@/components/shared/GridContainer";
 
 interface ProjectListContainerProps {
   children: ReactNode;
@@ -6,8 +7,8 @@ interface ProjectListContainerProps {
 
 export function ProjectListContainer({ children }: ProjectListContainerProps) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <GridContainer>
       {children}
-    </div>
+    </GridContainer>
   );
 }

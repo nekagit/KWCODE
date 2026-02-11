@@ -1,4 +1,5 @@
-import type { Project, Prompt } from "@/types/project";
+import type { Project, Prompt, Feature, Ticket } from "@/types/project";
+import { FeatureManagementCard } from "@/components/molecules/CardsAndDisplay/FeatureManagementCard.tsx";
 import type { RunningRun } from "@/store/run-store";
 import { useRunState } from "@/context/run-state";
 

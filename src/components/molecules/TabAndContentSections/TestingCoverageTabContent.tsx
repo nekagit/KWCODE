@@ -1,4 +1,4 @@
-import { CoverageDashboard } from "@/components/molecules/DashboardsAndViews/CoverageDashboard/CoverageDashboard";
+import { CoverageDashboard } from "@/components/molecules/DashboardsAndViews/CoverageDashboard.tsx";
 
 export function TestingCoverageTabContent() {
   return (

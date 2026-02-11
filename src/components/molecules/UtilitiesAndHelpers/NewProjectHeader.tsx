@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/shadcn/button";
 import { ArrowLeft } from "lucide-react";
+import { PageHeader } from "@/components/shared/PageHeader";
 
 interface NewProjectHeaderProps {
   title: string;
@@ -16,11 +17,8 @@ export function NewProjectHeader({ title, description }: NewProjectHeaderProps) 
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+        <PageHeader title={title} subtitle={description} />
       </div>
-      <p className="text-muted-foreground text-sm">
-        {description}
-      </p>
     </div>
   );
 }

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Folders, Plus, Sparkles, FolderOpen, Loader2 } from "lucide-react";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { ButtonGroup } from "@/components/shared/ButtonGroup";
 
 interface ProjectsHeaderProps {
   showLocalProjects: boolean;
@@ -19,13 +21,13 @@ export function ProjectsHeader({
 }: ProjectsHeaderProps) {
   return (
     <div className="flex items-center justify-between">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Projects</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Each project is a page that aggregates design, ideas, features, tickets, and prompts. Open a project to see all its data.
-        </p>
-      </div>
-      <div className="flex gap-2">
+      <PageHeader
+        title="Projects"
+        description={
+          "Each project is a page that aggregates design, ideas, features, tickets, and prompts. Open a project to see all its data."
+        }
+      />
+      <ButtonGroup alignment="right">
         <Button
           variant="outline"
           onClick={() => setShowLocalProjects((v) => !v)}
@@ -48,7 +50,7 @@ export function ProjectsHeader({
             New project
           </Link>
         </Button>
-      </div>
+      </ButtonGroup>
     </div>
   );
 }

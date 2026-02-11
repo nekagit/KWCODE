@@ -1,10 +1,5 @@
-import { Plus } from "lucide-react";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/shadcn/accordion";
-import { Button } from "@/components/shadcn/button";
-import { Input } from "@/components/shadcn/input";
-import { Label } from "@/components/shadcn/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/shadcn/select";
-import { Textarea } from "@/components/shadcn/textarea";
+import { Accordion } from "@/components/shared/Accordion";
+import { TicketFormFields } from "@/components/atoms/TicketFormFields";
 import type { TicketStatus } from "@/app/page";
 
 interface AddTicketAccordionProps {
@@ -19,61 +14,19 @@ export function AddTicketAccordion({
   addTicket,
 }: AddTicketAccordionProps) {
   return (
-    <Accordion type="single" collapsible className="w-full rounded-lg border bg-muted/30 glasgmorphism">
-      <AccordionItem value="add-ticket" className="border-none glasgmorphism">
-        <AccordionTrigger className="px-4 py-3 hover:no-underline [&[data-state=open]]:border-b">
-          Add ticket
-        </AccordionTrigger>
-        <AccordionContent className="px-4 pb-4 pt-2">
-          <div className="grid gap-2">
-            <Label>Title</Label>
-            <Input
-              value={ticketForm.title}
-              onChange={(e) => setTicketForm((f) => ({ ...f, title: e.target.value }))}
-              placeholder="e.g. Add user dashboard"
+    <Accordion
+      items={[
+        {
+          title: "Add ticket",
+          children: (
+            <TicketFormFields
+              ticketForm={ticketForm}
+              setTicketForm={setTicketForm}
+              addTicket={addTicket}
             />
-            <Label>Description (optional)</Label>
-            <Textarea
-              className="min-h-[60px]"
-              value={ticketForm.description}
-              onChange={(e) => setTicketForm((f) => ({ ...f, description: e.target.value }))}
-              placeholder="What should be built..."
-            />
-            <div className="flex items-center gap-4">
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Select
-                  value={ticketForm.status}
-                  onValueChange={(v) => setTicketForm((f) => ({ ...f, status: v as TicketStatus }))}
-                >
-                  <SelectTrigger className="w-[120px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="backlog">Backlog</SelectItem>
-                    <SelectItem value="in_progress">In progress</SelectItem>
-                    <SelectItem value="done">Done</SelectItem>
-                    <SelectItem value="blocked">Blocked</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Priority</Label>
-                <Input
-                  type="number"
-                  value={ticketForm.priority}
-                  onChange={(e) => setTicketForm((f) => ({ ...f, priority: Number(e.target.value) || 0 }))}
-                  className="w-20"
-                />
-              </div>
-            </div>
-            <Button onClick={addTicket}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add ticket
-            </Button>
-          </div>
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
+          ),
+        },
+      ]}
+    />
   );
 }

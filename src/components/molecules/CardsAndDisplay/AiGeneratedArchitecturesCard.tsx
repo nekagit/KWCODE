@@ -1,21 +1,14 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sparkles, Loader2, Copy } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { Card } from "@/components/shared/Card";
+import { TitleWithIcon } from "@/components/atoms/TitleWithIcon";
+import { ArchitectureGeneratorInput } from "@/components/atoms/ArchitectureGeneratorInput";
+import { AiArchitectureListItem } from "@/components/atoms/AiArchitectureListItem";
+import { LoadingState } from "@/components/shared/EmptyState";
 import type { ArchitectureCategory } from "@/types/architecture";
 
 type AiResult = { name: string; description: string; category: ArchitectureCategory; practices: string; scenarios: string };
@@ -56,76 +49,34 @@ export function AiGeneratedArchitecturesCard({ CATEGORY_LABELS, addFromAi }: AiG
   }, [aiTopic, aiCount]);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5" />
-          AI generated
-        </CardTitle>
-        <CardDescription>
-          Enter a topic or scenario; we&apos;ll suggest architecture definitions you can add to My definitions.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex flex-wrap gap-2 items-end">
-          <div className="flex-1 min-w-[200px] space-y-2">
-            <Label htmlFor="ai-topic">Topic or scenario</Label>
-            <Input
-              id="ai-topic"
-              placeholder="e.g. event-driven APIs, secure auth, high-throughput"
-              value={aiTopic}
-              onChange={(e) => setAiTopic(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleAiGenerate()}
-            />
-          </div>
-          <div className="w-[100px] space-y-2">
-            <Label>Count</Label>
-            <Select value={String(aiCount)} onValueChange={(v) => setAiCount(Number(v))}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <SelectItem key={n} value={String(n)}>
-                    {n}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <Button onClick={handleAiGenerate} disabled={aiLoading || !aiTopic.trim()}>
-            {aiLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
-            Generate
-          </Button>
-        </div>
-        {aiResults.length > 0 && (
-          <ScrollArea className="h-[400px] pr-4">
-            <ul className="space-y-3">
-              {aiResults.map((item, i) => (
-                <li key={i}>
-                  <Card className="bg-muted/30">
-                    <CardContent className="pt-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-medium">{item.name}</h3>
-                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{item.description}</p>
-                          <Badge variant="secondary" className="mt-2">
-                            {CATEGORY_LABELS[item.category]}
-                          </Badge>
-                        </div>
-                        <Button size="sm" variant="outline" className="shrink-0" onClick={() => addFromAi(item)}>
-                          <Copy className="h-4 w-4 mr-1" />
-                          Add
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </li>
-              ))}
-            </ul>
-          </ScrollArea>
-        )}
-      </CardContent>
+    <Card
+      title={<TitleWithIcon icon={Sparkles} title="AI generated" className="text-lg" />}
+      subtitle="Enter a topic or scenario; we&apos;ll suggest architecture definitions you can add to My definitions."
+    >
+      <ArchitectureGeneratorInput
+        topic={aiTopic}
+        onTopicChange={setAiTopic}
+        count={aiCount}
+        onCountChange={setAiCount}
+        onGenerate={handleAiGenerate}
+        loading={aiLoading}
+      />
+      {aiLoading ? (
+        <LoadingState />
+      ) : aiResults.length > 0 && (
+        <ScrollArea className="h-[400px] pr-4 mt-4">
+          <ul className="space-y-3">
+            {aiResults.map((item, i) => (
+              <AiArchitectureListItem
+                key={i}
+                item={item}
+                CATEGORY_LABELS={CATEGORY_LABELS}
+                onAddFromAi={addFromAi}
+              />
+            ))}
+          </ul>
+        </ScrollArea>
+      )}
     </Card>
   );
 }

@@ -1,5 +1,5 @@
-import { PromptsAndTiming } from "@/components/organisms/PromptsAndTiming";
-import type { Prompt } from "@/types/project";
+import { PromptsAndTiming } from "@/components/organisms/PromptsAndTiming.tsx";
+import type { Prompt } from "@/types/prompt";
 
 interface PromptsTabContentProps {
   prompts: Prompt[];

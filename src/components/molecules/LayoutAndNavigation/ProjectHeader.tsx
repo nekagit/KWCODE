@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Settings, Trash2 } from "lucide-react";
 import type { Project } from "@/types/project";
 import { deleteProject } from "@/lib/api-projects";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { ButtonGroup } from "@/components/shared/ButtonGroup";
 
 interface ProjectHeaderProps {
   project: Project;
@@ -21,21 +23,21 @@ export function ProjectHeader({ project, projectId }: ProjectHeaderProps) {
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-            {project.name}
-            {project.repoPath && (
-              <Badge variant="secondary" className="text-sm font-mono">
-                {project.repoPath.split("/").pop()}
-              </Badge>
-            )}
-          </h1>
-          {project.description && (
-            <p className="text-muted-foreground text-sm mt-1">{project.description}</p>
-          )}
-        </div>
+        <PageHeader
+          title={
+            <>
+              {project.name}
+              {project.repoPath && (
+                <Badge variant="secondary" className="text-sm font-mono ml-2">
+                  {project.repoPath.split("/").pop()}
+                </Badge>
+              )}
+            </>
+          }
+          description={project.description}
+        />
       </div>
-      <div className="flex gap-2">
+      <ButtonGroup alignment="right">
         <Button variant="outline" asChild>
           <Link href={`/projects/${projectId}/edit`}>
             <Settings className="h-4 w-4 mr-2" />
@@ -54,7 +56,7 @@ export function ProjectHeader({ project, projectId }: ProjectHeaderProps) {
           <Trash2 className="h-4 w-4 mr-2" />
           Delete
         </Button>
-      </div>
+      </ButtonGroup>
     </div>
   );
 }

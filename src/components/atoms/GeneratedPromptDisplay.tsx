@@ -1,0 +1,63 @@
+import React from 'react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2 } from "lucide-react";
+import { ButtonGroup } from "@/components/shared/ButtonGroup";
+
+interface GeneratedPromptDisplayProps {
+  generateResult: { title: string; content: string };
+  setGenerateResult: (result: { title: string; content: string } | null) => void;
+  useGeneratedAndCreate: () => void;
+  saveGeneratedAsNew: () => Promise<void>;
+  saveLoading: boolean;
+}
+
+export const GeneratedPromptDisplay: React.FC<GeneratedPromptDisplayProps> = ({
+  generateResult,
+  setGenerateResult,
+  useGeneratedAndCreate,
+  saveGeneratedAsNew,
+  saveLoading,
+}) => {
+  return (
+    <>
+      <div className="grid gap-2">
+        <Label>Generated title</Label>
+        <Input
+          value={generateResult.title}
+          onChange={(e) =>
+            setGenerateResult((r) => (r ? { ...r, title: e.target.value } : null))
+          }
+        />
+      </div>
+      <div className="grid gap-2">
+        <Label>Generated content</Label>
+        <Textarea
+          value={generateResult.content}
+          onChange={(e) =>
+            setGenerateResult((r) => (r ? { ...r, content: e.target.value } : null))
+          }
+          rows={10}
+          className="min-h-[200px]"
+        />
+      </div>
+      <ButtonGroup alignment="right">
+        <Button variant="outline" onClick={() => setGenerateResult(null)}>
+          Back
+        </Button>
+        <Button variant="outline" onClick={useGeneratedAndCreate}>
+          Edit & create
+        </Button>
+        <Button
+          onClick={saveGeneratedAsNew}
+          disabled={!generateResult.title.trim() || saveLoading}
+        >
+          {saveLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+          Save as new prompt
+        </Button>
+      </ButtonGroup>
+    </>
+  );
+};

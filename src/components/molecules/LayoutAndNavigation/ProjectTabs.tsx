@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, ReactNode } from "react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
   MessageSquare,
@@ -11,6 +10,8 @@ import {
   Palette,
   Building2,
 } from "lucide-react";
+import { Tabs } from "@/components/shared/Tabs";
+import { ProjectTabTrigger } from "@/components/atoms/ProjectTabTrigger";
 import type { Project, ProjectEntityCategories } from "@/types/project";
 
 interface ProjectTabsProps {
@@ -39,14 +40,15 @@ export function ProjectTabs({
   return (
     <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ProjectEntityCategories)}>
       <ScrollArea className="w-full whitespace-nowrap pb-2">
-        <TabsList>
+        <div className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">
           {entityCategories.map((category) => (
-            <TabsTrigger key={category.id} value={category.id}>
-              <category.icon className="h-4 w-4 mr-2" />
-              {category.label} ({project[`${category.id}Ids` as keyof Project].length})
-            </TabsTrigger>
+            <ProjectTabTrigger
+              key={category.id}
+              category={category}
+              project={project}
+            />
           ))}
-        </TabsList>
+        </div>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
     </Tabs>

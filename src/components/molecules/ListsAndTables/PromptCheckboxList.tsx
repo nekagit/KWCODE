@@ -1,5 +1,6 @@
-import { Checkbox } from "@/components/shadcn/checkbox";
+import React from 'react';
 import type { Prompt } from "@/types/project";
+import { PromptCheckboxItem } from "@/components/atoms/PromptCheckboxItem";
 
 interface PromptCheckboxListProps {
   prompts: Prompt[];
@@ -12,25 +13,22 @@ export function PromptCheckboxList({
   selectedPromptIds,
   setSelectedPromptIds,
 }: PromptCheckboxListProps) {
+  const handleToggle = (id: number, checked: boolean) => {
+    setSelectedPromptIds((prev) =>
+      checked ? [...prev, id] : prev.filter((promptId) => promptId !== id)
+    );
+  };
+
   return (
     <div className="flex flex-wrap gap-2">
       {prompts.map((p) => (
-        <label
+        <PromptCheckboxItem
           key={p.id}
-          className="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 hover:bg-muted/50"
-        >
-          <Checkbox
-            checked={selectedPromptIds.includes(p.id)}
-            onCheckedChange={(checked) => {
-              setSelectedPromptIds((prev) =>
-                checked ? [...prev, p.id] : prev.filter((id) => id !== p.id)
-              );
-            }}
-          />
-          <span className="text-sm">
-            {p.id}: {p.title}
-          </span>
-        </label>
+          promptId={p.id}
+          promptTitle={p.title}
+          isChecked={selectedPromptIds.includes(p.id)}
+          onToggle={handleToggle}
+        />
       ))}
     </div>
   );
