@@ -91,7 +91,7 @@ const isImplementAllRun = (r: { label: string }) =>
   r.label === "Implement All" || r.label.startsWith("Implement All (");
 
 /** Grid of 3 terminal slots (last 3 Implement All runs). Full width, each slot 50vh. */
-function ImplementAllTerminalsGrid() {
+export function ImplementAllTerminalsGrid() {
   const runningRuns = useRunStore((s) => s.runningRuns);
   const implementAllRuns = runningRuns.filter(isImplementAllRun);
   const runsForSlots = [
@@ -157,26 +157,30 @@ function ImplementAllTerminalSlot({
     : "No run yet.";
 
   return (
-    <Card title={`Terminal ${slotIndex + 1}`} subtitle={subtitle}>
-      <div className={classes[1]}>
+    <Card
+      title={`Terminal ${slotIndex + 1}`}
+      subtitle={subtitle}
+      className="overflow-hidden p-3"
+    >
+      <div className={cn(classes[1], "mt-3 min-h-0 flex flex-col gap-2")}>
         {running && (
-          <div className={classes[2]}>
+          <div className={cn(classes[2], "mb-2")}>
             <Loader2 className={classes[3]} />
             <span>{formatElapsed(elapsedSeconds)}</span>
           </div>
         )}
-        <ScrollArea className={classes[4]}>
+        <ScrollArea className={cn(classes[4], "min-h-[120px]")}>
           {displayLogLines.length === 0 && !running && (
-            <p className={classes[5]}>No output yet.</p>
+            <p className={cn(classes[5], "py-6 px-3 text-center text-muted-foreground")}>No output yet.</p>
           )}
           {displayLogLines.length === 0 && running && (
-            <p className={classes[6]}>
+            <p className={cn(classes[6], "py-6 px-3 flex items-center gap-2 text-muted-foreground")}>
               <Loader2 className={classes[7]} />
               (waiting for output…)
             </p>
           )}
           {displayLogLines.map((line, i) => (
-            <div key={i} className={classes[8]}>
+            <div key={i} className={cn(classes[8], "py-0.5 pr-2")}>
               {line}
             </div>
           ))}
@@ -187,7 +191,7 @@ function ImplementAllTerminalSlot({
 }
 
 /** Toolbar: Implement All button (print mode: selected prompt + ticket info), prompt selector, Stop / Clear / Archive. */
-function ImplementAllToolbar({
+export function ImplementAllToolbar({
   projectPath,
   kanbanData,
 }: {
@@ -252,7 +256,7 @@ function ImplementAllToolbar({
         variant="default"
         size="sm"
         onClick={handleOpenInSystemTerminal}
-        className={classes[10]}
+        className={cn(classes[10], "bg-teal-500 text-white hover:bg-teal-600")}
         title="Opens 3 Terminal.app windows with cd + agent. Interactive Cursor CLI (no prompt required)."
       >
         <Terminal className={classes[11]} />
@@ -263,14 +267,14 @@ function ImplementAllToolbar({
         size="sm"
         onClick={handleImplementAll}
         disabled={loading}
-        className={classes[12]}
+        className={cn(classes[12], "gap-2 bg-emerald-500 text-white hover:bg-emerald-600")}
         title="Runs in app; agent needs a prompt (print mode). For interactive agent use Open in system terminal."
       >
         {loading ? <Loader2 className={classes[7]} /> : <Play className={classes[11]} />}
         Implement All
       </Button>
       <Select value={selectedPromptId ?? ""} onValueChange={(v) => setSelectedPromptId(v || null)}>
-        <SelectTrigger className={classes[15]} aria-label="Select one prompt">
+        <SelectTrigger className={cn(classes[15], "w-[200px] bg-violet-500 text-white hover:bg-violet-600 border-violet-600")} aria-label="Select one prompt">
           <SelectValue placeholder="Select one prompt" />
         </SelectTrigger>
         <SelectContent>
@@ -283,7 +287,7 @@ function ImplementAllToolbar({
       </Select>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="default" size="sm" className={classes[16]}>
+          <Button variant="default" size="sm" className={cn(classes[16], "gap-1 bg-violet-500 text-white hover:bg-violet-600")}>
             Add prompt
             <ChevronDown className={classes[11]} />
           </Button>
@@ -302,7 +306,7 @@ function ImplementAllToolbar({
         size="sm"
         onClick={handleStopAll}
         disabled={!anyRunning}
-        className={classes[18]}
+        className={cn(classes[18], "gap-2 bg-red-500 text-white hover:bg-red-600")}
       >
         <Square className={classes[11]} />
         Stop all
@@ -311,7 +315,7 @@ function ImplementAllToolbar({
         variant="default"
         size="sm"
         onClick={clearImplementAllLogs}
-        className={classes[20]}
+        className={cn(classes[20], "gap-2 bg-amber-500 text-white hover:bg-amber-600")}
       >
         <Eraser className={classes[11]} />
         Clear
@@ -320,7 +324,7 @@ function ImplementAllToolbar({
         variant="default"
         size="sm"
         onClick={archiveImplementAllLogs}
-        className={classes[22]}
+        className={cn(classes[22], "gap-2 bg-cyan-500 text-white hover:bg-cyan-600")}
       >
         <Archive className={classes[11]} />
         Archive
@@ -750,9 +754,6 @@ export function ProjectTicketsTab({
                 Add feature
               </Button>
             </ButtonGroup>
-            {isTauri && project.repoPath?.trim() && (
-              <ImplementAllToolbar projectPath={project.repoPath.trim()} kanbanData={kanbanData} />
-            )}
           </div>
 
           <div className="flex w-full flex-col gap-4 shrink-0">
@@ -789,20 +790,9 @@ export function ProjectTicketsTab({
               </div>
             </div>
 
-            {/* 2. Terminals (Tauri only) */}
-            {isTauri && (
-              <div className="flex min-h-0 min-w-0 flex-col rounded-lg border border-border bg-card p-4 shadow-sm overflow-hidden">
-                <h3 className={classes[33]}>
-                  <Terminal className={classes[11]} />
-                  Terminals
-                </h3>
-                <ImplementAllTerminalsGrid />
-              </div>
-            )}
-
             {/* 3. Features */}
-            <div className="relative z-10 flex min-h-0 min-w-0 flex-col rounded-lg border border-border bg-card p-4 shadow-sm overflow-auto">
-              <h3 className={classes[33]}>
+            <div className="relative z-10 flex min-h-0 min-w-0 flex-col rounded-lg border border-border bg-card p-3 shadow-sm overflow-auto max-h-[50vh]">
+              <h3 className="text-xs font-medium flex items-center gap-2 shrink-0">
                 <Layers className={classes[11]} />
                 Features
               </h3>
@@ -823,47 +813,43 @@ export function ProjectTicketsTab({
                   if (doneRefs.length > 0) done.push({ feature: f, index: idx, doneRefs });
                 });
                 return (
-                  <div className={classes[41]}>
-                    <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
-                      <div className={classes[34]}>
-                        <h4 className={classes[37]}>In progress</h4>
-                        <ul className={cn(classes[38], "space-y-2")}>
+                  <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:gap-3 min-h-0">
+                    <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2">
+                      <div className="min-w-0 space-y-1">
+                        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">In progress</h4>
+                        <ul className="space-y-1.5">
                           {inProgress.map(({ feature: f, index: idx }) => {
                             const colorClasses = getFeatureColorClasses(idx);
                             return (
-                              <li key={`in-${f.id}`}>
-                                <span className={cn(classes[59], colorClasses)}>
-                                  <span>{f.title}</span>
-                                  <span className={classes[39]}>
-                                    — {f.ticketRefs.map((n) => `#${n}`).join(", ")}
-                                  </span>
+                              <li key={`in-${f.id}`} className="flex">
+                                <span className={cn("flex items-center gap-2 rounded border bg-background px-3 py-1.5 text-xs min-h-[2.5rem] w-full max-w-[240px]", colorClasses)}>
+                                  <span className="truncate min-w-0 flex-1">{f.title}</span>
+                                  <span className="opacity-80 shrink-0">— {f.ticketRefs.map((n) => `#${n}`).join(", ")}</span>
                                 </span>
                               </li>
                             );
                           })}
                           {inProgress.length === 0 && (
-                            <li className={classes[40]}>None</li>
+                            <li className="text-xs text-muted-foreground">None</li>
                           )}
                         </ul>
                       </div>
-                      <div className={classes[34]}>
-                        <h4 className={classes[37]}>Done</h4>
-                        <ul className={cn(classes[38], "space-y-2")}>
+                      <div className="min-w-0 space-y-1">
+                        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Done</h4>
+                        <ul className="space-y-1.5">
                           {done.map(({ feature: f, index: idx, doneRefs }) => {
                             const colorClasses = getFeatureColorClasses(idx);
                             return (
-                              <li key={`done-${f.id}`}>
-                                <span className={cn(classes[60], colorClasses)}>
-                                  <span>{f.title}</span>
-                                  <span className={classes[39]}>
-                                    — {doneRefs.map((n) => `#${n}`).join(", ")}
-                                  </span>
+                              <li key={`done-${f.id}`} className="flex">
+                                <span className={cn("flex items-center gap-2 rounded border bg-muted/50 line-through opacity-90 px-3 py-1.5 text-xs min-h-[2.5rem] w-full max-w-[240px]", colorClasses)}>
+                                  <span className="truncate min-w-0 flex-1">{f.title}</span>
+                                  <span className="opacity-80 shrink-0">— {doneRefs.map((n) => `#${n}`).join(", ")}</span>
                                 </span>
                               </li>
                             );
                           })}
                           {done.length === 0 && (
-                            <li className={classes[40]}>None</li>
+                            <li className="text-xs text-muted-foreground">None</li>
                           )}
                         </ul>
                       </div>
@@ -871,13 +857,13 @@ export function ProjectTicketsTab({
                   </div>
                 );
               })() : (
-                <p className={classes[40]}>No features yet.</p>
+                <p className="text-xs text-muted-foreground">No features yet.</p>
               )}
             </div>
 
             {/* 4. Tickets (at bottom) */}
-            <div className="relative z-10 flex min-h-0 min-w-0 flex-col rounded-lg border border-border bg-card p-4 shadow-sm overflow-auto">
-              <h3 className={classes[33]}>
+            <div className="relative z-10 flex min-h-0 min-w-0 flex-col rounded-lg border border-border bg-card p-3 shadow-sm overflow-auto max-h-[50vh]">
+              <h3 className="text-xs font-medium flex items-center gap-2 shrink-0">
                 <TicketIcon className={classes[11]} />
                 Tickets
               </h3>
@@ -894,53 +880,53 @@ export function ProjectTicketsTab({
                   }
                 />
               ) : (
-                <div className={classes[62]}>
-                  <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div className={classes[34]}>
-                      <h4 className={classes[37]}>In progress</h4>
-                      <ul className={cn(classes[38], "space-y-2")}>
+                <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:gap-3 min-h-0 overflow-auto">
+                  <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2">
+                    <div className="min-w-0 space-y-1">
+                      <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">In progress</h4>
+                      <ul className="space-y-1.5">
                         {kanbanData.tickets
                           .filter((t) => !t.done)
                           .map((t) => {
                             const featureIdx = kanbanData.features.findIndex((f) => f.title === t.featureName);
                             const colorClasses = featureIdx >= 0 ? getFeatureColorClasses(featureIdx) : "";
                             return (
-                              <li key={t.id}>
-                                <span className={cn(classes[59], colorClasses)}>
-                                  <span>#{t.number} — {t.title}</span>
+                              <li key={t.id} className="flex">
+                                <span className={cn("flex items-center gap-2 rounded border bg-background px-3 py-1.5 text-xs min-h-[2.5rem] w-full max-w-[280px]", colorClasses)}>
+                                  <span className="truncate min-w-0 flex-1">#{t.number} — {t.title}</span>
                                   {t.featureName ? (
-                                    <span className={classes[39]}> · {t.featureName}</span>
+                                    <span className="opacity-80 shrink-0">· {t.featureName}</span>
                                   ) : null}
                                 </span>
                               </li>
                             );
                           })}
                         {kanbanData.tickets.filter((t) => !t.done).length === 0 && (
-                          <li className={classes[40]}>None</li>
+                          <li className="text-xs text-muted-foreground">None</li>
                         )}
                       </ul>
                     </div>
-                    <div className={classes[34]}>
-                      <h4 className={classes[37]}>Done</h4>
-                      <ul className={cn(classes[38], "space-y-2")}>
+                    <div className="min-w-0 space-y-1">
+                      <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Done</h4>
+                      <ul className="space-y-1.5">
                         {kanbanData.tickets
                           .filter((t) => t.done)
                           .map((t) => {
                             const featureIdx = kanbanData.features.findIndex((f) => f.title === t.featureName);
                             const colorClasses = featureIdx >= 0 ? getFeatureColorClasses(featureIdx) : "";
                             return (
-                              <li key={t.id}>
-                                <span className={cn(classes[60], colorClasses)}>
-                                  <span>#{t.number} — {t.title}</span>
+                              <li key={t.id} className="flex">
+                                <span className={cn("flex items-center gap-2 rounded border bg-muted/50 line-through opacity-90 px-3 py-1.5 text-xs min-h-[2.5rem] w-full max-w-[280px]", colorClasses)}>
+                                  <span className="truncate min-w-0 flex-1">#{t.number} — {t.title}</span>
                                   {t.featureName ? (
-                                    <span className={classes[39]}> · {t.featureName}</span>
+                                    <span className="opacity-80 shrink-0">· {t.featureName}</span>
                                   ) : null}
                                 </span>
                               </li>
                             );
                           })}
                         {kanbanData.tickets.filter((t) => t.done).length === 0 && (
-                          <li className={classes[40]}>None</li>
+                          <li className="text-xs text-muted-foreground">None</li>
                         )}
                       </ul>
                     </div>

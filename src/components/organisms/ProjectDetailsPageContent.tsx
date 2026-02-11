@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, AlertCircle, FolderGit2, ListTodo, Settings } from "lucide-react";
+import { Loader2, AlertCircle, FolderGit2, ListTodo, Settings, Play } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Project } from "@/types/project";
@@ -14,9 +14,11 @@ import { ProjectGitTab } from "@/components/molecules/TabAndContentSections/Proj
 import { ProjectDesignTab } from "@/components/molecules/TabAndContentSections/ProjectDesignTab";
 import { ProjectIdeasTab } from "@/components/molecules/TabAndContentSections/ProjectIdeasTab";
 import { ProjectTicketsTab } from "@/components/molecules/TabAndContentSections/ProjectTicketsTab";
+import { ProjectRunTab } from "@/components/molecules/TabAndContentSections/ProjectRunTab";
 import { ProjectArchitectureTab } from "@/components/molecules/TabAndContentSections/ProjectArchitectureTab";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { getOrganismClasses } from "./organism-classes";
+import { cn } from "@/lib/utils";
 
 const c = getOrganismClasses("ProjectDetailsPageContent.tsx");
 
@@ -81,37 +83,27 @@ export function ProjectDetailsPageContent() {
       <div className={c["4"]} data-testid="project-detail-page">
         <ProjectHeader project={project} projectId={projectId} />
 
-        <Tabs defaultValue="todo" className={c["5"]} data-testid="project-detail-tabs">
+        <Tabs defaultValue="setup" className={c["5"]} data-testid="project-detail-tabs">
           <TabsList className={c["6"]} aria-label="Project sections">
-            <TabsTrigger value="git" className={c["7"]} data-testid="tab-git">
-              <FolderGit2 className={c["8"]} />
-              Git & Testing
+            <TabsTrigger value="setup" className={c["7"]} data-testid="tab-setup">
+              <Settings className={c["8"]} />
+              Stakeholder
             </TabsTrigger>
             <TabsTrigger value="todo" className={c["9"]} data-testid="tab-todo">
               <ListTodo className={c["10"]} />
-              Todo
+              Planner
             </TabsTrigger>
-            <TabsTrigger value="setup" className={c["11"]} data-testid="tab-setup">
-              <Settings className={c["12"]} />
-              Setup
+            <TabsTrigger value="run" className={c["11"]} data-testid="tab-run">
+              <Play className={c["12"]} />
+              Worker
+            </TabsTrigger>
+            <TabsTrigger value="git" className={c["11"]} data-testid="tab-git">
+              <FolderGit2 className={c["12"]} />
+              Versioning
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="git" className={c["13"]}>
-            <ProjectGitTab project={project} projectId={projectId} />
-          </TabsContent>
-
-          <TabsContent value="todo" className={c["14"]}>
-            <div className="min-w-0 flex flex-col rounded-lg border border-border bg-card/50 p-4 shadow-sm">
-              <ProjectTicketsTab
-                project={project}
-                projectId={projectId}
-                fetchProject={fetchProject}
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="setup" className={c["15"]}>
+          <TabsContent value="setup" className={cn(c["15"], "mt-4")}>
             <Card>
               <CardContent className={c["16"]}>
                 <ProjectDesignTab project={project} projectId={projectId} />
@@ -127,6 +119,24 @@ export function ProjectDetailsPageContent() {
                 <ProjectArchitectureTab project={project} projectId={projectId} />
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="todo" className={cn(c["14"], "mt-4")}>
+            <div className="min-w-0 flex flex-col rounded-lg border border-border bg-card/50 p-4 shadow-sm">
+              <ProjectTicketsTab
+                project={project}
+                projectId={projectId}
+                fetchProject={fetchProject}
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="run" className={cn(c["14"], "mt-4")}>
+            <ProjectRunTab project={project} projectId={projectId} />
+          </TabsContent>
+
+          <TabsContent value="git" className={cn(c["13"], "mt-4")}>
+            <ProjectGitTab project={project} projectId={projectId} />
           </TabsContent>
         </Tabs>
       </div>
