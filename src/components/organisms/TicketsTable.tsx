@@ -1,60 +1,18 @@
-import * as React from "react";
-import {
-  flexRender,
-  type Table as ReactTable,
-  type ColumnDef,
-} from "@tanstack/react-table";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import type { ColumnDef } from "@tanstack/react-table";
+import type { Table as ReactTable } from "@tanstack/react-table";
+import { DataTableLayout } from "@/components/molecules/Tables/DataTableLayout";
 
 type TicketsTableProps<TData> = {
   table: ReactTable<TData>;
-  columns: ColumnDef<TData, any>[];
+  columns: ColumnDef<TData, unknown>[];
 };
 
 export function TicketsTable<TData>({ table, columns }: TicketsTableProps<TData>) {
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <TableHead key={header.id}>
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(header.column.columnDef.header, header.getContext())}
-                </TableHead>
-              ))}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {table.getRowModel().rows?.length ? (
-            table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
-                No tickets match the current filter.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </div>
+    <DataTableLayout
+      table={table}
+      columns={columns}
+      emptyMessage="No tickets match the current filter."
+    />
   );
 }

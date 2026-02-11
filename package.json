@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "tauri": "node script/tauri-with-local-target.mjs",
-    "tauri:build": "node script/tauri-with-local-target.mjs build --bundles app"
+    "tauri:build": "node script/tauri-with-local-target.mjs build --bundles app",
+    "scaffold:cursor-md": "node script/scaffold-cursor-md.mjs"
   },
   "dependencies": {
     "@next/swc-darwin-arm64": "^16.1.6",

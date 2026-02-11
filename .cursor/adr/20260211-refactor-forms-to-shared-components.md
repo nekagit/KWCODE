@@ -16,10 +16,10 @@ To improve reusability, maintainability, and consistency, the form components we
 2.  **`GenericInputWithLabel`**: A shared component that composes `FormField` and `@/components/ui/input` to provide a standardized input field with a label.
 3.  **`GenericTextareaWithLabel`**: A shared component that composes `FormField` and `@/components/ui/textarea` to provide a standardized textarea with a label.
 
-The following files were created:
-- `src/components/shared/forms/FormField.tsx`
-- `src/components/shared/inputs/GenericInputWithLabel.tsx`
-- `src/components/shared/inputs/GenericTextareaWithLabel.tsx`
+The following files were created (under shared root, no subfolders):
+- `src/components/shared/FormField.tsx`
+- `src/components/shared/GenericInputWithLabel.tsx`
+- `src/components/shared/GenericTextareaWithLabel.tsx`
 
 The following files were refactored to use these new shared components:
 - `src/components/atoms/forms/PromptFormFields.tsx`

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Textarea } from '@/components/ui/textarea';
-import { FormField } from '@/components/shared/forms/FormField';
+import { FormField } from '@/components/shared/FormField';
 
 interface GenericTextareaWithLabelProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   id: string;

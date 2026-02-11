@@ -116,15 +116,35 @@ export function parseTicketsMd(content: string): ParsedTicket[] {
 }
 
 /**
+ * Build Kanban data from .cursor/tickets.md and .cursor/features.md content.
+ * Column mapping: ticket.done → done; !ticket.done → backlog. in_progress and blocked stay empty.
+ */
+export function buildKanbanFromMd(ticketsMd: string, featuresMd: string): TodosKanbanData {
+  const tickets = parseTicketsMd(ticketsMd);
+  const features = parseFeaturesMd(featuresMd);
+  const columns: Record<string, KanbanColumn> = {
+    backlog: { name: "Backlog", items: [] },
+    in_progress: { name: "In progress", items: [] },
+    done: { name: "Done", items: [] },
+    blocked: { name: "Blocked", items: [] },
+  };
+  for (const t of tickets) {
+    if (t.done) columns.done.items.push(t);
+    else columns.backlog.items.push(t);
+  }
+  return {
+    features,
+    tickets,
+    parsedAt: new Date().toISOString(),
+    columns,
+  };
+}
+
+/**
  * Parse both markdown contents into a single JSON structure for Kanban and export.
+ * Prefer buildKanbanFromMd when you have raw markdown; this remains for callers passing project IDs.
  */
 export function parseTodosToKanban(featureIds: string[] | undefined, ticketIds: string[] | undefined): TodosKanbanData {
-  // These are just placeholders, as the actual parsing happens from markdown files.
-  // The ProjectTicketsTab component currently passes Project.ticketIds and Project.featureIds (arrays of strings/numbers).
-  // These functions expect markdown content (string).
-  // For now, we'll return empty arrays or mock data until the parsing logic is aligned.
-  // This needs to be resolved by ensuring project.ticketIds and project.featureIds are raw markdown content
-  // or by providing a way to fetch the markdown content here.
   const columns: Record<string, KanbanColumn> = {
     backlog: { name: "Backlog", items: [] },
     in_progress: { name: "In progress", items: [] },
@@ -137,6 +157,91 @@ export function parseTodosToKanban(featureIds: string[] | undefined, ticketIds: 
     parsedAt: new Date().toISOString(),
     columns,
   };
+}
+
+const PRIORITY_ORDER: Array<"P0" | "P1" | "P2" | "P3"> = ["P0", "P1", "P2", "P3"];
+
+/**
+ * Serialize parsed tickets to full .cursor/tickets.md content (H1, metadata, Summary placeholders, Prioritized work items).
+ */
+export function serializeTicketsToMd(
+  tickets: ParsedTicket[],
+  options?: { projectName?: string }
+): string {
+  const projectName = options?.projectName ?? "project";
+  const date = new Date().toISOString().slice(0, 10);
+  const lines: string[] = [
+    `# Work items (tickets) — ${projectName}`,
+    "",
+    `**Project:** ${projectName}`,
+    "**Source:** Kanban",
+    `**Last updated:** ${date}`,
+    "",
+    "---",
+    "",
+    "## Summary: Done vs missing",
+    "",
+    "### Done",
+    "",
+    "| Area | What's implemented |",
+    "|------|--------------------|",
+    "",
+    "### Missing or incomplete",
+    "",
+    "| Area | Gap |",
+    "",
+    "---",
+    "",
+    "## Prioritized work items (tickets)",
+    "",
+  ];
+  const byPriority = new Map<ParsedTicket["priority"], ParsedTicket[]>();
+  for (const p of PRIORITY_ORDER) byPriority.set(p, []);
+  for (const t of tickets) byPriority.get(t.priority)!.push(t);
+  for (const p of PRIORITY_ORDER) {
+    const priorityTickets = byPriority.get(p)!;
+    if (priorityTickets.length === 0) continue;
+    const label = p === "P0" ? "Critical / foundation" : p === "P1" ? "High / quality and maintainability" : p === "P2" ? "Medium / polish and scale" : "Lower / later";
+    lines.push(`### ${p} — ${label}`, "");
+    const byFeature = new Map<string, ParsedTicket[]>();
+    for (const t of priorityTickets) {
+      const fn = t.featureName || "Uncategorized";
+      if (!byFeature.has(fn)) byFeature.set(fn, []);
+      byFeature.get(fn)!.push(t);
+    }
+    for (const [featureName, featureTickets] of byFeature) {
+      featureTickets.sort((a, b) => a.number - b.number);
+      lines.push(`#### Feature: ${featureName}`, "");
+      for (const t of featureTickets) {
+        const checkbox = t.done ? "[x]" : "[ ]";
+        const desc = t.description ? ` — ${t.description}` : "";
+        lines.push(`- ${checkbox} #${t.number} ${t.title}${desc}`);
+      }
+      lines.push("");
+    }
+  }
+  lines.push("## Next steps", "", "1. Add or update tickets in the Kanban.", "");
+  return lines.join("\n").replace(/\n{3,}/g, "\n\n");
+}
+
+/**
+ * Serialize parsed features to .cursor/features.md content (intro + Major features + checklist lines).
+ */
+export function serializeFeaturesToMd(features: ParsedFeature[]): string {
+  const lines: string[] = [
+    "# Features roadmap",
+    "",
+    "Features below are derived from `.cursor/tickets.md`. Each major feature groups one or more work items (tickets); ticket numbers are listed so the Kanban and project details page parse and stay in sync.",
+    "",
+    "## Major features",
+    "",
+  ];
+  for (const f of features) {
+    const checkbox = f.done ? "[x]" : "[ ]";
+    const refs = f.ticketRefs.length > 0 ? ` — ${f.ticketRefs.map((n) => `#${n}`).join(", ")}` : "";
+    lines.push(`- ${checkbox} ${f.title}${refs}`);
+  }
+  return lines.join("\n");
 }
 
 const TICKET_LINE_RE = /^(-\s*)\[\s\](\s+#\d+\s+.+)$/gm;

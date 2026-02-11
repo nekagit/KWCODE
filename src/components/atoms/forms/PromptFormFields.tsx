@@ -1,6 +1,6 @@
 import React from 'react';
-import { GenericInputWithLabel } from "@/components/shared/inputs/GenericInputWithLabel";
-import { GenericTextareaWithLabel } from "@/components/shared/inputs/GenericTextareaWithLabel";
+import { GenericInputWithLabel } from "@/components/shared/GenericInputWithLabel";
+import { GenericTextareaWithLabel } from "@/components/shared/GenericTextareaWithLabel";
 
 interface PromptFormFieldsProps {
   formTitle: string;

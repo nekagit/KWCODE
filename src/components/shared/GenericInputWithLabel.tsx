@@ -1,6 +1,6 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
-import { FormField } from '@/components/shared/forms/FormField';
+import { FormField } from '@/components/shared/FormField';
 
 interface GenericInputWithLabelProps extends React.InputHTMLAttributes<HTMLInputElement> {
   id: string;

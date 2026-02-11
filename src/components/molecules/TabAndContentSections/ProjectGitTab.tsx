@@ -255,11 +255,7 @@ export function ProjectGitTab({ project, projectId }: ProjectGitTabProps) {
           />
         </div>
       </Dialog>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-lg font-semibold">
-          <FolderGit2 className="h-6 w-6" />
-          Git
-        </div>
+      <div className="flex items-center justify-end">
         <ButtonGroup alignment="right">
           <Button
             variant="outline"

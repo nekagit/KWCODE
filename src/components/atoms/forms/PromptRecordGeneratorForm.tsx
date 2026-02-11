@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { GenericTextareaWithLabel } from "@/components/shared/inputs/GenericTextareaWithLabel";
+import { GenericTextareaWithLabel } from "@/components/shared/GenericTextareaWithLabel";
 
 interface PromptGeneratorFormProps {
   generateDescription: string;

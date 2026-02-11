@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { CheckboxGroup } from "@/components/shared/CheckboxGroup";
-import { GenericInputWithLabel } from "@/components/shared/inputs/GenericInputWithLabel";
+import { GenericInputWithLabel } from "@/components/shared/GenericInputWithLabel";
 import type { Feature } from "@/types/project";
 import type { TicketRow } from "@/types/ticket";
 

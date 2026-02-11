@@ -81,7 +81,7 @@ export function ProjectDetailsPageContent() {
       <Tabs defaultValue="todo" className="w-full">
         <TabsList className="grid w-full max-w-2xl grid-cols-3">
           <TabsTrigger value="git" className="flex items-center gap-2">
-            <FolderGit2 className="h-4 w-4 text-success/90" />
+            <FolderGit2 className="h-4 w-4 text-destructive" />
             Git
           </TabsTrigger>
           <TabsTrigger value="todo" className="flex items-center gap-2">
@@ -89,7 +89,7 @@ export function ProjectDetailsPageContent() {
             Todo
           </TabsTrigger>
           <TabsTrigger value="setup" className="flex items-center gap-2">
-            <Settings className="h-4 w-4 text-muted-foreground/90" />
+            <Settings className="h-4 w-4 text-success/90" />
             Setup
           </TabsTrigger>
         </TabsList>

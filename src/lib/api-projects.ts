@@ -97,3 +97,63 @@ export async function getProjectExport(id: string, category: keyof ResolvedProje
     return fetchJson<string>(`/api/data/projects/${id}/export/${category}`);
   }
 }
+
+/** Read a file from the project repo (e.g. .cursor/tickets.md). In Tauri pass repoPath; in browser uses projectId. Returns "" on 404. */
+export async function readProjectFile(
+  projectId: string,
+  relativePath: string,
+  repoPath?: string
+): Promise<string> {
+  if (isTauri && repoPath) {
+    try {
+      return await invoke<string>("read_file_text_under_root", {
+        root: repoPath,
+        path: relativePath,
+      });
+    } catch {
+      return "";
+    }
+  }
+  try {
+    const res = await fetch(
+      `/api/data/projects/${projectId}/file?path=${encodeURIComponent(relativePath)}`
+    );
+    if (!res.ok) return "";
+    return await res.text();
+  } catch {
+    return "";
+  }
+}
+
+/** Write a file under the project repo. In Tauri pass repoPath; in browser uses projectId. */
+export async function writeProjectFile(
+  projectId: string,
+  relativePath: string,
+  content: string,
+  repoPath?: string
+): Promise<void> {
+  if (isTauri && repoPath) {
+    await invoke("write_spec_file", {
+      projectPath: repoPath,
+      relativePath,
+      content,
+    });
+    return;
+  }
+  const res = await fetch(`/api/data/projects/${projectId}/file`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path: relativePath, content }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    let msg = res.statusText;
+    try {
+      const j = JSON.parse(text) as { error?: string };
+      if (j.error) msg = j.error;
+    } catch {
+      if (text) msg = text;
+    }
+    throw new Error(msg);
+  }
+}
