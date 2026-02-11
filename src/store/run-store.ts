@@ -30,6 +30,8 @@ export interface RunState {
   featureQueue: FeatureQueueItem[];
   /** run_id of the current run that is part of the queue (for advancing on script-exited). */
   queueRunInfoId: string | null;
+  /** Archived Implement All logs (saved when user clicks Archive). */
+  archivedImplementAllLogs: Array<{ id: string; timestamp: string; logLines: string[] }>;
 }
 
 export interface RunActions {
@@ -56,6 +58,10 @@ export interface RunActions {
   runNextInQueue: (exitedRunId: string) => void;
   stopScript: () => Promise<void>;
   stopRun: (runId: string) => Promise<void>;
+  runImplementAll: (projectPath: string) => Promise<string | null>;
+  stopAllImplementAll: () => Promise<void>;
+  clearImplementAllLogs: () => void;
+  archiveImplementAllLogs: () => void;
   getTimingForRun: () => Record<string, number>;
   // Hydration/setters used by RunStoreHydration
   setIsTauriEnv: (v: boolean | null | ((prev: boolean | null) => boolean | null)) => void;
@@ -81,6 +87,7 @@ const initialState: RunState = {
   selectedRunId: null,
   featureQueue: [],
   queueRunInfoId: null,
+  archivedImplementAllLogs: [],
 };
 
 export const useRunStore = create<RunStore>()((set, get) => ({
@@ -340,6 +347,37 @@ export const useRunStore = create<RunStore>()((set, get) => ({
     }
   },
 
+  runImplementAll: async (projectPath) => {
+    const { setError } = get();
+    const path = projectPath?.trim();
+    if (!path) {
+      set({ error: "Project path is required for Implement All" });
+      return null;
+    }
+    set({ error: null });
+    try {
+      const { run_id } = await invoke<{ run_id: string }>("run_implement_all", {
+        projectPath: path,
+      });
+      set((s) => ({
+        runningRuns: [
+          ...s.runningRuns,
+          {
+            runId: run_id,
+            label: "Implement All",
+            logLines: [],
+            status: "running",
+          },
+        ],
+        selectedRunId: run_id,
+      }));
+      return run_id;
+    } catch (e) {
+      set({ error: e instanceof Error ? e.message : String(e) });
+      return null;
+    }
+  },
+
   stopRun: async (runId) => {
     try {
       await invoke("stop_run", { runId });
@@ -351,6 +389,41 @@ export const useRunStore = create<RunStore>()((set, get) => ({
     } catch (e) {
       set({ error: e instanceof Error ? e.message : String(e) });
     }
+  },
+
+  stopAllImplementAll: async () => {
+    const { runningRuns, stopRun } = get();
+    const implementAllRunning = runningRuns.filter(
+      (r) => r.label === "Implement All" && r.status === "running"
+    );
+    for (const r of implementAllRunning) {
+      await stopRun(r.runId);
+    }
+  },
+
+  clearImplementAllLogs: () => {
+    set((s) => ({
+      runningRuns: s.runningRuns.map((r) =>
+        r.label === "Implement All" ? { ...r, logLines: [] } : r
+      ),
+    }));
+  },
+
+  archiveImplementAllLogs: () => {
+    set((s) => {
+      const implementAllRuns = s.runningRuns.filter((r) => r.label === "Implement All");
+      const allLogLines = implementAllRuns.flatMap((r) =>
+        r.logLines.length ? [`--- ${r.label} (${r.runId}) ---`, ...r.logLines] : []
+      );
+      if (allLogLines.length === 0) return s;
+      const entry = {
+        id: `archived-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        logLines: allLogLines,
+      };
+      return { archivedImplementAllLogs: [...s.archivedImplementAllLogs, entry] };
+    });
+    toast.success("Logs archived.");
   },
 
   setIsTauriEnv: (v) =>
@@ -399,6 +472,11 @@ export function useRunState() {
       runWithParams: s.runWithParams,
       stopScript: s.stopScript,
       stopRun: s.stopRun,
+      runImplementAll: s.runImplementAll,
+      stopAllImplementAll: s.stopAllImplementAll,
+      clearImplementAllLogs: s.clearImplementAllLogs,
+      archiveImplementAllLogs: s.archiveImplementAllLogs,
+      archivedImplementAllLogs: s.archivedImplementAllLogs,
       getTimingForRun: s.getTimingForRun,
     }))
   );

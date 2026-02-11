@@ -22,7 +22,7 @@ export type ParsedTicket = {
   status: "Todo" | "Done";
 };
 
-/** Kanban column for UI (e.g. backlog, in_progress, done, blocked). */
+/** Kanban column for UI (e.g. backlog, in_progress, done, testing). */
 export type KanbanColumn = {
   name: string;
   items: ParsedTicket[];
@@ -36,7 +36,7 @@ export type TodosKanbanData = {
   tickets: ParsedTicket[];
   /** ISO date when parsed (for display). */
   parsedAt: string;
-  /** Columns keyed by status (backlog, in_progress, done, blocked). */
+  /** Columns keyed by status (backlog, in_progress, done, testing). */
   columns: Record<string, KanbanColumn>;
 };
 
@@ -117,7 +117,7 @@ export function parseTicketsMd(content: string): ParsedTicket[] {
 
 /**
  * Build Kanban data from .cursor/tickets.md and .cursor/features.md content.
- * Column mapping: ticket.done → done; !ticket.done → backlog. in_progress and blocked stay empty.
+ * Column mapping: ticket.done → done; !ticket.done → backlog. in_progress and testing stay empty.
  */
 export function buildKanbanFromMd(ticketsMd: string, featuresMd: string): TodosKanbanData {
   const tickets = parseTicketsMd(ticketsMd);
@@ -126,7 +126,7 @@ export function buildKanbanFromMd(ticketsMd: string, featuresMd: string): TodosK
     backlog: { name: "Backlog", items: [] },
     in_progress: { name: "In progress", items: [] },
     done: { name: "Done", items: [] },
-    blocked: { name: "Blocked", items: [] },
+    testing: { name: "Testing", items: [] },
   };
   for (const t of tickets) {
     if (t.done) columns.done.items.push(t);
@@ -149,7 +149,7 @@ export function parseTodosToKanban(featureIds: string[] | undefined, ticketIds: 
     backlog: { name: "Backlog", items: [] },
     in_progress: { name: "In progress", items: [] },
     done: { name: "Done", items: [] },
-    blocked: { name: "Blocked", items: [] },
+    testing: { name: "Testing", items: [] },
   };
   return {
     features: [],
@@ -260,6 +260,19 @@ export function markTicketsDone(tickets: ParsedTicket[], ticketIds: string[]): P
 }
 
 /**
+ * Mark given ticket ids as not done (redo). Updates ticket.done and ticket.status.
+ */
+export function markTicketsNotDone(tickets: ParsedTicket[], ticketIds: string[]): ParsedTicket[] {
+  if (!ticketIds.length) return tickets;
+  const ticketIdsSet = new Set(ticketIds);
+  return tickets.map((ticket) =>
+    ticketIdsSet.has(ticket.id)
+      ? { ...ticket, done: false, status: "Todo" as const }
+      : ticket
+  );
+}
+
+/**
  * Validation result for features.md and tickets.md correlation (per .cursor/sync.md).
  */
 export type CorrelationValidation = {
@@ -355,6 +368,32 @@ export function markFeatureDoneByTicketRefs(featuresMd: string, ticketRefs: numb
     const lineSet = new Set(refsInLine);
     if (refSet.size === lineSet.size && [...refSet].every((r) => lineSet.has(r))) {
       lines[i] = line.replace(/^(-\s*)\[\s\]/, "$1[x]");
+      return lines.join("\n");
+    }
+  }
+  return featuresMd;
+}
+
+/**
+ * Mark the feature checklist line that has the given ticket refs as not done in .cursor/features.md.
+ * Finds a line like `- [x] Feature name — #1, #2` where the set of #N equals ticketRefs and sets [ ].
+ */
+export function markFeatureNotDoneByTicketRefs(featuresMd: string, ticketRefs: number[]): string {
+  if (!ticketRefs.length) return featuresMd;
+  const refSet = new Set(ticketRefs);
+  const lines = featuresMd.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const doneMatch = line.match(/^(-\s*)\[x\]\s+(.+)$/);
+    if (!doneMatch) continue;
+    const rest = doneMatch[2];
+    const refsInLine: number[] = [];
+    let m: RegExpExecArray | null;
+    const re = /#(\d+)/g;
+    while ((m = re.exec(rest)) !== null) refsInLine.push(parseInt(m[1], 10));
+    const lineSet = new Set(refsInLine);
+    if (refSet.size === lineSet.size && [...refSet].every((r) => lineSet.has(r))) {
+      lines[i] = line.replace(/^(-\s*)\[x\]/, "$1[ ]");
       return lines.join("\n");
     }
   }

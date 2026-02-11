@@ -10,6 +10,7 @@ import type { Project } from "@/types/project";
 import type { GitInfo } from "@/types/git";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import { Dialog } from "@/components/shared/Dialog";
 import { Input } from "@/components/ui/input";
@@ -311,51 +312,42 @@ export function ProjectGitTab({ project, projectId }: ProjectGitTabProps) {
       </div>
 
       <div className="space-y-4">
-        {/* Repo path */}
+        {/* Focus: repo path + current branch */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Card className="p-4">
+            <h3 className="text-xs font-medium text-muted-foreground mb-2">Repository path</h3>
+            <div className="rounded-md border border-border bg-muted/30 p-3">
+              <p className="font-mono text-xs break-all line-clamp-2">{project.repoPath}</p>
+            </div>
+          </Card>
+          {gitInfo?.current_branch && (
+            <Card className="p-4">
+              <h3 className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-2">
+                <GitBranch className="h-3.5 w-3.5" />
+                Current branch
+              </h3>
+              <div className="rounded-md border border-border bg-muted/30 p-3">
+                <p className="font-mono text-xs text-primary font-medium truncate">{gitInfo.current_branch}</p>
+              </div>
+            </Card>
+          )}
+        </div>
+
+        {/* Changed files — primary focus */}
         <Card className="p-4">
-          <h3 className="text-sm font-medium text-muted-foreground mb-1">Repository path</h3>
-          <p className="font-mono text-sm break-all">{project.repoPath}</p>
-        </Card>
-
-        {/* Status (branch line from git status -sb) */}
-        {branchLine && (
-          <Card className="p-4">
-            <h3 className="text-sm font-medium text-muted-foreground mb-1">Status</h3>
-            <p className="font-mono text-sm whitespace-pre-wrap break-all">{branchLine}</p>
-          </Card>
-        )}
-
-        {/* Current branch */}
-        {gitInfo?.current_branch && (
-          <Card className="p-4">
-            <h3 className="text-sm font-medium text-muted-foreground mb-1 flex items-center gap-2">
-              <GitBranch className="h-4 w-4" />
-              Current branch
-            </h3>
-            <p className="font-mono text-sm text-primary font-medium">{gitInfo.current_branch}</p>
-          </Card>
-        )}
-
-        {/* HEAD ref */}
-        {gitInfo?.head_ref && (
-          <Card className="p-4">
-            <h3 className="text-sm font-medium text-muted-foreground mb-1">HEAD</h3>
-            <p className="font-mono text-sm break-all">{gitInfo.head_ref}</p>
-          </Card>
-        )}
-
-        {/* Changed files (from status_short, lines after the first) */}
-        {changedFiles.length > 0 && (
-          <Card className="p-4">
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">Changed files</h3>
-            <ScrollArea className="h-[200px] w-full rounded border p-2">
-              <ul className="space-y-1 font-mono text-xs">
+          <h3 className="text-sm font-medium text-muted-foreground mb-2">Changed files</h3>
+          {changedFiles.length > 0 ? (
+            <ScrollArea className="h-[200px] w-full rounded-md border border-border p-0">
+              <ul className="font-mono text-xs">
                 {changedFiles.map((line, i) => {
                   const status = line.slice(0, 2);
                   const path = line.slice(2).trim() || line;
                   const { label, className } = getStatusStyle(status);
                   return (
-                    <li key={i} className="flex items-center gap-2">
+                    <li
+                      key={i}
+                      className="flex items-center gap-2 border-b border-border px-3 py-2 last:border-b-0"
+                    >
                       <span
                         className={`shrink-0 w-8 rounded px-1.5 py-0.5 text-center tabular-nums ${className}`}
                         title={status === "??" ? "Untracked" : status.includes("M") ? "Modified" : status.includes("D") ? "Deleted" : status.includes("A") ? "Added" : status.includes("R") ? "Renamed" : status.includes("U") ? "Unmerged" : "Changed"}
@@ -368,56 +360,104 @@ export function ProjectGitTab({ project, projectId }: ProjectGitTabProps) {
                 })}
               </ul>
             </ScrollArea>
-          </Card>
-        )}
+          ) : (
+            <div className="rounded-md border border-border bg-muted/30 p-4 text-center text-sm text-muted-foreground">
+              No changed files
+            </div>
+          )}
+        </Card>
 
-        {/* Branches */}
-        {gitInfo?.branches && gitInfo.branches.length > 0 && (
-          <Card className="p-4">
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">Branches</h3>
-            <ScrollArea className="h-[160px] w-full rounded border p-2">
-              <ul className="space-y-1 font-mono text-sm">
-                {gitInfo.branches.map((b, i) => (
-                  <li key={i}>{b}</li>
-                ))}
-              </ul>
-            </ScrollArea>
-          </Card>
-        )}
+        {/* Additional information — collapsible */}
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="additional-info" className="border rounded-md">
+            <AccordionTrigger className="px-4 py-3 hover:no-underline">
+              Additional information
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+                {/* Status */}
+                {branchLine && (
+                  <Card className="p-4">
+                    <h3 className="text-xs font-medium text-muted-foreground mb-2">Status</h3>
+                    <div className="rounded-md border border-border bg-muted/30 p-3">
+                      <p className="font-mono text-xs whitespace-pre-wrap break-all line-clamp-2">{branchLine}</p>
+                    </div>
+                  </Card>
+                )}
 
-        {/* Remotes */}
-        {gitInfo?.remotes?.trim() && (
-          <Card className="p-4">
-            <h3 className="text-sm font-medium text-muted-foreground mb-1">Remotes</h3>
-            <pre className="font-mono text-xs whitespace-pre-wrap break-all">{gitInfo.remotes}</pre>
-          </Card>
-        )}
+                {/* HEAD ref */}
+                {gitInfo?.head_ref && (
+                  <Card className="p-4">
+                    <h3 className="text-xs font-medium text-muted-foreground mb-2">HEAD</h3>
+                    <div className="rounded-md border border-border bg-muted/30 p-3">
+                      <p className="font-mono text-xs break-all line-clamp-2">{gitInfo.head_ref}</p>
+                    </div>
+                  </Card>
+                )}
 
-        {/* Last 30 commits */}
-        {gitInfo?.last_commits && gitInfo.last_commits.length > 0 && (
-          <Card className="p-4">
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">Last 30 commits</h3>
-            <ScrollArea className="h-[240px] w-full rounded border p-2">
-              <ul className="space-y-1 font-mono text-xs">
-                {gitInfo.last_commits.map((c, i) => (
-                  <li key={i} className="break-all">{c}</li>
-                ))}
-              </ul>
-            </ScrollArea>
-          </Card>
-        )}
+                {/* Branches */}
+                {gitInfo?.branches && gitInfo.branches.length > 0 && (
+                  <Card className="p-4">
+                    <h3 className="text-xs font-medium text-muted-foreground mb-2">Branches</h3>
+                    <ScrollArea className="h-[120px] w-full rounded-md border border-border p-0">
+                      <ul className="font-mono text-xs">
+                        {gitInfo.branches.map((b, i) => (
+                          <li
+                            key={i}
+                            className="border-b border-border px-3 py-2 last:border-b-0 truncate"
+                          >
+                            {b}
+                          </li>
+                        ))}
+                      </ul>
+                    </ScrollArea>
+                  </Card>
+                )}
 
-        {/* Config preview */}
-        {gitInfo?.config_preview?.trim() && (
-          <Card className="p-4">
-            <h3 className="text-sm font-medium text-muted-foreground mb-1">.git/config (preview)</h3>
-            <ScrollArea className="h-[200px] w-full rounded border p-2">
-              <pre className="font-mono text-xs whitespace-pre-wrap break-all text-muted-foreground">
-                {gitInfo.config_preview}
-              </pre>
-            </ScrollArea>
-          </Card>
-        )}
+                {/* Remotes */}
+                {gitInfo?.remotes?.trim() && (
+                  <Card className="p-4">
+                    <h3 className="text-xs font-medium text-muted-foreground mb-2">Remotes</h3>
+                    <div className="rounded-md border border-border bg-muted/30 p-3">
+                      <pre className="font-mono text-xs whitespace-pre-wrap break-all line-clamp-4">{gitInfo.remotes}</pre>
+                    </div>
+                  </Card>
+                )}
+
+                {/* Last 30 commits */}
+                {gitInfo?.last_commits && gitInfo.last_commits.length > 0 && (
+                  <Card className="p-4 sm:col-span-2">
+                    <h3 className="text-xs font-medium text-muted-foreground mb-2">Last 30 commits</h3>
+                    <ScrollArea className="h-[160px] w-full rounded-md border border-border p-0">
+                      <ul className="font-mono text-xs">
+                        {gitInfo.last_commits.map((c, i) => (
+                          <li
+                            key={i}
+                            className="border-b border-border px-3 py-2 last:border-b-0 break-all"
+                          >
+                            {c}
+                          </li>
+                        ))}
+                      </ul>
+                    </ScrollArea>
+                  </Card>
+                )}
+
+                {/* Config preview */}
+                {gitInfo?.config_preview?.trim() && (
+                  <Card className="p-4">
+                    <h3 className="text-xs font-medium text-muted-foreground mb-2">.git/config (preview)</h3>
+                    <ScrollArea className="h-[120px] w-full rounded-md border border-border p-3">
+                      <pre className="font-mono text-xs whitespace-pre-wrap break-all text-muted-foreground">
+                        {gitInfo.config_preview}
+                      </pre>
+                    </ScrollArea>
+                  </Card>
+                )}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </div>
     </div>
   );

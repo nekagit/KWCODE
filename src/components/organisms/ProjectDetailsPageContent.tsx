@@ -79,10 +79,10 @@ export function ProjectDetailsPageContent() {
       <ProjectHeader project={project} projectId={projectId} />
 
       <Tabs defaultValue="todo" className="w-full">
-        <TabsList className="grid w-full max-w-2xl grid-cols-3">
+        <TabsList className="mx-auto grid w-full max-w-2xl grid-cols-3">
           <TabsTrigger value="git" className="flex items-center gap-2">
             <FolderGit2 className="h-4 w-4 text-destructive" />
-            Git
+            Git & Testing
           </TabsTrigger>
           <TabsTrigger value="todo" className="flex items-center gap-2">
             <ListTodo className="h-4 w-4 text-info/90" />
@@ -98,7 +98,7 @@ export function ProjectDetailsPageContent() {
           <ProjectGitTab project={project} projectId={projectId} />
         </TabsContent>
 
-        <TabsContent value="todo" className="mt-4 space-y-6">
+        <TabsContent value="todo" className="mt-4 flex min-h-[calc(100vh-14rem)] flex-col gap-6">
           <ProjectTicketsTab
             project={project}
             projectId={projectId}

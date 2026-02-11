@@ -1,8 +1,8 @@
-# Work items (tickets) — automated_development
+# Work items (tickets) — KW-February-KWCode
 
-**Project:** automated_development
-**Source:** Codebase analysis
-**Last updated:** 2026-02-09
+**Project:** KW-February-KWCode
+**Source:** Kanban
+**Last updated:** 2026-02-11
 
 ---
 
@@ -12,33 +12,10 @@
 
 | Area | What's implemented |
 |------|--------------------|
-| Dashboard | Tabbed home with tickets kanban, prompts, active repos, features queue |
-| Tickets | CRUD, status/priority, drag-and-drop; AI generate from project or PDF/text |
-| Features | Define features (tickets, prompts, projects); run single or queue; filter, delete |
-| Run | Select prompts and projects; run script (Tauri); log; feature-based run and queue |
-| Projects | List, create from template/idea/path, delete; detail with links and export |
-| Project detail | Link prompts, tickets, features, ideas, designs, architectures; categorizations; export spec; Cursor files tree; analysis prompt; load/sync Kanban from .cursor/tickets.md and .cursor/features.md; archive; Implement Features loop; JSON on .md load |
-| Prompts | Full CRUD via API; AI generate from description |
-| Ideas | CRUD; categories; AI generate; create project from idea |
-| Design | Config (sections, colors, typography); generate markdown/HTML; AI generate; library |
-| Architecture | CRUD; categories; AI generate; filter by category |
-| Configuration | Timing params for run |
-| Data tab | Scripts, JSON files, KV/tickets/features dump (Tauri: SQLite) |
-| Seed template | API and UI to seed project from template |
-| Tauri backend | SQLite, run script, file read/archive, list projects |
 
 ### Missing or incomplete
 
 | Area | Gap |
-|------|-----|
-| Testing | No unit or E2E tests; no Jest/Vitest/Playwright |
-| API | No authentication; unvalidated request bodies; no rate limiting |
-| Resilience | No React error boundaries; run log in-memory only; browser mode no persistence story |
-| Validation | Request bodies not validated (e.g. Zod); malformed input can cause 500s |
-| UX | Project details and home page are very large single components; no systematic a11y beyond Radix |
-| Project sync | Local projects vs projects.json/DB can get out of sync; no sync-from-disk |
-| Run history | Log not persisted; no search |
-| i18n | English only; no locale/translation layer |
 
 ---
 
@@ -48,7 +25,7 @@
 
 #### Feature: Testing & quality
 
-- [ ] #1 Add unit test suite — Set up Vitest or Jest; add tests for lib (e.g. todos-kanban, analysis-prompt) and store
+- [x] #1 Add unit test suite — Set up Vitest or Jest; add tests for lib (e.g. todos-kanban, analysis-prompt) and store
 - [ ] #2 Add E2E tests for critical flows — Playwright for project detail, run script, Kanban load/sync
 
 #### Feature: API security & validation
@@ -105,11 +82,4 @@
 
 ## Next steps
 
-1. Add unit test suite (Vitest/Jest) and cover at least lib and store (ticket #1).
-2. Introduce request validation (Zod) on generate and data API routes (ticket #3).
-3. Add React error boundaries around main layout and heavy pages (ticket #5).
-4. Refactor project details page into smaller components (ticket #11).
-5. Harden Kanban parsing and .md load on project detail (tickets #7, #8).
-6. Backlog: E2E tests (#2), auth/docs (#4), run history (#6), OPENAI warning (#9), project sync (#10), a11y (#12), rate limiting (#13), feature queue UX (#14), home refactor (#15), seed UX (#16), i18n (#17), browser offline (#18).
-
-*Based on codebase as of analysis. Update this file as work is completed or priorities change. Check off items with `[x]` when done.*
+1. Add or update tickets in the Kanban.

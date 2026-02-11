@@ -3,7 +3,7 @@ import {
   ListTodo,
   Play,
   CheckCircle2,
-  AlertCircle,
+  TestTube2,
 } from "lucide-react";
 import type { KanbanColumn } from "@/lib/todos-kanban";
 
@@ -16,12 +16,12 @@ export const KanbanColumnHeader: React.FC<KanbanColumnHeaderProps> = ({
   columnId,
   column,
 }) => (
-  <div className="pb-3">
+  <div className="pb-4">
     <h3 className="text-base font-semibold flex items-center gap-2">
       {columnId === "backlog" && <ListTodo className="h-4 w-4" />}
       {columnId === "in_progress" && <Play className="h-4 w-4" />}
       {columnId === "done" && <CheckCircle2 className="h-4 w-4" />}
-      {columnId === "blocked" && <AlertCircle className="h-4 w-4" />}
+      {columnId === "testing" && <TestTube2 className="h-4 w-4" />}
       {column.name} ({column.items.length})
     </h3>
   </div>

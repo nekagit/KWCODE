@@ -257,6 +257,11 @@
   border-color: hsl(var(--primary) / 0.25);
 }
 
+/* Dark configuration: kanban column borders white */
+[data-theme="dark"] .kanban-column-card {
+  border-color: hsl(0 0% 100%);
+}
+
 @layer base {
   * {
     @apply border-border;

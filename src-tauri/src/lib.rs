@@ -399,7 +399,7 @@ fn git_commit(project_path: String, message: String) -> Result<String, String> {
 }
 
 fn is_valid_workspace(p: &PathBuf) -> bool {
-    p.join("script").join("run_prompts_all_projects.sh").exists() && p.join("data").is_dir()
+    p.join("script").join("implement_all.sh").exists() && p.join("data").is_dir()
 }
 
 fn data_dir(ws: &PathBuf) -> PathBuf {
@@ -417,6 +417,10 @@ fn script_path(ws: &PathBuf) -> PathBuf {
 
 fn analysis_script_path(ws: &PathBuf) -> PathBuf {
     ws.join("script").join("run_analysis_single_project.sh")
+}
+
+fn implement_all_script_path(ws: &PathBuf) -> PathBuf {
+    ws.join("script").join("implement_all.sh")
 }
 
 /// Resolve project root (contains script/ and data/). Tries current working directory first,
@@ -449,7 +453,7 @@ fn project_root() -> Result<PathBuf, String> {
         }
     }
 
-    Err("Project root not found. Run the app from the repo root (contains script/run_prompts_all_projects.sh and data/).".to_string())
+    Err("Project root not found. Run the app from the repo root (contains script/implement_all.sh and data/).".to_string())
 }
 
 /// Read a file from disk and return its contents as base64 (for sending to API for PDF/text extraction).
@@ -1456,6 +1460,124 @@ fn run_analysis_script_inner(
     Ok(())
 }
 
+fn run_implement_all_script_inner(
+    app: AppHandle,
+    state: State<'_, RunningState>,
+    ws: PathBuf,
+    run_id: String,
+    run_label: String,
+    project_path: String,
+) -> Result<(), String> {
+    let run_label_clone = run_label.clone();
+    let script = implement_all_script_path(&ws);
+    if !script.exists() {
+        return Err(format!(
+            "Implement All script not found: {}",
+            script.to_string_lossy()
+        ));
+    }
+    let mut cmd = Command::new("bash");
+    cmd.arg(script.as_os_str())
+        .arg("-P")
+        .arg(project_path.as_str())
+        .current_dir(&ws)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    #[cfg(unix)]
+    cmd.process_group(0);
+
+    let mut child = cmd.spawn().map_err(|e| e.to_string())?;
+    let stdout = child.stdout.take().ok_or("no stdout")?;
+    let stderr = child.stderr.take().ok_or("no stderr")?;
+
+    {
+        let mut guard = state.runs.lock().map_err(|e| e.to_string())?;
+        guard.insert(
+            run_id.clone(),
+            RunEntry {
+                child,
+                label: run_label.clone(),
+            },
+        );
+    }
+
+    let app_stdout = app.clone();
+    let app_stderr = app.clone();
+    let app_exited = app.clone();
+    let runs_handle = Arc::clone(&state.runs);
+    let run_id_stdout = run_id.clone();
+    let run_id_stderr = run_id.clone();
+    let run_id_exited = run_id.clone();
+    thread::spawn(move || {
+        let reader = BufReader::new(stdout);
+        for line in reader.lines() {
+            if let Ok(line) = line {
+                let _ = app_stdout.emit(
+                    "script-log",
+                    ScriptLogPayload {
+                        run_id: run_id_stdout.clone(),
+                        line,
+                    },
+                );
+            }
+        }
+    });
+    thread::spawn(move || {
+        let reader = BufReader::new(stderr);
+        for line in reader.lines() {
+            if let Ok(line) = line {
+                let _ = app_stderr.emit(
+                    "script-log",
+                    ScriptLogPayload {
+                        run_id: run_id_stderr.clone(),
+                        line: format!("[stderr] {}", line),
+                    },
+                );
+            }
+        }
+    });
+    thread::spawn(move || {
+        loop {
+            let exited = {
+                let mut guard = match runs_handle.lock() {
+                    Ok(g) => g,
+                    Err(_) => break,
+                };
+                if let Some(entry) = guard.get_mut(&run_id_exited) {
+                    if entry.child.try_wait().ok().flatten().is_some() {
+                        guard.remove(&run_id_exited);
+                        true
+                    } else {
+                        false
+                    }
+                } else {
+                    break;
+                }
+            };
+            if exited {
+                let _ = app_exited.emit("script-exited", ScriptExitedPayload { run_id: run_id_exited, label: run_label_clone.clone() });
+                break;
+            }
+            thread::sleep(std::time::Duration::from_millis(500));
+        }
+    });
+
+    Ok(())
+}
+
+#[tauri::command]
+async fn run_implement_all(
+    app: AppHandle,
+    state: State<'_, RunningState>,
+    project_path: String,
+) -> Result<RunIdResponse, String> {
+    let ws = project_root()?;
+    let run_id = gen_run_id();
+    let label = "Implement All".to_string();
+    run_implement_all_script_inner(app, state, ws, run_id.clone(), label, project_path)?;
+    Ok(RunIdResponse { run_id })
+}
+
 #[tauri::command]
 async fn run_analysis_script(
     app: AppHandle,
@@ -1606,6 +1728,7 @@ pub fn run() {
             save_features,
             run_script,
             run_analysis_script,
+            run_implement_all,
             list_running_runs,
             stop_run,
             stop_script,
