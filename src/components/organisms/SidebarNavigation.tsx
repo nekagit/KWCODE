@@ -93,28 +93,37 @@ function SidebarNavigationContent({
 
   return (
     <>
-      {renderItem(dashboardNavItem)}
-      <div className={c["0"]}>
-        <div className={c["1"]}>
+      {/* Dashboard — standalone top item */}
+      <div className="px-2 pt-3 pb-1">
+        {renderItem(dashboardNavItem)}
+      </div>
+
+      <div className="flex flex-col flex-1 min-h-0 gap-1 px-2">
+        {/* Tools section */}
+        <div className="flex flex-col gap-0.5 pt-3">
           {!sidebarCollapsed && (
-            <p className={c["2"]}>
-              Testing · Architecture · Data
+            <p className="sidebar-section-label px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 select-none">
+              Tools
             </p>
           )}
           {toolsNavItems.map(renderItem)}
         </div>
-        <div className={c["3"]}>
+
+        {/* Work section */}
+        <div className="flex flex-col gap-0.5 pt-3">
           {!sidebarCollapsed && (
-            <p className={c["4"]}>
-              Projects · Tickets · Features
+            <p className="sidebar-section-label px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 select-none">
+              Work
             </p>
           )}
           {workNavItems.map(renderItem)}
         </div>
-        <div className={c["5"]}>
+
+        {/* System section — pushed to bottom */}
+        <div className="flex flex-col gap-0.5 pt-3 mt-auto">
           {!sidebarCollapsed && (
-            <p className={c["6"]}>
-              Log · Run · Configuration · LS
+            <p className="sidebar-section-label px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 select-none">
+              System
             </p>
           )}
           {/* Log: opens modal (no page) */}
@@ -124,10 +133,10 @@ function SidebarNavigationContent({
                 <button
                   type="button"
                   onClick={() => openLogModal()}
-                  className={cn(c["11"], c["12"])}
+                  className="sidebar-nav-item flex items-center gap-2.5 rounded-lg w-full text-[13px] font-medium justify-center px-0 py-2 text-muted-foreground hover:bg-muted/40 hover:text-foreground"
                   aria-label="Open log"
                 >
-                  <ScrollText className={c["7"]} />
+                  <ScrollText className="size-[18px] shrink-0 text-info/80" />
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right">Log</TooltipContent>
@@ -136,10 +145,10 @@ function SidebarNavigationContent({
             <button
               type="button"
               onClick={() => openLogModal()}
-              className={cn(c["13"], c["12"])}
+              className="sidebar-nav-item flex items-center gap-2.5 rounded-lg w-full text-[13px] font-medium px-3 py-2 text-muted-foreground hover:bg-muted/40 hover:text-foreground"
             >
-              <ScrollText className={c["8"]} />
-              <span className={c["9"]}>Log</span>
+              <ScrollText className="size-[18px] shrink-0 text-info/80" />
+              <span className="truncate">Log</span>
             </button>
           )}
           {bottomNavItems.map(renderItem)}
@@ -152,7 +161,7 @@ function SidebarNavigationContent({
 export function SidebarNavigation({ sidebarCollapsed }: { sidebarCollapsed: boolean }) {
   const pathname = usePathname();
   return (
-    <nav className={c["10"]}>
+    <nav className="flex flex-col flex-1 min-w-0 w-full">
       <Suspense fallback={<SidebarNavigationContent pathname={pathname ?? ""} currentTab="dashboard" sidebarCollapsed={sidebarCollapsed} />}>
         <SidebarNavWithParams pathname={pathname ?? ""} sidebarCollapsed={sidebarCollapsed} />
       </Suspense>

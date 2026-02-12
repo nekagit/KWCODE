@@ -53,7 +53,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       const toStore = Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, lastWidthRef.current));
       try {
         localStorage.setItem(SIDEBAR_STORAGE_KEY, String(toStore));
-      } catch (_) {}
+      } catch (_) { }
     };
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
@@ -79,34 +79,49 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Sidebar: expandable and resizable. useSearchParams only inside Suspense so shell never suspends. */}
       <aside
-        className="flex shrink-0 flex-col border-r border-border bg-sidebar py-4 h-screen overflow-hidden relative"
+        className="flex shrink-0 flex-col border-r border-border/60 bg-sidebar h-screen overflow-hidden relative"
         style={{
           width: currentWidth,
           transition: isResizing ? "none" : "width 200ms ease-in-out",
         }}
       >
+        {/* Branded header */}
         <div
-          className={`px-3 pb-3 border-b border-primary/30 mb-3 overflow-hidden ${
-            sidebarCollapsed ? "px-2" : ""
-          }`}
+          className={`sidebar-brand-underline shrink-0 overflow-hidden transition-all duration-200 ${sidebarCollapsed ? "px-2 py-3" : "px-4 pt-5 pb-4"
+            }`}
         >
-          {!sidebarCollapsed && (
-            <h1 className="text-xl font-bold whitespace-nowrap uppercase">KWCode</h1>
+          {!sidebarCollapsed ? (
+            <h1 className="text-lg font-extrabold whitespace-nowrap tracking-wide text-foreground/90">
+              <span className="text-primary">KW</span>Code
+            </h1>
+          ) : (
+            <h1 className="text-sm font-extrabold text-center text-primary">
+              KW
+            </h1>
           )}
         </div>
-        <SidebarNavigation sidebarCollapsed={sidebarCollapsed} />
-        <div className={`mt-2 mx-2 border-t border-primary/30 pt-2 ${sidebarCollapsed ? "flex justify-center" : ""}`}>
+
+        {/* Scrollable nav area */}
+        <div className="flex-1 min-h-0 overflow-y-auto sidebar-nav-scroll">
+          <SidebarNavigation sidebarCollapsed={sidebarCollapsed} />
+        </div>
+
+        {/* Toggle footer */}
+        <div className={`shrink-0 px-2 py-2 border-t border-border/40 ${sidebarCollapsed ? "flex justify-center" : ""
+          }`}>
           <SidebarToggle
             sidebarCollapsed={sidebarCollapsed}
             setSidebarCollapsed={setSidebarCollapsed}
           />
         </div>
+
+        {/* Resize handle */}
         {!sidebarCollapsed && (
           <div
             role="separator"
             aria-label="Resize sidebar"
             onMouseDown={startResize}
-            className="absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-primary/20 active:bg-primary/30 transition-colors shrink-0 z-10"
+            className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:w-1.5 hover:bg-primary/20 active:bg-primary/30 transition-all shrink-0 z-10"
           />
         )}
       </aside>

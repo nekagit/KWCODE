@@ -36,14 +36,12 @@ import {
   Terminal,
   CheckCircle2,
   Circle,
-  Hash,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Project } from "@/types/project";
 import { readProjectFile, writeProjectFile } from "@/lib/api-projects";
 import { isTauri, invoke } from "@/lib/tauri";
 import { useRunStore } from "@/store/run-store";
-import { Card } from "@/components/shared/Card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   buildKanbanFromMd,
@@ -67,6 +65,10 @@ import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { KanbanColumnCard } from "@/components/molecules/Kanban/KanbanColumnCard";
 import { GenerateKanbanPromptSection } from "@/components/atoms/forms/GenerateKanbanPromptSection";
 import { cn } from "@/lib/utils";
+import { isImplementAllRun, formatElapsed } from "@/lib/run-helpers";
+import { AddPromptDialog } from "@/components/molecules/FormsAndDialogs/AddPromptDialog";
+import { SummaryStatPill } from "@/components/shared/DisplayPrimitives";
+import { TerminalSlot } from "@/components/shared/TerminalSlot";
 
 const PRIORITIES: Array<"P0" | "P1" | "P2" | "P3"> = ["P0", "P1", "P2", "P3"];
 
@@ -86,12 +88,7 @@ function getFeaturePalette(index: number) {
   return FEATURE_COLOR_PALETTE[index % FEATURE_COLOR_PALETTE.length];
 }
 
-const isImplementAllRun = (r: { label: string }) =>
-  r.label === "Implement All" || r.label.startsWith("Implement All (");
-
-/* ═══════════════════════════════════════════════════════ */
-/*  ImplementAllTerminalsGrid                             */
-/* ═══════════════════════════════════════════════════════ */
+/* isImplementAllRun is now imported from @/lib/run-helpers */
 
 /** Grid of 3 terminal slots (last 3 Implement All runs). */
 export function ImplementAllTerminalsGrid() {
@@ -105,96 +102,13 @@ export function ImplementAllTerminalsGrid() {
   return (
     <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3 min-w-0">
       {runsForSlots.map((run, i) => (
-        <ImplementAllTerminalSlot key={i} run={run} slotIndex={i} />
+        <TerminalSlot key={i} run={run} slotIndex={i} heightClass="h-[40vh]" showDots={false} />
       ))}
     </div>
   );
 }
 
-/** Format seconds as m:ss or s. */
-function formatElapsed(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`;
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
-
-/** Single terminal slot. */
-function ImplementAllTerminalSlot({
-  run,
-  slotIndex,
-}: {
-  run: {
-    runId: string;
-    label: string;
-    logLines: string[];
-    status: "running" | "done";
-    startedAt?: number;
-    doneAt?: number;
-  } | null;
-  slotIndex: number;
-}) {
-  const displayLogLines = run?.logLines ?? [];
-  const running = run?.status === "running";
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
-
-  useEffect(() => {
-    if (!run?.startedAt) return;
-    if (run.status === "done" && run.doneAt != null) {
-      setElapsedSeconds((run.doneAt - run.startedAt) / 1000);
-      return;
-    }
-    const tick = () =>
-      setElapsedSeconds(Math.floor((Date.now() - run.startedAt!) / 1000));
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [run?.runId, run?.status, run?.startedAt, run?.doneAt]);
-
-  const subtitle = run
-    ? running
-      ? `${run.label} — Running… ${formatElapsed(elapsedSeconds)}`
-      : run.doneAt != null && run.startedAt != null
-        ? `${run.label} — Done in ${formatElapsed((run.doneAt - run.startedAt) / 1000)}`
-        : `${run.label} — Done`
-    : "No run yet.";
-
-  return (
-    <div className="flex flex-col rounded-xl border border-border/40 bg-card/50 overflow-hidden">
-      <div className="flex items-center justify-between px-3 py-2 border-b border-border/30 bg-muted/20">
-        <span className="text-xs font-medium text-muted-foreground">
-          Terminal {slotIndex + 1}
-        </span>
-        {running && (
-          <span className="flex items-center gap-1.5 text-[10px] text-emerald-400 font-medium">
-            <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            {formatElapsed(elapsedSeconds)}
-          </span>
-        )}
-      </div>
-      <div className="p-2 min-h-0 flex-1">
-        <ScrollArea className="h-[40vh] min-h-[120px] rounded-lg bg-black/40 p-2 font-mono text-xs">
-          {displayLogLines.length === 0 && !running && (
-            <p className="py-6 px-3 text-center text-muted-foreground/50 text-xs">
-              No output yet.
-            </p>
-          )}
-          {displayLogLines.length === 0 && running && (
-            <p className="py-6 px-3 flex items-center gap-2 text-muted-foreground/50 text-xs">
-              <Loader2 className="size-3 animate-spin" />
-              Waiting for output…
-            </p>
-          )}
-          {displayLogLines.map((line, i) => (
-            <div key={i} className="whitespace-pre-wrap break-all py-0.5 pr-2 text-foreground/80">
-              {line}
-            </div>
-          ))}
-        </ScrollArea>
-      </div>
-    </div>
-  );
-}
+/* formatElapsed is now imported from @/lib/run-helpers */
 
 /* ═══════════════════════════════════════════════════════ */
 /*  ImplementAllToolbar                                   */
@@ -381,136 +295,7 @@ export function ImplementAllToolbar({
   );
 }
 
-/* ═══════════════════════════════════════════════════════ */
-/*  AddPromptDialog                                       */
-/* ═══════════════════════════════════════════════════════ */
-
-function AddPromptDialog({
-  open,
-  onOpenChange,
-}: {
-  open: "self" | "ai" | null;
-  onOpenChange: (v: "self" | "ai" | null) => void;
-}) {
-  const addPrompt = useRunStore((s) => s.addPrompt);
-  const refreshData = useRunStore((s) => s.refreshData);
-  const [title, setTitle] = useState("");
-  const [value, setValue] = useState("");
-  const [generating, setGenerating] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const isSelf = open === "self";
-  const isAI = open === "ai";
-
-  const handleSave = useCallback(async () => {
-    const t = title.trim();
-    const c = value.trim();
-    if (!t || !c) return;
-    setSaving(true);
-    try {
-      if (isTauri) {
-        await invoke("add_prompt", { title: t, content: c });
-        await refreshData();
-        toast.success("Prompt saved. It will appear in the dropdown.");
-      } else {
-        addPrompt(t, c);
-        toast.success("Prompt saved. It will appear in the dropdown.");
-        try {
-          const res = await fetch("/api/data/prompts", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ title: t, content: c }),
-          });
-          if (res.ok) await refreshData();
-        } catch {
-          // Store already updated
-        }
-      }
-      setTitle("");
-      setValue("");
-      onOpenChange(null);
-    } finally {
-      setSaving(false);
-    }
-  }, [title, value, addPrompt, refreshData, onOpenChange]);
-
-  const handleGenerate = useCallback(async () => {
-    setGenerating(true);
-    try {
-      setValue("Generated prompt placeholder. Wire to your AI API.");
-      toast.info("Generate prompt: connect to your AI API.");
-    } finally {
-      setGenerating(false);
-    }
-  }, []);
-
-  const dialogTitle = isAI ? "AI generation prompt" : "Self-written prompt";
-  return (
-    <SharedDialog
-      isOpen={open != null}
-      title={dialogTitle}
-      onClose={() => onOpenChange(null)}
-      actions={
-        <ButtonGroup alignment="right">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(null)}
-            disabled={saving}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={!title.trim() || !value.trim() || saving}
-          >
-            {saving ? (
-              <Loader2 className="size-4 animate-spin mr-2" />
-            ) : null}
-            Save
-          </Button>
-        </ButtonGroup>
-      }
-    >
-      <Form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (title.trim() && value.trim()) handleSave();
-        }}
-      >
-        <GenericInputWithLabel
-          id="add-prompt-title"
-          label="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Prompt title (shown in dropdown)"
-        />
-        <GenericTextareaWithLabel
-          id="add-prompt-body"
-          label="Prompt"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          placeholder={
-            isSelf ? "Enter your prompt…" : "Generate or paste prompt…"
-          }
-          rows={5}
-          className="min-h-[120px] font-mono text-sm"
-        />
-        {isAI && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleGenerate}
-            disabled={generating}
-          >
-            {generating ? (
-              <Loader2 className="size-4 animate-spin mr-2" />
-            ) : null}
-            Generate
-          </Button>
-        )}
-      </Form>
-    </SharedDialog>
-  );
-}
+/* AddPromptDialog is now imported from @/components/molecules/FormsAndDialogs/AddPromptDialog */
 
 /* ═══════════════════════════════════════════════════════ */
 /*  ProjectTicketsTab (main component)                    */
@@ -1293,25 +1078,4 @@ export function ProjectTicketsTab({
   );
 }
 
-/* ═══════════════ Sub-components ═══════════════ */
-
-function SummaryStatPill({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: number;
-  color: string;
-}) {
-  return (
-    <div className="flex items-center gap-1.5">
-      <span className={cn("text-lg font-bold tabular-nums", color)}>
-        {value}
-      </span>
-      <span className="text-[10px] text-muted-foreground/70 uppercase tracking-wider">
-        {label}
-      </span>
-    </div>
-  );
-}
+/* SummaryStatPill is now imported from @/components/shared/DisplayPrimitives */

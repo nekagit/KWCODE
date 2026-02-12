@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev -p 4000 -H 127.0.0.1 --webpack",
     "dev:tauri": "node script/wait-dev-server.mjs",
+    "dev:tauri:next": "next dev -p 4001 -H 127.0.0.1 --webpack",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "next lint",

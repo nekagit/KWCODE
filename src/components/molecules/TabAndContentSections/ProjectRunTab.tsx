@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { Project } from "@/types/project";
 import { readProjectFile } from "@/lib/api-projects";
 import { isTauri, invoke } from "@/lib/tauri";
@@ -22,12 +22,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Dialog as SharedDialog } from "@/components/shared/Dialog";
-import { ButtonGroup } from "@/components/shared/ButtonGroup";
-import { Form } from "@/components/shared/Form";
-import { GenericInputWithLabel } from "@/components/shared/GenericInputWithLabel";
-import { GenericTextareaWithLabel } from "@/components/shared/GenericTextareaWithLabel";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useRunStore } from "@/store/run-store";
 import { toast } from "sonner";
 import {
@@ -39,7 +33,6 @@ import {
   Loader2,
   ChevronDown,
   Zap,
-  Clock,
   CheckCircle2,
   Circle,
   ExternalLink,
@@ -48,20 +41,10 @@ import {
   MonitorUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   Helpers
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-const isImplementAllRun = (r: { label: string }) =>
-  r.label === "Implement All" || r.label.startsWith("Implement All (");
-
-function formatElapsed(seconds: number): string {
-  if (seconds < 60) return `${Math.floor(seconds)}s`;
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
+import { isImplementAllRun, formatElapsed } from "@/lib/run-helpers";
+import { AddPromptDialog } from "@/components/molecules/FormsAndDialogs/AddPromptDialog";
+import { StatusPill } from "@/components/shared/DisplayPrimitives";
+import { TerminalSlot } from "@/components/shared/TerminalSlot";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Main Component
@@ -237,39 +220,7 @@ function WorkerStatusBar() {
   );
 }
 
-function StatusPill({
-  icon,
-  label,
-  count,
-  color,
-  pulse,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  count: number;
-  color: "emerald" | "sky" | "muted";
-  pulse?: boolean;
-}) {
-  const colorClasses = {
-    emerald: "bg-emerald-500/10 border-emerald-500/25 text-emerald-400",
-    sky: "bg-sky-500/10 border-sky-500/25 text-sky-400",
-    muted: "bg-muted/30 border-border/50 text-muted-foreground",
-  };
-
-  return (
-    <div
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-medium tabular-nums transition-all duration-300",
-        colorClasses[color],
-        pulse && "animate-pulse"
-      )}
-    >
-      {icon}
-      <span className="hidden sm:inline">{label}</span>
-      <span className="font-semibold">{count}</span>
-    </div>
-  );
-}
+/* StatusPill is now imported from @/components/shared/DisplayPrimitives */
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Command Center — actions toolbar
@@ -475,134 +426,7 @@ function WorkerCommandCenter({
   );
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Add Prompt Dialog
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-function AddPromptDialog({
-  open,
-  onOpenChange,
-}: {
-  open: "self" | "ai" | null;
-  onOpenChange: (v: "self" | "ai" | null) => void;
-}) {
-  const addPrompt = useRunStore((s) => s.addPrompt);
-  const refreshData = useRunStore((s) => s.refreshData);
-  const [title, setTitle] = useState("");
-  const [value, setValue] = useState("");
-  const [generating, setGenerating] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const isSelf = open === "self";
-  const isAI = open === "ai";
-
-  const handleSave = useCallback(async () => {
-    const t = title.trim();
-    const c = value.trim();
-    if (!t || !c) return;
-    setSaving(true);
-    try {
-      if (isTauri) {
-        await invoke("add_prompt", { title: t, content: c });
-        await refreshData();
-        toast.success("Prompt saved. It will appear in the dropdown.");
-      } else {
-        addPrompt(t, c);
-        toast.success("Prompt saved. It will appear in the dropdown.");
-        try {
-          const res = await fetch("/api/data/prompts", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ title: t, content: c }),
-          });
-          if (res.ok) await refreshData();
-        } catch {
-          // Store already updated
-        }
-      }
-      setTitle("");
-      setValue("");
-      onOpenChange(null);
-    } finally {
-      setSaving(false);
-    }
-  }, [title, value, addPrompt, refreshData, onOpenChange]);
-
-  const handleGenerate = useCallback(async () => {
-    setGenerating(true);
-    try {
-      setValue("Generated prompt placeholder. Wire to your AI API.");
-      toast.info("Generate prompt: connect to your AI API.");
-    } finally {
-      setGenerating(false);
-    }
-  }, []);
-
-  const dialogTitle = isAI ? "AI generation prompt" : "Self-written prompt";
-  return (
-    <SharedDialog
-      isOpen={open != null}
-      title={dialogTitle}
-      onClose={() => onOpenChange(null)}
-      actions={
-        <ButtonGroup alignment="right">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(null)}
-            disabled={saving}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={!title.trim() || !value.trim() || saving}
-          >
-            {saving ? <Loader2 className="size-4 animate-spin" /> : null}
-            Save
-          </Button>
-        </ButtonGroup>
-      }
-    >
-      <Form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (title.trim() && value.trim()) handleSave();
-        }}
-      >
-        <GenericInputWithLabel
-          id="add-prompt-title"
-          label="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Prompt title (shown in dropdown)"
-        />
-        <GenericTextareaWithLabel
-          id="add-prompt-body"
-          label="Prompt"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          placeholder={
-            isSelf ? "Enter your prompt…" : "Generate or paste prompt…"
-          }
-          rows={5}
-          className="min-h-[120px] font-mono text-sm"
-        />
-        {isAI && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleGenerate}
-            disabled={generating}
-          >
-            {generating ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : null}
-            Generate
-          </Button>
-        )}
-      </Form>
-    </SharedDialog>
-  );
-}
+/* AddPromptDialog is now imported from @/components/molecules/FormsAndDialogs/AddPromptDialog */
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Terminals Section
@@ -639,7 +463,7 @@ function WorkerTerminalsSection() {
       <div className="px-4 pb-4">
         <div className="grid w-full grid-cols-1 gap-3 lg:grid-cols-3">
           {runsForSlots.map((run, i) => (
-            <WorkerTerminalSlot key={i} run={run} slotIndex={i} />
+            <TerminalSlot key={i} run={run} slotIndex={i} />
           ))}
         </div>
       </div>
@@ -647,153 +471,4 @@ function WorkerTerminalsSection() {
   );
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Single Terminal Slot
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-function WorkerTerminalSlot({
-  run,
-  slotIndex,
-}: {
-  run: {
-    runId: string;
-    label: string;
-    logLines: string[];
-    status: "running" | "done";
-    startedAt?: number;
-    doneAt?: number;
-  } | null;
-  slotIndex: number;
-}) {
-  const displayLogLines = run?.logLines ?? [];
-  const running = run?.status === "running";
-  const done = run?.status === "done";
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!run?.startedAt) return;
-    if (run.status === "done" && run.doneAt != null) {
-      setElapsedSeconds((run.doneAt - run.startedAt) / 1000);
-      return;
-    }
-    const tick = () =>
-      setElapsedSeconds(Math.floor((Date.now() - run.startedAt!) / 1000));
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [run?.runId, run?.status, run?.startedAt, run?.doneAt]);
-
-  // Auto-scroll to bottom on new log lines
-  useEffect(() => {
-    if (scrollRef.current) {
-      const el = scrollRef.current.querySelector("[data-radix-scroll-area-viewport]");
-      if (el) el.scrollTop = el.scrollHeight;
-    }
-  }, [displayLogLines.length]);
-
-  const statusColor = running
-    ? "emerald"
-    : done
-      ? "sky"
-      : "muted";
-
-  const statusLabel = run
-    ? running
-      ? `Running — ${formatElapsed(elapsedSeconds)}`
-      : run.doneAt != null && run.startedAt != null
-        ? `Done in ${formatElapsed((run.doneAt - run.startedAt) / 1000)}`
-        : "Done"
-    : "Idle";
-
-  const borderColor = {
-    emerald: "border-emerald-500/30",
-    sky: "border-sky-500/20",
-    muted: "border-border/40",
-  }[statusColor];
-
-  const headerBg = {
-    emerald: "bg-emerald-500/[0.06]",
-    sky: "bg-sky-500/[0.04]",
-    muted: "bg-muted/20",
-  }[statusColor];
-
-  return (
-    <div
-      className={cn(
-        "flex flex-col rounded-xl border overflow-hidden transition-all duration-300",
-        borderColor,
-        running && "shadow-lg shadow-emerald-500/5"
-      )}
-    >
-      {/* Terminal Header */}
-      <div className={cn("flex items-center justify-between px-3.5 py-2.5", headerBg)}>
-        <div className="flex items-center gap-2">
-          {/* Terminal dots */}
-          <div className="flex items-center gap-1">
-            <div className={cn(
-              "size-2 rounded-full transition-colors duration-300",
-              running ? "bg-emerald-400 animate-pulse" : done ? "bg-sky-400" : "bg-muted-foreground/30"
-            )} />
-            <div className="size-2 rounded-full bg-muted-foreground/20" />
-            <div className="size-2 rounded-full bg-muted-foreground/20" />
-          </div>
-          <span className="text-[11px] font-medium text-muted-foreground">
-            Terminal {slotIndex + 1}
-          </span>
-        </div>
-
-        {/* Status badge */}
-        <div className={cn(
-          "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium tabular-nums",
-          statusColor === "emerald" && "bg-emerald-500/15 text-emerald-400",
-          statusColor === "sky" && "bg-sky-500/15 text-sky-400",
-          statusColor === "muted" && "bg-muted/40 text-muted-foreground",
-        )}>
-          {running && <Loader2 className="size-2.5 animate-spin" />}
-          {done && <CheckCircle2 className="size-2.5" />}
-          {!run && <Circle className="size-2.5" />}
-          <span>{statusLabel}</span>
-        </div>
-      </div>
-
-      {/* Terminal body */}
-      <div className="flex-1 min-h-0 bg-[hsl(var(--card))]/80">
-        <ScrollArea
-          ref={scrollRef}
-          className="h-[280px] min-h-[200px]"
-        >
-          <div className="p-3 font-mono text-xs leading-relaxed">
-            {displayLogLines.length === 0 && !running && (
-              <div className="flex flex-col items-center justify-center h-[200px] gap-3 text-center">
-                <Terminal className="size-8 text-muted-foreground/30" />
-                <p className="text-[11px] text-muted-foreground/60 normal-case">
-                  No output yet
-                </p>
-              </div>
-            )}
-            {displayLogLines.length === 0 && running && (
-              <div className="flex flex-col items-center justify-center h-[200px] gap-3 text-center">
-                <div className="relative">
-                  <div className="absolute inset-0 rounded-full bg-emerald-500/20 blur-xl animate-pulse" />
-                  <Loader2 className="relative size-6 animate-spin text-emerald-400" />
-                </div>
-                <p className="text-[11px] text-muted-foreground normal-case">
-                  Waiting for output…
-                </p>
-              </div>
-            )}
-            {displayLogLines.map((line, i) => (
-              <div
-                key={i}
-                className="py-0.5 pr-2 text-muted-foreground/90 whitespace-pre-wrap break-all hover:text-foreground hover:bg-muted/20 rounded-sm transition-colors duration-150"
-              >
-                {line}
-              </div>
-            ))}
-          </div>
-        </ScrollArea>
-      </div>
-    </div>
-  );
-}
+/* WorkerTerminalSlot is now the shared TerminalSlot from @/components/shared/TerminalSlot */

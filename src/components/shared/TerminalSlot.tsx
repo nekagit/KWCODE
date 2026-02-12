@@ -1,0 +1,183 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { Loader2, CheckCircle2, Circle, Terminal } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
+import { formatElapsed } from "@/lib/run-helpers";
+
+/* ═══════════════════════════════════════════════════════════════
+   RunData — shape of a single run for the terminal display
+   ═══════════════════════════════════════════════════════════════ */
+
+export interface TerminalRunData {
+    runId: string;
+    label: string;
+    logLines: string[];
+    status: "running" | "done";
+    startedAt?: number;
+    doneAt?: number;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TerminalSlot — a single terminal card with live log output
+   Shared between ProjectRunTab and ProjectTicketsTab.
+   ═══════════════════════════════════════════════════════════════ */
+
+interface TerminalSlotProps {
+    run: TerminalRunData | null;
+    slotIndex: number;
+    /** Height class for the ScrollArea. Default: "h-[280px]" */
+    heightClass?: string;
+    /** Enable macOS-style traffic light dots. Default: true */
+    showDots?: boolean;
+}
+
+export function TerminalSlot({
+    run,
+    slotIndex,
+    heightClass = "h-[280px]",
+    showDots = true,
+}: TerminalSlotProps) {
+    const displayLogLines = run?.logLines ?? [];
+    const running = run?.status === "running";
+    const done = run?.status === "done";
+    const [elapsedSeconds, setElapsedSeconds] = useState(0);
+    const scrollRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!run?.startedAt) return;
+        if (run.status === "done" && run.doneAt != null) {
+            setElapsedSeconds((run.doneAt - run.startedAt) / 1000);
+            return;
+        }
+        const tick = () =>
+            setElapsedSeconds(Math.floor((Date.now() - run.startedAt!) / 1000));
+        tick();
+        const id = setInterval(tick, 1000);
+        return () => clearInterval(id);
+    }, [run?.runId, run?.status, run?.startedAt, run?.doneAt]);
+
+    // Auto-scroll to bottom on new log lines
+    useEffect(() => {
+        if (scrollRef.current) {
+            const el = scrollRef.current.querySelector(
+                "[data-radix-scroll-area-viewport]"
+            );
+            if (el) el.scrollTop = el.scrollHeight;
+        }
+    }, [displayLogLines.length]);
+
+    const statusColor = running ? "emerald" : done ? "sky" : "muted";
+
+    const statusLabel = run
+        ? running
+            ? `Running — ${formatElapsed(elapsedSeconds)}`
+            : run.doneAt != null && run.startedAt != null
+                ? `Done in ${formatElapsed((run.doneAt - run.startedAt) / 1000)}`
+                : "Done"
+        : "Idle";
+
+    const borderColor = {
+        emerald: "border-emerald-500/30",
+        sky: "border-sky-500/20",
+        muted: "border-border/40",
+    }[statusColor];
+
+    const headerBg = {
+        emerald: "bg-emerald-500/[0.06]",
+        sky: "bg-sky-500/[0.04]",
+        muted: "bg-muted/20",
+    }[statusColor];
+
+    return (
+        <div
+            className={cn(
+                "flex flex-col rounded-xl border overflow-hidden transition-all duration-300",
+                borderColor,
+                running && "shadow-lg shadow-emerald-500/5"
+            )}
+        >
+            {/* Terminal Header */}
+            <div
+                className={cn(
+                    "flex items-center justify-between px-3.5 py-2.5",
+                    headerBg
+                )}
+            >
+                <div className="flex items-center gap-2">
+                    {/* Terminal dots */}
+                    {showDots && (
+                        <div className="flex items-center gap-1">
+                            <div
+                                className={cn(
+                                    "size-2 rounded-full transition-colors duration-300",
+                                    running
+                                        ? "bg-emerald-400 animate-pulse"
+                                        : done
+                                            ? "bg-sky-400"
+                                            : "bg-muted-foreground/30"
+                                )}
+                            />
+                            <div className="size-2 rounded-full bg-muted-foreground/20" />
+                            <div className="size-2 rounded-full bg-muted-foreground/20" />
+                        </div>
+                    )}
+                    <span className="text-[11px] font-medium text-muted-foreground">
+                        Terminal {slotIndex + 1}
+                    </span>
+                </div>
+
+                {/* Status badge */}
+                <div
+                    className={cn(
+                        "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium tabular-nums",
+                        statusColor === "emerald" && "bg-emerald-500/15 text-emerald-400",
+                        statusColor === "sky" && "bg-sky-500/15 text-sky-400",
+                        statusColor === "muted" && "bg-muted/40 text-muted-foreground"
+                    )}
+                >
+                    {running && <Loader2 className="size-2.5 animate-spin" />}
+                    {done && <CheckCircle2 className="size-2.5" />}
+                    {!run && <Circle className="size-2.5" />}
+                    <span>{statusLabel}</span>
+                </div>
+            </div>
+
+            {/* Terminal body */}
+            <div className="flex-1 min-h-0 bg-[hsl(var(--card))]/80">
+                <ScrollArea ref={scrollRef} className={cn(heightClass, "min-h-[120px]")}>
+                    <div className="p-3 font-mono text-xs leading-relaxed">
+                        {displayLogLines.length === 0 && !running && (
+                            <div className="flex flex-col items-center justify-center h-[200px] gap-3 text-center">
+                                <Terminal className="size-8 text-muted-foreground/30" />
+                                <p className="text-[11px] text-muted-foreground/60 normal-case">
+                                    No output yet
+                                </p>
+                            </div>
+                        )}
+                        {displayLogLines.length === 0 && running && (
+                            <div className="flex flex-col items-center justify-center h-[200px] gap-3 text-center">
+                                <div className="relative">
+                                    <div className="absolute inset-0 rounded-full bg-emerald-500/20 blur-xl animate-pulse" />
+                                    <Loader2 className="relative size-6 animate-spin text-emerald-400" />
+                                </div>
+                                <p className="text-[11px] text-muted-foreground normal-case">
+                                    Waiting for output…
+                                </p>
+                            </div>
+                        )}
+                        {displayLogLines.map((line, i) => (
+                            <div
+                                key={i}
+                                className="py-0.5 pr-2 text-muted-foreground/90 whitespace-pre-wrap break-all hover:text-foreground hover:bg-muted/20 rounded-sm transition-colors duration-150"
+                            >
+                                {line}
+                            </div>
+                        ))}
+                    </div>
+                </ScrollArea>
+            </div>
+        </div>
+    );
+}

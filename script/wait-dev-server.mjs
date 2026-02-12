@@ -135,7 +135,10 @@ if (!alreadyUp) {
       // ignore
     }
   }
-  const dev = spawn("npm", ["run", "dev"], {
+  // For Tauri we prefer a dedicated Next dev script so the desktop app
+  // can use its own port (4001) without changing the main `npm run dev`.
+  const devScript = process.env.TAURI_DEV_NPM_SCRIPT || "dev:tauri:next";
+  const dev = spawn("npm", ["run", devScript], {
     stdio: "inherit",
     shell: true,
     detached: true,

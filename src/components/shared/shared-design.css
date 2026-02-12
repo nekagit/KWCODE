@@ -9,13 +9,13 @@
    --------------------------------------------------------------------------- */
 :root {
   /* Smooth, layered shadows (best practice: soft, multi-layer) */
-  --shared-shadow-sm: 0 1px 2px hsl(0 0% 0% / 0.04), 0 2px 4px hsl(0 0% 0% / 0.04);
-  --shared-shadow: 0 2px 4px hsl(0 0% 0% / 0.04), 0 4px 8px hsl(0 0% 0% / 0.04),
-    0 8px 16px hsl(0 0% 0% / 0.04);
-  --shared-shadow-md: 0 4px 6px hsl(0 0% 0% / 0.05), 0 6px 12px hsl(0 0% 0% / 0.05),
-    0 12px 24px hsl(0 0% 0% / 0.05);
-  --shared-shadow-lg: 0 8px 16px hsl(0 0% 0% / 0.06), 0 16px 32px hsl(0 0% 0% / 0.06),
-    0 24px 48px hsl(0 0% 0% / 0.06);
+  --shared-shadow-sm: 0 1px 2px hsl(0 0% 0% / 0.03), 0 1px 3px hsl(0 0% 0% / 0.03);
+  --shared-shadow: 0 1px 3px hsl(0 0% 0% / 0.04), 0 2px 6px hsl(0 0% 0% / 0.03),
+    0 4px 12px hsl(0 0% 0% / 0.02);
+  --shared-shadow-md: 0 2px 4px hsl(0 0% 0% / 0.04), 0 4px 8px hsl(0 0% 0% / 0.04),
+    0 8px 16px hsl(0 0% 0% / 0.03);
+  --shared-shadow-lg: 0 4px 8px hsl(0 0% 0% / 0.05), 0 8px 16px hsl(0 0% 0% / 0.04),
+    0 16px 32px hsl(0 0% 0% / 0.03);
 
   /* Typography: larger, readable base */
   --shared-font-size-base: 1rem;
@@ -36,8 +36,10 @@
   --shared-tracking-normal: 0;
 
   /* Radius and transition (smooth) */
-  --shared-radius: var(--radius, 1rem);
+  --shared-radius: var(--radius, 0.75rem);
+  --shared-radius-sm: calc(var(--shared-radius) - 4px);
   --shared-transition: 0.2s ease;
+  --shared-transition-fast: 0.15s ease;
 }
 
 /* ---------------------------------------------------------------------------
@@ -103,6 +105,7 @@
 [data-shared-ui].shared-card:hover,
 [data-shared-ui] [class*="bg-card"][class*="rounded"]:hover {
   box-shadow: var(--shared-shadow-md);
+  transform: translateY(-1px);
 }
 
 /* Buttons and interactive elements: smooth feedback */

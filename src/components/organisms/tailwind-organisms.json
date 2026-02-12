@@ -10,65 +10,65 @@
     "1": "flex-1 flex flex-col min-w-0 overflow-auto",
     "2": "mb-6 flex items-center justify-between gap-4",
     "3": "w-full whitespace-nowrap pb-3",
-    "4": "mt-0 pt-8 pb-8 px-5 space-y-8",
-    "5": "mt-0 pt-8 pb-8 px-5 space-y-8",
-    "6": "mt-0 pt-8 pb-8 px-5",
-    "7": "mt-0 pt-8 pb-8 px-5",
-    "8": "mt-0 pt-8 pb-8 px-5",
-    "9": "mt-0 pt-8 pb-8 px-5 space-y-8",
-    "10": "mt-0 pt-8 pb-8 px-5 space-y-8",
-    "11": "mt-0 pt-8 pb-8 px-5"
+    "4": "mt-0 pt-6 pb-6 px-4 space-y-6",
+    "5": "mt-0 pt-6 pb-6 px-4 space-y-6",
+    "6": "mt-0 pt-6 pb-6 px-4",
+    "7": "mt-0 pt-6 pb-6 px-4",
+    "8": "mt-0 pt-6 pb-6 px-4",
+    "9": "mt-0 pt-6 pb-6 px-4 space-y-6",
+    "10": "mt-0 pt-6 pb-6 px-4 space-y-6",
+    "11": "mt-0 pt-6 pb-6 px-4"
   },
   "IdeasPageContent.tsx": {
     "0": "text-warning/90"
   },
   "LoadingScreenPageContent.tsx": {
     "0": "fixed inset-0 flex items-center justify-center z-0",
-    "1": "absolute top-4 left-4 z-[10] flex items-center justify-center size-10 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors",
+    "1": "absolute top-4 left-4 z-[10] flex items-center justify-center size-10 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all duration-200",
     "2": "size-5"
   },
   "NewProjectPageContent.tsx": {
-    "0": "space-y-8 max-w-xl"
+    "0": "space-y-6 max-w-xl"
   },
   "ProjectDetailsPageContent.tsx": {},
   "ProjectsListPageContent.tsx": {
-    "0": "space-y-8",
-    "1": "space-y-4",
-    "2": "text-lg font-semibold",
-    "3": "space-y-2 rounded-lg border bg-muted/30 p-5",
-    "4": "flex items-center justify-between gap-2 py-2 px-3 rounded-lg hover:bg-muted/50 transition-colors group",
-    "5": "flex-1 min-w-0 truncate font-medium text-primary hover:underline",
-    "6": "text-xs text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+    "0": "space-y-6",
+    "1": "space-y-3",
+    "2": "text-lg font-semibold tracking-tight",
+    "3": "space-y-1 rounded-xl border border-border/60 bg-card/80 backdrop-blur-sm p-3 shadow-sm",
+    "4": "flex items-center justify-between gap-2 py-2 px-3 rounded-lg hover:bg-accent/50 transition-all duration-200 group",
+    "5": "flex-1 min-w-0 truncate font-medium text-primary hover:underline transition-colors",
+    "6": "text-xs text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-all duration-200"
   },
   "PromptRecordsPageContent.tsx": {
     "0": "space-y-6",
     "1": "flex flex-wrap items-center justify-between gap-3",
-    "2": "text-base",
+    "2": "text-base font-medium",
     "3": "mt-2",
     "4": "text-xs",
     "5": "underline hover:text-foreground transition-colors",
     "6": "underline hover:text-foreground transition-colors",
-    "7": "text-sm text-muted-foreground py-5"
+    "7": "text-sm text-muted-foreground py-4"
   },
   "RunPageContent.tsx": {
-    "0": "space-y-8",
+    "0": "space-y-6",
     "1": "border-amber-500/50 bg-amber-500/10"
   },
   "SidebarNavigation.tsx": {
-    "0": "flex flex-col flex-1 min-h-0 gap-4 mt-4",
-    "1": "flex flex-col flex-1 min-h-0 border-t border-primary/30 pt-4 gap-1",
-    "2": "px-3 mb-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80 shrink-0",
-    "3": "flex flex-col flex-1 min-h-0 border-t border-primary/30 pt-4 gap-1",
-    "4": "px-3 mb-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80 shrink-0",
-    "5": "flex flex-col flex-1 min-h-0 border-t border-primary/30 pt-4 gap-1 mt-auto",
-    "6": "px-3 mb-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80 shrink-0",
+    "0": "flex flex-col flex-1 min-h-0 gap-3 mt-3",
+    "1": "flex flex-col flex-1 min-h-0 border-t border-border/40 pt-3 gap-0.5",
+    "2": "px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70 shrink-0",
+    "3": "flex flex-col flex-1 min-h-0 border-t border-border/40 pt-3 gap-0.5",
+    "4": "px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70 shrink-0",
+    "5": "flex flex-col flex-1 min-h-0 border-t border-border/40 pt-3 gap-0.5 mt-auto",
+    "6": "px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70 shrink-0",
     "7": "size-4 shrink-0 text-info/80",
     "8": "size-4 shrink-0 text-info/80",
     "9": "truncate",
-    "10": "flex flex-col flex-1 min-w-0 w-full px-2 gap-1",
-    "11": "flex items-center gap-2 rounded-md py-2.5 w-full text-sm font-medium transition-colors justify-center px-0",
-    "12": "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
-    "13": "flex items-center gap-2 rounded-md py-2.5 w-full text-sm font-medium transition-colors px-3",
+    "10": "flex flex-col flex-1 min-w-0 w-full px-2 gap-0.5",
+    "11": "flex items-center gap-2 rounded-lg py-2 w-full text-sm font-medium transition-all duration-150 justify-center px-0",
+    "12": "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+    "13": "flex items-center gap-2 rounded-lg py-2 w-full text-sm font-medium transition-all duration-150 px-3",
     "14": "text-success/90",
     "15": "text-info/90",
     "16": "text-primary/90",
@@ -78,10 +78,10 @@
   },
   "SingleContentPage.tsx": {
     "0": "size-4",
-    "1": "space-y-8"
+    "1": "space-y-6"
   },
   "TestingPageContent.tsx": {
-    "0": "space-y-8",
+    "0": "space-y-6",
     "1": "size-6 text-info/90",
     "2": "w-full",
     "3": "flex flex-row flex-wrap items-center justify-start gap-3 w-full max-w-2xl p-3",
@@ -93,20 +93,20 @@
     "9": "size-4",
     "10": "flex items-center gap-2",
     "11": "size-4",
-    "12": "mt-0 pt-0 pb-8 px-5 space-y-8",
-    "13": "mt-0 pt-0 pb-8 px-5 space-y-8",
-    "14": "mt-0 pt-0 pb-8 px-5",
-    "15": "mt-0 pt-0 pb-8 px-5"
+    "12": "mt-0 pt-0 pb-6 px-4 space-y-6",
+    "13": "mt-0 pt-0 pb-6 px-4 space-y-6",
+    "14": "mt-0 pt-0 pb-6 px-4",
+    "15": "mt-0 pt-0 pb-6 px-4"
   },
   "ThreeTabResourcePageContent.tsx": {
-    "0": "space-y-8"
+    "0": "space-y-6"
   },
   "TicketBoard.tsx": {
-    "0": "rounded-lg border bg-muted/20 min-h-80 flex flex-col p-4",
-    "1": "px-5 py-4 border-b bg-muted/40 rounded-t-lg flex items-center justify-between gap-2",
-    "2": "capitalize font-medium",
-    "3": "text-xs text-muted-foreground",
-    "4": "flex-1 p-5",
-    "5": "space-y-4"
+    "0": "rounded-xl border border-border/60 bg-card/50 backdrop-blur-sm min-h-80 flex flex-col shadow-sm",
+    "1": "px-4 py-3 border-b border-border/40 bg-muted/30 rounded-t-xl flex items-center justify-between gap-2",
+    "2": "capitalize font-semibold text-sm",
+    "3": "text-xs text-muted-foreground tabular-nums",
+    "4": "flex-1 p-3",
+    "5": "space-y-2"
   }
 }

@@ -29,6 +29,7 @@ import { ProjectArchitectureTab } from "@/components/molecules/TabAndContentSect
 import { ProjectTestingTab } from "@/components/molecules/TabAndContentSections/ProjectTestingTab";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { cn } from "@/lib/utils";
+import { SectionCard, MetadataBadge, CountBadge } from "@/components/shared/DisplayPrimitives";
 
 const TAB_CONFIG = [
   { value: "setup", label: "Stakeholder", icon: Settings, color: "text-violet-400", activeGlow: "shadow-violet-500/10" },
@@ -206,35 +207,40 @@ export function ProjectDetailsPageContent() {
                 </MetadataBadge>
               )}
               {ticketCount > 0 && (
-                <StatBadge
+                <CountBadge
+                  icon={<Hash className="size-2.5" />}
                   count={ticketCount}
                   label="tickets"
                   color="bg-blue-500/10 border-blue-500/20 text-blue-400"
                 />
               )}
               {featureCount > 0 && (
-                <StatBadge
+                <CountBadge
+                  icon={<Hash className="size-2.5" />}
                   count={featureCount}
                   label="features"
                   color="bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
                 />
               )}
               {designCount > 0 && (
-                <StatBadge
+                <CountBadge
+                  icon={<Hash className="size-2.5" />}
                   count={designCount}
                   label="designs"
                   color="bg-violet-500/10 border-violet-500/20 text-violet-400"
                 />
               )}
               {ideaCount > 0 && (
-                <StatBadge
+                <CountBadge
+                  icon={<Hash className="size-2.5" />}
                   count={ideaCount}
                   label="ideas"
                   color="bg-amber-500/10 border-amber-500/20 text-amber-400"
                 />
               )}
               {architectureCount > 0 && (
-                <StatBadge
+                <CountBadge
+                  icon={<Hash className="size-2.5" />}
                   count={architectureCount}
                   label="architectures"
                   color="bg-teal-500/10 border-teal-500/20 text-teal-400"
@@ -343,78 +349,4 @@ export function ProjectDetailsPageContent() {
   );
 }
 
-/* ═══════════════ Sub-components ═══════════════ */
-
-const ACCENT_STYLES = {
-  violet:
-    "hover:border-violet-500/30 hover:shadow-lg hover:shadow-violet-500/5",
-  amber:
-    "hover:border-amber-500/30 hover:shadow-lg hover:shadow-amber-500/5",
-  blue: "hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/5",
-  emerald:
-    "hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5",
-  teal: "hover:border-teal-500/30 hover:shadow-lg hover:shadow-teal-500/5",
-} as const;
-
-function SectionCard({
-  children,
-  accentColor,
-}: {
-  children: React.ReactNode;
-  accentColor: keyof typeof ACCENT_STYLES;
-}) {
-  return (
-    <div
-      className={cn(
-        "rounded-xl border border-border/40 bg-card/60 backdrop-blur-sm p-5 transition-all duration-300",
-        ACCENT_STYLES[accentColor]
-      )}
-    >
-      {children}
-    </div>
-  );
-}
-
-function MetadataBadge({
-  icon,
-  color,
-  children,
-}: {
-  icon: React.ReactNode;
-  color: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium",
-        color
-      )}
-    >
-      {icon}
-      {children}
-    </div>
-  );
-}
-
-function StatBadge({
-  count,
-  label,
-  color,
-}: {
-  count: number;
-  label: string;
-  color: string;
-}) {
-  return (
-    <div
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium tabular-nums",
-        color
-      )}
-    >
-      <Hash className="size-2.5" />
-      {count} {label}
-    </div>
-  );
-}
+/* SectionCard, MetadataBadge, CountBadge are now imported from @/components/shared/DisplayPrimitives */

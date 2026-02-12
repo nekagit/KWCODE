@@ -26,15 +26,16 @@ export function NavLinkItem({
   const linkEl = (
     <Link
       href={href}
-      className={cn(classes[1],
-        sidebarCollapsed ? "justify-center px-0" : "px-3",
+      className={cn(
+        "sidebar-nav-item flex items-center gap-2.5 rounded-lg w-full text-[13px] font-medium",
+        sidebarCollapsed ? "justify-center px-0 py-2" : "px-3 py-2",
         isActive
-          ? "bg-background shadow-sm text-primary border-l-2 border-primary"
-          : "text-muted-foreground hover:bg-muted/50 hover:text-foreground border-l-2 border-transparent"
+          ? "sidebar-nav-active bg-primary/8 text-primary"
+          : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
       )}
     >
-      <Icon className={cn(classes[2], !isActive && iconClassName)} />
-      {!sidebarCollapsed && <span className={classes[0]}>{label}</span>}
+      <Icon className={cn("size-[18px] shrink-0 transition-colors duration-150", isActive ? "text-primary" : iconClassName)} />
+      {!sidebarCollapsed && <span className="truncate">{label}</span>}
     </Link>
   );
 
