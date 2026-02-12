@@ -44,10 +44,11 @@ import {
   Circle,
   Trash,
   MoreVertical,
+  Wand2,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Project } from "@/types/project";
-import { readProjectFile, writeProjectFile } from "@/lib/api-projects";
+import { readProjectFile, readProjectFileOrEmpty, writeProjectFile } from "@/lib/api-projects";
 import { isTauri, invoke } from "@/lib/tauri";
 import { useRunStore } from "@/store/run-store";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -338,6 +339,17 @@ export function ProjectTicketsTab({
   const [addFeatureTitle, setAddFeatureTitle] = useState("");
   const [addFeatureRefs, setAddFeatureRefs] = useState("");
   const [saving, setSaving] = useState(false);
+  /* Planner Manager: AI-generated ticket from prompt */
+  const [plannerManagerMode, setPlannerManagerMode] = useState<"ticket" | "feature">("ticket");
+  const [plannerPromptInput, setPlannerPromptInput] = useState("");
+  const [plannerPromptTextarea, setPlannerPromptTextarea] = useState("");
+  const [generatedTicket, setGeneratedTicket] = useState<{
+    title: string;
+    description?: string;
+    priority: "P0" | "P1" | "P2" | "P3";
+    featureName: string;
+  } | null>(null);
+  const [generatingTicket, setGeneratingTicket] = useState(false);
 
   /* ── Data loading ── */
 
@@ -353,8 +365,8 @@ export function ProjectTicketsTab({
     setKanbanError(null);
     try {
       const [ticketsMd, featuresMd] = await Promise.all([
-        readProjectFile(projectId, ".cursor/tickets.md", repoPath),
-        readProjectFile(projectId, ".cursor/features.md", repoPath),
+        readProjectFileOrEmpty(projectId, ".cursor/tickets.md", repoPath),
+        readProjectFileOrEmpty(projectId, ".cursor/features.md", repoPath),
       ]);
       const data = buildKanbanFromMd(ticketsMd, featuresMd);
       setKanbanData(data);
@@ -761,6 +773,97 @@ export function ProjectTicketsTab({
     }
   }, [project, projectId, kanbanData]);
 
+  const generateTicketFromPrompt = useCallback(async () => {
+    const prompt = [plannerPromptInput.trim(), plannerPromptTextarea.trim()].filter(Boolean).join("\n");
+    if (!prompt) {
+      toast.error("Enter a short description (e.g. “I want a new page with settings”).");
+      return;
+    }
+    setGeneratingTicket(true);
+    setGeneratedTicket(null);
+    try {
+      const existingFeatures = kanbanData?.features.map((f) => f.title) ?? [];
+      const res = await fetch("/api/generate-ticket-from-prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, existingFeatures }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to generate ticket");
+        return;
+      }
+      setGeneratedTicket({
+        title: data.title,
+        description: data.description,
+        priority: data.priority ?? "P1",
+        featureName: data.featureName ?? "Uncategorized",
+      });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setGeneratingTicket(false);
+    }
+  }, [plannerPromptInput, plannerPromptTextarea, kanbanData?.features]);
+
+  const confirmAddGeneratedTicketToBacklog = useCallback(async () => {
+    if (!project?.repoPath || !kanbanData || !generatedTicket) return;
+    const featureName = generatedTicket.featureName.trim() || "Uncategorized";
+    const nextNumber =
+      kanbanData.tickets.length === 0
+        ? 1
+        : Math.max(...kanbanData.tickets.map((t) => t.number)) + 1;
+    const newTicket: ParsedTicket = {
+      id: `ticket-${nextNumber}`,
+      number: nextNumber,
+      title: generatedTicket.title,
+      description: generatedTicket.description,
+      priority: generatedTicket.priority,
+      featureName,
+      done: false,
+      status: "Todo",
+    };
+    const updatedTickets = [newTicket, ...kanbanData.tickets];
+    let features = kanbanData.features.map((f) =>
+      f.title.toLowerCase().trim() === featureName.toLowerCase()
+        ? {
+            ...f,
+            ticketRefs: [...f.ticketRefs, nextNumber].sort((a, b) => a - b),
+          }
+        : f
+    );
+    const existingFeature = features.find(
+      (f) => f.title.toLowerCase().trim() === featureName.toLowerCase()
+    );
+    if (!existingFeature) {
+      features = [
+        ...features,
+        {
+          id: `feature-${features.length + 1}-${featureName.slice(0, 30).replace(/\s+/g, "-")}`,
+          title: featureName,
+          ticketRefs: [nextNumber],
+          done: false,
+        } as ParsedFeature,
+      ];
+    }
+    setSaving(true);
+    try {
+      const ticketsMd = serializeTicketsToMd(updatedTickets, { projectName: project.name });
+      await writeProjectFile(projectId, ".cursor/tickets.md", ticketsMd, project.repoPath);
+      const featuresMd = serializeFeaturesToMd(features);
+      await writeProjectFile(projectId, ".cursor/features.md", featuresMd, project.repoPath);
+      setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd));
+      setGeneratedTicket(null);
+      setPlannerPromptInput("");
+      setPlannerPromptTextarea("");
+      toast.success(`Ticket #${nextNumber} added to backlog.`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSaving(false);
+    }
+  }, [project, projectId, kanbanData, generatedTicket]);
+
   useEffect(() => {
     if (project) {
       loadKanbanFromMd();
@@ -884,93 +987,208 @@ export function ProjectTicketsTab({
                       </span>
                     </div>
                   )}
+
+                  {/* Kanban Board (inside Project Planner accordion) */}
+                  <div data-testid="kanban-columns-grid">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {(() => {
+                        const featureColorByTitle: Record<string, string> = {};
+                        kanbanData.features.forEach((f, i) => {
+                          featureColorByTitle[f.title] = getFeaturePalette(i).ticketBorder;
+                        });
+                        const kanbanColumnOrder = [
+                          "backlog",
+                          "in_progress",
+                          "done",
+                        ] as const;
+                        return kanbanColumnOrder.map((columnId) => {
+                          const column = kanbanData.columns[columnId];
+                          if (!column) return null;
+                          return (
+                            <KanbanColumnCard
+                              key={columnId}
+                              columnId={columnId}
+                              column={column}
+                              featureColorByTitle={featureColorByTitle}
+                              projectId={projectId}
+                              handleMarkDone={handleMarkDone}
+                              handleRedo={handleRedo}
+                              handleArchive={handleArchive}
+                            />
+                          );
+                        });
+                      })()}
+                    </div>
+                  </div>
                 </div>
               </AccordionContent>
             </AccordionItem>
           </Accordion>
 
-          {/* ═══════ Actions Toolbar ═══════ */}
-          <div className="w-full flex flex-col md:flex-row items-center justify-between gap-4 p-2 rounded-xl border border-border/40 bg-card/30 backdrop-blur-sm">
-            <div className="flex items-center gap-3 w-full md:w-auto">
-              <Button
-                onClick={() => setAddTicketOpen(true)}
-                className="flex-1 md:flex-none gap-2 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
-              >
-                <Plus className="size-4" />
-                Add Ticket
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setAddFeatureOpen(true)}
-                className="flex-1 md:flex-none gap-2 border-dashed border-border/60 hover:border-primary/50 hover:bg-primary/5"
-              >
-                <Layers className="size-4 text-violet-500" />
-                Add Feature
-              </Button>
-            </div>
+          {/* ═══════ Planner Manager (accordion: badges, prompt input, AI generate, confirm, bulk actions) ═══════ */}
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="planner-manager" className="border-none">
+              <AccordionTrigger className="hover:no-underline py-0">
+                <div className="flex flex-col items-start text-left gap-1">
+                  <h2 className="text-xl font-bold tracking-tight">Planner Manager</h2>
+                  <p className="text-sm text-muted-foreground font-normal">
+                    Describe what you want; AI generates a ticket. Confirm to add to backlog.
+                  </p>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pt-6">
+                <div className="w-full flex flex-col gap-4">
+                  {/* Mode badges: Ticket | Feature (only Ticket implemented) */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPlannerManagerMode("ticket")}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                        plannerManagerMode === "ticket"
+                          ? "bg-primary text-primary-foreground shadow"
+                          : "bg-muted/60 text-muted-foreground hover:bg-muted"
+                      )}
+                      tabIndex={0}
+                    >
+                      <TicketIcon className="size-3.5" />
+                      Ticket
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPlannerManagerMode("feature")}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                        plannerManagerMode === "feature"
+                          ? "bg-primary text-primary-foreground shadow"
+                          : "bg-muted/60 text-muted-foreground hover:bg-muted"
+                      )}
+                      tabIndex={0}
+                    >
+                      <Layers className="size-3.5" />
+                      Feature
+                    </button>
+                  </div>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                >
-                  <Trash className="size-4" />
-                  <span className="hidden sm:inline">Bulk Actions</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={handleRemoveAllTickets}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash className="size-4 mr-2" />
-                  Remove all tickets
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={handleRemoveAllFeatures}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash className="size-4 mr-2" />
-                  Remove all features
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+                  {/* Input + textarea + magic stick (tab order: input → textarea → button) */}
+                  {plannerManagerMode === "ticket" && (
+                    <>
+                      <div className="grid gap-2">
+                        <label htmlFor="planner-prompt-input" className="text-sm font-medium text-muted-foreground">
+                          What do you want?
+                        </label>
+                        <input
+                          id="planner-prompt-input"
+                          type="text"
+                          placeholder="e.g. A new page with settings"
+                          value={plannerPromptInput}
+                          onChange={(e) => setPlannerPromptInput(e.target.value)}
+                          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                          tabIndex={0}
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <label htmlFor="planner-prompt-textarea" className="text-sm font-medium text-muted-foreground">
+                          Details (optional)
+                        </label>
+                        <textarea
+                          id="planner-prompt-textarea"
+                          placeholder="e.g. I want a new page with settings for theme and notifications."
+                          value={plannerPromptTextarea}
+                          onChange={(e) => setPlannerPromptTextarea(e.target.value)}
+                          rows={3}
+                          className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                          tabIndex={0}
+                        />
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <Button
+                          type="button"
+                          onClick={generateTicketFromPrompt}
+                          disabled={generatingTicket || !kanbanData}
+                          className="gap-2"
+                          tabIndex={0}
+                        >
+                          {generatingTicket ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                            <Wand2 className="size-4" />
+                          )}
+                          Generate ticket
+                        </Button>
+                      </div>
 
-          {/* ═══════ Kanban Board ═══════ */}
-          <div data-testid="kanban-columns-grid">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {(() => {
-                const featureColorByTitle: Record<string, string> = {};
-                kanbanData.features.forEach((f, i) => {
-                  featureColorByTitle[f.title] = getFeaturePalette(i).ticketBorder;
-                });
-                const kanbanColumnOrder = [
-                  "backlog",
-                  "in_progress",
-                  "done",
-                ] as const;
-                return kanbanColumnOrder.map((columnId) => {
-                  const column = kanbanData.columns[columnId];
-                  if (!column) return null;
-                  return (
-                    <KanbanColumnCard
-                      key={columnId}
-                      columnId={columnId}
-                      column={column}
-                      featureColorByTitle={featureColorByTitle}
-                      projectId={projectId}
-                      handleMarkDone={handleMarkDone}
-                      handleRedo={handleRedo}
-                      handleArchive={handleArchive}
-                    />
-                  );
-                });
-              })()}
-            </div>
-          </div>
+                      {/* Confirm generated ticket → add to backlog at top */}
+                      {generatedTicket && (
+                        <div className="rounded-xl border border-border/40 bg-card/50 p-4 space-y-3">
+                          <p className="text-sm font-medium text-muted-foreground">Generated ticket — confirm to add to top of backlog</p>
+                          <div className="text-sm space-y-1">
+                            <p><span className="font-medium">Title:</span> {generatedTicket.title}</p>
+                            {generatedTicket.description && (
+                              <p><span className="font-medium">Description:</span> {generatedTicket.description}</p>
+                            )}
+                            <p><span className="font-medium">Priority:</span> {generatedTicket.priority} · <span className="font-medium">Feature:</span> {generatedTicket.featureName}</p>
+                          </div>
+                          <ButtonGroup alignment="left">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setGeneratedTicket(null)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={confirmAddGeneratedTicketToBacklog}
+                              disabled={saving}
+                            >
+                              {saving ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
+                              Confirm & add to backlog
+                            </Button>
+                          </ButtonGroup>
+                        </div>
+                      )}
+                    </>
+                  )}
+                  {plannerManagerMode === "feature" && (
+                    <p className="text-sm text-muted-foreground">Feature from prompt coming soon. Use Ticket for now.</p>
+                  )}
+
+                  {/* Bulk actions */}
+                  <div className="flex justify-end pt-2 border-t border-border/40">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash className="size-4" />
+                          <span className="hidden sm:inline">Bulk Actions</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={handleRemoveAllTickets}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash className="size-4 mr-2" />
+                          Remove all tickets
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={handleRemoveAllFeatures}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash className="size-4 mr-2" />
+                          Remove all features
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
 
           {/* ═══════ Features Section ═══════ */}
           {kanbanData.features.length > 0 && (

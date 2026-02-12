@@ -116,7 +116,7 @@ export async function readProjectFile(
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (/no such file|not a file|not found|does not exist/i.test(msg)) {
+      if (/no such file|not a file|not found|does not exist|os error 2/i.test(msg)) {
         throw new Error(`${relativePath}: file not found or not accessible. ${msg}`);
       }
       if (/canonicalize|permission denied|not a directory/i.test(msg)) {
@@ -146,6 +146,22 @@ export async function readProjectFile(
     throw new Error(`${relativePath}: ${errorMsg}`);
   }
   return text;
+}
+
+/**
+ * Read a file from the project repo, or return empty string if the file does not exist.
+ * Use for optional files (e.g. .cursor/tickets.md, .cursor/features.md) so the UI can load with empty data instead of showing a file-not-found error.
+ */
+export async function readProjectFileOrEmpty(
+  projectId: string,
+  relativePath: string,
+  repoPath?: string
+): Promise<string> {
+  try {
+    return await readProjectFile(projectId, relativePath, repoPath);
+  } catch {
+    return "";
+  }
 }
 
 /** Write a file under the project repo. In Tauri pass repoPath; in browser uses projectId. */
@@ -202,7 +218,7 @@ export async function listProjectFiles(
       });
     } catch (e) {
       console.warn("Tauri list_files_under_root failed:", e);
-      throw new Error("File listing not supported in desktop app yet.");
+      throw new Error(e instanceof Error ? e.message : "File listing failed.");
     }
   }
 

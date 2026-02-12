@@ -517,6 +517,69 @@ fn read_file_text_under_root(root: String, path: String) -> Result<String, Strin
     Ok(content)
 }
 
+/// Entry for one directory listing (one level under a root). Matches frontend FileEntry shape.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DirListingEntry {
+    pub name: String,
+    #[serde(rename = "isDirectory")]
+    pub is_directory: bool,
+    pub size: u64,
+    #[serde(rename = "updatedAt")]
+    pub updated_at: String,
+}
+
+/// List one level of files/dirs under a given root (e.g. project repo path). Used by Project Files in Stakeholder tab.
+#[tauri::command]
+fn list_files_under_root(root: String, path: String) -> Result<Vec<DirListingEntry>, String> {
+    let root_buf = PathBuf::from(root.trim());
+    let root_canonical = root_buf.canonicalize().map_err(|e| e.to_string())?;
+    let path_buf = PathBuf::from(path.trim().trim_start_matches('/'));
+    let dir = if path_buf.as_os_str().is_empty() || path_buf == Path::new(".") {
+        root_canonical.clone()
+    } else {
+        root_canonical.join(path_buf).canonicalize().map_err(|e| e.to_string())?
+    };
+    if !dir.starts_with(&root_canonical) {
+        return Err("Path must be under project root".to_string());
+    }
+    if !dir.is_dir() {
+        return Err("Path is not a directory".to_string());
+    }
+    let mut entries = Vec::new();
+    for e in std::fs::read_dir(&dir).map_err(|e| e.to_string())? {
+        let e = e.map_err(|e| e.to_string())?;
+        let path = e.path();
+        let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("").to_string();
+        if name.is_empty() || name == "." || name == ".." {
+            continue;
+        }
+        let meta = std::fs::metadata(&path).map_err(|e| e.to_string())?;
+        let is_directory = path.is_dir();
+        let size = if is_directory { 0 } else { meta.len() };
+        let updated_at = meta
+            .modified()
+            .ok()
+            .map(|t| {
+                let dt: DateTime<Utc> = t.into();
+                dt.format("%Y-%m-%dT%H:%M:%SZ").to_string()
+            })
+            .unwrap_or_default();
+        entries.push(DirListingEntry {
+            name,
+            is_directory,
+            size,
+            updated_at,
+        });
+    }
+    entries.sort_by(|a, b| {
+        if a.is_directory != b.is_directory {
+            return a.is_directory.cmp(&b.is_directory).reverse();
+        }
+        a.name.to_lowercase().cmp(&b.name.to_lowercase())
+    });
+    Ok(entries)
+}
+
 /// List files in script/ directory.
 #[tauri::command]
 fn list_scripts() -> Result<Vec<FileEntry>, String> {
@@ -1774,6 +1837,7 @@ pub fn run() {
             read_file_as_base64,
             read_file_text,
             read_file_text_under_root,
+            list_files_under_root,
             list_scripts,
             list_cursor_folder,
             write_spec_file,

@@ -27,13 +27,16 @@ import { ProjectGitTab } from "@/components/molecules/TabAndContentSections/Proj
 import { ProjectRunTab } from "@/components/molecules/TabAndContentSections/ProjectRunTab";
 import { ProjectArchitectureTab } from "@/components/molecules/TabAndContentSections/ProjectArchitectureTab";
 import { ProjectTestingTab } from "@/components/molecules/TabAndContentSections/ProjectTestingTab";
+import { ProjectDocumentationTab } from "@/components/molecules/TabAndContentSections/ProjectDocumentationTab";
 import { ProjectFilesTab } from "@/components/molecules/TabAndContentSections/ProjectFilesTab";
+import { ProjectAgentsSection } from "@/components/molecules/TabAndContentSections/ProjectAgentsSection";
+import { SetupDocBlock } from "@/components/molecules/TabAndContentSections/SetupDocBlock";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { cn } from "@/lib/utils";
 import { SectionCard, MetadataBadge, CountBadge } from "@/components/shared/DisplayPrimitives";
 
 const TAB_CONFIG = [
-  { value: "setup", label: "Stakeholder", icon: Settings, color: "text-violet-400", activeGlow: "shadow-violet-500/10" },
+  { value: "setup", label: "Setup", icon: Settings, color: "text-violet-400", activeGlow: "shadow-violet-500/10" },
   { value: "todo", label: "Planner", icon: ListTodo, color: "text-blue-400", activeGlow: "shadow-blue-500/10" },
   { value: "run", label: "Worker", icon: Play, color: "text-emerald-400", activeGlow: "shadow-emerald-500/10" },
   { value: "git", label: "Versioning", icon: FolderGit2, color: "text-amber-400", activeGlow: "shadow-amber-500/10" },
@@ -288,30 +291,13 @@ export function ProjectDetailsPageContent() {
             </TabsList>
           </div>
 
-          {/* ── Stakeholder Tab ── */}
+          {/* ── Setup Tab ── */}
           <TabsContent
             value="setup"
             className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
           >
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <SectionCard accentColor="violet">
-                <ProjectDesignTab project={project} projectId={projectId} />
-              </SectionCard>
-              <SectionCard accentColor="amber">
-                <ProjectIdeasTab project={project} projectId={projectId} />
-              </SectionCard>
-              <SectionCard accentColor="blue">
-                <ProjectArchitectureTab
-                  project={project}
-                  projectId={projectId}
-                />
-              </SectionCard>
-              <SectionCard accentColor="emerald">
-                <ProjectTestingTab
-                  project={project}
-                  projectId={projectId}
-                />
-              </SectionCard>
+              <ProjectAgentsSection project={project} projectId={projectId} />
               <SectionCard accentColor="rose" className="lg:col-span-2">
                 <div className="flex flex-col gap-4">
                   <div className="flex items-center gap-2">
@@ -324,6 +310,45 @@ export function ProjectDetailsPageContent() {
                     </div>
                   </div>
                   <ProjectFilesTab project={project} projectId={projectId} />
+                </div>
+              </SectionCard>
+              <SectionCard accentColor="violet">
+                <div className="flex flex-col gap-4">
+                  <SetupDocBlock project={project} projectId={projectId} setupKey="design" />
+                  <ProjectDesignTab project={project} projectId={projectId} />
+                </div>
+              </SectionCard>
+              <SectionCard accentColor="amber">
+                <div className="flex flex-col gap-4">
+                  <SetupDocBlock project={project} projectId={projectId} setupKey="ideas" />
+                  <ProjectIdeasTab project={project} projectId={projectId} />
+                </div>
+              </SectionCard>
+              <SectionCard accentColor="blue">
+                <div className="flex flex-col gap-4">
+                  <SetupDocBlock project={project} projectId={projectId} setupKey="architecture" />
+                  <ProjectArchitectureTab
+                    project={project}
+                    projectId={projectId}
+                  />
+                </div>
+              </SectionCard>
+              <SectionCard accentColor="emerald">
+                <div className="flex flex-col gap-4">
+                  <SetupDocBlock project={project} projectId={projectId} setupKey="testing" />
+                  <ProjectTestingTab
+                    project={project}
+                    projectId={projectId}
+                  />
+                </div>
+              </SectionCard>
+              <SectionCard accentColor="teal">
+                <div className="flex flex-col gap-4">
+                  <SetupDocBlock project={project} projectId={projectId} setupKey="documentation" />
+                  <ProjectDocumentationTab
+                    project={project}
+                    projectId={projectId}
+                  />
                 </div>
               </SectionCard>
             </div>

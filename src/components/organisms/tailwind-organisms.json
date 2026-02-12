@@ -80,6 +80,10 @@
     "0": "size-4",
     "1": "space-y-6"
   },
+  "DocumentationPageContent.tsx": {
+    "0": "min-h-screen bg-background space-y-8 pb-20 container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 animate-fade-in",
+    "1": "size-6 text-info/90"
+  },
   "TestingPageContent.tsx": {
     "0": "min-h-screen bg-background space-y-8 pb-20 container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 animate-fade-in",
     "1": "size-6 text-info/90",

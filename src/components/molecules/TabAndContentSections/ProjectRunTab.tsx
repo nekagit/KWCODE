@@ -273,7 +273,7 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
         <EmptyState
           icon={<Terminal className="h-8 w-8 text-muted-foreground" />}
           title="No repo path"
-          description="Set a repo path for this project in Stakeholder to run and view terminals here."
+          description="Set a repo path for this project in Setup to run and view terminals here."
         />
       </div>
     );
