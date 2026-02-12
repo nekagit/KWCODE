@@ -1,0 +1,176 @@
+[
+  {
+    "id": "8bb968b6-393a-4da3-b640-0a532e0e0108",
+    "title": "User authentication & authorization",
+    "ticket_ids": [
+      "1bb4ad84-0137-4d3c-8e1c-68d3edefca6e",
+      "23dd4ca2-18e2-4b22-a5a0-ad67c2aad35a",
+      "00bceea4-4636-4da7-be9b-df0263915456"
+    ],
+    "prompt_ids": [
+      2
+    ],
+    "project_paths": [],
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "e39bde42-7def-47bf-b5c4-72a217ead7db",
+    "title": "Landing page & marketing",
+    "ticket_ids": [
+      "7fc8b600-4e2b-4a18-ac6e-2c99fcc51fcc",
+      "42388fdd-ae7c-40b9-8467-9305f396328c",
+      "21e3daea-0c4d-454b-afbc-4621dce6f47c"
+    ],
+    "prompt_ids": [
+      3
+    ],
+    "project_paths": [],
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "0a8193cb-12d3-4708-ae75-6eaba10284de",
+    "title": "Core API & data layer",
+    "ticket_ids": [
+      "1aff008c-9367-40f4-8a47-4045a28ebe7a",
+      "211c1ae8-797c-4ee0-b5b0-762d1ecd4cc9",
+      "08194d24-28fd-49c5-be76-4628b48c0275"
+    ],
+    "prompt_ids": [
+      4
+    ],
+    "project_paths": [],
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "25924c6f-1871-42a8-83d6-f1e269d9c250",
+    "title": "Dashboard & analytics",
+    "ticket_ids": [
+      "858742cf-9922-4ddb-936e-2eeb6d1a83c2",
+      "84b4a6ad-c48c-4a68-b9e9-f353eac0f89d",
+      "5caf2010-32c7-4b59-b64b-81e77eebd39d"
+    ],
+    "prompt_ids": [
+      5
+    ],
+    "project_paths": [],
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "ca1b231d-aeab-4502-92f2-f20081c5ce79",
+    "title": "Settings & configuration",
+    "ticket_ids": [
+      "08808eee-1fd7-4af6-80fa-357dba0a0980",
+      "ef75a785-250c-4184-99f1-1a262037001d",
+      "6f620fba-e39a-4841-8318-1d29f6be5f90"
+    ],
+    "prompt_ids": [
+      6
+    ],
+    "project_paths": [],
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "341494ac-b177-497b-aba1-dd8563e9fae3",
+    "title": "Documentation & onboarding",
+    "ticket_ids": [
+      "4e04c2e8-f699-435a-9f6c-727b32dc553a",
+      "2665074e-b0c5-4b66-b579-768e5e09921c",
+      "b9e3ed39-2156-4b34-b4ba-11fa4f3b0368"
+    ],
+    "prompt_ids": [
+      7
+    ],
+    "project_paths": [],
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "60df0640-234d-404e-93a6-079c4eb26c5e",
+    "title": "Testing & quality",
+    "ticket_ids": [
+      "a417a536-fd3a-4bc3-aa6d-7cc6a691522a",
+      "9c09faa1-ac98-480c-a40f-b37bf1f34c03"
+    ],
+    "prompt_ids": [
+      8
+    ],
+    "project_paths": [],
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "45955128-1d74-4d26-9901-cf50e95a7ace",
+    "title": "Deployment & DevOps",
+    "ticket_ids": [
+      "b2e5179f-86ce-4637-a253-8d80ddf1012c",
+      "6990347f-55cd-475f-9d87-5d612b1679a7"
+    ],
+    "prompt_ids": [
+      9
+    ],
+    "project_paths": [],
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "ce2b0f5d-6ed7-402b-a598-058a948e87f5",
+    "title": "Security & compliance",
+    "ticket_ids": [
+      "43f35d5d-0a44-4c1f-ac7d-65f72e042ca9",
+      "176e610b-40a0-4090-a165-65aea6587652"
+    ],
+    "prompt_ids": [
+      10
+    ],
+    "project_paths": [],
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "0b30980c-a2f7-40d1-ae4c-b603977237fe",
+    "title": "Performance & monitoring",
+    "ticket_ids": [
+      "c3dfc795-77ca-4bbd-94ba-ecebbf6dd118",
+      "01b7d196-b722-457e-8283-f280db82f579"
+    ],
+    "prompt_ids": [
+      11
+    ],
+    "project_paths": [],
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "210d8fab-c542-4471-bb62-f099f1247bba",
+    "title": "Notifications & messaging",
+    "ticket_ids": [
+      "6055765e-437e-40d2-b5cf-3f4f1f44910f",
+      "f212c929-9862-4ae8-a914-d02dbd338cbe"
+    ],
+    "prompt_ids": [
+      2
+    ],
+    "project_paths": [],
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "c16c6583-aa0a-4b34-8b3e-1c5d32f29bc3",
+    "title": "Integration & extensibility",
+    "ticket_ids": [
+      "f168f2e5-f582-42ff-a8c9-d1f9ecf463a0",
+      "d7ab6bda-bf90-4926-b9d3-227fac54c17b"
+    ],
+    "prompt_ids": [
+      3
+    ],
+    "project_paths": [],
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  }
+]

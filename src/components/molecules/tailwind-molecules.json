@@ -548,9 +548,9 @@
     ],
     "LayoutAndNavigation/ThreeTabLayout.tsx": [
       "w-full",
-      "mt-6",
-      "mt-6",
-      "mt-6"
+      "mt-0",
+      "mt-0",
+      "mt-0"
     ],
     "LayoutAndNavigation/TicketBoardLayout.tsx": [
       "text-lg",

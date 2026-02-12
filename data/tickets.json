@@ -1,0 +1,272 @@
+[
+  {
+    "id": "1bb4ad84-0137-4d3c-8e1c-68d3edefca6e",
+    "title": "Discovery – backlog 1",
+    "description": "Template task for Discovery, categorizer backlog. Part of seed data.",
+    "status": "backlog",
+    "priority": 0,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "23dd4ca2-18e2-4b22-a5a0-ad67c2aad35a",
+    "title": "Design – task 2",
+    "description": "Template task for Design, categorizer task. Part of seed data.",
+    "status": "in_progress",
+    "priority": 1,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "00bceea4-4636-4da7-be9b-df0263915456",
+    "title": "Build – spike 3",
+    "description": "Template task for Build, categorizer spike. Part of seed data.",
+    "status": "done",
+    "priority": 2,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "7fc8b600-4e2b-4a18-ac6e-2c99fcc51fcc",
+    "title": "Launch – bug 4",
+    "description": "Template task for Launch, categorizer bug. Part of seed data.",
+    "status": "blocked",
+    "priority": 3,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "42388fdd-ae7c-40b9-8467-9305f396328c",
+    "title": "Review – review 5",
+    "description": "Template task for Review, categorizer review. Part of seed data.",
+    "status": "backlog",
+    "priority": 4,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "21e3daea-0c4d-454b-afbc-4621dce6f47c",
+    "title": "Discovery – backlog 6",
+    "description": "Template task for Discovery, categorizer backlog. Part of seed data.",
+    "status": "in_progress",
+    "priority": 0,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "1aff008c-9367-40f4-8a47-4045a28ebe7a",
+    "title": "Design – task 1",
+    "description": "Template task for Design, categorizer task. Part of seed data.",
+    "status": "done",
+    "priority": 1,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "211c1ae8-797c-4ee0-b5b0-762d1ecd4cc9",
+    "title": "Build – spike 2",
+    "description": "Template task for Build, categorizer spike. Part of seed data.",
+    "status": "blocked",
+    "priority": 2,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "08194d24-28fd-49c5-be76-4628b48c0275",
+    "title": "Launch – bug 3",
+    "description": "Template task for Launch, categorizer bug. Part of seed data.",
+    "status": "backlog",
+    "priority": 3,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "858742cf-9922-4ddb-936e-2eeb6d1a83c2",
+    "title": "Review – review 4",
+    "description": "Template task for Review, categorizer review. Part of seed data.",
+    "status": "in_progress",
+    "priority": 4,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "84b4a6ad-c48c-4a68-b9e9-f353eac0f89d",
+    "title": "Discovery – backlog 5",
+    "description": "Template task for Discovery, categorizer backlog. Part of seed data.",
+    "status": "done",
+    "priority": 0,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "5caf2010-32c7-4b59-b64b-81e77eebd39d",
+    "title": "Design – task 6",
+    "description": "Template task for Design, categorizer task. Part of seed data.",
+    "status": "blocked",
+    "priority": 1,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "08808eee-1fd7-4af6-80fa-357dba0a0980",
+    "title": "Build – spike 1",
+    "description": "Template task for Build, categorizer spike. Part of seed data.",
+    "status": "backlog",
+    "priority": 2,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "ef75a785-250c-4184-99f1-1a262037001d",
+    "title": "Launch – bug 2",
+    "description": "Template task for Launch, categorizer bug. Part of seed data.",
+    "status": "in_progress",
+    "priority": 3,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "6f620fba-e39a-4841-8318-1d29f6be5f90",
+    "title": "Review – review 3",
+    "description": "Template task for Review, categorizer review. Part of seed data.",
+    "status": "done",
+    "priority": 4,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "4e04c2e8-f699-435a-9f6c-727b32dc553a",
+    "title": "Discovery – backlog 4",
+    "description": "Template task for Discovery, categorizer backlog. Part of seed data.",
+    "status": "blocked",
+    "priority": 0,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "2665074e-b0c5-4b66-b579-768e5e09921c",
+    "title": "Design – task 5",
+    "description": "Template task for Design, categorizer task. Part of seed data.",
+    "status": "backlog",
+    "priority": 1,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "b9e3ed39-2156-4b34-b4ba-11fa4f3b0368",
+    "title": "Build – spike 6",
+    "description": "Template task for Build, categorizer spike. Part of seed data.",
+    "status": "in_progress",
+    "priority": 2,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "a417a536-fd3a-4bc3-aa6d-7cc6a691522a",
+    "title": "Launch – bug 1",
+    "description": "Template task for Launch, categorizer bug. Part of seed data.",
+    "status": "done",
+    "priority": 3,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "9c09faa1-ac98-480c-a40f-b37bf1f34c03",
+    "title": "Review – review 2",
+    "description": "Template task for Review, categorizer review. Part of seed data.",
+    "status": "blocked",
+    "priority": 4,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "b2e5179f-86ce-4637-a253-8d80ddf1012c",
+    "title": "Discovery – backlog 3",
+    "description": "Template task for Discovery, categorizer backlog. Part of seed data.",
+    "status": "backlog",
+    "priority": 0,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "6990347f-55cd-475f-9d87-5d612b1679a7",
+    "title": "Design – task 4",
+    "description": "Template task for Design, categorizer task. Part of seed data.",
+    "status": "in_progress",
+    "priority": 1,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "43f35d5d-0a44-4c1f-ac7d-65f72e042ca9",
+    "title": "Build – spike 5",
+    "description": "Template task for Build, categorizer spike. Part of seed data.",
+    "status": "done",
+    "priority": 2,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "176e610b-40a0-4090-a165-65aea6587652",
+    "title": "Launch – bug 6",
+    "description": "Template task for Launch, categorizer bug. Part of seed data.",
+    "status": "blocked",
+    "priority": 3,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "c3dfc795-77ca-4bbd-94ba-ecebbf6dd118",
+    "title": "Review – review 1",
+    "description": "Template task for Review, categorizer review. Part of seed data.",
+    "status": "backlog",
+    "priority": 4,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "01b7d196-b722-457e-8283-f280db82f579",
+    "title": "Discovery – backlog 2",
+    "description": "Template task for Discovery, categorizer backlog. Part of seed data.",
+    "status": "in_progress",
+    "priority": 0,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "6055765e-437e-40d2-b5cf-3f4f1f44910f",
+    "title": "Design – task 3",
+    "description": "Template task for Design, categorizer task. Part of seed data.",
+    "status": "done",
+    "priority": 1,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "f212c929-9862-4ae8-a914-d02dbd338cbe",
+    "title": "Build – spike 4",
+    "description": "Template task for Build, categorizer spike. Part of seed data.",
+    "status": "blocked",
+    "priority": 2,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "f168f2e5-f582-42ff-a8c9-d1f9ecf463a0",
+    "title": "Launch – bug 5",
+    "description": "Template task for Launch, categorizer bug. Part of seed data.",
+    "status": "backlog",
+    "priority": 3,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": "d7ab6bda-bf90-4926-b9d3-227fac54c17b",
+    "title": "Review – review 6",
+    "description": "Template task for Review, categorizer review. Part of seed data.",
+    "status": "in_progress",
+    "priority": 4,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  }
+]

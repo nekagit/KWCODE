@@ -5,10 +5,22 @@ import {
   CheckCircle2,
   TestTube2,
 } from "lucide-react";
-import { getClasses } from "@/components/molecules/tailwind-molecules";
 import type { KanbanColumn } from "@/lib/todos-kanban";
+import { cn } from "@/lib/utils";
 
-const classes = getClasses("Kanban/KanbanColumnHeader.tsx");
+const COLUMN_STYLES: Record<string, { dotColor: string; textColor: string }> = {
+  backlog: { dotColor: "bg-amber-400", textColor: "text-amber-400" },
+  in_progress: { dotColor: "bg-blue-400", textColor: "text-blue-400" },
+  done: { dotColor: "bg-emerald-400", textColor: "text-emerald-400" },
+  testing: { dotColor: "bg-violet-400", textColor: "text-violet-400" },
+};
+
+const COLUMN_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  backlog: ListTodo,
+  in_progress: Play,
+  done: CheckCircle2,
+  testing: TestTube2,
+};
 
 interface KanbanColumnHeaderProps {
   columnId: string;
@@ -18,14 +30,22 @@ interface KanbanColumnHeaderProps {
 export const KanbanColumnHeader: React.FC<KanbanColumnHeaderProps> = ({
   columnId,
   column,
-}) => (
-  <div className={classes[0]}>
-    <h3 className={classes[1]}>
-      {columnId === "backlog" && <ListTodo className={classes[2]} />}
-      {columnId === "in_progress" && <Play className={classes[2]} />}
-      {columnId === "done" && <CheckCircle2 className={classes[2]} />}
-      {columnId === "testing" && <TestTube2 className={classes[2]} />}
-      {column.name} ({column.items.length})
-    </h3>
-  </div>
-);
+}) => {
+  const style = COLUMN_STYLES[columnId] ?? COLUMN_STYLES.backlog;
+  const Icon = COLUMN_ICONS[columnId];
+
+  return (
+    <div className="flex items-center justify-between pb-3 border-b border-border/30">
+      <div className="flex items-center gap-2.5">
+        <div className={cn("size-2 rounded-full shrink-0", style.dotColor)} />
+        {Icon && <Icon className={cn("size-4 shrink-0", style.textColor)} />}
+        <h3 className="text-sm font-semibold tracking-tight">
+          {column.name}
+        </h3>
+      </div>
+      <span className="text-xs font-medium text-muted-foreground tabular-nums bg-muted/40 rounded-full px-2 py-0.5">
+        {column.items.length}
+      </span>
+    </div>
+  );
+};

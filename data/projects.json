@@ -1,0 +1,28 @@
+[
+  {
+    "id": "2745c03e-b8e8-47ab-a1ee-e0007daa88e1",
+    "name": "KW-February-Soladia",
+    "repoPath": "/Users/nenadkalicanin/Documents/February/KW-February-Soladia",
+    "promptIds": [],
+    "ticketIds": [],
+    "featureIds": [],
+    "ideaIds": [],
+    "designIds": [],
+    "architectureIds": [],
+    "created_at": "2026-02-12T11:01:07.189Z",
+    "updated_at": "2026-02-12T11:01:07.189Z"
+  },
+  {
+    "id": "eb7a582f-cdd8-4b26-95ea-61228d9f1479",
+    "name": "KW-February-KWCode",
+    "repoPath": "/Users/nenadkalicanin/Documents/February/KW-February-KWCode",
+    "promptIds": [],
+    "ticketIds": [],
+    "featureIds": [],
+    "ideaIds": [],
+    "designIds": [],
+    "architectureIds": [],
+    "created_at": "2026-02-12T11:01:32.344Z",
+    "updated_at": "2026-02-12T11:01:32.344Z"
+  }
+]

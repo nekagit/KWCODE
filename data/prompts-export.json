@@ -7,5 +7,95 @@
     "tags": null,
     "created_at": "2026-02-11T19:24:33.925Z",
     "updated_at": "2026-02-11T19:24:33.925Z"
+  },
+  {
+    "id": 2,
+    "title": "Sprint planning",
+    "content": "Follow the project's established patterns. Read .cursor/* and FEATURES.md first. Break work into small steps. Commit after each logical unit. Run tests and build before pushing.",
+    "category": "template",
+    "tags": null,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": 3,
+    "title": "Code review checklist",
+    "content": "Follow the project's established patterns. Read .cursor/* and FEATURES.md first. Break work into small steps. Commit after each logical unit. Run tests and build before pushing.",
+    "category": "template",
+    "tags": null,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": 4,
+    "title": "Bug triage",
+    "content": "Follow the project's established patterns. Read .cursor/* and FEATURES.md first. Break work into small steps. Commit after each logical unit. Run tests and build before pushing.",
+    "category": "template",
+    "tags": null,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": 5,
+    "title": "Refactor module",
+    "content": "Follow the project's established patterns. Read .cursor/* and FEATURES.md first. Break work into small steps. Commit after each logical unit. Run tests and build before pushing.",
+    "category": "template",
+    "tags": null,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": 6,
+    "title": "Add tests",
+    "content": "Follow the project's established patterns. Read .cursor/* and FEATURES.md first. Break work into small steps. Commit after each logical unit. Run tests and build before pushing.",
+    "category": "template",
+    "tags": null,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": 7,
+    "title": "Update docs",
+    "content": "Follow the project's established patterns. Read .cursor/* and FEATURES.md first. Break work into small steps. Commit after each logical unit. Run tests and build before pushing.",
+    "category": "template",
+    "tags": null,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": 8,
+    "title": "Deploy staging",
+    "content": "Follow the project's established patterns. Read .cursor/* and FEATURES.md first. Break work into small steps. Commit after each logical unit. Run tests and build before pushing.",
+    "category": "template",
+    "tags": null,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": 9,
+    "title": "Security scan",
+    "content": "Follow the project's established patterns. Read .cursor/* and FEATURES.md first. Break work into small steps. Commit after each logical unit. Run tests and build before pushing.",
+    "category": "template",
+    "tags": null,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": 10,
+    "title": "Performance audit",
+    "content": "Follow the project's established patterns. Read .cursor/* and FEATURES.md first. Break work into small steps. Commit after each logical unit. Run tests and build before pushing.",
+    "category": "template",
+    "tags": null,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
+  },
+  {
+    "id": 11,
+    "title": "User feedback review",
+    "content": "Follow the project's established patterns. Read .cursor/* and FEATURES.md first. Break work into small steps. Commit after each logical unit. Run tests and build before pushing.",
+    "category": "template",
+    "tags": null,
+    "created_at": "2026-02-12T10:53:42.643Z",
+    "updated_at": "2026-02-12T10:53:42.643Z"
   }
 ]
