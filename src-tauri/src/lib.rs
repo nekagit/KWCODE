@@ -11,6 +11,7 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Emitter, Manager, State};
+use url::Url;
 
 #[cfg(unix)]
 use std::os::unix::process::CommandExt;
@@ -1806,15 +1807,40 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .manage(RunningState::default())
         .setup(|app| {
-            // Workaround for macOS/Tauri bug: WebView sometimes shows white instead of devUrl.
-            // Force-navigate from Rust at 1s, 3s, 5s (navigate + eval fallback) if the initial load fails.
+            // Workaround for macOS/Tauri bug: WebView often shows white instead of devUrl.
+            // 1) Load a local loader HTML first (shows "kwcode" then redirects to dev server).
+            // 2) Retry navigating to app URL at 2s, 4s, 6s in case loader redirect fails.
             #[cfg(debug_assertions)]
             {
                 let app_url = "http://127.0.0.1:4000/".to_string();
                 let app_handle = app.handle().clone();
+
+                // Write loader to temp file so we can navigate to it (file:// works when devUrl fails).
+                let loader_url = (|| -> Option<Url> {
+                    let html = include_str!("../../public/tauri-load.html");
+                    let temp = std::env::temp_dir().join("tauri-load.html");
+                    std::fs::write(&temp, html).ok()?;
+                    let path = temp.canonicalize().ok()?;
+                    Url::from_file_path(path).ok()
+                })();
+
                 std::thread::spawn(move || {
-                    for &delay_ms in &[1000_u64, 3000, 5000] {
-                        std::thread::sleep(std::time::Duration::from_millis(delay_ms));
+                    // First: try to show loader (file://) so user sees something instead of white.
+                    if let Some(ref url) = loader_url {
+                        std::thread::sleep(std::time::Duration::from_millis(150));
+                        let handle = app_handle.clone();
+                        let load_url = url.clone();
+                        let _ = app_handle.run_on_main_thread(move || {
+                            for (_, w) in handle.webview_windows() {
+                                let _ = w.navigate(load_url.as_str().parse().unwrap_or_else(|_| "http://127.0.0.1:4000/".parse().unwrap()));
+                                break;
+                            }
+                        });
+                    }
+
+                    // Fallback: force-navigate to dev server in case loader or initial load failed.
+                    for _ in 0..3 {
+                        std::thread::sleep(std::time::Duration::from_millis(2000));
                         let handle = app_handle.clone();
                         let url = app_url.clone();
                         let _ = app_handle.run_on_main_thread(move || {
@@ -1822,7 +1848,6 @@ pub fn run() {
                                 let _ = w.navigate(
                                     url.parse().unwrap_or_else(|_| "http://127.0.0.1:4000/".parse().unwrap()),
                                 );
-                                // Fallback: force location via JS in case navigate() is ignored
                                 let js = format!("window.location.href = {}", serde_json::to_string(&url).unwrap_or_else(|_| "\"http://127.0.0.1:4000/\"".into()));
                                 let _ = w.eval(&js);
                                 break;
