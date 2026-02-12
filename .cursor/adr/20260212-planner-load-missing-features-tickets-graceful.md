@@ -1,4 +1,4 @@
-# ADR: Planner tab – graceful load when .cursor/features.md or .cursor/tickets.md is missing
+# ADR: Planner tab – graceful load when .cursor/planner/features.md or .cursor/planner/tickets.md is missing
 
 ## Date
 2026-02-12

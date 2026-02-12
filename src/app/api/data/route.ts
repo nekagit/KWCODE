@@ -6,8 +6,9 @@ import {
 } from "@/lib/todos-kanban";
 
 const CURSOR_PATH = ".cursor";
-const FEATURES_MD_PATH = `${CURSOR_PATH}/features.md`;
-const TICKETS_MD_PATH = `${CURSOR_PATH}/tickets.md`;
+const PLANNER_PATH = `${CURSOR_PATH}/planner`;
+const FEATURES_MD_PATH = `${PLANNER_PATH}/features.md`;
+const TICKETS_MD_PATH = `${PLANNER_PATH}/tickets.md`;
 const PROMPTS_JSON_PATH = `${CURSOR_PATH}/prompt-records.json`; // Assuming prompts are stored in a JSON file
 const DESIGNS_JSON_PATH = `${CURSOR_PATH}/designs.json`; // Assuming designs are stored in a JSON file
 const PROJECTS_JSON_PATH = `${CURSOR_PATH}/projects.json`; // Assuming active projects are stored in a JSON file

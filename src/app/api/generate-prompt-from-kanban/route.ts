@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error:
-          "No pending features or tickets. Add items in .cursor/features.md and .cursor/tickets.md and run Sync, or ensure some are not marked done.",
+          "No pending features or tickets. Add items in .cursor/planner/features.md and .cursor/planner/tickets.md and run Sync, or ensure some are not marked done.",
       },
       { status: 400 }
     );
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
   const featuresText =
     pendingFeatures.length === 0
       ? ""
-      : "## Pending features (from .cursor/features.md)\n" +
+      : "## Pending features (from .cursor/planner/features.md)\n" +
         pendingFeatures
           .map(
             (f) =>
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
   const ticketsText =
     pendingTickets.length === 0
       ? ""
-      : "## Pending tickets (from .cursor/tickets.md)\n" +
+      : "## Pending tickets (from .cursor/planner/tickets.md)\n" +
         pendingTickets
           .map(
             (t) =>
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
           )
           .join("\n");
 
-  const userPromptRecord = `You are helping a developer who uses Cursor IDE. They have a Kanban board driven by .cursor/features.md and .cursor/tickets.md. Below are the current PENDING (not done) features and tickets.
+  const userPromptRecord = `You are helping a developer who uses Cursor IDE. They have a Kanban board driven by .cursor/planner/features.md and .cursor/planner/tickets.md. Below are the current PENDING (not done) features and tickets.
 
 Generate a single Cursor/IDE prompt that will instruct an AI assistant to complete these features and tickets efficiently. The prompt should:
 1. Be actionable and clear (steps, order, references to ticket numbers).

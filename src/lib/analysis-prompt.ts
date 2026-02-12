@@ -24,8 +24,8 @@ export const ANALYSIS_PROMPT = `You are a senior engineer and architect. Analyze
    - Design system or UI overview: colors, typography, layout, key sections/pages.
    - Template type if applicable: landing, dashboard, product, auth, docs, etc.
 
-4. **features.md** (optional, must align with \`.cursor/tickets.md\`)
-   - Features must consist of work items from \`.cursor/tickets.md\`: each feature groups one or more tickets; reference ticket numbers where helpful. See \`.cursor/features-tickets-correlation.md\` if present.
+4. **features.md** (optional, must align with \`.cursor/planner/tickets.md\`)
+   - Features must consist of work items from \`.cursor/planner/tickets.md\`: each feature groups one or more tickets; reference ticket numbers where helpful. See \`.cursor/features-tickets-correlation.md\` if present.
    - Implemented features (title + short description).
    - Missing features with suggested next steps, each tied to tickets from \`tickets.md\`.
 
@@ -61,7 +61,7 @@ export function buildArchitectureAnalysisPromptRecord(opts: {
 Write the result to \`.cursor/architecture.md\` in the project root. Create \`.cursor\` if needed. Include: layers, patterns (e.g. clean, hexagonal, REST), dependencies, and where they appear in the code. Use clear markdown. Base everything on the actual codebase.`;
 }
 
-/** Build prompt for tickets/work analysis; writes .cursor/tickets.md (checklist by feature) and .cursor/features.md in one run. */
+/** Build prompt for tickets/work analysis; writes .cursor/planner/tickets.md (checklist by feature) and .cursor/planner/features.md in one run. */
 export function buildTicketsAnalysisPromptRecord(opts: {
   projectName: string;
   ticketSummaries: { title: string; status: string }[];
@@ -72,13 +72,13 @@ export function buildTicketsAnalysisPromptRecord(opts: {
 
 **You must create two files in the same run so they stay in sync:**
 
-1. **\`.cursor/tickets.md\`** — Work items in **checklist format** so the AI or user can check off finished tickets. Follow the structure in \`.cursor/tickets-format.md\` if present. Requirements:
+1. **\`.cursor/planner/tickets.md\`** — Work items in **checklist format** so the AI or user can check off finished tickets. Follow the structure in \`.cursor/tickets-format.md\` if present. Requirements:
    - **Required sections in order:** Title (H1), Metadata block (Project, Source, Last updated), horizontal rule, \`## Summary: Done vs missing\` (Done table, Missing table), horizontal rule, \`## Prioritized work items (tickets)\`, then \`### P0 — Critical / foundation\`, \`### P1 — High / quality and maintainability\`, \`### P2 — Medium / polish and scale\`, \`### P3 — Lower / later\`. Under each priority use \`#### Feature: <name>\` and list tickets as checklist items.
    - Use GFM task lists: \`- [ ] #N Title — short description\` for open, \`- [x] #N Title — short description\` for done. Every ticket must appear under exactly one \`#### Feature:\` subsection.
    - Add \`## Next steps\` with a numbered list at the end. Base everything on the actual codebase.
 
-2. **\`.cursor/features.md\`** — Features roadmap derived from the same tickets. Requirements:
-   - Short intro (1–3 sentences) stating features are derived from \`.cursor/tickets.md\`.
+2. **\`.cursor/planner/features.md\`** — Features roadmap derived from the same tickets. Requirements:
+   - Short intro (1–3 sentences) stating features are derived from \`.cursor/planner/tickets.md\`.
    - Checklist of **major features** in priority order: \`- [ ] Feature name (optional description) — #1, #2\` using the same feature names and ticket numbers as in \`tickets.md\`. Each feature must reference at least one ticket number.
    - Every feature must map to one or more tickets from \`tickets.md\`; no standalone features. See \`.cursor/features-tickets-correlation.md\` if present.
 
@@ -89,47 +89,47 @@ export function buildTicketsAnalysisPromptRecord(opts: {
 Create the \`.cursor\` folder if needed. Write both files in one run so feature names and ticket numbers match. This keeps tickets (checklist) and features (grouping) aligned and ensures the Kanban/JSON view on the project details page parses correctly. Base everything on the actual codebase.`;
 }
 
-/** Build prompt for features roadmap; writes to .cursor/features.md. Features must consist of tickets from .cursor/tickets.md. */
+/** Build prompt for features roadmap; writes to .cursor/planner/features.md. Features must consist of tickets from .cursor/planner/tickets.md. */
 export function buildFeaturesAnalysisPromptRecord(opts: {
   projectName: string;
   featureTitles: string[];
-  /** When provided, features in features.md must be derived from these work items (tickets). Omit to instruct the AI to read .cursor/tickets.md if present. */
+  /** When provided, features in features.md must be derived from these work items (tickets). Omit to instruct the AI to read .cursor/planner/tickets.md if present. */
   ticketsMdContent?: string | null;
 }): string {
   const hasTickets = opts.ticketsMdContent != null && opts.ticketsMdContent.trim() !== "";
   const ticketsBlock = hasTickets
     ? `
 
-**Current work items (tickets) from \`.cursor/tickets.md\` — use these as the source for features:**
+**Current work items (tickets) from \`.cursor/planner/tickets.md\` — use these as the source for features:**
 <tickets>
 ${(opts.ticketsMdContent ?? "").trim()}
 </tickets>
 
-Every feature you list in \`.cursor/features.md\` must consist of one or more of the above tickets. Group related tickets into a feature; reference ticket numbers (e.g. #1, #2) in the feature line or description where helpful. Do not add features that do not map to these tickets.`
+Every feature you list in \`.cursor/planner/features.md\` must consist of one or more of the above tickets. Group related tickets into a feature; reference ticket numbers (e.g. #1, #2) in the feature line or description where helpful. Do not add features that do not map to these tickets.`
     : `
 
-**Correlation with tickets:** If \`.cursor/tickets.md\` exists in the project, read it first. Features in \`.cursor/features.md\` must consist of work items from that file: each feature = one or more tickets; reference ticket numbers where helpful. If \`tickets.md\` is missing, create a features list that could later be reflected in \`tickets.md\`. See \`.cursor/features-tickets-correlation.md\` and \`.cursor/sync.md\` if present.`;
+**Correlation with tickets:** If \`.cursor/planner/tickets.md\` exists in the project, read it first. Features in \`.cursor/planner/features.md\` must consist of work items from that file: each feature = one or more tickets; reference ticket numbers where helpful. If \`tickets.md\` is missing, create a features list that could later be reflected in \`tickets.md\`. See \`.cursor/features-tickets-correlation.md\` and \`.cursor/sync.md\` if present.`;
 
   return `You are a senior engineer and product analyst. Analyze this codebase and the project's current scope, then produce a **features roadmap** that is aligned with the project's work items (tickets).
 
 Project: ${opts.projectName}.${opts.featureTitles.length ? ` Already defined/linked features: ${opts.featureTitles.join("; ")}.` : ""}
 ${ticketsBlock}
 
-**Requirements:** The project details page parses \`.cursor/features.md\` for Kanban and JSON (see \`.cursor/sync.md\`). Follow the format exactly so parsing succeeds: checklist lines with optional ticket refs.
+**Requirements:** The project details page parses \`.cursor/planner/features.md\` for Kanban and JSON (see \`.cursor/sync.md\`). Follow the format exactly so parsing succeeds: checklist lines with optional ticket refs.
 
-**Task:** Write exactly one file: \`.cursor/features.md\` in the project root. Create the \`.cursor\` folder if it does not exist.
+**Task:** Write exactly one file: \`.cursor/planner/features.md\` in the project root. Create the \`.cursor\` folder if it does not exist.
 
-**Content of \`.cursor/features.md\`:**
-- A short intro (1–3 sentences) stating that features are derived from \`.cursor/tickets.md\` and what "major features" means here.
+**Content of \`.cursor/planner/features.md\`:**
+- A short intro (1–3 sentences) stating that features are derived from \`.cursor/planner/tickets.md\` and what "major features" means here.
 - A checklist of **major features** in priority order. Each line: \`- [ ] Feature name (optional one-line description) — #1, #2\` — every feature must reference at least one ticket number from \`tickets.md\`.
-- Each feature must map to one or more tickets from \`.cursor/tickets.md\`. Group related tickets into a feature; no standalone features without ticket coverage.
+- Each feature must map to one or more tickets from \`.cursor/planner/tickets.md\`. Group related tickets into a feature; no standalone features without ticket coverage.
 - Base the list on the tickets (and codebase). Keep features distinct and meaningful (no duplicates).
 
 Example format:
 \`\`\`markdown
 # Features roadmap
 
-Brief intro: features below are derived from .cursor/tickets.md.
+Brief intro: features below are derived from .cursor/planner/tickets.md.
 
 ## Major features
 
@@ -138,7 +138,7 @@ Brief intro: features below are derived from .cursor/tickets.md.
 ...
 \`\`\`
 
-Create \`.cursor/features.md\` with this structure. Ensure every feature corresponds to tickets in \`.cursor/tickets.md\` and includes ticket refs (e.g. — #1, #2) so the Kanban/JSON view parses correctly.`;
+Create \`.cursor/planner/features.md\` with this structure. Ensure every feature corresponds to tickets in \`.cursor/planner/tickets.md\` and includes ticket refs (e.g. — #1, #2) so the Kanban/JSON view parses correctly.`;
 }
 
 /** Kanban/board data for context injection (avoids circular dependency). */
@@ -153,7 +153,7 @@ export type KanbanContextData = {
  */
 export function buildKanbanContextBlock(data: KanbanContextData): string {
   const lines: string[] = [
-    "## Current scope (from Kanban — .cursor/features.md & .cursor/tickets.md)",
+    "## Current scope (from Kanban — .cursor/planner/features.md & .cursor/planner/tickets.md)",
     "",
     "Use the following features and tickets as context. They are parsed from the project's Kanban board.",
     "",
@@ -179,7 +179,7 @@ export function buildKanbanContextBlock(data: KanbanContextData): string {
     });
   }
   if (data.features.length === 0 && data.tickets.length === 0) {
-    lines.push("_No features or tickets parsed yet. Run Sync on the Todos tab after creating .cursor/features.md and .cursor/tickets.md._");
+    lines.push("_No features or tickets parsed yet. Run Sync on the Todos tab after creating .cursor/planner/features.md and .cursor/planner/tickets.md._");
     lines.push("");
   }
   return lines.join("\n");

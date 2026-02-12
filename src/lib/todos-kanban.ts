@@ -1,5 +1,5 @@
 /**
- * Parsed feature from .cursor/features.md (checklist line with ticket refs).
+ * Parsed feature from .cursor/planner/features.md (checklist line with ticket refs).
  */
 export type ParsedFeature = {
   id: string;
@@ -9,7 +9,7 @@ export type ParsedFeature = {
 };
 
 /**
- * Parsed ticket from .cursor/tickets.md (checklist item under a feature and priority).
+ * Parsed ticket from .cursor/planner/tickets.md (checklist item under a feature and priority).
  */
 export type ParsedTicket = {
   id: string;
@@ -44,7 +44,7 @@ const FEATURE_CHECKLIST_RE = /^-\s*\[([ x])\]\s+(.+)$/gm;
 const TICKET_REF_RE = /#(\d+)/g;
 
 /**
- * Parse .cursor/features.md into a list of features (checklist items with optional #N refs).
+ * Parse .cursor/planner/features.md into a list of features (checklist items with optional #N refs).
  */
 export function parseFeaturesMd(content: string): ParsedFeature[] {
   if (!content?.trim()) return [];
@@ -70,7 +70,7 @@ const FEATURE_HEADER_RE = /^####\s*Feature:\s*(.+?)(?:\n|$)/gm;
 const TICKET_ITEM_RE = /^-\s*\[([ x])\]\s+#(\d+)\s+(.+?)(?:\s*—\s*(.+))?$/gm;
 
 /**
- * Parse .cursor/tickets.md into a list of tickets (checklist items by priority and feature).
+ * Parse .cursor/planner/tickets.md into a list of tickets (checklist items by priority and feature).
  */
 export function parseTicketsMd(content: string): ParsedTicket[] {
   if (!content?.trim()) return [];
@@ -116,7 +116,7 @@ export function parseTicketsMd(content: string): ParsedTicket[] {
 }
 
 /**
- * Build Kanban data from .cursor/tickets.md and .cursor/features.md content.
+ * Build Kanban data from .cursor/planner/tickets.md and .cursor/planner/features.md content.
  * Column mapping: ticket.done → done; !ticket.done → backlog. in_progress and testing stay empty.
  */
 export function buildKanbanFromMd(ticketsMd: string, featuresMd: string): TodosKanbanData {
@@ -162,7 +162,7 @@ export function parseTodosToKanban(featureIds: string[] | undefined, ticketIds: 
 const PRIORITY_ORDER: Array<"P0" | "P1" | "P2" | "P3"> = ["P0", "P1", "P2", "P3"];
 
 /**
- * Serialize parsed tickets to full .cursor/tickets.md content (H1, metadata, Summary placeholders, Prioritized work items).
+ * Serialize parsed tickets to full .cursor/planner/tickets.md content (H1, metadata, Summary placeholders, Prioritized work items).
  */
 export function serializeTicketsToMd(
   tickets: ParsedTicket[],
@@ -225,13 +225,13 @@ export function serializeTicketsToMd(
 }
 
 /**
- * Serialize parsed features to .cursor/features.md content (intro + Major features + checklist lines).
+ * Serialize parsed features to .cursor/planner/features.md content (intro + Major features + checklist lines).
  */
 export function serializeFeaturesToMd(features: ParsedFeature[]): string {
   const lines: string[] = [
     "# Features roadmap",
     "",
-    "Features below are derived from `.cursor/tickets.md`. Each major feature groups one or more work items (tickets); ticket numbers are listed so the Kanban and project details page parse and stay in sync.",
+    "Features below are derived from `.cursor/planner/tickets.md`. Each major feature groups one or more work items (tickets); ticket numbers are listed so the Kanban and project details page parse and stay in sync.",
     "",
     "## Major features",
     "",
@@ -247,7 +247,7 @@ export function serializeFeaturesToMd(features: ParsedFeature[]): string {
 const TICKET_LINE_RE = /^(-\s*)\[\s\](\s+#\d+\s+.+)$/gm;
 
 /**
- * Mark given ticket numbers as done in .cursor/tickets.md content.
+ * Mark given ticket numbers as done in .cursor/planner/tickets.md content.
  * Replaces `- [ ] #N` with `- [x] #N` for each N in ticketNumbers.
  */
 export function markTicketsDone(tickets: ParsedTicket[], ticketIds: string[]): ParsedTicket[] {
@@ -349,7 +349,7 @@ export function validateFeaturesTicketsCorrelation(
 }
 
 /**
- * Mark the feature checklist line that has the given ticket refs as done in .cursor/features.md.
+ * Mark the feature checklist line that has the given ticket refs as done in .cursor/planner/features.md.
  * Finds a line like `- [ ] Feature name — #1, #2` where the set of #N equals ticketRefs and sets [x].
  */
 export function markFeatureDoneByTicketRefs(featuresMd: string, ticketRefs: number[]): string {
@@ -375,7 +375,7 @@ export function markFeatureDoneByTicketRefs(featuresMd: string, ticketRefs: numb
 }
 
 /**
- * Mark the feature checklist line that has the given ticket refs as not done in .cursor/features.md.
+ * Mark the feature checklist line that has the given ticket refs as not done in .cursor/planner/features.md.
  * Finds a line like `- [x] Feature name — #1, #2` where the set of #N equals ticketRefs and sets [ ].
  */
 export function markFeatureNotDoneByTicketRefs(featuresMd: string, ticketRefs: number[]): string {

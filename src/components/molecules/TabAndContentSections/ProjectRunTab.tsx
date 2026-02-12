@@ -104,8 +104,8 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
     setKanbanError(null);
     try {
       const [ticketsMd, featuresMd] = await Promise.all([
-        readProjectFile(projectId, ".cursor/tickets.md", repoPath),
-        readProjectFile(projectId, ".cursor/features.md", repoPath),
+        readProjectFile(projectId, ".cursor/planner/tickets.md", repoPath),
+        readProjectFile(projectId, ".cursor/planner/features.md", repoPath),
       ]);
       const data = buildKanbanFromMd(ticketsMd, featuresMd);
       setKanbanData(data);
@@ -132,14 +132,14 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
         });
         await writeProjectFile(
           projectId,
-          ".cursor/tickets.md",
+          ".cursor/planner/tickets.md",
           ticketsMd,
           project.repoPath
         );
         const ticket = updatedTickets.find((t) => t.id === ticketId);
         let featuresMd = await readProjectFile(
           projectId,
-          ".cursor/features.md",
+          ".cursor/planner/features.md",
           project.repoPath
         );
         if (ticket && ticket.done) {
@@ -157,7 +157,7 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
             );
             await writeProjectFile(
               projectId,
-              ".cursor/features.md",
+              ".cursor/planner/features.md",
               featuresMd,
               project.repoPath
             );
@@ -185,13 +185,13 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
         });
         await writeProjectFile(
           projectId,
-          ".cursor/tickets.md",
+          ".cursor/planner/tickets.md",
           ticketsMd,
           project.repoPath
         );
         let featuresMd = await readProjectFile(
           projectId,
-          ".cursor/features.md",
+          ".cursor/planner/features.md",
           project.repoPath
         );
         if (ticket) {
@@ -210,7 +210,7 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
             );
             await writeProjectFile(
               projectId,
-              ".cursor/features.md",
+              ".cursor/planner/features.md",
               featuresMd,
               project.repoPath
             );
@@ -248,13 +248,13 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
         const featuresMd = serializeFeaturesToMd(features);
         await writeProjectFile(
           projectId,
-          ".cursor/tickets.md",
+          ".cursor/planner/tickets.md",
           ticketsMd,
           project.repoPath
         );
         await writeProjectFile(
           projectId,
-          ".cursor/features.md",
+          ".cursor/planner/features.md",
           featuresMd,
           project.repoPath
         );

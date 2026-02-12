@@ -99,7 +99,7 @@ export async function getProjectExport(id: string, category: keyof ResolvedProje
 }
 
 /**
- * Read a file from the project repo (e.g. .cursor/tickets.md).
+ * Read a file from the project repo (e.g. .cursor/planner/tickets.md).
  * In Tauri pass repoPath; in browser uses projectId.
  * Throws with a clear message when the file is missing or repo path is invalid (reliable read; clear errors when missing).
  */
@@ -150,7 +150,7 @@ export async function readProjectFile(
 
 /**
  * Read a file from the project repo, or return empty string if the file does not exist.
- * Use for optional files (e.g. .cursor/tickets.md, .cursor/features.md) so the UI can load with empty data instead of showing a file-not-found error.
+ * Use for optional files (e.g. .cursor/planner/tickets.md, .cursor/planner/features.md) so the UI can load with empty data instead of showing a file-not-found error.
  */
 export async function readProjectFileOrEmpty(
   projectId: string,

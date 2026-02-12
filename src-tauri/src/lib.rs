@@ -645,7 +645,7 @@ fn write_spec_file(project_path: String, relative_path: String, content: String)
     Ok(())
 }
 
-/// Archive .cursor/tickets.md or .cursor/features.md to .cursor/legacy/{file}-YYYY-MM-DD.md and create a new empty file.
+/// Archive .cursor/planner/tickets.md or .cursor/planner/features.md to .cursor/legacy/{file}-YYYY-MM-DD.md and create a new empty file.
 /// file_kind must be "tickets" or "features".
 #[tauri::command]
 fn archive_cursor_file(project_path: String, file_kind: String) -> Result<(), String> {
@@ -655,7 +655,7 @@ fn archive_cursor_file(project_path: String, file_kind: String) -> Result<(), St
     }
     let (cursor_file, legacy_prefix, minimal_content) = match file_kind.trim() {
         "tickets" => (
-            ".cursor/tickets.md",
+            ".cursor/planner/tickets.md",
             "tickets",
             "# Work items (tickets) — (project name)\n\n**Project:** (set)\n**Source:** Archived and reset\n**Last updated:** (date)\n\n---\n\n## Summary: Done vs missing\n\n### Done\n\n| Area | What's implemented |\n\n### Missing or incomplete\n\n| Area | Gap |\n\n---\n\n## Prioritized work items (tickets)\n\n### P0 — Critical / foundation\n
 #### Feature: (add feature name)\n
@@ -667,9 +667,9 @@ fn archive_cursor_file(project_path: String, file_kind: String) -> Result<(), St
 1. Add tickets under features.\n",
         ),
         "features" => (
-            ".cursor/features.md",
+            ".cursor/planner/features.md",
             "features",
-            "# Features roadmap\n\nFeatures below are derived from .cursor/tickets.md. Add features as checklist items with ticket refs, e.g. `- [ ] Feature name — #1, #2`.\n\n## Major features\n\n- [ ] (add feature)\n",
+            "# Features roadmap\n\nFeatures below are derived from .cursor/planner/tickets.md. Add features as checklist items with ticket refs, e.g. `- [ ] Feature name — #1, #2`.\n\n## Major features\n\n- [ ] (add feature)\n",
         ),
         _ => return Err("file_kind must be 'tickets' or 'features'".to_string()),
     };

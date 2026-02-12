@@ -21,5 +21,5 @@ The user wanted the Planner Manager section to stop offering direct "Add ticket"
 
 ## Consequences
 - Users can describe work in natural language and get a properly formatted ticket (title, description, priority, feature) without filling a form.
-- Ticket and prompt storage format is enforced by the API system prompt and by existing serialization (`.cursor/tickets.md` and `.cursor/features.md`).
+- Ticket and prompt storage format is enforced by the API system prompt and by existing serialization (`.cursor/planner/tickets.md` and `.cursor/planner/features.md`).
 - New tickets from this flow always appear at the top of the backlog. Feature mode can be added later with a similar AI flow for features.

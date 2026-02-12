@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
-/** Ticket shape returned by AI for .cursor/tickets.md (see .cursor/tickets-format.md). */
+/** Ticket shape returned by AI for .cursor/planner/tickets.md (see .cursor/tickets-format.md). */
 type GeneratedTicket = {
   title: string;
   description?: string;

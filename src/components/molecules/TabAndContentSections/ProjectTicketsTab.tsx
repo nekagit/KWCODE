@@ -365,8 +365,8 @@ export function ProjectTicketsTab({
     setKanbanError(null);
     try {
       const [ticketsMd, featuresMd] = await Promise.all([
-        readProjectFileOrEmpty(projectId, ".cursor/tickets.md", repoPath),
-        readProjectFileOrEmpty(projectId, ".cursor/features.md", repoPath),
+        readProjectFileOrEmpty(projectId, ".cursor/planner/tickets.md", repoPath),
+        readProjectFileOrEmpty(projectId, ".cursor/planner/features.md", repoPath),
       ]);
       const data = buildKanbanFromMd(ticketsMd, featuresMd);
       setKanbanData(data);
@@ -406,14 +406,14 @@ export function ProjectTicketsTab({
         });
         await writeProjectFile(
           projectId,
-          ".cursor/tickets.md",
+          ".cursor/planner/tickets.md",
           ticketsMd,
           project.repoPath
         );
         const ticket = updatedTickets.find((t) => t.id === ticketId);
         let featuresMd = await readProjectFile(
           projectId,
-          ".cursor/features.md",
+          ".cursor/planner/features.md",
           project.repoPath
         );
         if (ticket && ticket.done) {
@@ -431,7 +431,7 @@ export function ProjectTicketsTab({
             );
             await writeProjectFile(
               projectId,
-              ".cursor/features.md",
+              ".cursor/planner/features.md",
               featuresMd,
               project.repoPath
             );
@@ -459,13 +459,13 @@ export function ProjectTicketsTab({
         });
         await writeProjectFile(
           projectId,
-          ".cursor/tickets.md",
+          ".cursor/planner/tickets.md",
           ticketsMd,
           project.repoPath
         );
         let featuresMd = await readProjectFile(
           projectId,
-          ".cursor/features.md",
+          ".cursor/planner/features.md",
           project.repoPath
         );
         if (ticket) {
@@ -484,7 +484,7 @@ export function ProjectTicketsTab({
             );
             await writeProjectFile(
               projectId,
-              ".cursor/features.md",
+              ".cursor/planner/features.md",
               featuresMd,
               project.repoPath
             );
@@ -522,13 +522,13 @@ export function ProjectTicketsTab({
         const featuresMd = serializeFeaturesToMd(features);
         await writeProjectFile(
           projectId,
-          ".cursor/tickets.md",
+          ".cursor/planner/tickets.md",
           ticketsMd,
           project.repoPath
         );
         await writeProjectFile(
           projectId,
-          ".cursor/features.md",
+          ".cursor/planner/features.md",
           featuresMd,
           project.repoPath
         );
@@ -590,14 +590,14 @@ export function ProjectTicketsTab({
       });
       await writeProjectFile(
         projectId,
-        ".cursor/tickets.md",
+        ".cursor/planner/tickets.md",
         ticketsMd,
         project.repoPath
       );
       const featuresMd = serializeFeaturesToMd(features);
       await writeProjectFile(
         projectId,
-        ".cursor/features.md",
+        ".cursor/planner/features.md",
         featuresMd,
         project.repoPath
       );
@@ -638,13 +638,13 @@ export function ProjectTicketsTab({
         });
         await writeProjectFile(
           projectId,
-          ".cursor/tickets.md",
+          ".cursor/planner/tickets.md",
           ticketsMd,
           project.repoPath
         );
         let featuresMd = await readProjectFile(
           projectId,
-          ".cursor/features.md",
+          ".cursor/planner/features.md",
           project.repoPath
         );
         featuresMd = markFeatureDoneByTicketRefs(
@@ -653,7 +653,7 @@ export function ProjectTicketsTab({
         );
         await writeProjectFile(
           projectId,
-          ".cursor/features.md",
+          ".cursor/planner/features.md",
           featuresMd,
           project.repoPath
         );
@@ -686,13 +686,13 @@ export function ProjectTicketsTab({
       const featuresMd = serializeFeaturesToMd(updatedFeatures);
       await writeProjectFile(
         projectId,
-        ".cursor/features.md",
+        ".cursor/planner/features.md",
         featuresMd,
         project.repoPath
       );
       const ticketsMd = await readProjectFile(
         projectId,
-        ".cursor/tickets.md",
+        ".cursor/planner/tickets.md",
         project.repoPath
       );
       setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd));
@@ -723,13 +723,13 @@ export function ProjectTicketsTab({
       });
       await writeProjectFile(
         projectId,
-        ".cursor/tickets.md",
+        ".cursor/planner/tickets.md",
         ticketsMd,
         project.repoPath
       );
       const featuresMd = await readProjectFile(
         projectId,
-        ".cursor/features.md",
+        ".cursor/planner/features.md",
         project.repoPath
       );
       setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd));
@@ -755,13 +755,13 @@ export function ProjectTicketsTab({
       const featuresMd = serializeFeaturesToMd([]);
       await writeProjectFile(
         projectId,
-        ".cursor/features.md",
+        ".cursor/planner/features.md",
         featuresMd,
         project.repoPath
       );
       const ticketsMd = await readProjectFile(
         projectId,
-        ".cursor/tickets.md",
+        ".cursor/planner/tickets.md",
         project.repoPath
       );
       setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd));
@@ -849,9 +849,9 @@ export function ProjectTicketsTab({
     setSaving(true);
     try {
       const ticketsMd = serializeTicketsToMd(updatedTickets, { projectName: project.name });
-      await writeProjectFile(projectId, ".cursor/tickets.md", ticketsMd, project.repoPath);
+      await writeProjectFile(projectId, ".cursor/planner/tickets.md", ticketsMd, project.repoPath);
       const featuresMd = serializeFeaturesToMd(features);
-      await writeProjectFile(projectId, ".cursor/features.md", featuresMd, project.repoPath);
+      await writeProjectFile(projectId, ".cursor/planner/features.md", featuresMd, project.repoPath);
       setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd));
       setGeneratedTicket(null);
       setPlannerPromptInput("");
@@ -896,7 +896,7 @@ export function ProjectTicketsTab({
         <EmptyState
           icon={<TicketIcon className="size-6 text-muted-foreground" />}
           title="No repo path"
-          description="Set a repo path for this project to load tickets and features from .cursor/tickets.md and .cursor/features.md."
+          description="Set a repo path for this project to load tickets and features from .cursor/planner/tickets.md and .cursor/planner/features.md."
         />
       ) : kanbanLoading ? (
         <div className="flex items-center justify-center py-16">
