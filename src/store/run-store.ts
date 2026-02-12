@@ -32,6 +32,8 @@ export interface RunState {
   queueRunInfoId: string | null;
   /** Archived Implement All logs (saved when user clicks Archive). */
   archivedImplementAllLogs: Array<{ id: string; timestamp: string; logLines: string[] }>;
+  /** Run ID currently shown in the floating terminal dialog (Setup prompt runs). */
+  floatingTerminalRunId: string | null;
 }
 
 export interface RunActions {
@@ -59,6 +61,10 @@ export interface RunActions {
   stopScript: () => Promise<void>;
   stopRun: (runId: string) => Promise<void>;
   runImplementAll: (projectPath: string, promptContent?: string) => Promise<string | null>;
+  /** Run a single setup prompt (design/ideas/etc.) and open it in the floating terminal. */
+  runSetupPrompt: (projectPath: string, promptContent: string, label: string) => Promise<string | null>;
+  setFloatingTerminalRunId: (id: string | null) => void;
+  clearFloatingTerminal: () => void;
   stopAllImplementAll: () => Promise<void>;
   clearImplementAllLogs: () => void;
   archiveImplementAllLogs: () => void;
@@ -89,6 +95,7 @@ const initialState: RunState = {
   featureQueue: [],
   queueRunInfoId: null,
   archivedImplementAllLogs: [],
+  floatingTerminalRunId: null,
 };
 
 export const useRunStore = create<RunStore>()((set, get) => ({
@@ -408,6 +415,49 @@ export const useRunStore = create<RunStore>()((set, get) => ({
     }
   },
 
+  runSetupPrompt: async (projectPath, promptContent, label) => {
+    const path = projectPath?.trim();
+    if (!path) {
+      set({ error: "Project path is required" });
+      return null;
+    }
+    if (!promptContent?.trim()) {
+      set({ error: "Prompt content is empty" });
+      return null;
+    }
+    set({ error: null });
+    try {
+      const { run_id } = await invoke<{ run_id: string }>("run_implement_all", {
+        projectPath: path,
+        slot: 1,
+        promptContent: promptContent.trim(),
+      });
+      const runLabel = `Setup Prompt: ${label}`;
+      set((s) => ({
+        runningRuns: [
+          ...s.runningRuns,
+          {
+            runId: run_id,
+            label: runLabel,
+            logLines: [],
+            status: "running" as const,
+            startedAt: Date.now(),
+          },
+        ],
+        selectedRunId: run_id,
+        floatingTerminalRunId: run_id,
+      }));
+      return run_id;
+    } catch (e) {
+      set({ error: e instanceof Error ? e.message : String(e) });
+      return null;
+    }
+  },
+
+  setFloatingTerminalRunId: (id) => set({ floatingTerminalRunId: id }),
+
+  clearFloatingTerminal: () => set({ floatingTerminalRunId: null }),
+
   stopRun: async (runId) => {
     try {
       await invoke("stop_run", { runId });
@@ -533,6 +583,10 @@ export function useRunState() {
       archiveImplementAllLogs: s.archiveImplementAllLogs,
       archivedImplementAllLogs: s.archivedImplementAllLogs,
       getTimingForRun: s.getTimingForRun,
+      runSetupPrompt: s.runSetupPrompt,
+      floatingTerminalRunId: s.floatingTerminalRunId,
+      setFloatingTerminalRunId: s.setFloatingTerminalRunId,
+      clearFloatingTerminal: s.clearFloatingTerminal,
     }))
   );
 }

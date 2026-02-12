@@ -1,9 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Plus, Building2 } from "lucide-react";
-import { EmptyState } from "@/components/shared/EmptyState";
+import { Building2 } from "lucide-react";
 import type { Project } from "@/types/project";
 import { ProjectCategoryHeader } from "@/components/shared/ProjectCategoryHeader";
 import { ProjectArchitectureListItem } from "@/components/atoms/list-items/ProjectArchitectureListItem";
@@ -14,34 +11,27 @@ const classes = getClasses("TabAndContentSections/ProjectArchitectureTab.tsx");
 interface ProjectArchitectureTabProps {
   project: Project;
   projectId: string;
+  /** When false, used inside Setup card with section title above; omit header to avoid duplicate. */
+  showHeader?: boolean;
 }
 
 export function ProjectArchitectureTab({
   project,
   projectId,
+  showHeader = true,
 }: ProjectArchitectureTabProps) {
   return (
     <div className={classes[0]}>
-      <ProjectCategoryHeader
-        title="Architectures"
-        icon={<Building2 className={classes[1]} />}
-        project={project}
-      />
+      {showHeader && (
+        <ProjectCategoryHeader
+          title="Architectures"
+          icon={<Building2 className={classes[1]} />}
+          project={project}
+        />
+      )}
 
       {project.architectureIds?.length === 0 ? (
-        <EmptyState
-          icon={<Building2 className={classes[1]} />}
-          title="No architectures yet"
-          description="Define the high-level structure and components of your project."
-          action={
-            <Button asChild>
-              <Link href={`/architecture?projectId=${projectId}`}>
-                <Plus className={classes[3]} />
-                New architecture
-              </Link>
-            </Button>
-          }
-        />
+        <div className="min-h-[140px] rounded-xl border border-border/40 bg-white dark:bg-card" />
       ) : (
         <GridContainer>
           {project.architectureIds?.map((architectureId) => (

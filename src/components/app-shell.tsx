@@ -7,6 +7,7 @@ import { SidebarNavigation } from "@/components/organisms/SidebarNavigation";
 import { SidebarToggle } from "@/components/molecules/ControlsAndButtons/SidebarToggle";
 import { useRunState } from "@/context/run-state";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { FloatingTerminalDialog } from "@/components/shared/FloatingTerminalDialog";
 
 const SIDEBAR_STORAGE_KEY = "kwcode-sidebar-width";
 const SIDEBAR_MIN = 160;
@@ -142,6 +143,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </ErrorBoundary>
         </Suspense>
       </main>
+
+      {/* Floating terminal dialog for setup-prompt runs */}
+      <FloatingTerminalDialog />
     </div>
   );
 }

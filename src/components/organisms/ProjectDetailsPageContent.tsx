@@ -314,40 +314,48 @@ export function ProjectDetailsPageContent() {
               </SectionCard>
               <SectionCard accentColor="violet">
                 <div className="flex flex-col gap-4">
+                  <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Design</h3>
                   <SetupDocBlock project={project} projectId={projectId} setupKey="design" />
-                  <ProjectDesignTab project={project} projectId={projectId} />
+                  <ProjectDesignTab project={project} projectId={projectId} showHeader={false} />
                 </div>
               </SectionCard>
               <SectionCard accentColor="amber">
                 <div className="flex flex-col gap-4">
+                  <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Ideas</h3>
                   <SetupDocBlock project={project} projectId={projectId} setupKey="ideas" />
-                  <ProjectIdeasTab project={project} projectId={projectId} />
+                  <ProjectIdeasTab project={project} projectId={projectId} showHeader={false} />
                 </div>
               </SectionCard>
               <SectionCard accentColor="blue">
                 <div className="flex flex-col gap-4">
+                  <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Architecture</h3>
                   <SetupDocBlock project={project} projectId={projectId} setupKey="architecture" />
                   <ProjectArchitectureTab
                     project={project}
                     projectId={projectId}
+                    showHeader={false}
                   />
                 </div>
               </SectionCard>
               <SectionCard accentColor="emerald">
                 <div className="flex flex-col gap-4">
+                  <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Testing</h3>
                   <SetupDocBlock project={project} projectId={projectId} setupKey="testing" />
                   <ProjectTestingTab
                     project={project}
                     projectId={projectId}
+                    showHeader={false}
                   />
                 </div>
               </SectionCard>
               <SectionCard accentColor="teal">
                 <div className="flex flex-col gap-4">
+                  <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Documentation</h3>
                   <SetupDocBlock project={project} projectId={projectId} setupKey="documentation" />
                   <ProjectDocumentationTab
                     project={project}
                     projectId={projectId}
+                    showHeader={false}
                   />
                 </div>
               </SectionCard>

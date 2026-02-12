@@ -1070,88 +1070,99 @@ export function ProjectTicketsTab({
                     </button>
                   </div>
 
-                  {/* Input + textarea + magic stick (tab order: input → textarea → button) */}
-                  {plannerManagerMode === "ticket" && (
-                    <>
-                      <div className="grid gap-2">
-                        <label htmlFor="planner-prompt-input" className="text-sm font-medium text-muted-foreground">
-                          What do you want?
-                        </label>
-                        <input
-                          id="planner-prompt-input"
-                          type="text"
-                          placeholder="e.g. A new page with settings"
-                          value={plannerPromptInput}
-                          onChange={(e) => setPlannerPromptInput(e.target.value)}
-                          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                          tabIndex={0}
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <label htmlFor="planner-prompt-textarea" className="text-sm font-medium text-muted-foreground">
-                          Details (optional)
-                        </label>
-                        <textarea
-                          id="planner-prompt-textarea"
-                          placeholder="e.g. I want a new page with settings for theme and notifications."
-                          value={plannerPromptTextarea}
-                          onChange={(e) => setPlannerPromptTextarea(e.target.value)}
-                          rows={3}
-                          className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                          tabIndex={0}
-                        />
-                      </div>
-                      <div className="flex flex-wrap items-center gap-3">
-                        <Button
-                          type="button"
-                          onClick={generateTicketFromPrompt}
-                          disabled={generatingTicket || !kanbanData}
-                          className="gap-2"
-                          tabIndex={0}
-                        >
-                          {generatingTicket ? (
-                            <Loader2 className="size-4 animate-spin" />
-                          ) : (
-                            <Wand2 className="size-4" />
-                          )}
-                          Generate ticket
-                        </Button>
-                      </div>
+                  {/* Same input + textarea + magic stick for both Ticket and Feature (different prompt/flow per mode) */}
+                  <div className="grid gap-2">
+                    <label htmlFor="planner-prompt-input" className="text-sm font-medium text-muted-foreground">
+                      What do you want?
+                    </label>
+                    <input
+                      id="planner-prompt-input"
+                      type="text"
+                      placeholder={plannerManagerMode === "ticket" ? "e.g. A new page with settings" : "e.g. User settings and preferences"}
+                      value={plannerPromptInput}
+                      onChange={(e) => setPlannerPromptInput(e.target.value)}
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      tabIndex={0}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <label htmlFor="planner-prompt-textarea" className="text-sm font-medium text-muted-foreground">
+                      Details (optional)
+                    </label>
+                    <textarea
+                      id="planner-prompt-textarea"
+                      placeholder={plannerManagerMode === "ticket" ? "e.g. I want a new page with settings for theme and notifications." : "e.g. A feature that groups theme, notifications, and account settings."}
+                      value={plannerPromptTextarea}
+                      onChange={(e) => setPlannerPromptTextarea(e.target.value)}
+                      rows={3}
+                      className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                      tabIndex={0}
+                    />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {plannerManagerMode === "ticket" ? (
+                      <Button
+                        type="button"
+                        onClick={generateTicketFromPrompt}
+                        disabled={generatingTicket || !kanbanData}
+                        className="gap-2"
+                        tabIndex={0}
+                      >
+                        {generatingTicket ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <Wand2 className="size-4" />
+                        )}
+                        Generate ticket
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        onClick={() => toast.info("Feature from prompt coming soon. Use Ticket for now.")}
+                        disabled={!kanbanData}
+                        className="gap-2"
+                        tabIndex={0}
+                      >
+                        <Wand2 className="size-4" />
+                        Generate feature
+                      </Button>
+                    )}
+                  </div>
 
-                      {/* Confirm generated ticket → add to backlog at top */}
-                      {generatedTicket && (
-                        <div className="rounded-xl border border-border/40 bg-card/50 p-4 space-y-3">
-                          <p className="text-sm font-medium text-muted-foreground">Generated ticket — confirm to add to top of backlog</p>
-                          <div className="text-sm space-y-1">
-                            <p><span className="font-medium">Title:</span> {generatedTicket.title}</p>
-                            {generatedTicket.description && (
-                              <p><span className="font-medium">Description:</span> {generatedTicket.description}</p>
-                            )}
-                            <p><span className="font-medium">Priority:</span> {generatedTicket.priority} · <span className="font-medium">Feature:</span> {generatedTicket.featureName}</p>
-                          </div>
-                          <ButtonGroup alignment="left">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setGeneratedTicket(null)}
-                            >
-                              Cancel
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={confirmAddGeneratedTicketToBacklog}
-                              disabled={saving}
-                            >
-                              {saving ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
-                              Confirm & add to backlog
-                            </Button>
-                          </ButtonGroup>
-                        </div>
-                      )}
-                    </>
+                  {/* Ticket: confirm generated ticket → add to backlog at top */}
+                  {plannerManagerMode === "ticket" && generatedTicket && (
+                    <div className="rounded-xl border border-border/40 bg-card/50 p-4 space-y-3">
+                      <p className="text-sm font-medium text-muted-foreground">Generated ticket — confirm to add to top of backlog</p>
+                      <div className="text-sm space-y-1">
+                        <p><span className="font-medium">Title:</span> {generatedTicket.title}</p>
+                        {generatedTicket.description && (
+                          <p><span className="font-medium">Description:</span> {generatedTicket.description}</p>
+                        )}
+                        <p><span className="font-medium">Priority:</span> {generatedTicket.priority} · <span className="font-medium">Feature:</span> {generatedTicket.featureName}</p>
+                      </div>
+                      <ButtonGroup alignment="left">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setGeneratedTicket(null)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={confirmAddGeneratedTicketToBacklog}
+                          disabled={saving}
+                        >
+                          {saving ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
+                          Confirm & add to backlog
+                        </Button>
+                      </ButtonGroup>
+                    </div>
                   )}
+
+                  {/* Feature: same UI, different prompt — coming soon message */}
                   {plannerManagerMode === "feature" && (
-                    <p className="text-sm text-muted-foreground">Feature from prompt coming soon. Use Ticket for now.</p>
+                    <p className="text-sm text-muted-foreground uppercase tracking-wide">Feature from prompt coming soon. Use Ticket for now.</p>
                   )}
 
                   {/* Bulk actions */}

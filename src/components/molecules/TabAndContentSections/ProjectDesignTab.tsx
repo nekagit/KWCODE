@@ -1,9 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Plus, Palette } from "lucide-react";
-import { EmptyState } from "@/components/shared/EmptyState";
+import { Palette } from "lucide-react";
 import type { Project } from "@/types/project";
 import { ProjectCategoryHeader } from "@/components/shared/ProjectCategoryHeader";
 import { ProjectDesignListItem } from "@/components/atoms/list-items/ProjectDesignListItem";
@@ -14,34 +11,27 @@ const classes = getClasses("TabAndContentSections/ProjectDesignTab.tsx");
 interface ProjectDesignTabProps {
   project: Project;
   projectId: string;
+  /** When false, used inside Setup card with section title above; omit header to avoid duplicate. */
+  showHeader?: boolean;
 }
 
 export function ProjectDesignTab({
   project,
   projectId,
+  showHeader = true,
 }: ProjectDesignTabProps) {
   return (
     <div className={classes[0]}>
-      <ProjectCategoryHeader
-        title="Design"
-        icon={<Palette className={classes[1]} />}
-        project={project}
-      />
+      {showHeader && (
+        <ProjectCategoryHeader
+          title="Design"
+          icon={<Palette className={classes[1]} />}
+          project={project}
+        />
+      )}
 
       {project.designIds?.length === 0 ? (
-        <EmptyState
-          icon={<Palette className={classes[1]} />}
-          title="No designs yet"
-          description="Create a design to define the look and feel of your project."
-          action={
-            <Button asChild>
-              <Link href={`/design?projectId=${projectId}`}>
-                <Plus className={classes[3]} />
-                New design
-              </Link>
-            </Button>
-          }
-        />
+        <div className="min-h-[140px] rounded-xl border border-border/40 bg-white dark:bg-card" />
       ) : (
         <GridContainer>
           {project.designIds?.map((designId) => (
