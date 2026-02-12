@@ -137,7 +137,7 @@ export function ProjectDetailsPageContent() {
             </div>
           </TabsContent>
 
-          <TabsContent value="run" className={cn(c["14"], "mt-4")}>
+          <TabsContent value="run" className={c["14"]}>
             <ProjectRunTab project={project} projectId={projectId} />
           </TabsContent>
 
