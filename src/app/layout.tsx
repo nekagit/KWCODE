@@ -32,7 +32,8 @@ export default function RootLayout({
           }}
         />
         {/* Critical CSS: variables + base so Tauri webview has styles even if main stylesheet is delayed or blocked */}
-        <style dangerouslySetInnerHTML={{ __html: `
+        <style dangerouslySetInnerHTML={{
+          __html: `
           :root {
             --background: 0 0% 100%;
             --foreground: 240 10% 3.9%;
@@ -58,7 +59,7 @@ export default function RootLayout({
           @keyframes root-loading-pulse { 0%,100% { opacity: 0.4; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1); } }
         `}} />
       </head>
-      <body className="min-h-screen antialiased bg-background text-foreground" style={{ background: "hsl(var(--background))", color: "hsl(var(--foreground))" }}>
+      <body suppressHydrationWarning className="min-h-screen antialiased bg-background text-foreground" style={{ background: "hsl(var(--background))", color: "hsl(var(--foreground))" }}>
         <RootLoadingOverlay />
         <RunStoreHydration />
         <UIThemeProvider>

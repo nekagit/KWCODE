@@ -325,6 +325,11 @@ export function applyUITheme(themeId: UIThemeId): void {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(UI_THEME_STORAGE_KEY, themeId);
   document.documentElement.setAttribute("data-theme", themeId);
+  if (themeId === "dark") {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
 }
 
 /** Read current theme id from localStorage. Returns undefined if not set or invalid. */

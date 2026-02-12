@@ -8,8 +8,7 @@ import { spawn } from "child_process";
 import { existsSync, unlinkSync } from "fs";
 import { join } from "path";
 
-// Default to Tauri's dedicated dev port (4001) when TAURI_* env vars are not set.
-const port = process.env.TAURI_DEV_PORT || "4001";
+const port = process.env.TAURI_DEV_PORT || "4000";
 const baseUrl = `http://127.0.0.1:${port}`;
 // Wait for the app root (same as devUrl in tauri.conf.json)
 const devUrl = process.env.TAURI_DEV_URL || `${baseUrl}/`;
@@ -136,10 +135,7 @@ if (!alreadyUp) {
       // ignore
     }
   }
-  // For Tauri we prefer a dedicated Next dev script so the desktop app
-  // can use its own port (4001) without changing the main `npm run dev`.
-  const devScript = process.env.TAURI_DEV_NPM_SCRIPT || "dev:tauri:next";
-  const dev = spawn("npm", ["run", devScript], {
+  const dev = spawn("npm", ["run", "dev"], {
     stdio: "inherit",
     shell: true,
     detached: true,

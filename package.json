@@ -5,11 +5,10 @@
   "scripts": {
     "dev": "next dev -p 4000 -H 127.0.0.1 --webpack",
     "dev:tauri": "node script/wait-dev-server.mjs",
-    "dev:tauri:next": "next dev -p 4001 -H 127.0.0.1 --webpack",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "next lint",
-    "tauri": "node script/tauri-with-local-target.mjs dev",
+    "tauri": "node script/tauri-with-local-target.mjs",
     "tauri:build": "node script/tauri-with-local-target.mjs build --bundles app",
     "scaffold:cursor-md": "node script/scaffold-cursor-md.mjs",
     "extract:tailwind-classes": "node script/extract-tailwind-classes.mjs",

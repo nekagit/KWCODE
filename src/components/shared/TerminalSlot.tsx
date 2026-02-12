@@ -85,9 +85,9 @@ export function TerminalSlot({
     }[statusColor];
 
     const headerBg = {
-        emerald: "bg-emerald-500/[0.06]",
-        sky: "bg-sky-500/[0.04]",
-        muted: "bg-muted/20",
+        emerald: "bg-emerald-500/10",
+        sky: "bg-sky-500/10",
+        muted: "bg-muted/40",
     }[statusColor];
 
     return (
@@ -145,7 +145,7 @@ export function TerminalSlot({
             </div>
 
             {/* Terminal body */}
-            <div className="flex-1 min-h-0 bg-[hsl(var(--card))]/80">
+            <div className="flex-1 min-h-0 bg-slate-950">
                 <ScrollArea ref={scrollRef} className={cn(heightClass, "min-h-[120px]")}>
                     <div className="p-3 font-mono text-xs leading-relaxed">
                         {displayLogLines.length === 0 && !running && (

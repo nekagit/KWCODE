@@ -6,10 +6,10 @@ import type { KanbanColumn, ParsedTicket } from "@/lib/todos-kanban";
 import { cn } from "@/lib/utils";
 
 const COLUMN_BG: Record<string, string> = {
-  backlog: "bg-amber-500/[0.02]",
-  in_progress: "bg-blue-500/[0.02]",
-  done: "bg-emerald-500/[0.02]",
-  testing: "bg-violet-500/[0.02]",
+  backlog: "bg-amber-500/[0.08] border-amber-500/20",
+  in_progress: "bg-blue-500/[0.08] border-blue-500/20",
+  done: "bg-emerald-500/[0.08] border-emerald-500/20",
+  testing: "bg-violet-500/[0.08] border-violet-500/20",
 };
 
 interface KanbanColumnCardProps {
@@ -33,17 +33,17 @@ export const KanbanColumnCard: React.FC<KanbanColumnCardProps> = ({
 }) => (
   <div
     className={cn(
-      "flex min-h-[300px] min-w-0 w-full flex-col rounded-xl border border-border/40 p-4 transition-colors",
-      COLUMN_BG[columnId] ?? ""
+      "flex min-h-[400px] min-w-0 w-full flex-col rounded-xl border p-4 transition-all duration-300",
+      COLUMN_BG[columnId] ?? "bg-muted/30 border-border/40"
     )}
     data-testid={`kanban-column-${columnId}`}
   >
     <KanbanColumnHeader columnId={columnId} column={column} />
-    <ScrollArea className="flex-1 pt-3 -mx-1 px-1">
-      <div className="flex flex-col gap-2 min-w-0 w-full pb-2">
+    <ScrollArea className="flex-1 pt-4 -mx-1 px-1">
+      <div className="flex flex-col gap-3 min-w-0 w-full pb-2">
         {column.items.length === 0 && (
-          <div className="flex items-center justify-center py-8 text-xs text-muted-foreground/50">
-            No tickets
+          <div className="flex flex-col items-center justify-center py-12 text-xs text-muted-foreground/40 border-2 border-dashed border-border/30 rounded-lg">
+            <span className="opacity-50">No tickets</span>
           </div>
         )}
         {column.items.map((ticket: ParsedTicket) => (

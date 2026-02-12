@@ -2,9 +2,20 @@
 
 import { useState, useCallback, useEffect } from "react";
 import type { Project } from "@/types/project";
-import { readProjectFile } from "@/lib/api-projects";
+import { readProjectFile, writeProjectFile } from "@/lib/api-projects";
 import { isTauri, invoke } from "@/lib/tauri";
-import { buildKanbanFromMd, type TodosKanbanData } from "@/lib/todos-kanban";
+import {
+  buildKanbanFromMd,
+  markTicketsDone,
+  markTicketsNotDone,
+  serializeTicketsToMd,
+  serializeFeaturesToMd,
+  markFeatureDoneByTicketRefs,
+  markFeatureNotDoneByTicketRefs,
+  type TodosKanbanData,
+  type ParsedTicket,
+  type ParsedFeature,
+} from "@/lib/todos-kanban";
 import { buildKanbanContextBlock, combinePromptRecordWithKanban } from "@/lib/analysis-prompt";
 import { EmptyState, LoadingState } from "@/components/shared/EmptyState";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
@@ -39,12 +50,34 @@ import {
   Sparkles,
   Activity,
   MonitorUp,
+  Layers,
+  RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isImplementAllRun, formatElapsed } from "@/lib/run-helpers";
 import { AddPromptDialog } from "@/components/molecules/FormsAndDialogs/AddPromptDialog";
 import { StatusPill } from "@/components/shared/DisplayPrimitives";
 import { TerminalSlot } from "@/components/shared/TerminalSlot";
+import { KanbanTicketCard } from "@/components/molecules/Kanban/KanbanTicketCard";
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Constants & Utilities
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+const FEATURE_COLOR_PALETTE = [
+  { border: "border-l-blue-500", text: "text-blue-400", bg: "bg-blue-500/10", ticketBorder: "border-l-2 border-l-blue-500" },
+  { border: "border-l-emerald-500", text: "text-emerald-400", bg: "bg-emerald-500/10", ticketBorder: "border-l-2 border-l-emerald-500" },
+  { border: "border-l-amber-500", text: "text-amber-400", bg: "bg-amber-500/10", ticketBorder: "border-l-2 border-l-amber-500" },
+  { border: "border-l-violet-500", text: "text-violet-400", bg: "bg-violet-500/10", ticketBorder: "border-l-2 border-l-violet-500" },
+  { border: "border-l-rose-500", text: "text-rose-400", bg: "bg-rose-500/10", ticketBorder: "border-l-2 border-l-rose-500" },
+  { border: "border-l-cyan-500", text: "text-cyan-400", bg: "bg-cyan-500/10", ticketBorder: "border-l-2 border-l-cyan-500" },
+  { border: "border-l-orange-500", text: "text-orange-400", bg: "bg-orange-500/10", ticketBorder: "border-l-2 border-l-orange-500" },
+  { border: "border-l-teal-500", text: "text-teal-400", bg: "bg-teal-500/10", ticketBorder: "border-l-2 border-l-teal-500" },
+] as const;
+
+function getFeaturePalette(index: number) {
+  return FEATURE_COLOR_PALETTE[index % FEATURE_COLOR_PALETTE.length];
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Main Component
@@ -86,6 +119,153 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
   useEffect(() => {
     loadKanbanFromMd();
   }, [loadKanbanFromMd]);
+
+  /* ═══ Handlers (Duplicated from tickets tab for interactivity) ═══ */
+
+  const handleMarkDone = useCallback(
+    async (ticketId: string) => {
+      if (!project.repoPath || !kanbanData) return;
+      try {
+        const updatedTickets = markTicketsDone(kanbanData.tickets, [ticketId]);
+        const ticketsMd = serializeTicketsToMd(updatedTickets, {
+          projectName: project.name,
+        });
+        await writeProjectFile(
+          projectId,
+          ".cursor/tickets.md",
+          ticketsMd,
+          project.repoPath
+        );
+        const ticket = updatedTickets.find((t) => t.id === ticketId);
+        let featuresMd = await readProjectFile(
+          projectId,
+          ".cursor/features.md",
+          project.repoPath
+        );
+        if (ticket && ticket.done) {
+          const feature = kanbanData.features.find((f) =>
+            f.ticketRefs.includes(ticket.number)
+          );
+          if (
+            feature?.ticketRefs.every(
+              (n) => updatedTickets.find((t) => t.number === n)?.done
+            )
+          ) {
+            featuresMd = markFeatureDoneByTicketRefs(
+              featuresMd,
+              feature.ticketRefs
+            );
+            await writeProjectFile(
+              projectId,
+              ".cursor/features.md",
+              featuresMd,
+              project.repoPath
+            );
+          }
+        }
+        setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd));
+        toast.success("Ticket marked as done.");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : String(e));
+      }
+    },
+    [project, projectId, kanbanData]
+  );
+
+  const handleRedo = useCallback(
+    async (ticketId: string) => {
+      if (!project.repoPath || !kanbanData) return;
+      try {
+        const updatedTickets = markTicketsNotDone(kanbanData.tickets, [
+          ticketId,
+        ]);
+        const ticket = kanbanData.tickets.find((t) => t.id === ticketId);
+        const ticketsMd = serializeTicketsToMd(updatedTickets, {
+          projectName: project.name,
+        });
+        await writeProjectFile(
+          projectId,
+          ".cursor/tickets.md",
+          ticketsMd,
+          project.repoPath
+        );
+        let featuresMd = await readProjectFile(
+          projectId,
+          ".cursor/features.md",
+          project.repoPath
+        );
+        if (ticket) {
+          const feature = kanbanData.features.find((f) =>
+            f.ticketRefs.includes(ticket.number)
+          );
+          if (
+            feature &&
+            !feature.ticketRefs.some(
+              (n) => updatedTickets.find((t) => t.number === n)?.done
+            )
+          ) {
+            featuresMd = markFeatureNotDoneByTicketRefs(
+              featuresMd,
+              feature.ticketRefs
+            );
+            await writeProjectFile(
+              projectId,
+              ".cursor/features.md",
+              featuresMd,
+              project.repoPath
+            );
+          }
+        }
+        setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd));
+        toast.success("Ticket moved back to todo.");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : String(e));
+      }
+    },
+    [project, projectId, kanbanData]
+  );
+
+  const handleArchive = useCallback(
+    async (ticketId: string) => {
+      if (!project.repoPath || !kanbanData) return;
+      const ticket = kanbanData.tickets.find((t) => t.id === ticketId);
+      if (!ticket) return;
+      try {
+        const updatedTickets = kanbanData.tickets.filter(
+          (t) => t.id !== ticketId
+        );
+        const features = kanbanData.features.map((f) =>
+          f.ticketRefs.includes(ticket.number)
+            ? {
+              ...f,
+              ticketRefs: f.ticketRefs.filter((n) => n !== ticket.number),
+            }
+            : f
+        );
+        const ticketsMd = serializeTicketsToMd(updatedTickets, {
+          projectName: project.name,
+        });
+        const featuresMd = serializeFeaturesToMd(features);
+        await writeProjectFile(
+          projectId,
+          ".cursor/tickets.md",
+          ticketsMd,
+          project.repoPath
+        );
+        await writeProjectFile(
+          projectId,
+          ".cursor/features.md",
+          featuresMd,
+          project.repoPath
+        );
+        setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd));
+        toast.success(`Ticket #${ticket.number} archived.`);
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : String(e));
+      }
+    },
+    [project, projectId, kanbanData]
+  );
 
   if (!project.repoPath?.trim()) {
     return (
@@ -131,6 +311,15 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
     <div className="flex flex-col gap-5">
       {/* ═══ Status Bar ═══ */}
       <WorkerStatusBar />
+
+      {/* ═══ Ticket Queue (In Progress) ═══ */}
+      <WorkerTicketQueue
+        kanbanData={kanbanData}
+        projectId={projectId}
+        handleMarkDone={handleMarkDone}
+        handleRedo={handleRedo}
+        handleArchive={handleArchive}
+      />
 
       {/* ═══ Command Center ═══ */}
       <WorkerCommandCenter
@@ -472,3 +661,82 @@ function WorkerTerminalsSection() {
 }
 
 /* WorkerTerminalSlot is now the shared TerminalSlot from @/components/shared/TerminalSlot */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Ticket Queue Component
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function WorkerTicketQueue({
+  kanbanData,
+  projectId,
+  handleMarkDone,
+  handleRedo,
+  handleArchive,
+}: {
+  kanbanData: TodosKanbanData | null;
+  projectId: string;
+  handleMarkDone: (id: string) => Promise<void>;
+  handleRedo: (id: string) => Promise<void>;
+  handleArchive: (id: string) => Promise<void>;
+}) {
+  if (!kanbanData) return null;
+
+  // We want to show 'In Progress' tickets.
+  // Although parsing logic might put them in Backlog (if just Todo), we check the 'in_progress' column
+  // in case logic changes or is dynamic. If empty, users might expect us to show something, but
+  // strictly adhering to 'tickets in in_progress' means checking that column.
+  const tickets = kanbanData.columns.in_progress?.items ?? [];
+
+  // Compute feature colors
+  const featureColorByTitle: Record<string, string> = {};
+  kanbanData.features.forEach((f, i) => {
+    featureColorByTitle[f.title] = getFeaturePalette(i).ticketBorder;
+  });
+
+  if (tickets.length === 0) return null;
+
+  return (
+    <div className="rounded-2xl border border-border/40 bg-gradient-to-r from-blue-500/[0.04] to-violet-500/[0.04] backdrop-blur-sm overflow-hidden flex flex-col">
+      {/* Header */}
+      <div className="flex items-center gap-2.5 px-5 pt-4 pb-1">
+        <div className="flex items-center justify-center size-7 rounded-lg bg-blue-500/10">
+          <Layers className="size-3.5 text-blue-400" />
+        </div>
+        <div>
+          <h3 className="text-xs font-semibold text-foreground tracking-tight">Active Tickets</h3>
+          <p className="text-[10px] text-muted-foreground normal-case">
+            Tickets currently in progress
+          </p>
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+            {tickets.length} Active
+          </span>
+        </div>
+      </div>
+
+      {/* Horizontal Scroll Queue */}
+      <div className="w-full overflow-x-auto pb-4 pt-2 px-5 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
+        <div className="flex gap-4 min-w-max">
+          {tickets.map((ticket) => (
+            <div key={ticket.id} className="w-[300px]">
+              <KanbanTicketCard
+                ticket={ticket}
+                featureBorderClass={
+                  ticket.featureName
+                    ? featureColorByTitle[ticket.featureName]
+                    : undefined
+                }
+                projectId={projectId}
+                onMarkDone={handleMarkDone}
+                onRedo={handleRedo}
+                onArchive={handleArchive}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+

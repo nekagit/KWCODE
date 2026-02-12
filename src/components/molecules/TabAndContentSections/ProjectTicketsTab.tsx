@@ -36,6 +36,8 @@ import {
   Terminal,
   CheckCircle2,
   Circle,
+  Trash,
+  MoreVertical,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Project } from "@/types/project";
@@ -687,6 +689,72 @@ export function ProjectTicketsTab({
     }
   }, [project, projectId, kanbanData, addFeatureTitle, addFeatureRefs]);
 
+  const handleRemoveAllTickets = useCallback(async () => {
+    if (!project?.repoPath || !kanbanData) return;
+    if (
+      !confirm(
+        "Are you sure you want to remove ALL tickets? This cannot be undone."
+      )
+    )
+      return;
+
+    setSaving(true);
+    try {
+      const ticketsMd = serializeTicketsToMd([], {
+        projectName: project.name,
+      });
+      await writeProjectFile(
+        projectId,
+        ".cursor/tickets.md",
+        ticketsMd,
+        project.repoPath
+      );
+      const featuresMd = await readProjectFile(
+        projectId,
+        ".cursor/features.md",
+        project.repoPath
+      );
+      setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd));
+      toast.success("All tickets removed.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSaving(false);
+    }
+  }, [project, projectId, kanbanData]);
+
+  const handleRemoveAllFeatures = useCallback(async () => {
+    if (!project?.repoPath || !kanbanData) return;
+    if (
+      !confirm(
+        "Are you sure you want to remove ALL features? This cannot be undone."
+      )
+    )
+      return;
+
+    setSaving(true);
+    try {
+      const featuresMd = serializeFeaturesToMd([]);
+      await writeProjectFile(
+        projectId,
+        ".cursor/features.md",
+        featuresMd,
+        project.repoPath
+      );
+      const ticketsMd = await readProjectFile(
+        projectId,
+        ".cursor/tickets.md",
+        project.repoPath
+      );
+      setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd));
+      toast.success("All features removed.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSaving(false);
+    }
+  }, [project, projectId, kanbanData]);
+
   useEffect(() => {
     if (project) {
       loadKanbanFromMd();
@@ -729,69 +797,115 @@ export function ProjectTicketsTab({
         <ErrorDisplay message={kanbanError} />
       ) : !kanbanData ? null : (
         <>
-          {/* ═══════ Summary Bar ═══════ */}
-          <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-4">
-            <div className="flex items-center gap-6">
-              {/* Stats */}
-              <div className="flex items-center gap-4">
-                <SummaryStatPill
-                  label="Total"
-                  value={totalTickets}
-                  color="text-foreground"
-                />
-                <SummaryStatPill
-                  label="Open"
-                  value={totalTickets - doneTickets}
-                  color="text-blue-400"
-                />
-                <SummaryStatPill
-                  label="Done"
-                  value={doneTickets}
-                  color="text-emerald-400"
-                />
-                <SummaryStatPill
-                  label="Features"
-                  value={kanbanData.features.length}
-                  color="text-violet-400"
-                />
+          {/* ═══════ Summary & Actions ═══════ */}
+          <div className="flex flex-col gap-6">
+            {/* Header with Actions */}
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-bold tracking-tight">Project Planner</h2>
+                <p className="text-sm text-muted-foreground">Manage tickets, features, and progress.</p>
               </div>
-              {/* Progress bar */}
-              {totalTickets > 0 && (
-                <div className="flex items-center gap-2">
-                  <div className="w-24 h-1.5 rounded-full bg-muted/40 overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-500"
-                      style={{ width: `${progressPercent}%` }}
-                    />
-                  </div>
-                  <span className="text-[10px] font-medium text-muted-foreground tabular-nums">
-                    {progressPercent}%
-                  </span>
-                </div>
-              )}
+              {/* Actions moved to toolbar below */}
             </div>
 
-            {/* Action buttons */}
-            <div className="flex items-center gap-2">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="rounded-xl border border-border/40 bg-card backdrop-blur-sm p-4 flex flex-col gap-2 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <TicketIcon className="size-8" />
+                </div>
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Tickets</span>
+                <span className="text-2xl font-bold tabular-nums">{totalTickets}</span>
+              </div>
+
+              <div className="rounded-xl border border-blue-500/20 bg-blue-500/10 backdrop-blur-sm p-4 flex flex-col gap-2 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-3 text-blue-500 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <Circle className="size-8" />
+                </div>
+                <span className="text-xs font-medium text-blue-400 uppercase tracking-wider">Open</span>
+                <span className="text-2xl font-bold text-blue-500 tabular-nums">{totalTickets - doneTickets}</span>
+              </div>
+
+              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 backdrop-blur-sm p-4 flex flex-col gap-2 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-3 text-emerald-500 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <CheckCircle2 className="size-8" />
+                </div>
+                <span className="text-xs font-medium text-emerald-400 uppercase tracking-wider">Completed</span>
+                <span className="text-2xl font-bold text-emerald-500 tabular-nums">{doneTickets}</span>
+              </div>
+
+              <div className="rounded-xl border border-violet-500/20 bg-violet-500/10 backdrop-blur-sm p-4 flex flex-col gap-2 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-3 text-violet-500 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <Layers className="size-8" />
+                </div>
+                <span className="text-xs font-medium text-violet-400 uppercase tracking-wider">Features</span>
+                <span className="text-2xl font-bold text-violet-500 tabular-nums">{kanbanData.features.length}</span>
+              </div>
+            </div>
+
+            {/* Overall Progress */}
+            {totalTickets > 0 && (
+              <div className="rounded-xl border border-border/40 bg-card p-4 flex items-center gap-4">
+                <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Overall Progress</span>
+                <div className="h-3 flex-1 bg-muted/50 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-700 ease-out"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+                <span className="text-sm font-bold tabular-nums">{progressPercent}%</span>
+              </div>
+            )}
+          </div>
+
+          {/* ═══════ Actions Toolbar ═══════ */}
+          <div className="w-full flex flex-col md:flex-row items-center justify-between gap-4 p-2 rounded-xl border border-border/40 bg-card/30 backdrop-blur-sm">
+            <div className="flex items-center gap-3 w-full md:w-auto">
               <Button
-                variant="default"
-                size="sm"
                 onClick={() => setAddTicketOpen(true)}
-                className="gap-1.5 h-8 text-xs"
+                className="flex-1 md:flex-none gap-2 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
               >
-                <Plus className="size-3" />
-                Ticket
+                <Plus className="size-4" />
+                Add Ticket
               </Button>
               <Button
                 variant="outline"
-                size="sm"
                 onClick={() => setAddFeatureOpen(true)}
-                className="gap-1.5 h-8 text-xs"
+                className="flex-1 md:flex-none gap-2 border-dashed border-border/60 hover:border-primary/50 hover:bg-primary/5"
               >
-                <Layers className="size-3" />
-                Feature
+                <Layers className="size-4 text-violet-500" />
+                Add Feature
               </Button>
             </div>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                >
+                  <Trash className="size-4" />
+                  <span className="hidden sm:inline">Bulk Actions</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={handleRemoveAllTickets}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash className="size-4 mr-2" />
+                  Remove all tickets
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleRemoveAllFeatures}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash className="size-4 mr-2" />
+                  Remove all features
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* ═══════ Kanban Board ═══════ */}
@@ -829,17 +943,16 @@ export function ProjectTicketsTab({
 
           {/* ═══════ Features Section ═══════ */}
           {kanbanData.features.length > 0 && (
-            <div className="rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm overflow-hidden">
-              <div className="flex items-center gap-2 px-5 py-3 border-b border-border/30">
-                <Layers className="size-4 text-violet-400" />
-                <h3 className="text-sm font-semibold tracking-tight">
-                  Features
-                </h3>
-                <span className="text-xs text-muted-foreground tabular-nums ml-auto">
-                  {kanbanData.features.filter((f) => f.done).length}/{kanbanData.features.length} done
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 px-1">
+                <Layers className="size-5 text-violet-500" />
+                <h3 className="text-lg font-semibold tracking-tight">Active Features</h3>
+                <span className="ml-auto text-xs font-medium px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-400 border border-violet-500/20">
+                  {kanbanData.features.filter((f) => f.done).length}/{kanbanData.features.length} Done
                 </span>
               </div>
-              <div className="divide-y divide-border/20">
+
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {kanbanData.features.map((feature, idx) => {
                   const palette = getFeaturePalette(idx);
                   const ticketsByNumber = new Map(
@@ -858,76 +971,70 @@ export function ProjectTicketsTab({
                     <div
                       key={feature.id}
                       className={cn(
-                        "flex items-center gap-4 px-5 py-3 border-l-2 transition-colors hover:bg-muted/20",
-                        palette.border
+                        "group relative flex flex-col gap-3 rounded-xl border bg-card/40 p-5 transition-all duration-300 hover:shadow-lg hover:bg-card/60 backdrop-blur-sm",
+                        feature.done ? "opacity-60 grayscale" : "",
+                        palette.border.replace('border-l-2', 'border-l-4') // robust left border
                       )}
                     >
-                      {/* Status icon */}
-                      <button
-                        onClick={() => !feature.done && handleMarkFeatureDone(feature)}
-                        className={cn(
-                          "shrink-0 transition-colors",
-                          feature.done
-                            ? "text-emerald-400 cursor-default"
-                            : "text-muted-foreground/40 hover:text-emerald-400 cursor-pointer"
-                        )}
-                        title={feature.done ? "Done" : "Mark as done"}
-                        disabled={feature.done}
-                      >
-                        {feature.done ? (
-                          <CheckCircle2 className="size-4" />
-                        ) : (
-                          <Circle className="size-4" />
-                        )}
-                      </button>
-
-                      {/* Feature info */}
-                      <div className="flex-1 min-w-0">
-                        <span
-                          className={cn(
-                            "text-sm font-medium",
-                            feature.done &&
-                            "line-through text-muted-foreground"
-                          )}
-                        >
+                      {/* Title & Status */}
+                      <div className="flex items-start justify-between gap-3">
+                        <h4 className={cn("font-semibold text-sm leading-tight", feature.done && "line-through")}>
                           {feature.title}
-                        </span>
+                        </h4>
+                        <button
+                          onClick={() => !feature.done && handleMarkFeatureDone(feature)}
+                          className={cn(
+                            "shrink-0 transition-all duration-200",
+                            feature.done
+                              ? "text-emerald-500 cursor-default"
+                              : "text-muted-foreground/30 hover:text-emerald-500 hover:scale-110"
+                          )}
+                          disabled={feature.done}
+                        >
+                          {feature.done ? (
+                            <CheckCircle2 className="size-5" />
+                          ) : (
+                            <Circle className="size-5" />
+                          )}
+                        </button>
                       </div>
 
-                      {/* Ticket refs */}
-                      <div className="flex items-center gap-1.5 shrink-0">
+                      {/* Progress Bar */}
+                      {totalRefs > 0 && (
+                        <div className="space-y-1.5">
+                          <div className="flex justify-between text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                            <span>Progress</span>
+                            <span>{featureProgress}%</span>
+                          </div>
+                          <div className="h-1.5 w-full rounded-full bg-muted/40 overflow-hidden">
+                            <div
+                              className={cn("h-full rounded-full transition-all duration-500", feature.done ? "bg-emerald-500" : palette.bg.replace('/10', ''))}
+                              style={{ width: `${featureProgress}%`, backgroundColor: feature.done ? undefined : 'currentColor' }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Tickets Pills */}
+                      <div className="mt-auto pt-2 flex flex-wrap gap-1.5">
                         {feature.ticketRefs.map((num) => {
                           const t = ticketsByNumber.get(num);
+                          const isTicketDone = t?.done;
                           return (
                             <span
                               key={num}
                               className={cn(
-                                "text-[10px] font-mono tabular-nums px-1.5 py-0.5 rounded border",
-                                t?.done
-                                  ? "border-emerald-500/30 text-emerald-400/70 bg-emerald-500/5"
-                                  : "border-border/40 text-muted-foreground bg-muted/20"
+                                "text-[10px] tabular-nums px-1.5 py-0.5 rounded border transition-colors",
+                                isTicketDone
+                                  ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500 decoration-emerald-500/30 line-through"
+                                  : "bg-muted/30 border-border/40 text-muted-foreground"
                               )}
                             >
                               #{num}
                             </span>
-                          );
+                          )
                         })}
                       </div>
-
-                      {/* Mini progress */}
-                      {totalRefs > 0 && (
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <div className="w-12 h-1 rounded-full bg-muted/40 overflow-hidden">
-                            <div
-                              className="h-full rounded-full bg-emerald-500 transition-all duration-300"
-                              style={{ width: `${featureProgress}%` }}
-                            />
-                          </div>
-                          <span className="text-[9px] text-muted-foreground tabular-nums w-7 text-right">
-                            {doneRefs}/{totalRefs}
-                          </span>
-                        </div>
-                      )}
                     </div>
                   );
                 })}
@@ -936,12 +1043,14 @@ export function ProjectTicketsTab({
           )}
 
           {/* ═══════ Generate Kanban Prompt ═══════ */}
-          <GenerateKanbanPromptSection
-            kanbanData={kanbanData}
-            kanbanPrompt={kanbanPrompt}
-            kanbanPromptLoading={kanbanPromptLoading}
-            generateKanbanPrompt={generateKanbanPrompt}
-          />
+          <div className="rounded-xl border border-border/40 bg-card/30 backdrop-blur-sm p-1">
+            <GenerateKanbanPromptSection
+              kanbanData={kanbanData}
+              kanbanPrompt={kanbanPrompt}
+              kanbanPromptLoading={kanbanPromptLoading}
+              generateKanbanPrompt={generateKanbanPrompt}
+            />
+          </div>
         </>
       )}
 

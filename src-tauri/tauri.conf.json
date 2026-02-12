@@ -4,7 +4,7 @@
   "identifier": "com.kwcode.app",
   "build": {
     "beforeDevCommand": "npm run dev:tauri",
-    "devUrl": "http://127.0.0.1:4001/",
+    "devUrl": "http://127.0.0.1:4000/",
     "beforeBuildCommand": "npm run build",
     "frontendDist": "../out"
   },

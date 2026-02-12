@@ -8,15 +8,16 @@ import {
   ArrowRight,
   Archive,
   RotateCcw,
+  Circle,
 } from "lucide-react";
 import type { ParsedTicket } from "@/lib/todos-kanban";
 import { cn } from "@/lib/utils";
 
-const PRIORITY_STYLES: Record<string, string> = {
-  P0: "bg-red-500/15 text-red-400 border-red-500/30",
-  P1: "bg-amber-500/15 text-amber-400 border-amber-500/30",
-  P2: "bg-blue-500/15 text-blue-400 border-blue-500/30",
-  P3: "bg-muted/50 text-muted-foreground border-border/50",
+const PRIORITY_COLORS: Record<string, string> = {
+  P0: "text-red-500 bg-red-500",
+  P1: "text-amber-500 bg-amber-500",
+  P2: "text-blue-500 bg-blue-500",
+  P3: "text-muted-foreground bg-gray-500",
 };
 
 interface KanbanTicketCardProps {
@@ -37,104 +38,95 @@ export const KanbanTicketCard: React.FC<KanbanTicketCardProps> = ({
   onArchive,
 }) => {
   const isDone = ticket.status === "Done";
-  const priorityStyle = PRIORITY_STYLES[ticket.priority] ?? PRIORITY_STYLES.P3;
+  const priorityColor = PRIORITY_COLORS[ticket.priority] ?? PRIORITY_COLORS.P3;
 
   return (
     <div
       className={cn(
-        "group relative flex flex-col gap-2.5 rounded-lg border bg-card/80 p-3.5 transition-all duration-200",
-        "hover:bg-card hover:shadow-md hover:shadow-black/5",
-        isDone ? "opacity-70" : "",
-        featureBorderClass ?? "border-border/50"
+        "group relative flex flex-col gap-3 rounded-xl border bg-card/95 backdrop-blur-sm p-4 transition-all duration-300",
+        "hover:bg-card hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5",
+        isDone ? "opacity-60 grayscale-[0.5]" : "",
+        featureBorderClass ?? "border-border/60"
       )}
     >
-      {/* Header: title + priority */}
-      <div className="flex items-start justify-between gap-2 min-w-0">
-        <div className="flex-1 min-w-0">
-          <span className="text-xs font-medium text-muted-foreground/70 tabular-nums">
-            #{ticket.number}
-          </span>
+      {/* Header: ID + Priority + Title */}
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono text-muted-foreground/80 bg-muted/40 px-1.5 py-0.5 rounded-md">
+              #{ticket.number}
+            </span>
+            <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-full bg-muted/30 border border-border/20">
+              <div className={cn("size-1.5 rounded-full shrink-0", priorityColor.split(" ")[1])} />
+              <span className="text-[10px] font-medium leading-none text-muted-foreground">{ticket.priority}</span>
+            </div>
+          </div>
+
+          {/* Actions (visible on hover or always for essential) */}
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            {isDone ? (
+              <>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={(e) => { e.stopPropagation(); onArchive(ticket.id); }}
+                  title="Archive"
+                  className="size-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                >
+                  <Archive className="size-3" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={(e) => { e.stopPropagation(); onRedo(ticket.id); }}
+                  title="Redo"
+                  className="size-6 text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10"
+                >
+                  <RotateCcw className="size-3" />
+                </Button>
+              </>
+            ) : (
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={(e) => { e.stopPropagation(); onMarkDone(ticket.id); }}
+                title="Mark done"
+                className="size-6 text-muted-foreground hover:text-emerald-500 hover:bg-emerald-500/10"
+              >
+                <CheckCircle2 className="size-3.5" />
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <Link href={`/tickets/${ticket.id}?projectId=${projectId}`} className="group/link block">
           <h4
             className={cn(
-              "text-sm font-medium leading-snug mt-0.5 line-clamp-2 break-words",
+              "text-sm font-semibold leading-snug text-foreground/90 group-hover/link:text-primary transition-colors line-clamp-2",
               isDone && "line-through text-muted-foreground"
             )}
           >
             {ticket.title}
           </h4>
-        </div>
-        <Badge
-          className={cn(
-            "shrink-0 text-[10px] font-semibold px-1.5 py-0 h-5 rounded-md border",
-            priorityStyle
-          )}
-        >
-          {ticket.priority}
-        </Badge>
+        </Link>
       </div>
 
       {/* Description */}
       {ticket.description && (
-        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 normal-case">
+        <p className="text-xs text-muted-foreground/80 leading-relaxed line-clamp-2">
           {ticket.description}
         </p>
       )}
 
-      {/* Footer: feature + actions */}
-      <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/20">
-        {ticket.featureName ? (
-          <div className="flex items-center gap-1 min-w-0 flex-1">
-            <Layers className="size-3 shrink-0 text-muted-foreground/60" />
-            <span className="text-[10px] text-muted-foreground truncate">
-              {ticket.featureName}
-            </span>
-          </div>
-        ) : (
-          <div />
-        )}
-
-        <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          {isDone ? (
-            <>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => onArchive(ticket.id)}
-                title="Archive"
-                className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-              >
-                <Archive className="size-3" />
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => onRedo(ticket.id)}
-                title="Redo"
-                className="h-6 w-6 p-0 text-muted-foreground hover:text-amber-400"
-              >
-                <RotateCcw className="size-3" />
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => onMarkDone(ticket.id)}
-                title="Mark done"
-                className="h-6 w-6 p-0 text-muted-foreground hover:text-emerald-400"
-              >
-                <CheckCircle2 className="size-3" />
-              </Button>
-              <Button variant="ghost" size="sm" asChild className="h-6 w-6 p-0 text-muted-foreground hover:text-primary">
-                <Link href={`/tickets/${ticket.id}?projectId=${projectId}`} title="Open ticket">
-                  <ArrowRight className="size-3" />
-                </Link>
-              </Button>
-            </>
-          )}
+      {/* Footer: Feature badge */}
+      {ticket.featureName && (
+        <div className="mt-auto pt-2 flex items-center gap-1.5 border-t border-border/30">
+          <Layers className="size-3 shrink-0 text-violet-400" />
+          <span className="text-[10px] font-medium text-muted-foreground truncate max-w-full">
+            {ticket.featureName}
+          </span>
         </div>
-      </div>
+      )}
     </div>
   );
 };
