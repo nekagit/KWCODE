@@ -16,6 +16,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Dialog as SharedDialog } from "@/components/shared/Dialog";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import { Form } from "@/components/shared/Form";
@@ -798,65 +804,90 @@ export function ProjectTicketsTab({
       ) : !kanbanData ? null : (
         <>
           {/* ═══════ Summary & Actions ═══════ */}
-          <div className="flex flex-col gap-6">
-            {/* Header with Actions */}
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-bold tracking-tight">Project Planner</h2>
-                <p className="text-sm text-muted-foreground">Manage tickets, features, and progress.</p>
-              </div>
-              {/* Actions moved to toolbar below */}
-            </div>
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="rounded-xl border border-border/40 bg-card backdrop-blur-sm p-4 flex flex-col gap-2 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <TicketIcon className="size-8" />
+          <Accordion type="single" collapsible defaultValue="planner-stats" className="w-full">
+            <AccordionItem value="planner-stats" className="border-none">
+              <AccordionTrigger className="hover:no-underline py-0">
+                <div className="flex flex-col items-start text-left gap-1">
+                  <h2 className="text-xl font-bold tracking-tight">Project Planner</h2>
+                  <p className="text-sm text-muted-foreground font-normal">
+                    Manage tickets, features, and progress.
+                  </p>
                 </div>
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Tickets</span>
-                <span className="text-2xl font-bold tabular-nums">{totalTickets}</span>
-              </div>
+              </AccordionTrigger>
+              <AccordionContent className="pt-6">
+                <div className="flex flex-col gap-6">
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="rounded-xl border border-border/40 bg-card backdrop-blur-sm p-4 flex flex-col gap-2 relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <TicketIcon className="size-8" />
+                      </div>
+                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Total Tickets
+                      </span>
+                      <span className="text-2xl font-bold tabular-nums">
+                        {totalTickets}
+                      </span>
+                    </div>
 
-              <div className="rounded-xl border border-blue-500/20 bg-blue-500/10 backdrop-blur-sm p-4 flex flex-col gap-2 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-3 text-blue-500 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <Circle className="size-8" />
-                </div>
-                <span className="text-xs font-medium text-blue-400 uppercase tracking-wider">Open</span>
-                <span className="text-2xl font-bold text-blue-500 tabular-nums">{totalTickets - doneTickets}</span>
-              </div>
+                    <div className="rounded-xl border border-blue-500/20 bg-blue-500/10 backdrop-blur-sm p-4 flex flex-col gap-2 relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 p-3 text-blue-500 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <Circle className="size-8" />
+                      </div>
+                      <span className="text-xs font-medium text-blue-400 uppercase tracking-wider">
+                        Open
+                      </span>
+                      <span className="text-2xl font-bold text-blue-500 tabular-nums">
+                        {totalTickets - doneTickets}
+                      </span>
+                    </div>
 
-              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 backdrop-blur-sm p-4 flex flex-col gap-2 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-3 text-emerald-500 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <CheckCircle2 className="size-8" />
-                </div>
-                <span className="text-xs font-medium text-emerald-400 uppercase tracking-wider">Completed</span>
-                <span className="text-2xl font-bold text-emerald-500 tabular-nums">{doneTickets}</span>
-              </div>
+                    <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 backdrop-blur-sm p-4 flex flex-col gap-2 relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 p-3 text-emerald-500 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <CheckCircle2 className="size-8" />
+                      </div>
+                      <span className="text-xs font-medium text-emerald-400 uppercase tracking-wider">
+                        Completed
+                      </span>
+                      <span className="text-2xl font-bold text-emerald-500 tabular-nums">
+                        {doneTickets}
+                      </span>
+                    </div>
 
-              <div className="rounded-xl border border-violet-500/20 bg-violet-500/10 backdrop-blur-sm p-4 flex flex-col gap-2 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-3 text-violet-500 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <Layers className="size-8" />
-                </div>
-                <span className="text-xs font-medium text-violet-400 uppercase tracking-wider">Features</span>
-                <span className="text-2xl font-bold text-violet-500 tabular-nums">{kanbanData.features.length}</span>
-              </div>
-            </div>
+                    <div className="rounded-xl border border-violet-500/20 bg-violet-500/10 backdrop-blur-sm p-4 flex flex-col gap-2 relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 p-3 text-violet-500 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <Layers className="size-8" />
+                      </div>
+                      <span className="text-xs font-medium text-violet-400 uppercase tracking-wider">
+                        Features
+                      </span>
+                      <span className="text-2xl font-bold text-violet-500 tabular-nums">
+                        {kanbanData.features.length}
+                      </span>
+                    </div>
+                  </div>
 
-            {/* Overall Progress */}
-            {totalTickets > 0 && (
-              <div className="rounded-xl border border-border/40 bg-card p-4 flex items-center gap-4">
-                <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Overall Progress</span>
-                <div className="h-3 flex-1 bg-muted/50 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-700 ease-out"
-                    style={{ width: `${progressPercent}%` }}
-                  />
+                  {/* Overall Progress */}
+                  {totalTickets > 0 && (
+                    <div className="rounded-xl border border-border/40 bg-card p-4 flex items-center gap-4">
+                      <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+                        Overall Progress
+                      </span>
+                      <div className="h-3 flex-1 bg-muted/50 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-700 ease-out"
+                          style={{ width: `${progressPercent}%` }}
+                        />
+                      </div>
+                      <span className="text-sm font-bold tabular-nums">
+                        {progressPercent}%
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <span className="text-sm font-bold tabular-nums">{progressPercent}%</span>
-              </div>
-            )}
-          </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
 
           {/* ═══════ Actions Toolbar ═══════ */}
           <div className="w-full flex flex-col md:flex-row items-center justify-between gap-4 p-2 rounded-xl border border-border/40 bg-card/30 backdrop-blur-sm">

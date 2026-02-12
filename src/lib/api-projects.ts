@@ -180,3 +180,40 @@ export async function writeProjectFile(
     throw new Error(msg);
   }
 }
+
+export type FileEntry = {
+  name: string;
+  isDirectory: boolean;
+  size: number;
+  updatedAt: string;
+};
+
+export async function listProjectFiles(
+  projectId: string,
+  relativePath: string = "",
+  repoPath?: string
+): Promise<FileEntry[]> {
+  if (isTauri && repoPath) {
+    // Attempting invoke call, might fail if not implemented in Rust backend yet
+    try {
+      return await invoke<FileEntry[]>("list_files_under_root", {
+        root: repoPath,
+        path: relativePath,
+      });
+    } catch (e) {
+      console.warn("Tauri list_files_under_root failed:", e);
+      throw new Error("File listing not supported in desktop app yet.");
+    }
+  }
+
+  const query = relativePath ? `?path=${encodeURIComponent(relativePath)}` : "";
+  const res = await fetch(`/api/data/projects/${projectId}/files${query}`);
+  const json = await res.json();
+
+  if (!res.ok) {
+    throw new Error(json.error || "Failed to list files");
+  }
+
+  return json.files;
+}
+

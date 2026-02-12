@@ -28,7 +28,7 @@ export default function RootLayout({
         {/* Apply stored UI theme before paint so first paint and loading overlay match Configuration choice */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){var t=localStorage.getItem("app-ui-theme");var v=["light","dark","ocean","forest","warm","red"];var themeToApply=t&&v.indexOf(t)!==-1?t:"dark";document.documentElement.setAttribute("data-theme",themeToApply);})();`,
+            __html: `(function(){var t=localStorage.getItem("app-ui-theme");var v=["light","dark","ocean","forest","warm","red"];var themeToApply=t&&v.indexOf(t)!==-1?t:"dark";document.documentElement.setAttribute("data-theme",themeToApply);if(themeToApply==="dark"){document.documentElement.classList.add("dark")}else{document.documentElement.classList.remove("dark")}})();`,
           }}
         />
         {/* Critical CSS: variables + base so Tauri webview has styles even if main stylesheet is delayed or blocked */}

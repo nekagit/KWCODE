@@ -27,6 +27,7 @@ import { ProjectGitTab } from "@/components/molecules/TabAndContentSections/Proj
 import { ProjectRunTab } from "@/components/molecules/TabAndContentSections/ProjectRunTab";
 import { ProjectArchitectureTab } from "@/components/molecules/TabAndContentSections/ProjectArchitectureTab";
 import { ProjectTestingTab } from "@/components/molecules/TabAndContentSections/ProjectTestingTab";
+import { ProjectFilesTab } from "@/components/molecules/TabAndContentSections/ProjectFilesTab";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { cn } from "@/lib/utils";
 import { SectionCard, MetadataBadge, CountBadge } from "@/components/shared/DisplayPrimitives";
@@ -311,7 +312,22 @@ export function ProjectDetailsPageContent() {
                   projectId={projectId}
                 />
               </SectionCard>
+              <SectionCard accentColor="rose" className="lg:col-span-2">
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500">
+                      <FolderGit2 className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground">Project Files</h3>
+                      <p className="text-xs text-muted-foreground">Files in .cursor directory</p>
+                    </div>
+                  </div>
+                  <ProjectFilesTab project={project} projectId={projectId} />
+                </div>
+              </SectionCard>
             </div>
+
           </TabsContent>
 
           {/* ── Planner Tab ── */}
