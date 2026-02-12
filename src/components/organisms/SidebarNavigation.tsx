@@ -39,7 +39,7 @@ const getNavItems = (): {
   bottomNavItems: [
     { href: "/run", label: "Run", icon: Play, iconClassName: c["17"] },
     { href: "/configuration", label: "Configuration", icon: Settings, iconClassName: c["14"] },
-    { href: "/loading-screen", label: "LS", icon: Moon, iconClassName: c["19"] },
+    { href: "/loading-screen", label: "Loading", icon: Moon, iconClassName: c["19"] },
   ],
 });
 

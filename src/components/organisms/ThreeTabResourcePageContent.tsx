@@ -33,7 +33,7 @@ export function ThreeTabResourcePageContent<TResource>({
   renderDialogs,
 }: ThreeTabResourcePageContentProps<TResource>) {
   return (
-    <div className={c["0"]}>
+    <div className={c["0"]} data-shared-ui>
       <PageHeader
         title={config.title}
         description={config.description}

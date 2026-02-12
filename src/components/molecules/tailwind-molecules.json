@@ -234,9 +234,9 @@
       "space-y-3"
     ],
     "CardsAndDisplay/CoverageMetricCard.tsx": [
-      "text-sm font-medium text-muted-foreground",
-      "text-sm font-medium text-muted-foreground",
-      "text-xs text-muted-foreground",
+      "text-sm font-medium text-muted-foreground/90",
+      "text-sm font-medium text-muted-foreground/90",
+      "text-xs text-muted-foreground/90",
       "text-2xl font-bold",
       "mt-2 h-2"
     ],
@@ -249,7 +249,7 @@
       "text-lg",
       "flex items-center gap-2 flex-wrap mt-4",
       "h-4 w-4 mr-1",
-      "min-h-[280px] h-[60vh] rounded-md border p-3 mt-4",
+      "min-h-[280px] h-[60vh] surface-card p-3 mt-4",
       "space-y-2"
     ],
     "CardsAndDisplay/IdeaTemplateCard.tsx": [
@@ -277,13 +277,13 @@
     ],
     "CardsAndDisplay/ProjectSelectionCard.tsx": [
       "text-lg",
-      "h-[180px] rounded-md border p-3",
+      "h-[180px] surface-card p-4",
       "flex flex-wrap gap-2"
     ],
     "CardsAndDisplay/PromptRecordSelectionCard.tsx": [
       "text-lg",
       "text-xs",
-      "h-[180px] rounded-md border p-3",
+      "h-[180px] surface-card p-4",
       "flex flex-wrap gap-2"
     ],
     "CardsAndDisplay/QuickActionCard.tsx": [
@@ -292,7 +292,7 @@
     "CardsAndDisplay/RunFromFeatureCard.tsx": [
       "text-lg",
       "w-full max-w-md",
-      "text-muted-foreground"
+      "text-muted-foreground/90"
     ],
     "CardsAndDisplay/RunLabelCard.tsx": [
       "max-w-md"
@@ -306,7 +306,7 @@
     ],
     "CardsAndDisplay/TestGenerationCard.tsx": [
       "text-lg",
-      "rounded-lg border bg-muted/30 p-4 text-sm whitespace-pre-wrap mt-4"
+      "surface-card bg-muted/40 p-4 text-sm whitespace-pre-wrap mt-4"
     ],
     "CardsAndDisplay/TestingPhasesCard.tsx": [
       "space-y-4"
@@ -318,7 +318,7 @@
     ],
     "CardsAndDisplay/TicketCard.tsx": [
       "flex items-center justify-between w-full",
-      "rounded-md border bg-card p-3 cursor-grab active:cursor-grabbing hover:shadow-sm transition-shadow"
+      "surface-card p-4 hover:border-primary/50 cursor-grab active:cursor-grabbing hover:shadow-sm transition-shadow"
     ],
     "CardsAndDisplay/TicketManagementCard.tsx": [
       "text-lg",
@@ -326,19 +326,19 @@
     ],
     "ControlsAndButtons/PaginationControls.tsx": [
       "flex items-center gap-2",
-      "text-sm text-muted-foreground",
+      "text-sm text-muted-foreground/90",
       "h-8 w-8 p-0",
       "h-4 w-4",
       "h-8 w-8 p-0",
       "h-4 w-4"
     ],
     "ControlsAndButtons/RowsPerPageSelector.tsx": [
-      "flex items-center gap-2 text-sm text-muted-foreground",
+      "flex items-center gap-2 text-sm text-muted-foreground/90",
       "h-8 w-[70px]"
     ],
     "ControlsAndButtons/RunControls.tsx": [
       "space-y-6",
-      "text-sm text-muted-foreground"
+      "text-sm text-muted-foreground/90"
     ],
     "ControlsAndButtons/SidebarToggle.tsx": [
       "h-4 w-4",
@@ -347,13 +347,13 @@
     "DashboardsAndViews/CoverageDashboard.tsx": [
       "h-5 w-5",
       "grid gap-4 sm:grid-cols-2 lg:grid-cols-4",
-      "rounded-lg border bg-muted/20 p-4 text-sm text-muted-foreground mt-6",
+      "surface-card bg-muted/20 p-4 text-sm text-muted-foreground/90 mt-6",
       "font-medium text-foreground",
       "mt-1"
     ],
     "Display/DescriptionTooltip.tsx": [
-      "text-muted-foreground text-xs",
-      "text-muted-foreground text-xs max-w-[240px] truncate block cursor-default",
+      "text-muted-foreground/90 text-xs",
+      "text-muted-foreground/90 text-xs max-w-[240px] truncate block cursor-default",
       "max-w-sm",
       "whitespace-pre-wrap text-xs"
     ],
@@ -366,61 +366,61 @@
       "capitalize text-xs"
     ],
     "Display/TerminalStatusBadge.tsx": [
-      "fixed top-3 right-3 z-50 flex items-center gap-1.5 rounded-lg border bg-background/95 px-2.5 py-1.5 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/60 hover:bg-muted/50 transition-colors glasgmorphism",
-      "h-4 w-4 text-muted-foreground",
+      "fixed top-3 right-3 z-50 flex items-center gap-1.5 surface-card bg-background/95 px-2.5 py-1.5 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/60 hover:bg-muted/50 transition-colors glass-card",
+      "h-4 w-4 text-muted-foreground/90",
       "tabular-nums font-medium"
     ],
     "Displays/AllProjectsDisplay.tsx": [
-      "text-xs text-muted-foreground mb-2",
-      "h-24 rounded border bg-muted/30 p-3 font-mono text-xs"
+      "text-xs text-muted-foreground/90 mb-2",
+      "h-24 surface-card bg-muted/40 p-3 font-mono text-xs"
     ],
     "Displays/AllProjectsDisplayList.tsx": [
-      "h-[200px] rounded border p-2",
+      "h-[200px] surface-card p-3",
       "space-y-1",
       "flex items-center gap-2 text-sm",
       "truncate font-mono",
       "text-xs"
     ],
     "Displays/FeaturesDisplayList.tsx": [
-      "h-[220px] rounded border p-2",
+      "h-[220px] surface-card p-3",
       "space-y-2 text-sm",
-      "rounded border p-2 bg-muted/20",
+      "surface-card p-3 bg-muted/20",
       "font-medium truncate",
-      "text-xs text-muted-foreground"
+      "text-xs text-muted-foreground/90"
     ],
     "Displays/IdeasDisplayList.tsx": [
       "h-[200px] w-full rounded",
-      "h-[200px] rounded border p-2",
+      "h-[200px] surface-card p-3",
       "space-y-2 text-sm",
-      "rounded border p-2 bg-muted/20",
+      "surface-card p-3 bg-muted/20",
       "font-medium truncate",
-      "text-xs text-muted-foreground line-clamp-2",
+      "text-xs text-muted-foreground/90 line-clamp-2",
       "mt-1 text-xs",
-      "text-xs text-muted-foreground mt-2",
+      "text-xs text-muted-foreground/90 mt-2",
       "text-primary hover:underline"
     ],
     "Displays/JsonFileListDisplay.tsx": [
       "grid grid-cols-1 md:grid-cols-2 gap-4",
       "space-y-2",
-      "text-xs text-muted-foreground",
-      "h-32 rounded border bg-muted/30 p-2",
-      "text-muted-foreground text-sm",
+      "text-xs text-muted-foreground/90",
+      "h-32 surface-card bg-muted/40 p-2",
+      "text-muted-foreground/90 text-sm",
       "block w-full text-left text-sm px-2 py-1.5 rounded hover:bg-muted truncate",
       "space-y-2",
-      "text-xs text-muted-foreground",
-      "h-48 rounded border bg-muted/30 p-3 font-mono text-xs whitespace-pre-wrap break-all",
-      "text-muted-foreground"
+      "text-xs text-muted-foreground/90",
+      "h-48 surface-card bg-muted/40 p-3 font-mono text-xs whitespace-pre-wrap break-all",
+      "text-muted-foreground/90"
     ],
     "Displays/KvStoreDisplay.tsx": [
-      "text-xs text-muted-foreground mb-2",
-      "h-40 rounded border bg-muted/30 p-3 font-mono text-xs",
-      "text-muted-foreground",
+      "text-xs text-muted-foreground/90 mb-2",
+      "h-40 surface-card bg-muted/40 p-3 font-mono text-xs",
+      "text-muted-foreground/90",
       "mb-3",
       "font-semibold text-foreground",
-      "mt-1 whitespace-pre-wrap break-all text-muted-foreground"
+      "mt-1 whitespace-pre-wrap break-all text-muted-foreground/90"
     ],
     "Displays/PromptsDisplayList.tsx": [
-      "h-[200px] rounded border p-2",
+      "h-[200px] surface-card p-3",
       "space-y-1 text-sm",
       "flex items-center gap-2",
       "truncate"
@@ -428,26 +428,26 @@
     "Displays/ScriptListDisplay.tsx": [
       "grid grid-cols-1 md:grid-cols-2 gap-4",
       "space-y-2",
-      "text-xs text-muted-foreground",
-      "h-32 rounded border bg-muted/30 p-2",
-      "text-muted-foreground text-sm",
+      "text-xs text-muted-foreground/90",
+      "h-32 surface-card bg-muted/40 p-2",
+      "text-muted-foreground/90 text-sm",
       "block w-full text-left text-sm px-2 py-1.5 rounded hover:bg-muted truncate",
       "space-y-2",
-      "text-xs text-muted-foreground",
-      "h-48 rounded border bg-muted/30 p-3 font-mono text-xs whitespace-pre-wrap break-all",
-      "text-muted-foreground"
+      "text-xs text-muted-foreground/90",
+      "h-48 surface-card bg-muted/40 p-3 font-mono text-xs whitespace-pre-wrap break-all",
+      "text-muted-foreground/90"
     ],
     "Displays/TicketsDisplay.tsx": [
-      "text-xs text-muted-foreground mb-2",
-      "h-48 rounded border bg-muted/30 p-3 font-mono text-xs whitespace-pre-wrap"
+      "text-xs text-muted-foreground/90 mb-2",
+      "h-48 surface-card bg-muted/40 p-3 font-mono text-xs whitespace-pre-wrap"
     ],
     "Displays/TicketsDisplayList.tsx": [
-      "h-[220px] rounded border p-2",
+      "h-[220px] surface-card p-3",
       "space-y-2 text-sm",
-      "flex items-start gap-2 rounded border p-2 bg-muted/20",
+      "flex items-start gap-2 surface-card p-3 bg-muted/20",
       "shrink-0 text-xs",
       "truncate font-medium",
-      "text-xs text-muted-foreground"
+      "text-xs text-muted-foreground/90"
     ],
     "FormsAndDialogs/ArchitectureEditDialog.tsx": [
       "h-4 w-4 mr-2 animate-spin",
@@ -483,7 +483,7 @@
     "FormsAndDialogs/TicketSearchInput.tsx": [
       "flex flex-wrap items-center gap-2",
       "max-w-sm h-9",
-      "text-sm text-muted-foreground"
+      "text-sm text-muted-foreground/90"
     ],
     "FormsAndDialogs/TicketStatusUpdater.tsx": [
       "w-[120px] h-8 text-xs"
@@ -506,9 +506,9 @@
       "text-sm font-semibold flex flex-wrap items-start justify-between gap-2 min-w-0",
       "line-clamp-2 min-w-0 break-words",
       "shrink-0 text-xs",
-      "line-clamp-2 text-xs text-muted-foreground min-w-0 break-words overflow-hidden",
+      "line-clamp-2 text-xs text-muted-foreground/90 min-w-0 break-words overflow-hidden",
       "flex flex-wrap items-center gap-2 pt-0 shrink-0",
-      "flex items-center gap-1 text-xs text-muted-foreground",
+      "flex items-center gap-1 text-xs text-muted-foreground/90",
       "h-3 w-3",
       "text-xs",
       "h-3 w-3",
@@ -522,7 +522,7 @@
       "text-primary/90",
       "flex flex-col space-y-2",
       "text-3xl font-bold tracking-tight",
-      "text-muted-foreground"
+      "text-muted-foreground/90"
     ],
     "LayoutAndNavigation/PageWithHeader.tsx": [
       "space-y-6",
@@ -547,8 +547,8 @@
       "h-4 w-4"
     ],
     "LayoutAndNavigation/ThreeTabLayout.tsx": [
-      "w-full",
-      "mt-0",
+      "w-full space-y-6",
+      "mt-6 ring-offset-background animate-fade-in-up focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
       "mt-0",
       "mt-0"
     ],
@@ -557,11 +557,11 @@
       "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
     ],
     "ListsAndTables/LocalReposSection.tsx": [
-      "text-sm text-muted-foreground",
-      "py-8 text-center text-muted-foreground text-sm",
-      "text-sm text-muted-foreground",
-      "text-sm text-muted-foreground",
-      "rounded-md border bg-muted/30 max-h-[520px]",
+      "text-sm text-muted-foreground/90",
+      "py-8 text-center text-muted-foreground/90 text-sm",
+      "text-sm text-muted-foreground/90",
+      "text-sm text-muted-foreground/90",
+      "surface-card bg-muted/30 max-h-[520px]",
       "p-2 space-y-0.5",
       "w-full",
       "border-b",
@@ -570,7 +570,7 @@
       "space-y-3"
     ],
     "ListsAndTables/PromptRecordTable.tsx": [
-      "text-center text-muted-foreground py-8"
+      "text-center text-muted-foreground/90 py-8"
     ],
     "ListsAndTables/TestTemplateList.tsx": [
       "h-[calc(100vh-22rem)] pr-4",
@@ -578,7 +578,7 @@
     ],
     "Navigation/FileTreeItem.tsx": [
       "flex items-center gap-2 rounded px-2 py-1.5 hover:bg-muted/50 min-w-0 group",
-      "h-4 w-4 shrink-0 text-muted-foreground",
+      "h-4 w-4 shrink-0 text-muted-foreground/90",
       "truncate flex-1 min-w-0 font-mono text-sm",
       "h-7 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity",
       "h-3.5 w-3.5 mr-1"
@@ -586,10 +586,10 @@
     "Navigation/FolderTreeItem.tsx": [
       "select-none",
       "flex items-center gap-2 w-full rounded px-2 py-1.5 hover:bg-muted/50 text-left text-sm font-mono min-w-0",
-      "shrink-0 text-muted-foreground",
+      "shrink-0 text-muted-foreground/90",
       "h-4 w-4",
       "h-4 w-4",
-      "shrink-0 text-muted-foreground",
+      "shrink-0 text-muted-foreground/90",
       "h-4 w-4",
       "h-4 w-4",
       "truncate"
@@ -600,7 +600,7 @@
       "h-4 w-4 shrink-0"
     ],
     "Navigation/PageFooterText.tsx": [
-      "text-xs text-muted-foreground",
+      "text-xs text-muted-foreground/90",
       "underline hover:text-foreground"
     ],
     "TabAndContentSections/AiGeneratedArchitecturesTabContent.tsx": [
@@ -609,20 +609,20 @@
     "TabAndContentSections/AllDataTabContent.tsx": [
       "space-y-6",
       "text-lg font-semibold mb-1",
-      "text-sm text-muted-foreground mb-4",
+      "text-sm text-muted-foreground/90 mb-4",
       "grid gap-6 md:grid-cols-2",
       "h-5 w-5 text-success/90",
       "h-5 w-5 text-primary/90",
-      "text-xs text-muted-foreground mt-2",
+      "text-xs text-muted-foreground/90 mt-2",
       "grid gap-6 md:grid-cols-2",
       "h-5 w-5 text-warning/90",
-      "text-xs text-muted-foreground mt-2",
+      "text-xs text-muted-foreground/90 mt-2",
       "h-5 w-5 text-info/90",
-      "text-xs text-muted-foreground mt-2",
+      "text-xs text-muted-foreground/90 mt-2",
       "grid gap-6 md:grid-cols-2",
       "h-5 w-5 text-warning/90",
       "h-5 w-5 text-primary/90",
-      "text-sm text-muted-foreground mb-3"
+      "text-sm text-muted-foreground/90 mb-3"
     ],
     "TabAndContentSections/ArchitectureTemplatesTabContent.tsx": [
       "mt-6"
@@ -633,11 +633,11 @@
     "TabAndContentSections/DatabaseDataTabContent.tsx": [
       "h-5 w-5",
       "block",
-      "block text-muted-foreground text-xs mt-1",
-      "block text-muted-foreground text-xs mt-1",
-      "text-sm text-muted-foreground flex items-center gap-2 mt-4",
+      "block text-muted-foreground/90 text-xs mt-1",
+      "block text-muted-foreground/90 text-xs mt-1",
+      "text-sm text-muted-foreground/90 flex items-center gap-2 mt-4",
       "h-4 w-4 animate-spin",
-      "w-full glasgmorphism",
+      "w-full glass-card",
       "flex items-center gap-2",
       "h-4 w-4",
       "flex items-center gap-2",
@@ -650,8 +650,8 @@
       "mt-0"
     ],
     "TabAndContentSections/LogTabContent.tsx": [
-      "h-[400px] rounded border bg-muted/30 p-3 font-mono text-sm",
-      "text-muted-foreground",
+      "h-[400px] surface-card bg-muted/40 p-3 font-mono text-sm",
+      "text-muted-foreground/90",
       "whitespace-pre-wrap break-all"
     ],
     "TabAndContentSections/MyDefinitionsTabContent.tsx": [
@@ -686,15 +686,15 @@
       "flex items-center gap-2 text-lg font-semibold",
       "h-6 w-6",
       "p-6",
-      "text-muted-foreground",
+      "text-muted-foreground/90",
       "text-primary underline",
       "mt-4 space-y-6",
       "flex items-center gap-2 text-lg font-semibold",
       "h-6 w-6",
       "p-6",
-      "text-muted-foreground",
+      "text-muted-foreground/90",
       "mt-4 flex items-center justify-center py-12",
-      "h-8 w-8 animate-spin text-muted-foreground",
+      "h-8 w-8 animate-spin text-muted-foreground/90",
       "mt-4 space-y-6",
       "flex items-center justify-between",
       "flex items-center gap-2 text-lg font-semibold",
@@ -720,52 +720,52 @@
       "space-y-4",
       "grid grid-cols-1 sm:grid-cols-2 gap-4",
       "p-4",
-      "text-xs font-medium text-muted-foreground mb-2",
-      "rounded-md border border-border bg-muted/30 p-3",
+      "text-xs font-medium text-muted-foreground/90 mb-2",
+      "surface-card bg-muted/40 p-3",
       "font-mono text-xs break-all line-clamp-2",
       "p-4",
-      "text-xs font-medium text-muted-foreground mb-2 flex items-center gap-2",
+      "text-xs font-medium text-muted-foreground/90 mb-2 flex items-center gap-2",
       "h-3.5 w-3.5",
-      "rounded-md border border-border bg-muted/30 p-3",
+      "surface-card bg-muted/40 p-3",
       "font-mono text-xs text-primary font-medium truncate",
       "p-4",
-      "text-sm font-medium text-muted-foreground mb-2",
-      "h-[200px] w-full rounded-md border border-border p-0",
+      "text-sm font-medium text-muted-foreground/90 mb-2",
+      "h-[200px] w-full surface-card border-border p-0",
       "font-mono text-xs",
       "flex items-center gap-2 border-b border-border px-3 py-2 last:border-b-0",
       "break-all text-foreground",
-      "rounded-md border border-border bg-muted/30 p-4 text-center text-sm text-muted-foreground",
+      "surface-card bg-muted/40 p-4 text-center text-sm text-muted-foreground/90",
       "w-full",
       "border rounded-md",
       "px-4 py-3 hover:no-underline",
       "px-4 pb-4",
       "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2",
       "p-4",
-      "text-xs font-medium text-muted-foreground mb-2",
-      "rounded-md border border-border bg-muted/30 p-3",
+      "text-xs font-medium text-muted-foreground/90 mb-2",
+      "surface-card bg-muted/40 p-3",
       "font-mono text-xs whitespace-pre-wrap break-all line-clamp-2",
       "p-4",
-      "text-xs font-medium text-muted-foreground mb-2",
-      "rounded-md border border-border bg-muted/30 p-3",
+      "text-xs font-medium text-muted-foreground/90 mb-2",
+      "surface-card bg-muted/40 p-3",
       "font-mono text-xs break-all line-clamp-2",
       "p-4",
-      "text-xs font-medium text-muted-foreground mb-2",
-      "h-[120px] w-full rounded-md border border-border p-0",
+      "text-xs font-medium text-muted-foreground/90 mb-2",
+      "h-[120px] w-full surface-card border-border p-0",
       "font-mono text-xs",
       "border-b border-border px-3 py-2 last:border-b-0 truncate",
       "p-4",
-      "text-xs font-medium text-muted-foreground mb-2",
-      "rounded-md border border-border bg-muted/30 p-3",
+      "text-xs font-medium text-muted-foreground/90 mb-2",
+      "surface-card bg-muted/40 p-3",
       "font-mono text-xs whitespace-pre-wrap break-all line-clamp-4",
       "p-4 sm:col-span-2",
-      "text-xs font-medium text-muted-foreground mb-2",
-      "h-[160px] w-full rounded-md border border-border p-0",
+      "text-xs font-medium text-muted-foreground/90 mb-2",
+      "h-[160px] w-full surface-card border-border p-0",
       "font-mono text-xs",
       "border-b border-border px-3 py-2 last:border-b-0 break-all",
       "p-4",
-      "text-xs font-medium text-muted-foreground mb-2",
-      "h-[120px] w-full rounded-md border border-border p-3",
-      "font-mono text-xs whitespace-pre-wrap break-all text-muted-foreground",
+      "text-xs font-medium text-muted-foreground/90 mb-2",
+      "h-[120px] w-full surface-card border-border p-3",
+      "font-mono text-xs whitespace-pre-wrap break-all text-muted-foreground/90",
       "shrink-0 w-8 rounded px-1.5 py-0.5 text-center tabular-nums ${className}"
     ],
     "TabAndContentSections/ProjectIdeasTab.tsx": [
@@ -784,10 +784,10 @@
       "grid w-full grid-cols-3 gap-4",
       "relative",
       "absolute right-2 top-2 z-10 flex items-center gap-2 rounded bg-muted/80 px-2 py-1 font-mono text-sm tabular-nums",
-      "h-4 w-4 animate-spin text-muted-foreground",
-      "h-[50vh] min-h-[200px] rounded border bg-muted/30 p-3 font-mono text-sm",
-      "text-muted-foreground text-sm",
-      "flex items-center gap-2 text-muted-foreground text-sm",
+      "h-4 w-4 animate-spin text-muted-foreground/90",
+      "h-[50vh] min-h-[200px] surface-card bg-muted/40 p-3 font-mono text-sm",
+      "text-muted-foreground/90 text-sm",
+      "flex items-center gap-2 text-muted-foreground/90 text-sm",
       "h-4 w-4 animate-spin",
       "whitespace-pre-wrap break-all",
       "w-full flex flex-wrap items-center gap-2 shrink-0",
@@ -818,15 +818,15 @@
       "h-4 w-4",
       "grid grid-cols-1 gap-4 sm:grid-cols-2",
       "space-y-2",
-      "text-xs font-medium text-muted-foreground uppercase tracking-wide",
+      "text-xs font-medium text-muted-foreground/90 uppercase tracking-wide",
       "flex flex-wrap gap-2",
       "opacity-80",
-      "text-xs text-muted-foreground",
+      "text-xs text-muted-foreground/90",
       "space-y-2",
-      "text-xs font-medium text-muted-foreground uppercase tracking-wide",
+      "text-xs font-medium text-muted-foreground/90 uppercase tracking-wide",
       "flex flex-wrap gap-2",
       "opacity-80",
-      "text-xs text-muted-foreground",
+      "text-xs text-muted-foreground/90",
       "flex flex-wrap items-center gap-2",
       "gap-2",
       "h-4 w-4",
@@ -840,36 +840,36 @@
       "h-4 w-4 animate-spin",
       "grid gap-2",
       "h-4 w-4 animate-spin",
-      "inline-flex items-center gap-2 rounded-md border-2 bg-background px-2 py-1 text-xs ${colorClasses}",
-      "inline-flex items-center gap-2 rounded-md border-2 bg-muted/50 line-through opacity-90 px-2 py-1 text-xs ${colorClasses}",
+      "inline-flex items-center gap-2 surface-card-2 bg-background px-2 py-1 text-xs ${colorClasses}",
+      "inline-flex items-center gap-2 surface-card-2 bg-muted/50 line-through opacity-90 px-2 py-1 text-xs ${colorClasses}",
       "mt-6 space-y-4",
       "space-y-2",
       "mt-4 w-full min-h-0",
       "space-y-2",
-      "text-xs text-muted-foreground",
+      "text-xs text-muted-foreground/90",
       "space-y-2",
       "gap-2",
       "min-h-0",
       "overflow-y-auto",
       "flex-1",
-      "rounded-lg border border-border",
-      "flex min-h-0 flex-1 flex-col rounded-lg border border-border bg-card p-4 overflow-auto min-h-[280px]",
+      "surface-card border-border",
+      "flex min-h-0 flex-1 flex-col surface-card border-border bg-card p-4 overflow-auto min-h-[280px]",
       "grid min-h-0 w-full grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4",
       "h-6 w-6 text-warning/90",
       "gap-2",
       "h-4 w-4",
       "h-4 w-4 animate-spin",
       "mt-4 space-y-2",
-      "inline-flex items-center gap-2 rounded-md border-2 bg-background px-2 py-1 text-xs",
-      "inline-flex items-center gap-2 rounded-md border-2 bg-muted/50 line-through opacity-90 px-2 py-1 text-xs",
-      "flex flex-col min-h-0 flex-1 rounded-lg border border-border bg-card p-4 overflow-auto min-h-[280px]",
+      "inline-flex items-center gap-2 surface-card-2 bg-background px-2 py-1 text-xs",
+      "inline-flex items-center gap-2 surface-card-2 bg-muted/50 line-through opacity-90 px-2 py-1 text-xs",
+      "flex flex-col min-h-0 flex-1 surface-card border-border bg-card p-4 overflow-auto min-h-[280px]",
       "space-y-2 overflow-y-auto flex-1 min-h-0",
-      "flex flex-col min-h-0 flex-1 rounded-lg border border-border bg-card p-4 overflow-auto min-h-[280px]",
+      "flex flex-col min-h-0 flex-1 surface-card border-border bg-card p-4 overflow-auto min-h-[280px]",
       "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6",
-      "flex flex-col min-h-0 flex-1 rounded-lg border border-border bg-card p-4 overflow-auto min-h-[280px]"
+      "flex flex-col min-h-0 flex-1 surface-card border-border bg-card p-4 overflow-auto min-h-[280px]"
     ],
     "TabAndContentSections/ProjectsTabContent.tsx": [
-      "h-[280px] rounded-md border p-3",
+      "h-[280px] surface-card p-3",
       "space-y-2"
     ],
     "TabAndContentSections/PromptsTabContent.tsx": [
@@ -895,7 +895,7 @@
       "ml-2 h-3.5 w-3.5"
     ],
     "Tables/DataTableLayout.tsx": [
-      "h-24 text-center text-muted-foreground"
+      "h-24 text-center text-muted-foreground/90"
     ],
     "Tables/DataTableWithControls.tsx": [
       "space-y-4",
@@ -908,7 +908,7 @@
     ],
     "UtilitiesAndHelpers/ProjectLoadingState.tsx": [
       "flex items-center justify-center py-12",
-      "h-8 w-8 animate-spin text-muted-foreground"
+      "h-8 w-8 animate-spin text-muted-foreground/90"
     ],
     "UtilitiesAndHelpers/ThemeSelector.tsx": [
       "grid gap-5 sm:grid-cols-2 lg:grid-cols-3"

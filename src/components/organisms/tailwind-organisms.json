@@ -81,25 +81,25 @@
     "1": "space-y-6"
   },
   "TestingPageContent.tsx": {
-    "0": "space-y-6",
+    "0": "min-h-screen bg-background space-y-8 pb-20 container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 animate-fade-in",
     "1": "size-6 text-info/90",
-    "2": "w-full",
-    "3": "flex flex-row flex-wrap items-center justify-start gap-3 w-full max-w-2xl p-3",
-    "4": "flex items-center gap-2",
+    "2": "w-full space-y-6",
+    "3": "inline-flex h-auto p-1.5 rounded-2xl bg-muted/20 backdrop-blur-md border border-border/40 gap-2 items-center justify-start overflow-x-auto w-full sm:w-auto mx-auto sm:mx-0 shadow-sm",
+    "4": "inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 border border-transparent data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:border-border/50 data-[state=active]:shadow-sm hover:bg-muted/40",
     "5": "size-4",
-    "6": "flex items-center gap-2",
+    "6": "inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 border border-transparent data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:border-border/50 data-[state=active]:shadow-sm hover:bg-muted/40",
     "7": "size-4",
-    "8": "flex items-center gap-2",
+    "8": "inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 border border-transparent data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:border-border/50 data-[state=active]:shadow-sm hover:bg-muted/40",
     "9": "size-4",
-    "10": "flex items-center gap-2",
+    "10": "inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 border border-transparent data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:border-border/50 data-[state=active]:shadow-sm hover:bg-muted/40",
     "11": "size-4",
-    "12": "mt-0 pt-0 pb-6 px-4 space-y-6",
-    "13": "mt-0 pt-0 pb-6 px-4 space-y-6",
-    "14": "mt-0 pt-0 pb-6 px-4",
-    "15": "mt-0 pt-0 pb-6 px-4"
+    "12": "mt-0 pt-0 pb-6 space-y-6 animate-fade-in-up",
+    "13": "mt-0 pt-0 pb-6 space-y-6 animate-fade-in-up",
+    "14": "mt-0 pt-0 pb-6 animate-fade-in-up",
+    "15": "mt-0 pt-0 pb-6 animate-fade-in-up"
   },
   "ThreeTabResourcePageContent.tsx": {
-    "0": "space-y-6"
+    "0": "min-h-screen bg-background space-y-8 pb-20 container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 animate-fade-in"
   },
   "TicketBoard.tsx": {
     "0": "rounded-xl border border-border/60 bg-card/50 backdrop-blur-sm min-h-80 flex flex-col shadow-sm",

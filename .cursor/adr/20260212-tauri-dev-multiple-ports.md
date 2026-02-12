@@ -33,4 +33,6 @@ Concretely:
   - `build.devUrl` set to `http://127.0.0.1:4001/`.
 - `script/wait-dev-server.mjs`:
   - Still prefers `TAURI_DEV_PORT` / `TAURI_DEV_URL` from Tauri, but spawns `npm run dev:tauri:next` when it needs to start a dev server (overridable via `TAURI_DEV_NPM_SCRIPT`).
+ - `public/tauri-load.html`:
+   - Redirects to `http://127.0.0.1:4001/` so the loading screen and Tauri devUrl stay in sync.
 

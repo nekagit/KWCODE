@@ -9,7 +9,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "next lint",
-    "tauri": "node script/tauri-with-local-target.mjs",
+    "tauri": "node script/tauri-with-local-target.mjs dev",
     "tauri:build": "node script/tauri-with-local-target.mjs build --bundles app",
     "scaffold:cursor-md": "node script/scaffold-cursor-md.mjs",
     "extract:tailwind-classes": "node script/extract-tailwind-classes.mjs",

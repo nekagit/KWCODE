@@ -79,7 +79,7 @@ export function TestingPageContent() {
   };
 
   return (
-    <div className={c["0"]}>
+    <div className={c["0"]} data-shared-ui>
       <PageHeader
         title="Testing"
         description="AI test templates, best practices, automation phases, and test coverage dashboard."

@@ -196,6 +196,7 @@ export function IdeasPageContent() {
     title: "Business ideas",
     description: "SaaS, IaaS, PaaS, websites, webapps, webshops — templates, AI-generated, or your own.",
     icon: <Lightbulb className={c["0"]} />,
+    tabListClassName: "grid w-full max-w-xl grid-cols-3 gap-1.5 p-1.5 glass-card rounded-xl mx-auto bg-muted/20 backdrop-blur-md border-border/40 shadow-sm",
     tabLabels: ["Templates", "AI generated", "My ideas"] as [string, string, string],
   };
 

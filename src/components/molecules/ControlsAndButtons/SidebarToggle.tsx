@@ -1,8 +1,6 @@
-import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
-import { getClasses } from "@/components/molecules/tailwind-molecules";
-const classes = getClasses("ControlsAndButtons/SidebarToggle.tsx");
+import { cn } from "@/lib/utils";
 
 type SidebarToggleProps = {
   sidebarCollapsed: boolean;
@@ -16,23 +14,28 @@ export function SidebarToggle({
   return (
     <Tooltip delayDuration={0}>
       <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className={sidebarCollapsed ? "h-8 w-8" : "h-8 w-8"}
+        <button
+          type="button"
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          className={cn(
+            "sidebar-nav-item flex items-center gap-2.5 rounded-lg text-[13px] font-medium text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-all duration-200",
+            sidebarCollapsed ? "size-9 justify-center p-0 mx-auto" : "w-full justify-start px-3 py-2"
+          )}
           aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {sidebarCollapsed ? (
-            <PanelLeftOpen className={classes[0]} />
+            <PanelLeftOpen className="size-[18px] shrink-0 transition-transform active:scale-95" />
           ) : (
-            <PanelLeftClose className={classes[0]} />
+            <>
+              <PanelLeftClose className="size-[18px] shrink-0" />
+              <span className="truncate">Collapse sidebar</span>
+            </>
           )}
-        </Button>
+        </button>
       </TooltipTrigger>
-      <TooltipContent side="right">
-        {sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-      </TooltipContent>
+      {sidebarCollapsed && (
+        <TooltipContent side="right">Expand sidebar</TooltipContent>
+      )}
     </Tooltip>
   );
 }

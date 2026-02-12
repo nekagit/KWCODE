@@ -8,7 +8,8 @@ import { spawn } from "child_process";
 import { existsSync, unlinkSync } from "fs";
 import { join } from "path";
 
-const port = process.env.TAURI_DEV_PORT || "4000";
+// Default to Tauri's dedicated dev port (4001) when TAURI_* env vars are not set.
+const port = process.env.TAURI_DEV_PORT || "4001";
 const baseUrl = `http://127.0.0.1:${port}`;
 // Wait for the app root (same as devUrl in tauri.conf.json)
 const devUrl = process.env.TAURI_DEV_URL || `${baseUrl}/`;

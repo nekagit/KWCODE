@@ -222,7 +222,7 @@ export function ArchitecturePageContent() {
     description: "Select from templates or generate with AI, then edit and add more input. You cannot create from scratch—only add from templates or AI.",
     icon: <Building2 className={c["0"]} />,
     tabLabels: ["Templates", "AI generated", "My definitions"] as [string, string, string],
-    tabListClassName: "grid w-full max-w-2xl grid-cols-3",
+    tabListClassName: "grid w-full max-w-xl grid-cols-3 gap-1.5 p-1.5 glass-card rounded-xl mx-auto bg-muted/20 backdrop-blur-md border-border/40 shadow-sm",
   };
 
   const resource = {
