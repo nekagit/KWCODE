@@ -48,12 +48,13 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Project } from "@/types/project";
-import { readProjectFile, readProjectFileOrEmpty, writeProjectFile } from "@/lib/api-projects";
+import { readProjectFile, readProjectFileOrEmpty, writeProjectFile, listProjectFiles } from "@/lib/api-projects";
 import { isTauri, invoke } from "@/lib/tauri";
 import { useRunStore } from "@/store/run-store";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   buildKanbanFromMd,
+  applyInProgressState,
   markTicketsDone,
   markTicketsNotDone,
   validateFeaturesTicketsCorrelation,
@@ -73,7 +74,7 @@ import { EmptyState, LoadingState } from "@/components/shared/EmptyState";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { KanbanColumnCard } from "@/components/molecules/Kanban/KanbanColumnCard";
 import { GenerateKanbanPromptSection } from "@/components/atoms/forms/GenerateKanbanPromptSection";
-import { cn } from "@/lib/utils";
+import { cn, humanizeAgentId } from "@/lib/utils";
 import { isImplementAllRun, formatElapsed } from "@/lib/run-helpers";
 import { AddPromptDialog } from "@/components/molecules/FormsAndDialogs/AddPromptDialog";
 import { SummaryStatPill } from "@/components/shared/DisplayPrimitives";
@@ -349,9 +350,13 @@ export function ProjectTicketsTab({
     priority: "P0" | "P1" | "P2" | "P3";
     featureName: string;
   } | null>(null);
+  /** When a ticket is generated, we assign one agent from .cursor/agents; stored here for display and for newTicket.agent. */
+  const [assignedAgentForGenerated, setAssignedAgentForGenerated] = useState<string | null>(null);
   const [generatingTicket, setGeneratingTicket] = useState(false);
 
   /* ── Data loading ── */
+
+  const KANBAN_STATE_PATH = ".cursor/planner/kanban-state.json";
 
   const loadKanbanFromMd = useCallback(async () => {
     if (!project) return;
@@ -364,11 +369,21 @@ export function ProjectTicketsTab({
     setKanbanLoading(true);
     setKanbanError(null);
     try {
-      const [ticketsMd, featuresMd] = await Promise.all([
+      const [ticketsMd, featuresMd, stateRaw] = await Promise.all([
         readProjectFileOrEmpty(projectId, ".cursor/planner/tickets.md", repoPath),
         readProjectFileOrEmpty(projectId, ".cursor/planner/features.md", repoPath),
+        readProjectFileOrEmpty(projectId, KANBAN_STATE_PATH, repoPath),
       ]);
-      const data = buildKanbanFromMd(ticketsMd, featuresMd);
+      let inProgressIds: string[] = [];
+      if (stateRaw?.trim()) {
+        try {
+          const state = JSON.parse(stateRaw) as { inProgressIds?: string[] };
+          inProgressIds = Array.isArray(state?.inProgressIds) ? state.inProgressIds : [];
+        } catch {
+          /* ignore invalid JSON */
+        }
+      }
+      const data = buildKanbanFromMd(ticketsMd, featuresMd, inProgressIds);
       setKanbanData(data);
       const { hasInvalidFeatures } =
         validateFeaturesTicketsCorrelation(data);
@@ -437,7 +452,8 @@ export function ProjectTicketsTab({
             );
           }
         }
-        setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd));
+        const inProgressIds = kanbanData.columns.in_progress?.items.map((t) => t.id) ?? [];
+        setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd, inProgressIds));
         toast.success("Ticket marked as done.");
       } catch (e) {
         toast.error(e instanceof Error ? e.message : String(e));
@@ -490,7 +506,8 @@ export function ProjectTicketsTab({
             );
           }
         }
-        setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd));
+        const inProgressIds = kanbanData.columns.in_progress?.items.map((t) => t.id) ?? [];
+        setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd, inProgressIds));
         toast.success("Ticket moved back to todo.");
       } catch (e) {
         toast.error(e instanceof Error ? e.message : String(e));
@@ -532,8 +549,33 @@ export function ProjectTicketsTab({
           featuresMd,
           project.repoPath
         );
-        setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd));
+        const inProgressIds = (kanbanData.columns.in_progress?.items.map((t) => t.id) ?? []).filter((id) => id !== ticketId);
+        setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd, inProgressIds));
+        await writeProjectFile(projectId, KANBAN_STATE_PATH, JSON.stringify({ inProgressIds }, null, 2), project.repoPath);
         toast.success(`Ticket #${ticket.number} archived.`);
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : String(e));
+      }
+    },
+    [project, projectId, kanbanData]
+  );
+
+  const handleMoveToInProgress = useCallback(
+    async (ticketId: string) => {
+      if (!project?.repoPath || !kanbanData) return;
+      const inProgressColumn = kanbanData.columns.in_progress;
+      const currentIds = inProgressColumn ? inProgressColumn.items.map((t) => t.id) : [];
+      if (currentIds.includes(ticketId)) return;
+      const newIds = [...currentIds, ticketId];
+      try {
+        await writeProjectFile(
+          projectId,
+          KANBAN_STATE_PATH,
+          JSON.stringify({ inProgressIds: newIds }, null, 2),
+          project.repoPath
+        );
+        setKanbanData(applyInProgressState(kanbanData, newIds));
+        toast.success("Ticket moved to In progress.");
       } catch (e) {
         toast.error(e instanceof Error ? e.message : String(e));
       }
@@ -601,7 +643,8 @@ export function ProjectTicketsTab({
         featuresMd,
         project.repoPath
       );
-      setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd));
+      const inProgressIds = kanbanData.columns.in_progress?.items.map((t) => t.id) ?? [];
+      setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd, inProgressIds));
       setAddTicketOpen(false);
       setAddTicketTitle("");
       setAddTicketDesc("");
@@ -657,7 +700,8 @@ export function ProjectTicketsTab({
           featuresMd,
           project.repoPath
         );
-        setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd));
+        const inProgressIds = kanbanData.columns.in_progress?.items.map((t) => t.id) ?? [];
+        setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd, inProgressIds));
         toast.success(`Feature "${feature.title}" marked done.`);
       } catch (e) {
         toast.error(e instanceof Error ? e.message : String(e));
@@ -695,7 +739,8 @@ export function ProjectTicketsTab({
         ".cursor/planner/tickets.md",
         project.repoPath
       );
-      setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd));
+      const inProgressIds = kanbanData.columns.in_progress?.items.map((t) => t.id) ?? [];
+      setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd, inProgressIds));
       setAddFeatureOpen(false);
       setAddFeatureTitle("");
       setAddFeatureRefs("");
@@ -732,7 +777,9 @@ export function ProjectTicketsTab({
         ".cursor/planner/features.md",
         project.repoPath
       );
-      setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd));
+      const inProgressIds: string[] = [];
+      setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd, inProgressIds));
+      await writeProjectFile(projectId, KANBAN_STATE_PATH, JSON.stringify({ inProgressIds }, null, 2), project.repoPath);
       toast.success("All tickets removed.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
@@ -764,7 +811,8 @@ export function ProjectTicketsTab({
         ".cursor/planner/tickets.md",
         project.repoPath
       );
-      setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd));
+      const inProgressIds = kanbanData.columns.in_progress?.items.map((t) => t.id) ?? [];
+      setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd, inProgressIds));
       toast.success("All features removed.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
@@ -781,6 +829,7 @@ export function ProjectTicketsTab({
     }
     setGeneratingTicket(true);
     setGeneratedTicket(null);
+    setAssignedAgentForGenerated(null);
     try {
       const existingFeatures = kanbanData?.features.map((f) => f.title) ?? [];
       const res = await fetch("/api/generate-ticket-from-prompt", {
@@ -822,6 +871,7 @@ export function ProjectTicketsTab({
       featureName,
       done: false,
       status: "Todo",
+      ...(assignedAgentForGenerated && { agent: assignedAgentForGenerated }),
     };
     const updatedTickets = [newTicket, ...kanbanData.tickets];
     let features = kanbanData.features.map((f) =>
@@ -852,8 +902,10 @@ export function ProjectTicketsTab({
       await writeProjectFile(projectId, ".cursor/planner/tickets.md", ticketsMd, project.repoPath);
       const featuresMd = serializeFeaturesToMd(features);
       await writeProjectFile(projectId, ".cursor/planner/features.md", featuresMd, project.repoPath);
-      setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd));
+      const inProgressIds = kanbanData.columns.in_progress?.items.map((t) => t.id) ?? [];
+      setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd, inProgressIds));
       setGeneratedTicket(null);
+      setAssignedAgentForGenerated(null);
       setPlannerPromptInput("");
       setPlannerPromptTextarea("");
       toast.success(`Ticket #${nextNumber} added to backlog.`);
@@ -862,7 +914,32 @@ export function ProjectTicketsTab({
     } finally {
       setSaving(false);
     }
-  }, [project, projectId, kanbanData, generatedTicket]);
+  }, [project, projectId, kanbanData, generatedTicket, assignedAgentForGenerated]);
+
+  /** When a ticket is generated, assign one agent from .cursor/agents (first .md file). */
+  useEffect(() => {
+    if (!generatedTicket) {
+      setAssignedAgentForGenerated(null);
+      return;
+    }
+    if (!project?.repoPath) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const list = await listProjectFiles(projectId, ".cursor/agents", project.repoPath);
+        const mdFiles = list.filter((e) => !e.isDirectory && e.name.toLowerCase().endsWith(".md"));
+        const first = mdFiles[0];
+        if (!cancelled && first) {
+          setAssignedAgentForGenerated(first.name.replace(/\.md$/i, ""));
+        } else if (!cancelled) {
+          setAssignedAgentForGenerated(null);
+        }
+      } catch {
+        if (!cancelled) setAssignedAgentForGenerated(null);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [generatedTicket, project?.repoPath, projectId]);
 
   useEffect(() => {
     if (project) {
@@ -1014,6 +1091,7 @@ export function ProjectTicketsTab({
                               handleMarkDone={handleMarkDone}
                               handleRedo={handleRedo}
                               handleArchive={handleArchive}
+                              handleMoveToInProgress={handleMoveToInProgress}
                             />
                           );
                         });
@@ -1139,6 +1217,11 @@ export function ProjectTicketsTab({
                           <p><span className="font-medium">Description:</span> {generatedTicket.description}</p>
                         )}
                         <p><span className="font-medium">Priority:</span> {generatedTicket.priority} · <span className="font-medium">Feature:</span> {generatedTicket.featureName}</p>
+                        {assignedAgentForGenerated ? (
+                          <p><span className="font-medium">Assigned agent:</span> <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-violet-500/10 text-violet-600 border border-violet-500/20">{humanizeAgentId(assignedAgentForGenerated)}</span></p>
+                        ) : (
+                          <p className="text-muted-foreground text-xs">No agent (add .md files to .cursor/agents to assign one)</p>
+                        )}
                       </div>
                       <ButtonGroup alignment="left">
                         <Button
@@ -1238,9 +1321,16 @@ export function ProjectTicketsTab({
                     >
                       {/* Title & Status */}
                       <div className="flex items-start justify-between gap-3">
-                        <h4 className={cn("font-semibold text-sm leading-tight", feature.done && "line-through")}>
-                          {feature.title}
-                        </h4>
+                        <div className="flex flex-col gap-1.5 min-w-0">
+                          <h4 className={cn("font-semibold text-sm leading-tight", feature.done && "line-through")}>
+                            {feature.title}
+                          </h4>
+                          {feature.agent && (
+                            <span className="inline-flex items-center w-fit px-1.5 py-0.5 rounded text-[10px] font-medium bg-violet-500/10 text-violet-600 border border-violet-500/20">
+                              {humanizeAgentId(feature.agent)}
+                            </span>
+                          )}
+                        </div>
                         <button
                           onClick={() => !feature.done && handleMarkFeatureDone(feature)}
                           className={cn(

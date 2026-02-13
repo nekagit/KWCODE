@@ -1353,4 +1353,4 @@ Provide a summary table of key decisions:
 
 ## FINAL INSTRUCTION
 
-Generate the complete `architecture.md` file NOW. Be exhaustive, specific, and opinionated. Reference the actual codebase where possible. Make it the definitive architectural reference for this project.
+Generate the complete `architecture.md` in .cursor/setup file NOW. Be exhaustive, specific, and opinionated. Reference the actual codebase where possible. Make it the definitive architectural reference for this project.

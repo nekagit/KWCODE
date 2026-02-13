@@ -20,6 +20,7 @@ interface KanbanColumnCardProps {
   handleMarkDone: (ticketId: string) => Promise<void>;
   handleRedo: (ticketId: string) => Promise<void>;
   handleArchive: (ticketId: string) => Promise<void>;
+  handleMoveToInProgress: (ticketId: string) => Promise<void>;
 }
 
 export const KanbanColumnCard: React.FC<KanbanColumnCardProps> = ({
@@ -30,6 +31,7 @@ export const KanbanColumnCard: React.FC<KanbanColumnCardProps> = ({
   handleMarkDone,
   handleRedo,
   handleArchive,
+  handleMoveToInProgress,
 }) => (
   <div
     className={cn(
@@ -50,6 +52,7 @@ export const KanbanColumnCard: React.FC<KanbanColumnCardProps> = ({
           <KanbanTicketCard
             key={ticket.id}
             ticket={ticket}
+            columnId={columnId}
             featureBorderClass={
               ticket.featureName
                 ? featureColorByTitle[ticket.featureName]
@@ -59,6 +62,7 @@ export const KanbanColumnCard: React.FC<KanbanColumnCardProps> = ({
             onMarkDone={handleMarkDone}
             onRedo={handleRedo}
             onArchive={handleArchive}
+            onMoveToInProgress={handleMoveToInProgress}
           />
         ))}
       </div>

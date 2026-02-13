@@ -11,7 +11,7 @@ import {
   Circle,
 } from "lucide-react";
 import type { ParsedTicket } from "@/lib/todos-kanban";
-import { cn } from "@/lib/utils";
+import { cn, humanizeAgentId } from "@/lib/utils";
 
 const PRIORITY_COLORS: Record<string, string> = {
   P0: "text-red-500 bg-red-500",
@@ -22,22 +22,27 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 interface KanbanTicketCardProps {
   ticket: ParsedTicket;
+  columnId: string;
   featureBorderClass?: string;
   projectId: string;
   onMarkDone: (ticketId: string) => Promise<void>;
   onRedo: (ticketId: string) => Promise<void>;
   onArchive: (ticketId: string) => Promise<void>;
+  onMoveToInProgress: (ticketId: string) => Promise<void>;
 }
 
 export const KanbanTicketCard: React.FC<KanbanTicketCardProps> = ({
   ticket,
+  columnId,
   featureBorderClass,
   projectId,
   onMarkDone,
   onRedo,
   onArchive,
+  onMoveToInProgress,
 }) => {
   const isDone = ticket.status === "Done";
+  const isBacklog = columnId === "backlog";
   const priorityColor = PRIORITY_COLORS[ticket.priority] ?? PRIORITY_COLORS.P3;
 
   return (
@@ -86,15 +91,28 @@ export const KanbanTicketCard: React.FC<KanbanTicketCardProps> = ({
                 </Button>
               </>
             ) : (
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={(e) => { e.stopPropagation(); onMarkDone(ticket.id); }}
-                title="Mark done"
-                className="size-6 text-muted-foreground hover:text-emerald-500 hover:bg-emerald-500/10"
-              >
-                <CheckCircle2 className="size-3.5" />
-              </Button>
+              <>
+                {isBacklog && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={(e) => { e.stopPropagation(); onMoveToInProgress(ticket.id); }}
+                    title="Move to In progress"
+                    className="size-6 text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10"
+                  >
+                    <ArrowRight className="size-3.5" />
+                  </Button>
+                )}
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={(e) => { e.stopPropagation(); onMarkDone(ticket.id); }}
+                  title="Mark done"
+                  className="size-6 text-muted-foreground hover:text-emerald-500 hover:bg-emerald-500/10"
+                >
+                  <CheckCircle2 className="size-3.5" />
+                </Button>
+              </>
             )}
           </div>
         </div>
@@ -118,15 +136,22 @@ export const KanbanTicketCard: React.FC<KanbanTicketCardProps> = ({
         </p>
       )}
 
-      {/* Footer: Feature badge */}
-      {ticket.featureName && (
-        <div className="mt-auto pt-2 flex items-center gap-1.5 border-t border-border/30">
-          <Layers className="size-3 shrink-0 text-violet-400" />
-          <span className="text-[10px] font-medium text-muted-foreground truncate max-w-full">
-            {ticket.featureName}
-          </span>
-        </div>
-      )}
+      {/* Footer: Feature + Agent badges */}
+      <div className="mt-auto pt-2 flex flex-wrap items-center gap-2 border-t border-border/30">
+        {ticket.featureName && (
+          <div className="flex items-center gap-1.5">
+            <Layers className="size-3 shrink-0 text-violet-400" />
+            <span className="text-[10px] font-medium text-muted-foreground truncate max-w-full">
+              {ticket.featureName}
+            </span>
+          </div>
+        )}
+        {ticket.agent && (
+          <Badge variant="secondary" className="text-[10px] font-medium px-1.5 py-0 bg-violet-500/10 text-violet-600 border border-violet-500/20 hover:bg-violet-500/10">
+            {humanizeAgentId(ticket.agent)}
+          </Badge>
+        )}
+      </div>
     </div>
   );
 };

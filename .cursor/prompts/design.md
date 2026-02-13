@@ -858,4 +858,4 @@ List 10-15 specific anti-patterns with ❌ BAD and ✅ GOOD examples.
 
 ## FINAL INSTRUCTION
 
-Generate the complete `design.md` file NOW. Be exhaustive, specific, and opinionated. Reference the actual codebase where possible. Make it the definitive design guide for this project.
+Generate the complete `design.md` file in .cursor/setup NOW. Be exhaustive, specific, and opinionated. Reference the actual codebase where possible. Make it the definitive design guide for this project.

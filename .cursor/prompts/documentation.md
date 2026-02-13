@@ -1126,4 +1126,4 @@ Define key project-specific terms that should be used consistently:
 
 ## FINAL INSTRUCTION
 
-Generate the complete `documentation.md` file NOW. Be comprehensive, actionable, and provide complete templates. Reference the actual project structure where possible. Make it the definitive documentation strategy for this project.
+Generate the complete `documentation.md` .cursor/setup file NOW. Be comprehensive, actionable, and provide complete templates. Reference the actual project structure where possible. Make it the definitive documentation strategy for this project.

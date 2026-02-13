@@ -5,6 +5,14 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/** Humanize agent id for display: "frontend-dev" → "Frontend Dev". */
+export function humanizeAgentId(id: string): string {
+  return id
+    .split(/[-_]/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ");
+}
+
 const FRIENDLY_500 = "Server error loading data";
 
 /** Parse error message from an API response (JSON body or status text). Avoids showing raw JSON or generic "Internal Server Error". */

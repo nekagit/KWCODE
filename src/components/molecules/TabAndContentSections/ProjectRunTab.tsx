@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import type { Project } from "@/types/project";
-import { readProjectFile, writeProjectFile } from "@/lib/api-projects";
+import { readProjectFile, readProjectFileOrEmpty, writeProjectFile } from "@/lib/api-projects";
 import { isTauri, invoke } from "@/lib/tauri";
 import {
   buildKanbanFromMd,
@@ -93,6 +93,8 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
   const [kanbanLoading, setKanbanLoading] = useState(false);
   const [kanbanError, setKanbanError] = useState<string | null>(null);
 
+  const KANBAN_STATE_PATH = ".cursor/planner/kanban-state.json";
+
   const loadKanbanFromMd = useCallback(async () => {
     const repoPath = project.repoPath?.trim();
     if (!repoPath) {
@@ -103,11 +105,21 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
     setKanbanLoading(true);
     setKanbanError(null);
     try {
-      const [ticketsMd, featuresMd] = await Promise.all([
+      const [ticketsMd, featuresMd, stateRaw] = await Promise.all([
         readProjectFile(projectId, ".cursor/planner/tickets.md", repoPath),
         readProjectFile(projectId, ".cursor/planner/features.md", repoPath),
+        readProjectFileOrEmpty(projectId, KANBAN_STATE_PATH, repoPath),
       ]);
-      const data = buildKanbanFromMd(ticketsMd, featuresMd);
+      let inProgressIds: string[] = [];
+      if (stateRaw?.trim()) {
+        try {
+          const state = JSON.parse(stateRaw) as { inProgressIds?: string[] };
+          inProgressIds = Array.isArray(state?.inProgressIds) ? state.inProgressIds : [];
+        } catch {
+          /* ignore invalid JSON */
+        }
+      }
+      const data = buildKanbanFromMd(ticketsMd, featuresMd, inProgressIds);
       setKanbanData(data);
     } catch (e) {
       setKanbanError(e instanceof Error ? e.message : String(e));
@@ -163,7 +175,8 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
             );
           }
         }
-        setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd));
+        const inProgressIds = kanbanData.columns.in_progress?.items.map((t) => t.id) ?? [];
+        setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd, inProgressIds));
         toast.success("Ticket marked as done.");
       } catch (e) {
         toast.error(e instanceof Error ? e.message : String(e));
@@ -216,7 +229,8 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
             );
           }
         }
-        setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd));
+        const inProgressIds = kanbanData.columns.in_progress?.items.map((t) => t.id) ?? [];
+        setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd, inProgressIds));
         toast.success("Ticket moved back to todo.");
       } catch (e) {
         toast.error(e instanceof Error ? e.message : String(e));
@@ -258,7 +272,9 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
           featuresMd,
           project.repoPath
         );
-        setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd));
+        const inProgressIds = (kanbanData.columns.in_progress?.items.map((t) => t.id) ?? []).filter((id) => id !== ticketId);
+        setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd, inProgressIds));
+        await writeProjectFile(projectId, KANBAN_STATE_PATH, JSON.stringify({ inProgressIds }, null, 2), project.repoPath);
         toast.success(`Ticket #${ticket.number} archived.`);
       } catch (e) {
         toast.error(e instanceof Error ? e.message : String(e));
@@ -681,19 +697,12 @@ function WorkerTicketQueue({
 }) {
   if (!kanbanData) return null;
 
-  // We want to show 'In Progress' tickets.
-  // Although parsing logic might put them in Backlog (if just Todo), we check the 'in_progress' column
-  // in case logic changes or is dynamic. If empty, users might expect us to show something, but
-  // strictly adhering to 'tickets in in_progress' means checking that column.
   const tickets = kanbanData.columns.in_progress?.items ?? [];
 
-  // Compute feature colors
   const featureColorByTitle: Record<string, string> = {};
   kanbanData.features.forEach((f, i) => {
     featureColorByTitle[f.title] = getFeaturePalette(i).ticketBorder;
   });
-
-  if (tickets.length === 0) return null;
 
   return (
     <div className="rounded-2xl border border-border/40 bg-gradient-to-r from-blue-500/[0.04] to-violet-500/[0.04] backdrop-blur-sm overflow-hidden flex flex-col">
@@ -703,38 +712,48 @@ function WorkerTicketQueue({
           <Layers className="size-3.5 text-blue-400" />
         </div>
         <div>
-          <h3 className="text-xs font-semibold text-foreground tracking-tight">Active Tickets</h3>
+          <h3 className="text-xs font-semibold text-foreground tracking-tight">In progress queue</h3>
           <p className="text-[10px] text-muted-foreground normal-case">
-            Tickets currently in progress
+            All tickets from the kanban In progress column
           </p>
         </div>
         <div className="ml-auto flex items-center gap-2">
           <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
-            {tickets.length} Active
+            {tickets.length} {tickets.length === 1 ? "ticket" : "tickets"}
           </span>
         </div>
       </div>
 
-      {/* Horizontal Scroll Queue */}
-      <div className="w-full overflow-x-auto pb-4 pt-2 px-5 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
-        <div className="flex gap-4 min-w-max">
-          {tickets.map((ticket) => (
-            <div key={ticket.id} className="w-[300px]">
-              <KanbanTicketCard
-                ticket={ticket}
-                featureBorderClass={
-                  ticket.featureName
-                    ? featureColorByTitle[ticket.featureName]
-                    : undefined
-                }
-                projectId={projectId}
-                onMarkDone={handleMarkDone}
-                onRedo={handleRedo}
-                onArchive={handleArchive}
-              />
-            </div>
-          ))}
-        </div>
+      {/* Queue: horizontal scroll when tickets, empty state when none */}
+      <div className="w-full overflow-x-auto pb-4 pt-2 px-5 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent min-h-[120px]">
+        {tickets.length === 0 ? (
+          <div className="flex items-center justify-center py-8 text-center">
+            <p className="text-sm text-muted-foreground">
+              No tickets in progress. Move tickets from <strong>Backlog</strong> in the Planner tab (arrow → on a ticket).
+            </p>
+          </div>
+        ) : (
+          <div className="flex gap-4 min-w-max">
+            {tickets.map((ticket) => (
+              <div key={ticket.id} className="w-[300px]">
+                <KanbanTicketCard
+                  ticket={ticket}
+                  columnId="in_progress"
+                  featureBorderClass={
+                    ticket.featureName
+                      ? featureColorByTitle[ticket.featureName]
+                      : undefined
+                  }
+                  projectId={projectId}
+                  onMarkDone={handleMarkDone}
+                  onRedo={handleRedo}
+                  onArchive={handleArchive}
+                  onMoveToInProgress={async () => {}}
+                />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

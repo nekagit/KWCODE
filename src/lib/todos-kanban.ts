@@ -6,6 +6,8 @@ export type ParsedFeature = {
   title: string;
   ticketRefs: number[];
   done: boolean;
+  /** Agent from .cursor/agents (filename without .md), e.g. "frontend-dev". */
+  agent?: string;
 };
 
 /**
@@ -20,6 +22,8 @@ export type ParsedTicket = {
   featureName: string;
   done: boolean;
   status: "Todo" | "Done";
+  /** Agent from .cursor/agents (filename without .md), e.g. "frontend-dev". */
+  agent?: string;
 };
 
 /** Kanban column for UI (e.g. backlog, in_progress, done, testing). */
@@ -53,14 +57,17 @@ export function parseFeaturesMd(content: string): ParsedFeature[] {
   FEATURE_CHECKLIST_RE.lastIndex = 0;
   while ((match = FEATURE_CHECKLIST_RE.exec(content)) !== null) {
     const done = match[1].toLowerCase() === "x";
-    const rest = match[2].trim();
+    let rest = match[2].trim();
+    const agentMatch = rest.match(/\s*—\s*@([\w-]+)\s*$/);
+    const agent = agentMatch ? agentMatch[1] : undefined;
+    if (agent) rest = rest.replace(/\s*—\s*@[\w-]+\s*$/, "").trim();
     const ticketRefs: number[] = [];
     let refM: RegExpExecArray | null;
     TICKET_REF_RE.lastIndex = 0;
     while ((refM = TICKET_REF_RE.exec(rest)) !== null) ticketRefs.push(parseInt(refM[1], 10));
     const title = rest.replace(/\s*—\s*#[\d,\s#]+$/, "").replace(/\s*#\d+(\s*,\s*#\d+)*\s*$/, "").trim() || rest;
     const id = `feature-${features.length + 1}-${title.slice(0, 30).replace(/\s+/g, "-")}`;
-    features.push({ id, title, ticketRefs, done });
+    features.push({ id, title, ticketRefs, done, ...(agent && { agent }) });
   }
   return features;
 }
@@ -95,7 +102,10 @@ export function parseTicketsMd(content: string): ParsedTicket[] {
     if (tMatch) {
       const done = tMatch[1].toLowerCase() === "x";
       const num = parseInt(tMatch[2], 10);
-      const rest = tMatch[3].trim();
+      let rest = tMatch[3].trim();
+      const agentMatch = rest.match(/\s*—\s*@([\w-]+)\s*$/);
+      const agent = agentMatch ? agentMatch[1] : undefined;
+      if (agent) rest = rest.replace(/\s*—\s*@[\w-]+\s*$/, "").trim();
       const dashIdx = rest.indexOf(" — ");
       const title = dashIdx >= 0 ? rest.slice(0, dashIdx).trim() : rest;
       const description = dashIdx >= 0 ? rest.slice(dashIdx + 3).trim() : undefined;
@@ -109,6 +119,7 @@ export function parseTicketsMd(content: string): ParsedTicket[] {
         featureName: currentFeature,
         done,
         status: done ? "Done" : "Todo",
+        ...(agent && { agent }),
       });
     }
   }
@@ -117,11 +128,17 @@ export function parseTicketsMd(content: string): ParsedTicket[] {
 
 /**
  * Build Kanban data from .cursor/planner/tickets.md and .cursor/planner/features.md content.
- * Column mapping: ticket.done → done; !ticket.done → backlog. in_progress and testing stay empty.
+ * Column mapping: ticket.done → done; !ticket.done → backlog or in_progress when id is in inProgressIds.
+ * @param inProgressIds optional list of ticket ids to place in "In progress" column (persisted in .cursor/planner/kanban-state.json).
  */
-export function buildKanbanFromMd(ticketsMd: string, featuresMd: string): TodosKanbanData {
+export function buildKanbanFromMd(
+  ticketsMd: string,
+  featuresMd: string,
+  inProgressIds: string[] = []
+): TodosKanbanData {
   const tickets = parseTicketsMd(ticketsMd);
   const features = parseFeaturesMd(featuresMd);
+  const inProgressSet = new Set(inProgressIds);
   const columns: Record<string, KanbanColumn> = {
     backlog: { name: "Backlog", items: [] },
     in_progress: { name: "In progress", items: [] },
@@ -129,13 +146,47 @@ export function buildKanbanFromMd(ticketsMd: string, featuresMd: string): TodosK
     testing: { name: "Testing", items: [] },
   };
   for (const t of tickets) {
-    if (t.done) columns.done.items.push(t);
-    else columns.backlog.items.push(t);
+    if (t.done) {
+      columns.done.items.push(t);
+    } else if (inProgressSet.has(t.id)) {
+      columns.in_progress.items.push(t);
+    } else {
+      columns.backlog.items.push(t);
+    }
   }
   return {
     features,
     tickets,
     parsedAt: new Date().toISOString(),
+    columns,
+  };
+}
+
+/**
+ * Rebuild columns from existing kanban data using a new inProgressIds (e.g. after moving a ticket to in progress).
+ */
+export function applyInProgressState(
+  data: TodosKanbanData,
+  inProgressIds: string[]
+): TodosKanbanData {
+  const inProgressSet = new Set(inProgressIds);
+  const columns: Record<string, KanbanColumn> = {
+    backlog: { name: "Backlog", items: [] },
+    in_progress: { name: "In progress", items: [] },
+    done: { name: "Done", items: [] },
+    testing: { name: "Testing", items: [] },
+  };
+  for (const t of data.tickets) {
+    if (t.done) {
+      columns.done.items.push(t);
+    } else if (inProgressSet.has(t.id)) {
+      columns.in_progress.items.push(t);
+    } else {
+      columns.backlog.items.push(t);
+    }
+  }
+  return {
+    ...data,
     columns,
   };
 }
@@ -215,7 +266,8 @@ export function serializeTicketsToMd(
       for (const t of featureTickets) {
         const checkbox = t.done ? "[x]" : "[ ]";
         const desc = t.description ? ` — ${t.description}` : "";
-        lines.push(`- ${checkbox} #${t.number} ${t.title}${desc}`);
+        const agentSuffix = t.agent ? ` — @${t.agent}` : "";
+        lines.push(`- ${checkbox} #${t.number} ${t.title}${desc}${agentSuffix}`);
       }
       lines.push("");
     }
@@ -239,7 +291,8 @@ export function serializeFeaturesToMd(features: ParsedFeature[]): string {
   for (const f of features) {
     const checkbox = f.done ? "[x]" : "[ ]";
     const refs = f.ticketRefs.length > 0 ? ` — ${f.ticketRefs.map((n) => `#${n}`).join(", ")}` : "";
-    lines.push(`- ${checkbox} ${f.title}${refs}`);
+    const agentSuffix = f.agent ? ` — @${f.agent}` : "";
+    lines.push(`- ${checkbox} ${f.title}${refs}${agentSuffix}`);
   }
   return lines.join("\n");
 }

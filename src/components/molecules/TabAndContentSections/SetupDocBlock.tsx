@@ -220,7 +220,7 @@ export function SetupDocBlock({
         isOpen={showSetupDialog}
         title={setupPath}
         onClose={() => setShowSetupDialog(false)}
-        panelClassName="max-h-[90vh] h-[90vh] w-full max-w-4xl flex flex-col"
+        panelClassName="h-screen w-screen max-w-none rounded-none flex flex-col"
         bodyClassName="flex-1 min-h-0 overflow-hidden mt-6 flex flex-col"
       >
         <ScrollArea className="flex-1 min-h-0 pr-4">
@@ -238,7 +238,7 @@ export function SetupDocBlock({
         isOpen={showPromptDialog}
         title={promptPath}
         onClose={() => setShowPromptDialog(false)}
-        panelClassName="max-h-[90vh] h-[90vh] w-full max-w-4xl flex flex-col"
+        panelClassName="h-screen w-screen max-w-none rounded-none flex flex-col"
         bodyClassName="flex-1 min-h-0 overflow-hidden mt-6 flex flex-col"
       >
         <ScrollArea className="flex-1 min-h-0 pr-4">
