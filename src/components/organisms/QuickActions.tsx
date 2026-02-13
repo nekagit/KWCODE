@@ -1,18 +1,28 @@
 import { useRouter } from "next/navigation";
-import type { Feature } from "@/types/project";
+import type { RunInfo } from "@/types/run";
 import { QuickActionCard } from "@/components/molecules/CardsAndDisplay/QuickActionCard";
 import { QuickActionButtons } from "@/components/molecules/ControlsAndButtons/QuickActionButtons";
 
 interface QuickActionsProps {
-  features: Feature[];
-  navigateToTab: (tab: "tickets" | "projects" | "feature" | "log" | "dashboard" | "prompts" | "all" | "data") => void;
-  runForFeature: (feature: Feature) => Promise<void>;
+  runningRuns: RunInfo[];
+  navigateToTab: (tab: "tickets" | "projects" | "log" | "dashboard" | "prompts" | "all" | "data") => void;
   setSelectedRunId: (id: string | null) => void;
   router: ReturnType<typeof useRouter>;
 }
 
-export function QuickActions({ features, navigateToTab, runForFeature, setSelectedRunId, router }: QuickActionsProps) {
+export function QuickActions({
+  runningRuns,
+  navigateToTab,
+  setSelectedRunId,
+  router,
+}: QuickActionsProps) {
   return (
-    <QuickActionCard>{null}</QuickActionCard>
+    <QuickActionCard>
+      <QuickActionButtons
+        runningRuns={runningRuns}
+        navigateToTab={navigateToTab}
+        setSelectedRunId={setSelectedRunId}
+      />
+    </QuickActionCard>
   );
 }

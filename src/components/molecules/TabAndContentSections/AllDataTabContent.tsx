@@ -3,15 +3,15 @@
 import Link from "next/link";
 import { Card } from "@/components/shared/Card";
 import { Button } from "@/components/ui/button";
-import { Folders, MessageSquare, Ticket as TicketIcon, Layers, Lightbulb, Palette } from "lucide-react";
-import type { Project, Feature } from "@/types/project";
+import { Folders, MessageSquare, Ticket as TicketIcon, Lightbulb, Palette } from "lucide-react";
+import type { Project } from "@/types/project";
 import type { PromptRecord } from "@/types/prompt";
 import type { TicketRow } from "@/types/ticket";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import { AllProjectsDisplayList } from "@/components/molecules/Displays/AllProjectsDisplayList";
 import { PromptsDisplayList } from "@/components/molecules/Displays/PromptsDisplayList";
 import { TicketsDisplayList } from "@/components/molecules/Displays/TicketsDisplayList";
-import { FeaturesDisplayList } from "@/components/molecules/Displays/FeaturesDisplayList";
+
 import { IdeasDisplayList } from "@/components/molecules/Displays/IdeasDisplayList";
 import { getClasses } from "@/components/molecules/tailwind-molecules";
 const classes = getClasses("TabAndContentSections/AllDataTabContent.tsx");
@@ -25,7 +25,6 @@ interface AllDataTabContentProps {
   selectedPromptRecordIds: number[];
   setSelectedPromptRecordIds: React.Dispatch<React.SetStateAction<number[]>>;
   tickets: { id: string; title: string; status: string; description?: string }[];
-  features: { id: string; title: string; prompt_ids: number[]; project_paths: string[] }[];
   ideas: { id: number; title: string; description: string; category: string }[];
   ideasLoading: boolean;
 }
@@ -39,7 +38,6 @@ export function AllDataTabContent({
   selectedPromptRecordIds,
   setSelectedPromptRecordIds,
   tickets,
-  features,
   ideas,
   ideasLoading,
 }: AllDataTabContentProps) {
@@ -48,7 +46,7 @@ export function AllDataTabContent({
       <div>
         <h2 className={classes[1]}>Database</h2>
         <p className={classes[2]}>
-          Combined view: projects, prompts, tickets, features, ideas, and design. Use this as the big project page.
+          Combined view: projects, prompts, tickets, ideas, and design. Use this as the big project page.
         </p>
       </div>
 
@@ -88,33 +86,6 @@ export function AllDataTabContent({
             setSelectedPromptIds={setSelectedPromptRecordIds}
           />
           <p className={classes[6]}>Select prompts for Run. Edit on PromptRecords page.</p>
-        </Card>
-      </div>
-
-      <div className={classes[3]}>
-        <Card
-          title={
-            <>
-              <TicketIcon className={classes[8]} />
-              Tickets
-            </>
-          }
-          subtitle={`${tickets.length} tickets`}
-        >
-          <TicketsDisplayList tickets={tickets as TicketRow[]} />
-          <p className={classes[6]}>Full list on Tickets tab.</p>
-        </Card>
-        <Card
-          title={
-            <>
-              <Layers className={classes[10]} />
-              Features
-            </>
-          }
-          subtitle={`${features.length} features (prompts + projects)`}
-        >
-          <FeaturesDisplayList features={features as Feature[]} />
-          <p className={classes[6]}>Configure on Feature tab.</p>
         </Card>
       </div>
 

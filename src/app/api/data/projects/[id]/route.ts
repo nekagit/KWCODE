@@ -47,7 +47,7 @@ type ResolvedEntityCategory = EntityCategory;
 type ResolvedProject = Project & {
   prompts: ({ id: number; title: string; content?: string } & ResolvedEntityCategory)[];
   tickets: ({ id: string; title: string; status: string; description?: string } & ResolvedEntityCategory)[];
-  features: ({ id: string; title: string; prompt_ids: number[]; project_paths: string[] } & ResolvedEntityCategory)[];
+
   ideas: ({ id: number; title: string; description: string; category: string } & ResolvedEntityCategory)[];
   designs: ({ id: string; name: string } & ResolvedEntityCategory)[];
   architectures: ({ id: string; name: string } & ResolvedEntityCategory)[];
@@ -60,7 +60,7 @@ function getCategory(ec: ProjectEntityCategories | undefined, kind: keyof Projec
   return map[key];
 }
 
-/** GET: single project with resolved prompts, tickets, features, ideas */
+/** GET: single project with resolved prompts, tickets, ideas */
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -76,7 +76,7 @@ export async function GET(
     const promptsRaw = readJson<{ id: number; title: string; content?: string }[]>("prompts-export.json");
     const promptsList = Array.isArray(promptsRaw) ? promptsRaw : [];
     const ticketsList = readJson<{ id: string; title: string; status: string; description?: string }[]>("tickets.json") ?? [];
-    const featuresList = readJson<{ id: string; title: string; prompt_ids: number[]; project_paths: string[] }[]>("features.json") ?? [];
+
     const ideasList = readJson<{ id: number; title: string; description: string; category: string }[]>("ideas.json") ?? [];
     const designsRaw = readJson<{ id: string; name: string }[]>("designs.json");
     const designsList = Array.isArray(designsRaw) ? designsRaw : [];
@@ -85,7 +85,7 @@ export async function GET(
 
     const promptIds = Array.isArray(project.promptIds) ? project.promptIds : [];
     const ticketIds = Array.isArray(project.ticketIds) ? project.ticketIds : [];
-    const featureIds = Array.isArray(project.featureIds) ? project.featureIds : [];
+
     const ideaIds = Array.isArray(project.ideaIds) ? project.ideaIds : [];
     const designIds = Array.isArray((project as { designIds?: string[] }).designIds) ? (project as { designIds: string[] }).designIds : [];
     const architectureIds = Array.isArray((project as { architectureIds?: string[] }).architectureIds) ? (project as { architectureIds: string[] }).architectureIds : [];
@@ -97,7 +97,7 @@ export async function GET(
       architectureIds,
       promptIds,
       ticketIds,
-      featureIds,
+
       ideaIds,
       prompts: (promptIds as number[])
         .map((pid) => {
@@ -115,14 +115,7 @@ export async function GET(
           return { ...t, ...cat };
         })
         .filter(Boolean) as ResolvedProject["tickets"],
-      features: featureIds
-        .map((fid) => {
-          const f = featuresList.find((fr) => fr.id === fid);
-          if (!f) return null;
-          const cat = getCategory(entityCategories, "features", fid);
-          return { ...f, ...cat };
-        })
-        .filter(Boolean) as ResolvedProject["features"],
+
       ideas: ideaIds
         .map((iid) => {
           const i = ideasList.find((ir) => Number(ir.id) === iid);
@@ -175,21 +168,19 @@ export async function PUT(
     const now = new Date().toISOString();
     const specFilesValid =
       Array.isArray(body.specFiles) &&
-      body.specFiles.every(
-        (e: unknown) => {
-          if (typeof e !== "object" || e == null || !("name" in e) || !("path" in e)) return false;
-          const o = e as { name: unknown; path: unknown; content?: unknown };
-          return typeof o.name === "string" && typeof o.path === "string" && (o.content === undefined || typeof o.content === "string");
-        }
-      )
+        body.specFiles.every(
+          (e: unknown) => {
+            if (typeof e !== "object" || e == null || !("name" in e) || !("path" in e)) return false;
+            const o = e as { name: unknown; path: unknown; content?: unknown };
+            return typeof o.name === "string" && typeof o.path === "string" && (o.content === undefined || typeof o.content === "string");
+          }
+        )
         ? (body.specFiles as { name: string; path: string; content?: string }[])
         : undefined;
     const specFilesTicketsValid = Array.isArray(body.specFilesTickets)
       ? (body.specFilesTickets as unknown[]).filter((s): s is string => typeof s === "string")
       : undefined;
-    const specFilesFeaturesValid = Array.isArray(body.specFilesFeatures)
-      ? (body.specFilesFeatures as unknown[]).filter((s): s is string => typeof s === "string")
-      : undefined;
+
     const updated: Project = {
       ...projects[idx],
       ...(typeof body.name === "string" && { name: body.name.trim() }),
@@ -197,14 +188,14 @@ export async function PUT(
       ...(body.repoPath !== undefined && { repoPath: typeof body.repoPath === "string" ? body.repoPath.trim() || undefined : undefined }),
       ...(Array.isArray(body.promptIds) && { promptIds: body.promptIds.filter((n: unknown) => typeof n === "number") }),
       ...(Array.isArray(body.ticketIds) && { ticketIds: body.ticketIds.filter((s: unknown) => typeof s === "string") }),
-      ...(Array.isArray(body.featureIds) && { featureIds: body.featureIds.filter((s: unknown) => typeof s === "string") }),
+
       ...(Array.isArray(body.ideaIds) && { ideaIds: body.ideaIds.filter((n: unknown) => typeof n === "number") }),
       ...(Array.isArray(body.designIds) && { designIds: body.designIds.filter((s: unknown) => typeof s === "string") }),
       ...(Array.isArray(body.architectureIds) && { architectureIds: body.architectureIds.filter((s: unknown) => typeof s === "string") }),
       ...(body.entityCategories !== undefined && typeof body.entityCategories === "object" && body.entityCategories !== null && { entityCategories: body.entityCategories as ProjectEntityCategories }),
       ...(specFilesValid !== undefined && { specFiles: specFilesValid }),
       ...(specFilesTicketsValid !== undefined && { specFilesTickets: specFilesTicketsValid }),
-      ...(specFilesFeaturesValid !== undefined && { specFilesFeatures: specFilesFeaturesValid }),
+
       updated_at: now,
     };
     projects[idx] = updated;

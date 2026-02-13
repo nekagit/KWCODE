@@ -78,9 +78,6 @@ function buildPromptRecord(idea: { title: string; description: string; category:
   "tickets": [
     { "title": "string", "description": "string (1-3 sentences)", "status": "backlog" | "in_progress" | "done" }
   ],
-  "features": [
-    { "title": "string", "ticketIndexes": [0, 1], "promptIndexes": [0] }
-  ],
   "design": {
     "projectName": "string (from idea title)",
     "templateId": "landing" | "dashboard" | "product" | "custom",
@@ -108,7 +105,6 @@ function buildPromptRecord(idea: { title: string; description: string; category:
 ## Rules
 - Generate 5 to 8 prompts (recurring workflows useful for this idea).
 - Generate 15 to 25 tickets (concrete tasks; mix statuses).
-- Generate 15 to 25 features; ticketIndexes and promptIndexes are 0-based indices into tickets and prompts arrays; each feature references at least one ticket and one prompt.
 - design.sections: use kinds from hero, features, testimonials, cta, pricing, faq, team, contact-form, footer, nav, content, sidebar, custom. At least 3 sections.
 - design.templateId must be one of: landing, dashboard, product, custom.
 - Exactly 1 architecture; category one of: ddd, tdd, bdd, dry, solid, kiss, yagni, clean, hexagonal, cqrs, event_sourcing, microservices, rest, graphql, scenario.
@@ -118,7 +114,6 @@ function buildPromptRecord(idea: { title: string; description: string; category:
 interface AIModel {
   prompts: { title: string; content: string }[];
   tickets: { title: string; description: string; status: string }[];
-  features: { title: string; ticketIndexes: number[]; promptIndexes: number[] }[];
   design: {
     projectName: string;
     templateId: string;
@@ -197,7 +192,7 @@ export async function POST(request: NextRequest) {
         {
           role: "system",
           content:
-            "You output only a single valid JSON object with keys prompts, tickets, features, design, architectures. No markdown, no code fence, no other text.",
+            "You output only a single valid JSON object with keys prompts, tickets, design, architectures. No markdown, no code fence, no other text.",
         },
         { role: "user", content: userPromptRecord },
       ],
@@ -226,7 +221,6 @@ export async function POST(request: NextRequest) {
 
   if (!parsed.prompts || !Array.isArray(parsed.prompts)) parsed.prompts = [];
   if (!parsed.tickets || !Array.isArray(parsed.tickets)) parsed.tickets = [];
-  if (!parsed.features || !Array.isArray(parsed.features)) parsed.features = [];
   if (!parsed.design || typeof parsed.design !== "object") {
     parsed.design = {
       projectName: idea.title,
@@ -271,24 +265,6 @@ export async function POST(request: NextRequest) {
       description: String(t.description ?? "").slice(0, 5000),
       status: ["backlog", "in_progress", "done"].includes(String(t.status)) ? t.status : "backlog",
       priority: 0,
-      created_at: now,
-      updated_at: now,
-    };
-  });
-
-  const featuresExisting = (readJson<{ id: string }[]>("features.json") ?? []).filter((f) => f != null && typeof f.id === "string");
-  const newFeatureIds: string[] = [];
-  const newFeatures = parsed.features.slice(0, 50).map((f) => {
-    const id = crypto.randomUUID();
-    newFeatureIds.push(id);
-    const ticketIndexes = Array.isArray(f.ticketIndexes) ? f.ticketIndexes.filter((i) => i >= 0 && i < newTicketIds.length) : [];
-    const promptIndexes = Array.isArray(f.promptIndexes) ? f.promptIndexes.filter((i) => i >= 0 && i < promptIds.length) : [];
-    return {
-      id,
-      title: String(f.title ?? "Feature").slice(0, 500),
-      ticket_ids: ticketIndexes.length ? ticketIndexes.map((i) => newTicketIds[i]) : [newTicketIds[0]].filter(Boolean),
-      prompt_ids: promptIndexes.length ? promptIndexes.map((i) => promptIds[i]) : [promptIds[0]].filter(Boolean),
-      project_paths: [],
       created_at: now,
       updated_at: now,
     };
@@ -362,7 +338,6 @@ export async function POST(request: NextRequest) {
 
   writeJson("prompts-export.json", [...promptsExisting, ...newPromptRecords]);
   writeJson("tickets.json", [...ticketsExisting, ...newTickets]);
-  writeJson("features.json", [...featuresExisting, ...newFeatures]);
 
   const PHASES = ["Discovery", "Design", "Build", "Launch", "Review"] as const;
   const buildEntityCategories = (): ProjectEntityCategories => {
@@ -376,19 +351,13 @@ export async function POST(request: NextRequest) {
       const step = String((i % 5) + 1);
       ticketsMap[tid] = { phase, step, organization: "Team", categorizer: "backlog", other: "task" };
     });
-    const featuresMap: Record<string, EntityCategory> = {};
-    newFeatureIds.forEach((fid, i) => {
-      const phase = PHASES[i % PHASES.length];
-      const step = String((i % 5) + 1);
-      featuresMap[fid] = { phase, step, organization: "Product", categorizer: "feature", other: "scope" };
-    });
     const ideasMap: Record<string, EntityCategory> = {};
     ideasMap[String(ideaIdToLink)] = { phase: "Discovery", step: "1", organization: "Product", categorizer: "idea", other: "concept" };
     const designsMap: Record<string, EntityCategory> = {};
     designsMap[designId] = { phase: "Design", step: "1", organization: "Design", categorizer: "design", other: "ui-spec" };
     const architecturesMap: Record<string, EntityCategory> = {};
     architecturesMap[archId] = { phase: "Design", step: "1", organization: "Tech", categorizer: "architecture", other: "best-practice" };
-    return { prompts: promptsMap, tickets: ticketsMap, features: featuresMap, ideas: ideasMap, designs: designsMap, architectures: architecturesMap };
+    return { prompts: promptsMap, tickets: ticketsMap, ideas: ideasMap, designs: designsMap, architectures: architecturesMap };
   };
 
   const projectId = crypto.randomUUID();
@@ -398,7 +367,6 @@ export async function POST(request: NextRequest) {
     description: idea.description,
     promptIds,
     ticketIds: newTicketIds,
-    featureIds: newFeatureIds,
     ideaIds: [ideaIdToLink],
     designIds: [designId],
     architectureIds: [archId],
@@ -414,7 +382,6 @@ export async function POST(request: NextRequest) {
     counts: {
       prompts: newPromptRecords.length,
       tickets: newTickets.length,
-      features: newFeatures.length,
       ideas: 1,
       designs: 1,
       architectures: 1,

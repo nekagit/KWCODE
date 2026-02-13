@@ -1303,6 +1303,37 @@ fn get_data_dir() -> Result<String, String> {
     resolve_data_dir().map(|p| p.to_string_lossy().to_string())
 }
 
+/// Aggregated counts for the dashboard metrics view.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DashboardMetrics {
+    pub tickets_count: u32,
+    pub features_count: u32,
+    pub prompts_count: u32,
+    pub designs_count: u32,
+    pub active_projects_count: u32,
+    pub all_projects_count: u32,
+}
+
+#[tauri::command]
+fn get_dashboard_metrics() -> Result<DashboardMetrics, String> {
+    with_db(|conn| {
+        let tickets = db::get_tickets(conn)?;
+        let features = db::get_features(conn)?;
+        let prompts = db::get_prompts(conn)?;
+        let designs = db::get_designs(conn)?;
+        let active = db::get_active_projects(conn)?;
+        let all = db::get_all_projects(conn)?;
+        Ok(DashboardMetrics {
+            tickets_count: tickets.len() as u32,
+            features_count: features.len() as u32,
+            prompts_count: prompts.len() as u32,
+            designs_count: designs.len() as u32,
+            active_projects_count: active.len() as u32,
+            all_projects_count: all.len() as u32,
+        })
+    })
+}
+
 fn run_script_inner(
     app: AppHandle,
     state: State<'_, RunningState>,
@@ -1902,7 +1933,8 @@ pub fn run() {
             stop_run,
             stop_script,
             get_kv_store_entries,
-            get_data_dir
+            get_data_dir,
+            get_dashboard_metrics
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

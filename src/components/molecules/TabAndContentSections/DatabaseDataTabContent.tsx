@@ -7,12 +7,12 @@ import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { Loader2, Database, FileCode, Braces } from "lucide-react";
 import { invoke, isTauri } from "@/lib/tauri";
 import type { TicketRow } from "@/types/ticket";
-import type { Feature } from "@/types/project";
+
 import { ScriptListDisplay } from "@/components/molecules/Displays/ScriptListDisplay";
 import { JsonFileListDisplay } from "@/components/molecules/Displays/JsonFileListDisplay";
 import { KvStoreDisplay } from "@/components/molecules/Displays/KvStoreDisplay";
 import { TicketsDisplay } from "@/components/molecules/Displays/TicketsDisplay";
-import { FeaturesDisplay } from "@/components/molecules/Displays/FeaturesDisplay";
+
 import { AllProjectsDisplay } from "@/components/molecules/Displays/AllProjectsDisplay";
 import { ActiveProjectsDisplay } from "@/components/molecules/Displays/ActiveProjectsDisplay";
 import { getClasses } from "@/components/molecules/tailwind-molecules";
@@ -21,7 +21,7 @@ const classes = getClasses("TabAndContentSections/DatabaseDataTabContent.tsx");
 interface DatabaseDataTabContentProps {
   isTauriEnv: boolean | null;
   tickets: TicketRow[];
-  features: Feature[];
+
   allProjects: string[];
   activeProjects: string[];
 }
@@ -29,7 +29,6 @@ interface DatabaseDataTabContentProps {
 export function DatabaseDataTabContent({
   isTauriEnv,
   tickets,
-  features,
   allProjects,
   activeProjects,
 }: DatabaseDataTabContentProps) {
@@ -118,7 +117,7 @@ export function DatabaseDataTabContent({
       }
       subtitle={
         <>
-          <span className={classes[1]}>Scripts in script/, JSON files in data/, and DB data (kv_store, tickets, features).</span>
+          <span className={classes[1]}>Scripts in script/, JSON files in data/, and DB data (kv_store, tickets).</span>
           {isTauriEnv ? (
             <span className={classes[2]}>
               SQLite: data/app.db (created on first run; migrated from data/*.json). All app data is read/written via the DB.
@@ -176,12 +175,11 @@ export function DatabaseDataTabContent({
         <AccordionItem value="db">
           <AccordionTrigger className={classes[7]}>
             <Database className={classes[0]} />
-            DB Data (kv_store, tickets, features)
+            DB Data (kv_store, tickets)
           </AccordionTrigger>
           <AccordionContent className={classes[13]}>
             <KvStoreDisplay dataKvEntries={dataKvEntries} dataLoading={dataLoading} />
             <TicketsDisplay tickets={tickets as TicketRow[]} />
-            <FeaturesDisplay features={features} />
             <AllProjectsDisplay allProjects={allProjects} />
             <ActiveProjectsDisplay activeProjects={activeProjects} />
           </AccordionContent>

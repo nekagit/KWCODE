@@ -33,7 +33,6 @@ import {
   Plus,
   Ticket as TicketIcon,
   AlertCircle,
-  Layers,
   Play,
   ChevronDown,
   Square,
@@ -43,28 +42,21 @@ import {
   CheckCircle2,
   Circle,
   Trash,
-  MoreVertical,
   Wand2,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Project } from "@/types/project";
 import { readProjectFile, readProjectFileOrEmpty, writeProjectFile, listProjectFiles } from "@/lib/api-projects";
-import { isTauri, invoke } from "@/lib/tauri";
+import { invoke } from "@/lib/tauri";
 import { useRunStore } from "@/store/run-store";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   buildKanbanFromMd,
   applyInProgressState,
   markTicketsDone,
   markTicketsNotDone,
-  validateFeaturesTicketsCorrelation,
   serializeTicketsToMd,
-  serializeFeaturesToMd,
-  markFeatureDoneByTicketRefs,
-  markFeatureNotDoneByTicketRefs,
   type TodosKanbanData,
   type ParsedTicket,
-  type ParsedFeature,
 } from "@/lib/todos-kanban";
 import {
   buildKanbanContextBlock,
@@ -75,31 +67,14 @@ import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { KanbanColumnCard } from "@/components/molecules/Kanban/KanbanColumnCard";
 import { GenerateKanbanPromptSection } from "@/components/atoms/forms/GenerateKanbanPromptSection";
 import { cn, humanizeAgentId } from "@/lib/utils";
-import { isImplementAllRun, formatElapsed } from "@/lib/run-helpers";
+import { isImplementAllRun } from "@/lib/run-helpers";
 import { AddPromptDialog } from "@/components/molecules/FormsAndDialogs/AddPromptDialog";
-import { SummaryStatPill } from "@/components/shared/DisplayPrimitives";
 import { TerminalSlot } from "@/components/shared/TerminalSlot";
 
 const PRIORITIES: Array<"P0" | "P1" | "P2" | "P3"> = ["P0", "P1", "P2", "P3"];
 
 /** Agent ids to never auto-assign to generated tickets (e.g. devops, requirements). */
 const EXCLUDED_AGENT_IDS = ["devops", "requirements"];
-
-/** Tailwind border/text classes per feature index so features and their tickets share the same color. */
-const FEATURE_COLOR_PALETTE = [
-  { border: "border-l-blue-500", text: "text-blue-400", bg: "bg-blue-500/10", ticketBorder: "border-l-2 border-l-blue-500" },
-  { border: "border-l-emerald-500", text: "text-emerald-400", bg: "bg-emerald-500/10", ticketBorder: "border-l-2 border-l-emerald-500" },
-  { border: "border-l-amber-500", text: "text-amber-400", bg: "bg-amber-500/10", ticketBorder: "border-l-2 border-l-amber-500" },
-  { border: "border-l-violet-500", text: "text-violet-400", bg: "bg-violet-500/10", ticketBorder: "border-l-2 border-l-violet-500" },
-  { border: "border-l-rose-500", text: "text-rose-400", bg: "bg-rose-500/10", ticketBorder: "border-l-2 border-l-rose-500" },
-  { border: "border-l-cyan-500", text: "text-cyan-400", bg: "bg-cyan-500/10", ticketBorder: "border-l-2 border-l-cyan-500" },
-  { border: "border-l-orange-500", text: "text-orange-400", bg: "bg-orange-500/10", ticketBorder: "border-l-2 border-l-orange-500" },
-  { border: "border-l-teal-500", text: "text-teal-400", bg: "bg-teal-500/10", ticketBorder: "border-l-2 border-l-teal-500" },
-] as const;
-
-function getFeaturePalette(index: number) {
-  return FEATURE_COLOR_PALETTE[index % FEATURE_COLOR_PALETTE.length];
-}
 
 /* isImplementAllRun is now imported from @/lib/run-helpers */
 
@@ -330,21 +305,16 @@ export function ProjectTicketsTab({
   const [kanbanError, setKanbanError] = useState<string | null>(null);
   const [kanbanPrompt, setKanbanPrompt] = useState("");
   const [kanbanPromptLoading, setKanbanPromptLoading] = useState(false);
-  const [showFeatureTicketWarning, setShowFeatureTicketWarning] =
-    useState(false);
   const [addTicketOpen, setAddTicketOpen] = useState(false);
-  const [addFeatureOpen, setAddFeatureOpen] = useState(false);
   const [addTicketTitle, setAddTicketTitle] = useState("");
   const [addTicketDesc, setAddTicketDesc] = useState("");
   const [addTicketPriority, setAddTicketPriority] = useState<
     "P0" | "P1" | "P2" | "P3"
   >("P1");
   const [addTicketFeature, setAddTicketFeature] = useState("");
-  const [addFeatureTitle, setAddFeatureTitle] = useState("");
-  const [addFeatureRefs, setAddFeatureRefs] = useState("");
   const [saving, setSaving] = useState(false);
   /* Planner Manager: AI-generated ticket from prompt */
-  const [plannerManagerMode, setPlannerManagerMode] = useState<"ticket" | "feature">("ticket");
+  // Removed plannerManagerMode, always default to ticket
   const [plannerPromptInput, setPlannerPromptInput] = useState("");
   const [plannerPromptTextarea, setPlannerPromptTextarea] = useState("");
   const [generatedTicket, setGeneratedTicket] = useState<{
@@ -372,9 +342,8 @@ export function ProjectTicketsTab({
     setKanbanLoading(true);
     setKanbanError(null);
     try {
-      const [ticketsMd, featuresMd, stateRaw] = await Promise.all([
+      const [ticketsMd, stateRaw] = await Promise.all([
         readProjectFileOrEmpty(projectId, ".cursor/planner/tickets.md", repoPath),
-        readProjectFileOrEmpty(projectId, ".cursor/planner/features.md", repoPath),
         readProjectFileOrEmpty(projectId, KANBAN_STATE_PATH, repoPath),
       ]);
       let inProgressIds: string[] = [];
@@ -386,11 +355,8 @@ export function ProjectTicketsTab({
           /* ignore invalid JSON */
         }
       }
-      const data = buildKanbanFromMd(ticketsMd, featuresMd, inProgressIds);
+      const data = buildKanbanFromMd(ticketsMd, inProgressIds);
       setKanbanData(data);
-      const { hasInvalidFeatures } =
-        validateFeaturesTicketsCorrelation(data);
-      setShowFeatureTicketWarning(hasInvalidFeatures);
     } catch (e) {
       setKanbanError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -428,35 +394,8 @@ export function ProjectTicketsTab({
           ticketsMd,
           project.repoPath
         );
-        const ticket = updatedTickets.find((t) => t.id === ticketId);
-        let featuresMd = await readProjectFile(
-          projectId,
-          ".cursor/planner/features.md",
-          project.repoPath
-        );
-        if (ticket && ticket.done) {
-          const feature = kanbanData.features.find((f) =>
-            f.ticketRefs.includes(ticket.number)
-          );
-          if (
-            feature?.ticketRefs.every(
-              (n) => updatedTickets.find((t) => t.number === n)?.done
-            )
-          ) {
-            featuresMd = markFeatureDoneByTicketRefs(
-              featuresMd,
-              feature.ticketRefs
-            );
-            await writeProjectFile(
-              projectId,
-              ".cursor/planner/features.md",
-              featuresMd,
-              project.repoPath
-            );
-          }
-        }
         const inProgressIds = kanbanData.columns.in_progress?.items.map((t) => t.id) ?? [];
-        setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd, inProgressIds));
+        setKanbanData(buildKanbanFromMd(ticketsMd, inProgressIds));
         toast.success("Ticket marked as done.");
       } catch (e) {
         toast.error(e instanceof Error ? e.message : String(e));
@@ -472,7 +411,6 @@ export function ProjectTicketsTab({
         const updatedTickets = markTicketsNotDone(kanbanData.tickets, [
           ticketId,
         ]);
-        const ticket = kanbanData.tickets.find((t) => t.id === ticketId);
         const ticketsMd = serializeTicketsToMd(updatedTickets, {
           projectName: project.name,
         });
@@ -482,35 +420,8 @@ export function ProjectTicketsTab({
           ticketsMd,
           project.repoPath
         );
-        let featuresMd = await readProjectFile(
-          projectId,
-          ".cursor/planner/features.md",
-          project.repoPath
-        );
-        if (ticket) {
-          const feature = kanbanData.features.find((f) =>
-            f.ticketRefs.includes(ticket.number)
-          );
-          if (
-            feature &&
-            !feature.ticketRefs.some(
-              (n) => updatedTickets.find((t) => t.number === n)?.done
-            )
-          ) {
-            featuresMd = markFeatureNotDoneByTicketRefs(
-              featuresMd,
-              feature.ticketRefs
-            );
-            await writeProjectFile(
-              projectId,
-              ".cursor/planner/features.md",
-              featuresMd,
-              project.repoPath
-            );
-          }
-        }
         const inProgressIds = kanbanData.columns.in_progress?.items.map((t) => t.id) ?? [];
-        setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd, inProgressIds));
+        setKanbanData(buildKanbanFromMd(ticketsMd, inProgressIds));
         toast.success("Ticket moved back to todo.");
       } catch (e) {
         toast.error(e instanceof Error ? e.message : String(e));
@@ -528,32 +439,17 @@ export function ProjectTicketsTab({
         const updatedTickets = kanbanData.tickets.filter(
           (t) => t.id !== ticketId
         );
-        const features = kanbanData.features.map((f) =>
-          f.ticketRefs.includes(ticket.number)
-            ? {
-              ...f,
-              ticketRefs: f.ticketRefs.filter((n) => n !== ticket.number),
-            }
-            : f
-        );
         const ticketsMd = serializeTicketsToMd(updatedTickets, {
           projectName: project.name,
         });
-        const featuresMd = serializeFeaturesToMd(features);
         await writeProjectFile(
           projectId,
           ".cursor/planner/tickets.md",
           ticketsMd,
           project.repoPath
         );
-        await writeProjectFile(
-          projectId,
-          ".cursor/planner/features.md",
-          featuresMd,
-          project.repoPath
-        );
         const inProgressIds = (kanbanData.columns.in_progress?.items.map((t) => t.id) ?? []).filter((id) => id !== ticketId);
-        setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd, inProgressIds));
+        setKanbanData(buildKanbanFromMd(ticketsMd, inProgressIds));
         await writeProjectFile(projectId, KANBAN_STATE_PATH, JSON.stringify({ inProgressIds }, null, 2), project.repoPath);
         toast.success(`Ticket #${ticket.number} archived.`);
       } catch (e) {
@@ -604,30 +500,7 @@ export function ProjectTicketsTab({
       status: "Todo",
     };
     const updatedTickets = [...kanbanData.tickets, newTicket];
-    let features = kanbanData.features.map((f) =>
-      f.title.toLowerCase().trim() === featureName.toLowerCase()
-        ? {
-          ...f,
-          ticketRefs: [...f.ticketRefs, nextNumber].sort((a, b) => a - b),
-        }
-        : f
-    );
-    const existingFeature = features.find(
-      (f) => f.title.toLowerCase().trim() === featureName.toLowerCase()
-    );
-    if (!existingFeature) {
-      features = [
-        ...features,
-        {
-          id: `feature-${features.length + 1}-${featureName
-            .slice(0, 30)
-            .replace(/\s+/g, "-")}`,
-          title: featureName,
-          ticketRefs: [nextNumber],
-          done: false,
-        } as ParsedFeature,
-      ];
-    }
+
     setSaving(true);
     try {
       const ticketsMd = serializeTicketsToMd(updatedTickets, {
@@ -639,15 +512,8 @@ export function ProjectTicketsTab({
         ticketsMd,
         project.repoPath
       );
-      const featuresMd = serializeFeaturesToMd(features);
-      await writeProjectFile(
-        projectId,
-        ".cursor/planner/features.md",
-        featuresMd,
-        project.repoPath
-      );
       const inProgressIds = kanbanData.columns.in_progress?.items.map((t) => t.id) ?? [];
-      setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd, inProgressIds));
+      setKanbanData(buildKanbanFromMd(ticketsMd, inProgressIds));
       setAddTicketOpen(false);
       setAddTicketTitle("");
       setAddTicketDesc("");
@@ -667,93 +533,6 @@ export function ProjectTicketsTab({
     addTicketPriority,
     addTicketFeature,
   ]);
-
-  const handleMarkFeatureDone = useCallback(
-    async (feature: ParsedFeature) => {
-      if (!project?.repoPath || !kanbanData || feature.done) return;
-      try {
-        const ticketIdsToMark = feature.ticketRefs.map(
-          (n) => `ticket-${n}`
-        );
-        const updatedTickets = markTicketsDone(
-          kanbanData.tickets,
-          ticketIdsToMark
-        );
-        const ticketsMd = serializeTicketsToMd(updatedTickets, {
-          projectName: project.name,
-        });
-        await writeProjectFile(
-          projectId,
-          ".cursor/planner/tickets.md",
-          ticketsMd,
-          project.repoPath
-        );
-        let featuresMd = await readProjectFile(
-          projectId,
-          ".cursor/planner/features.md",
-          project.repoPath
-        );
-        featuresMd = markFeatureDoneByTicketRefs(
-          featuresMd,
-          feature.ticketRefs
-        );
-        await writeProjectFile(
-          projectId,
-          ".cursor/planner/features.md",
-          featuresMd,
-          project.repoPath
-        );
-        const inProgressIds = kanbanData.columns.in_progress?.items.map((t) => t.id) ?? [];
-        setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd, inProgressIds));
-        toast.success(`Feature "${feature.title}" marked done.`);
-      } catch (e) {
-        toast.error(e instanceof Error ? e.message : String(e));
-      }
-    },
-    [project, projectId, kanbanData]
-  );
-
-  const handleAddFeature = useCallback(async () => {
-    if (!project?.repoPath || !kanbanData || !addFeatureTitle.trim()) return;
-    const refs = addFeatureRefs
-      .split(/[\s,#]+/)
-      .map((s) => parseInt(s.replace(/^#/, ""), 10))
-      .filter((n) => !Number.isNaN(n) && n > 0);
-    const newFeature: ParsedFeature = {
-      id: `feature-${kanbanData.features.length + 1}-${addFeatureTitle
-        .slice(0, 30)
-        .replace(/\s+/g, "-")}`,
-      title: addFeatureTitle.trim(),
-      ticketRefs: refs,
-      done: false,
-    };
-    const updatedFeatures = [...kanbanData.features, newFeature];
-    setSaving(true);
-    try {
-      const featuresMd = serializeFeaturesToMd(updatedFeatures);
-      await writeProjectFile(
-        projectId,
-        ".cursor/planner/features.md",
-        featuresMd,
-        project.repoPath
-      );
-      const ticketsMd = await readProjectFile(
-        projectId,
-        ".cursor/planner/tickets.md",
-        project.repoPath
-      );
-      const inProgressIds = kanbanData.columns.in_progress?.items.map((t) => t.id) ?? [];
-      setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd, inProgressIds));
-      setAddFeatureOpen(false);
-      setAddFeatureTitle("");
-      setAddFeatureRefs("");
-      toast.success("Feature added.");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
-    } finally {
-      setSaving(false);
-    }
-  }, [project, projectId, kanbanData, addFeatureTitle, addFeatureRefs]);
 
   const handleRemoveAllTickets = useCallback(async () => {
     if (!project?.repoPath || !kanbanData) return;
@@ -775,48 +554,10 @@ export function ProjectTicketsTab({
         ticketsMd,
         project.repoPath
       );
-      const featuresMd = await readProjectFile(
-        projectId,
-        ".cursor/planner/features.md",
-        project.repoPath
-      );
       const inProgressIds: string[] = [];
-      setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd, inProgressIds));
+      setKanbanData(buildKanbanFromMd(ticketsMd, inProgressIds));
       await writeProjectFile(projectId, KANBAN_STATE_PATH, JSON.stringify({ inProgressIds }, null, 2), project.repoPath);
       toast.success("All tickets removed.");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
-    } finally {
-      setSaving(false);
-    }
-  }, [project, projectId, kanbanData]);
-
-  const handleRemoveAllFeatures = useCallback(async () => {
-    if (!project?.repoPath || !kanbanData) return;
-    if (
-      !confirm(
-        "Are you sure you want to remove ALL features? This cannot be undone."
-      )
-    )
-      return;
-
-    setSaving(true);
-    try {
-      const featuresMd = serializeFeaturesToMd([]);
-      await writeProjectFile(
-        projectId,
-        ".cursor/planner/features.md",
-        featuresMd,
-        project.repoPath
-      );
-      const ticketsMd = await readProjectFile(
-        projectId,
-        ".cursor/planner/tickets.md",
-        project.repoPath
-      );
-      const inProgressIds = kanbanData.columns.in_progress?.items.map((t) => t.id) ?? [];
-      setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd, inProgressIds));
-      toast.success("All features removed.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
     } finally {
@@ -834,7 +575,7 @@ export function ProjectTicketsTab({
     setGeneratedTicket(null);
     setAssignedAgentsForGenerated([]);
     try {
-      const existingFeatures = kanbanData?.features.map((f) => f.title) ?? [];
+      const existingFeatures = []; // No longer tracking features
       const res = await fetch("/api/generate-ticket-from-prompt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -856,7 +597,7 @@ export function ProjectTicketsTab({
     } finally {
       setGeneratingTicket(false);
     }
-  }, [plannerPromptInput, plannerPromptTextarea, kanbanData?.features]);
+  }, [plannerPromptInput, plannerPromptTextarea]);
 
   const confirmAddGeneratedTicketToBacklog = useCallback(async () => {
     if (!project?.repoPath || !kanbanData || !generatedTicket) return;
@@ -877,36 +618,13 @@ export function ProjectTicketsTab({
       ...(assignedAgentsForGenerated.length > 0 && { agents: assignedAgentsForGenerated }),
     };
     const updatedTickets = [newTicket, ...kanbanData.tickets];
-    let features = kanbanData.features.map((f) =>
-      f.title.toLowerCase().trim() === featureName.toLowerCase()
-        ? {
-            ...f,
-            ticketRefs: [...f.ticketRefs, nextNumber].sort((a, b) => a - b),
-          }
-        : f
-    );
-    const existingFeature = features.find(
-      (f) => f.title.toLowerCase().trim() === featureName.toLowerCase()
-    );
-    if (!existingFeature) {
-      features = [
-        ...features,
-        {
-          id: `feature-${features.length + 1}-${featureName.slice(0, 30).replace(/\s+/g, "-")}`,
-          title: featureName,
-          ticketRefs: [nextNumber],
-          done: false,
-        } as ParsedFeature,
-      ];
-    }
+
     setSaving(true);
     try {
       const ticketsMd = serializeTicketsToMd(updatedTickets, { projectName: project.name });
       await writeProjectFile(projectId, ".cursor/planner/tickets.md", ticketsMd, project.repoPath);
-      const featuresMd = serializeFeaturesToMd(features);
-      await writeProjectFile(projectId, ".cursor/planner/features.md", featuresMd, project.repoPath);
       const inProgressIds = kanbanData.columns.in_progress?.items.map((t) => t.id) ?? [];
-      setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd, inProgressIds));
+      setKanbanData(buildKanbanFromMd(ticketsMd, inProgressIds));
       setGeneratedTicket(null);
       setAssignedAgentsForGenerated([]);
       setPlannerPromptInput("");
@@ -958,24 +676,12 @@ export function ProjectTicketsTab({
 
   return (
     <div className="w-full flex flex-col gap-6">
-      {/* ── Warning banner ── */}
-      {showFeatureTicketWarning && (
-        <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
-          <AlertCircle className="size-4 shrink-0 text-amber-400 mt-0.5" />
-          <div className="text-xs text-amber-300/90">
-            <span className="font-medium">Feature-Ticket Mismatch:</span>{" "}
-            Some features reference tickets that do not exist or are not linked
-            to this project.
-          </div>
-        </div>
-      )}
-
       {/* ── No repo path ── */}
       {!project.repoPath?.trim() ? (
         <EmptyState
           icon={<TicketIcon className="size-6 text-muted-foreground" />}
           title="No repo path"
-          description="Set a repo path for this project to load tickets and features from .cursor/planner/tickets.md and .cursor/planner/features.md."
+          description="Set a repo path for this project to load tickets from .cursor/planner/tickets.md."
         />
       ) : kanbanLoading ? (
         <div className="flex items-center justify-center py-16">
@@ -992,14 +698,14 @@ export function ProjectTicketsTab({
                 <div className="flex flex-col items-start text-left gap-1">
                   <h2 className="text-xl font-bold tracking-tight">Project Planner</h2>
                   <p className="text-sm text-muted-foreground font-normal">
-                    Manage tickets, features, and progress.
+                    Manage tickets and progress.
                   </p>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="pt-6">
                 <div className="flex flex-col gap-6">
                   {/* Stats Grid */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div className="rounded-xl border border-border/40 bg-card backdrop-blur-sm p-4 flex flex-col gap-2 relative overflow-hidden group">
                       <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
                         <TicketIcon className="size-8" />
@@ -1035,18 +741,6 @@ export function ProjectTicketsTab({
                         {doneTickets}
                       </span>
                     </div>
-
-                    <div className="rounded-xl border border-violet-500/20 bg-violet-500/10 backdrop-blur-sm p-4 flex flex-col gap-2 relative overflow-hidden group">
-                      <div className="absolute top-0 right-0 p-3 text-violet-500 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <Layers className="size-8" />
-                      </div>
-                      <span className="text-xs font-medium text-violet-400 uppercase tracking-wider">
-                        Features
-                      </span>
-                      <span className="text-2xl font-bold text-violet-500 tabular-nums">
-                        {kanbanData.features.length}
-                      </span>
-                    </div>
                   </div>
 
                   {/* Overall Progress */}
@@ -1071,10 +765,6 @@ export function ProjectTicketsTab({
                   <div data-testid="kanban-columns-grid">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {(() => {
-                        const featureColorByTitle: Record<string, string> = {};
-                        kanbanData.features.forEach((f, i) => {
-                          featureColorByTitle[f.title] = getFeaturePalette(i).ticketBorder;
-                        });
                         const kanbanColumnOrder = [
                           "backlog",
                           "in_progress",
@@ -1088,7 +778,7 @@ export function ProjectTicketsTab({
                               key={columnId}
                               columnId={columnId}
                               column={column}
-                              featureColorByTitle={featureColorByTitle}
+                              featureColorByTitle={{}}
                               projectId={projectId}
                               handleMarkDone={handleMarkDone}
                               handleRedo={handleRedo}
@@ -1118,39 +808,8 @@ export function ProjectTicketsTab({
               </AccordionTrigger>
               <AccordionContent className="pt-6">
                 <div className="w-full flex flex-col gap-4">
-                  {/* Mode badges: Ticket | Feature (only Ticket implemented) */}
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setPlannerManagerMode("ticket")}
-                      className={cn(
-                        "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-                        plannerManagerMode === "ticket"
-                          ? "bg-primary text-primary-foreground shadow"
-                          : "bg-muted/60 text-muted-foreground hover:bg-muted"
-                      )}
-                      tabIndex={0}
-                    >
-                      <TicketIcon className="size-3.5" />
-                      Ticket
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPlannerManagerMode("feature")}
-                      className={cn(
-                        "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-                        plannerManagerMode === "feature"
-                          ? "bg-primary text-primary-foreground shadow"
-                          : "bg-muted/60 text-muted-foreground hover:bg-muted"
-                      )}
-                      tabIndex={0}
-                    >
-                      <Layers className="size-3.5" />
-                      Feature
-                    </button>
-                  </div>
 
-                  {/* Same input + textarea + magic stick for both Ticket and Feature (different prompt/flow per mode) */}
+                  {/* Same input + textarea + magic stick for Ticket */}
                   <div className="grid gap-2">
                     <label htmlFor="planner-prompt-input" className="text-sm font-medium text-muted-foreground">
                       What do you want?
@@ -1158,7 +817,7 @@ export function ProjectTicketsTab({
                     <input
                       id="planner-prompt-input"
                       type="text"
-                      placeholder={plannerManagerMode === "ticket" ? "e.g. A new page with settings" : "e.g. User settings and preferences"}
+                      placeholder="e.g. A new page with settings"
                       value={plannerPromptInput}
                       onChange={(e) => setPlannerPromptInput(e.target.value)}
                       className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
@@ -1171,7 +830,7 @@ export function ProjectTicketsTab({
                     </label>
                     <textarea
                       id="planner-prompt-textarea"
-                      placeholder={plannerManagerMode === "ticket" ? "e.g. I want a new page with settings for theme and notifications." : "e.g. A feature that groups theme, notifications, and account settings."}
+                      placeholder="e.g. I want a new page with settings for theme and notifications."
                       value={plannerPromptTextarea}
                       onChange={(e) => setPlannerPromptTextarea(e.target.value)}
                       rows={3}
@@ -1180,37 +839,24 @@ export function ProjectTicketsTab({
                     />
                   </div>
                   <div className="flex flex-wrap items-center gap-3">
-                    {plannerManagerMode === "ticket" ? (
-                      <Button
-                        type="button"
-                        onClick={generateTicketFromPrompt}
-                        disabled={generatingTicket || !kanbanData}
-                        className="gap-2"
-                        tabIndex={0}
-                      >
-                        {generatingTicket ? (
-                          <Loader2 className="size-4 animate-spin" />
-                        ) : (
-                          <Wand2 className="size-4" />
-                        )}
-                        Generate ticket
-                      </Button>
-                    ) : (
-                      <Button
-                        type="button"
-                        onClick={() => toast.info("Feature from prompt coming soon. Use Ticket for now.")}
-                        disabled={!kanbanData}
-                        className="gap-2"
-                        tabIndex={0}
-                      >
+                    <Button
+                      type="button"
+                      onClick={generateTicketFromPrompt}
+                      disabled={generatingTicket || !kanbanData}
+                      className="gap-2"
+                      tabIndex={0}
+                    >
+                      {generatingTicket ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
                         <Wand2 className="size-4" />
-                        Generate feature
-                      </Button>
-                    )}
+                      )}
+                      Generate ticket
+                    </Button>
                   </div>
 
                   {/* Ticket: confirm generated ticket → add to backlog at top */}
-                  {plannerManagerMode === "ticket" && generatedTicket && (
+                  {generatedTicket && (
                     <div className="rounded-xl border border-border/40 bg-card/50 p-4 space-y-3">
                       <p className="text-sm font-medium text-muted-foreground">Generated ticket — confirm to add to top of backlog</p>
                       <div className="text-sm space-y-1">
@@ -1249,11 +895,6 @@ export function ProjectTicketsTab({
                     </div>
                   )}
 
-                  {/* Feature: same UI, different prompt — coming soon message */}
-                  {plannerManagerMode === "feature" && (
-                    <p className="text-sm text-muted-foreground uppercase tracking-wide">Feature from prompt coming soon. Use Ticket for now.</p>
-                  )}
-
                   {/* Bulk actions */}
                   <div className="flex justify-end pt-2 border-t border-border/40">
                     <DropdownMenu>
@@ -1275,13 +916,6 @@ export function ProjectTicketsTab({
                           <Trash className="size-4 mr-2" />
                           Remove all tickets
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={handleRemoveAllFeatures}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash className="size-4 mr-2" />
-                          Remove all features
-                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -1289,114 +923,6 @@ export function ProjectTicketsTab({
               </AccordionContent>
             </AccordionItem>
           </Accordion>
-
-          {/* ═══════ Features Section ═══════ */}
-          {kanbanData.features.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 px-1">
-                <Layers className="size-5 text-violet-500" />
-                <h3 className="text-lg font-semibold tracking-tight">Active Features</h3>
-                <span className="ml-auto text-xs font-medium px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-400 border border-violet-500/20">
-                  {kanbanData.features.filter((f) => f.done).length}/{kanbanData.features.length} Done
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {kanbanData.features.map((feature, idx) => {
-                  const palette = getFeaturePalette(idx);
-                  const ticketsByNumber = new Map(
-                    kanbanData.tickets.map((t) => [t.number, t])
-                  );
-                  const totalRefs = feature.ticketRefs.length;
-                  const doneRefs = feature.ticketRefs.filter(
-                    (n) => ticketsByNumber.get(n)?.done
-                  ).length;
-                  const featureProgress =
-                    totalRefs > 0
-                      ? Math.round((doneRefs / totalRefs) * 100)
-                      : 0;
-
-                  return (
-                    <div
-                      key={feature.id}
-                      className={cn(
-                        "group relative flex flex-col gap-3 rounded-xl border bg-card/40 p-5 transition-all duration-300 hover:shadow-lg hover:bg-card/60 backdrop-blur-sm",
-                        feature.done ? "opacity-60 grayscale" : "",
-                        palette.border.replace('border-l-2', 'border-l-4') // robust left border
-                      )}
-                    >
-                      {/* Title & Status */}
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex flex-col gap-1.5 min-w-0">
-                          <h4 className={cn("font-semibold text-sm leading-tight", feature.done && "line-through")}>
-                            {feature.title}
-                          </h4>
-                          {feature.agents?.map((id) => (
-                            <span key={id} className="inline-flex items-center w-fit px-1.5 py-0.5 rounded text-[10px] font-medium bg-violet-500/10 text-violet-600 border border-violet-500/20 mr-1">
-                              {humanizeAgentId(id)}
-                            </span>
-                          ))}
-                        </div>
-                        <button
-                          onClick={() => !feature.done && handleMarkFeatureDone(feature)}
-                          className={cn(
-                            "shrink-0 transition-all duration-200",
-                            feature.done
-                              ? "text-emerald-500 cursor-default"
-                              : "text-muted-foreground/30 hover:text-emerald-500 hover:scale-110"
-                          )}
-                          disabled={feature.done}
-                        >
-                          {feature.done ? (
-                            <CheckCircle2 className="size-5" />
-                          ) : (
-                            <Circle className="size-5" />
-                          )}
-                        </button>
-                      </div>
-
-                      {/* Progress Bar */}
-                      {totalRefs > 0 && (
-                        <div className="space-y-1.5">
-                          <div className="flex justify-between text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                            <span>Progress</span>
-                            <span>{featureProgress}%</span>
-                          </div>
-                          <div className="h-1.5 w-full rounded-full bg-muted/40 overflow-hidden">
-                            <div
-                              className={cn("h-full rounded-full transition-all duration-500", feature.done ? "bg-emerald-500" : palette.bg.replace('/10', ''))}
-                              style={{ width: `${featureProgress}%`, backgroundColor: feature.done ? undefined : 'currentColor' }}
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Tickets Pills */}
-                      <div className="mt-auto pt-2 flex flex-wrap gap-1.5">
-                        {feature.ticketRefs.map((num) => {
-                          const t = ticketsByNumber.get(num);
-                          const isTicketDone = t?.done;
-                          return (
-                            <span
-                              key={num}
-                              className={cn(
-                                "text-[10px] tabular-nums px-1.5 py-0.5 rounded border transition-colors",
-                                isTicketDone
-                                  ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500 decoration-emerald-500/30 line-through"
-                                  : "bg-muted/30 border-border/40 text-muted-foreground"
-                              )}
-                            >
-                              #{num}
-                            </span>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
 
           {/* ═══════ Generate Kanban Prompt ═══════ */}
           <div className="rounded-xl border border-border/40 bg-card/30 backdrop-blur-sm p-1">
@@ -1477,66 +1003,12 @@ export function ProjectTicketsTab({
           <div className="space-y-2">
             <GenericInputWithLabel
               id="ticket-feature"
-              label="Feature (existing or new)"
+              label="Feature (optional grouping)"
               value={addTicketFeature}
               onChange={(e) => setAddTicketFeature(e.target.value)}
               placeholder="e.g. Testing & quality"
-              list="ticket-feature-list"
             />
-            <datalist id="ticket-feature-list">
-              {kanbanData?.features.map((f) => (
-                <option key={f.id} value={f.title} />
-              ))}
-            </datalist>
           </div>
-        </Form>
-      </SharedDialog>
-
-      {/* ═══════ Add Feature Dialog ═══════ */}
-      <SharedDialog
-        isOpen={addFeatureOpen}
-        title="Add feature"
-        onClose={() => setAddFeatureOpen(false)}
-        actions={
-          <ButtonGroup alignment="right">
-            <Button
-              variant="outline"
-              onClick={() => setAddFeatureOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleAddFeature}
-              disabled={saving || !addFeatureTitle.trim()}
-            >
-              {saving ? (
-                <Loader2 className="size-4 animate-spin mr-2" />
-              ) : null}
-              Add
-            </Button>
-          </ButtonGroup>
-        }
-      >
-        <Form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleAddFeature();
-          }}
-        >
-          <GenericInputWithLabel
-            id="feature-title"
-            label="Feature name"
-            value={addFeatureTitle}
-            onChange={(e) => setAddFeatureTitle(e.target.value)}
-            placeholder="Feature name"
-          />
-          <GenericInputWithLabel
-            id="feature-refs"
-            label="Ticket refs (#1, #2, …)"
-            value={addFeatureRefs}
-            onChange={(e) => setAddFeatureRefs(e.target.value)}
-            placeholder="#1, #2, #3"
-          />
         </Form>
       </SharedDialog>
     </div>

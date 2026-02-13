@@ -11,7 +11,6 @@ export type CreateProjectBody = {
   repoPath?: string;
   promptIds?: number[];
   ticketIds?: string[];
-  featureIds?: string[];
   ideaIds?: number[];
   designIds?: string[];
   architectureIds?: string[];
@@ -36,13 +35,12 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
 export type ResolvedProject = Project & {
   prompts: unknown[];
   tickets: unknown[];
-  features: unknown[];
   ideas: unknown[];
   designs: unknown[];
   architectures: unknown[];
 };
 
-/** Get one project with resolved prompts, tickets, features, ideas, designs, architectures. In Tauri uses same sources as dashboard (SQLite + JSON) so counts match "All data". */
+/** Get one project with resolved prompts, tickets, ideas, designs, architectures. In Tauri uses same sources as dashboard (SQLite + JSON) so counts match "All data". */
 export async function getProjectResolved(id: string): Promise<ResolvedProject> {
   if (isTauri) {
     return invoke("get_project_resolved", { id });
@@ -150,7 +148,7 @@ export async function readProjectFile(
 
 /**
  * Read a file from the project repo, or return empty string if the file does not exist.
- * Use for optional files (e.g. .cursor/planner/tickets.md, .cursor/planner/features.md) so the UI can load with empty data instead of showing a file-not-found error.
+ * Use for optional files (e.g. .cursor/planner/tickets.md) so the UI can load with empty data instead of showing a file-not-found error.
  */
 export async function readProjectFileOrEmpty(
   projectId: string,

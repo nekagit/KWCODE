@@ -22,7 +22,7 @@ export function ProjectsHeader({
       <PageHeader
         title="Projects"
         description={
-          "Each project is a page that aggregates design, ideas, features, tickets, and prompts. Open a project to see all its data."
+          "Each project is a page that aggregates design, ideas, tickets, and prompts. Open a project to see all its data."
         }
       />
       <ButtonGroup alignment="right">

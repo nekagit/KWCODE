@@ -42,7 +42,7 @@ export function NoProjectsFoundCard({
       <EmptyState
         icon={Folders}
         message="No projects yet"
-        action="Create a project to group design, ideas, features, tickets, and prompts in one place."
+        action="Create a project to group design, ideas, tickets, and prompts in one place."
       />
     </Card>
   );

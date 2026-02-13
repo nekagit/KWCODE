@@ -1,20 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { invoke, isTauri } from "@/lib/tauri";
+import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useRunState } from "@/context/run-state";
-import { getApiErrorMessage } from "@/lib/utils";
 import { RunPageHeader } from "@/components/molecules/LayoutAndNavigation/RunPageHeader";
-import { RunFromFeatureCard } from "@/components/molecules/CardsAndDisplay/RunFromFeatureCard";
 import { PromptRecordSelectionCard } from "@/components/molecules/CardsAndDisplay/PromptRecordSelectionCard";
 import { ProjectSelectionCard } from "@/components/molecules/CardsAndDisplay/ProjectSelectionCard";
 import { RunLabelCard } from "@/components/molecules/CardsAndDisplay/RunLabelCard";
 import { RunControls } from "@/components/molecules/ControlsAndButtons/RunControls";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { getOrganismClasses } from "./organism-classes";
-
-import type { Feature } from "@/types/project";
 
 const c = getOrganismClasses("RunPageContent.tsx");
 
@@ -28,61 +23,16 @@ export function RunPageContent() {
     setSelectedPromptRecordIds,
     allProjects,
     activeProjects,
-    setActiveProjects,
     toggleProject,
     saveActiveProjects,
     runWithParams,
     stopScript,
     runningRuns,
-    isTauriEnv,
-    featureQueue,
-    addFeatureToQueue,
-    removeFeatureFromQueue,
-    clearFeatureQueue,
-    runFeatureQueue,
   } = useRunState();
 
-  const [features, setFeatures] = useState<Feature[]>([]);
   const [runLabel, setRunLabel] = useState("");
-  const [selectedFeatureId, setSelectedFeatureId] = useState<string | null>(null);
 
   const running = runningRuns.some((r) => r.status === "running");
-
-  const loadFeatures = useCallback(async () => {
-    try {
-      if (isTauri) {
-        const list = await invoke<Feature[]>("get_features");
-        setFeatures(list);
-      } else {
-        const res = await fetch("/api/data");
-        if (!res.ok) {
-          setError(await getApiErrorMessage(res.clone()));
-          return;
-        }
-        const data = await res.json();
-        setFeatures(Array.isArray(data.features) ? data.features : []);
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  }, [setError]);
-
-  useEffect(() => {
-    loadFeatures();
-  }, [loadFeatures]);
-
-  const applyFeature = useCallback(
-    (feature: Feature | null) => {
-      setSelectedFeatureId(feature?.id ?? null);
-      if (feature) {
-        setSelectedPromptRecordIds(feature.prompt_ids);
-        setActiveProjects(
-          feature.project_paths.length > 0 ? feature.project_paths : allProjects // Changed to allProjects
-        );
-      }
-    },
-    [setSelectedPromptRecordIds, setActiveProjects, allProjects]
-  );
 
   const handleStart = async () => {
     if (selectedPromptRecordIds.length === 0) {
@@ -124,15 +74,6 @@ export function RunPageContent() {
           <Alert variant="default" className={c["1"]}>
             <AlertDescription>{dataWarning}</AlertDescription>
           </Alert>
-        )}
-
-        {/* Run from feature */}
-        {features.length > 0 && (
-          <RunFromFeatureCard
-            features={features}
-            selectedFeatureId={selectedFeatureId}
-            applyFeature={applyFeature}
-          />
         )}
 
         {/* PromptRecords */}

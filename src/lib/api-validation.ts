@@ -70,7 +70,6 @@ export const generateProjectFromIdeaSchema = z.union([
 ]);
 
 export const generatePromptRecordFromKanbanSchema = z.object({
-  features: z.array(z.object({ title: z.string(), ticketRefs: z.array(z.number()).optional() })).optional().default([]),
   tickets: z.array(z.object({
     number: z.number(),
     title: z.string(),
@@ -90,7 +89,6 @@ export const createProjectSchema = z.object({
   repoPath: z.string().optional(),
   promptIds: z.array(z.number()).optional().default([]),
   ticketIds: z.array(z.string()).optional().default([]),
-  featureIds: z.array(z.string()).optional().default([]),
   ideaIds: z.array(z.number()).optional().default([]),
   designIds: z.array(z.string()).optional().default([]),
   architectureIds: z.array(z.string()).optional().default([]),

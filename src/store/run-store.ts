@@ -11,7 +11,6 @@ import {
   type Timing,
   type PromptRecordItem,
   type RunInfo,
-  type FeatureQueueItem,
 } from "@/types/run";
 
 export interface RunState {
@@ -27,10 +26,7 @@ export interface RunState {
   timing: Timing;
   runningRuns: RunInfo[];
   selectedRunId: string | null;
-  /** Features added via + on Feature tab; run queue to execute in order. */
-  featureQueue: FeatureQueueItem[];
-  /** run_id of the current run that is part of the queue (for advancing on script-exited). */
-  queueRunInfoId: string | null;
+
   /** Archived Implement All logs (saved when user clicks Archive). */
   archivedImplementAllLogs: Array<{ id: string; timestamp: string; logLines: string[] }>;
   /** Run ID currently shown in the floating terminal dialog (Setup prompt runs). */
@@ -54,11 +50,7 @@ export interface RunActions {
     activeProjects: string[];
     runLabel: string | null;
   }) => Promise<string | null>;
-  addFeatureToQueue: (feature: FeatureQueueItem) => void;
-  removeFeatureFromQueue: (id: string) => void;
-  clearFeatureQueue: () => void;
-  runFeatureQueue: (activeProjectsFallback: string[]) => Promise<void>;
-  runNextInQueue: (exitedRunId: string) => void;
+
   stopScript: () => Promise<void>;
   stopRun: (runId: string) => Promise<void>;
   runImplementAll: (projectPath: string, promptContent?: string) => Promise<string | null>;
@@ -98,8 +90,7 @@ const initialState: RunState = {
   timing: DEFAULT_TIMING,
   runningRuns: [],
   selectedRunId: null,
-  featureQueue: [],
-  queueRunInfoId: null,
+
   archivedImplementAllLogs: [],
   floatingTerminalRunId: null,
 };
@@ -290,81 +281,7 @@ export const useRunStore = create<RunStore>()((set, get) => ({
     }
   },
 
-  addFeatureToQueue: (feature) =>
-    set((s) => {
-      if (s.featureQueue.some((f) => f.id === feature.id)) return s;
-      return {
-        featureQueue: [
-          ...s.featureQueue,
-          {
-            id: feature.id,
-            title: feature.title,
-            prompt_ids: feature.prompt_ids,
-            project_paths: feature.project_paths,
-          },
-        ],
-      };
-    }),
 
-  removeFeatureFromQueue: (id) =>
-    set((s) => ({
-      featureQueue: s.featureQueue.filter((f) => f.id !== id),
-      queueRunInfoId:
-        s.queueRunInfoId != null && s.featureQueue[0]?.id === id
-          ? null
-          : s.queueRunInfoId,
-    })),
-
-  clearFeatureQueue: () => set({ featureQueue: [], queueRunInfoId: null }),
-
-  runFeatureQueue: async (activeProjectsFallback) => {
-    const s = get();
-    if (s.featureQueue.length === 0) return;
-    if (s.runningRuns.some((r) => r.status === "running")) {
-      set({ error: "A run is already in progress" });
-      return;
-    }
-    const first = s.featureQueue[0];
-    const projectsToUse =
-      first.project_paths.length > 0 ? first.project_paths : activeProjectsFallback;
-    if (projectsToUse.length === 0) {
-      set({ error: "Select at least one project (or set projects on the feature)" });
-      return;
-    }
-    if (first.prompt_ids.length === 0) {
-      set({ error: "First feature in queue has no prompts" });
-      return;
-    }
-    set({ error: null });
-    const runId = await get().runWithParams({
-      promptIds: first.prompt_ids,
-      activeProjects: projectsToUse,
-      runLabel: first.title,
-    });
-    if (runId != null) set({ queueRunInfoId: runId });
-  },
-
-  runNextInQueue: (exitedRunId) => {
-    const s = get();
-    if (s.queueRunInfoId !== exitedRunId) return;
-    set({ queueRunInfoId: null });
-    const rest = s.featureQueue.slice(1);
-    set({ featureQueue: rest });
-    if (rest.length === 0) return;
-    const next = rest[0];
-    const projectsToUse =
-      next.project_paths.length > 0 ? next.project_paths : s.activeProjects;
-    if (projectsToUse.length === 0 || next.prompt_ids.length === 0) return;
-    get()
-      .runWithParams({
-        promptIds: next.prompt_ids,
-        activeProjects: projectsToUse,
-        runLabel: next.title,
-      })
-      .then((runId) => {
-        if (runId != null) set({ queueRunInfoId: runId });
-      });
-  },
 
   stopScript: async () => {
     try {
@@ -611,13 +528,7 @@ export function useRunState() {
       setRunInfos: s.setRunInfos,
       selectedRunId: s.selectedRunId,
       setSelectedRunId: s.setSelectedRunId,
-      featureQueue: s.featureQueue,
-      queueRunInfoId: s.queueRunInfoId,
-      addFeatureToQueue: s.addFeatureToQueue,
-      removeFeatureFromQueue: s.removeFeatureFromQueue,
-      clearFeatureQueue: s.clearFeatureQueue,
-      runFeatureQueue: s.runFeatureQueue,
-      runNextInQueue: s.runNextInQueue,
+
       refreshData: s.refreshData,
       runScript: s.runScript,
       runWithParams: s.runWithParams,

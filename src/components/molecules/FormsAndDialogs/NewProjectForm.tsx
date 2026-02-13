@@ -52,7 +52,7 @@ export function NewProjectForm() {
         repoPath: repoPath.trim() || undefined,
         promptIds: [],
         ticketIds: [],
-        featureIds: [],
+
         ideaIds: [],
       });
       router.push(`/projects/${project.id}`);

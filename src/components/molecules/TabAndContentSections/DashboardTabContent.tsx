@@ -1,17 +1,16 @@
 import { QuickActions } from "@/components/organisms/QuickActions";
 import { TicketBoard } from "@/components/organisms/TicketBoard";
-import type { Feature } from "@/types/project";
+import { DashboardMetricsCards } from "@/components/molecules/CardsAndDisplay/DashboardMetricsCards";
 import type { TicketRow } from "@/types/ticket";
 import type { RunInfo } from "@/types/run";
 import { useRouter } from "next/navigation";
 import { getClasses } from "@/components/molecules/tailwind-molecules";
+
 const classes = getClasses("TabAndContentSections/DashboardTabContent.tsx");
 
 interface DashboardTabContentProps {
-  features: Feature[];
   runningRuns: RunInfo[];
   navigateToTab: (tab: string) => void;
-  runForFeature: (feature: Feature) => Promise<void>;
   setSelectedRunId: (id: string | null) => void;
   tickets: TicketRow[];
   updateTicket: (id: string, updates: Partial<TicketRow>) => Promise<void>;
@@ -20,10 +19,8 @@ interface DashboardTabContentProps {
 }
 
 export function DashboardTabContent({
-  features,
   runningRuns,
   navigateToTab,
-  runForFeature,
   setSelectedRunId,
   tickets,
   updateTicket,
@@ -32,8 +29,25 @@ export function DashboardTabContent({
 }: DashboardTabContentProps) {
   return (
     <div className={classes[0]}>
-
-      <TicketBoard tickets={tickets} updateTicket={updateTicket} deleteTicket={deleteTicket} />
+      <section className="mb-6">
+        <h2 className="mb-3 text-sm font-medium text-muted-foreground">Metrics</h2>
+        <DashboardMetricsCards />
+      </section>
+      <section className="mb-6">
+        <QuickActions
+          runningRuns={runningRuns}
+          navigateToTab={navigateToTab}
+          setSelectedRunId={setSelectedRunId}
+          router={router}
+        />
+      </section>
+      <section>
+        <TicketBoard
+          tickets={tickets}
+          updateTicket={updateTicket}
+          deleteTicket={deleteTicket}
+        />
+      </section>
     </div>
   );
 }

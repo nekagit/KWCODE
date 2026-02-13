@@ -29,7 +29,7 @@ export const GenerateKanbanPromptSection: React.FC<GenerateKanbanPromptSectionPr
         </AccordionTrigger>
         <AccordionContent>
           <p className="text-muted-foreground text-sm mb-4">
-            Generate a prompt that includes the current Kanban state (tickets and features) to use with AI models.
+            {"Generate a prompt that includes the current Kanban state (tickets) to use with AI models."}
           </p>
           <Button
             onClick={generateKanbanPrompt}

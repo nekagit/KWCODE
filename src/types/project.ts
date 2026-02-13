@@ -11,13 +11,13 @@ export interface EntityCategory {
 export interface ProjectEntityCategories {
   prompts?: Record<string, EntityCategory>;
   tickets?: Record<string, EntityCategory>;
-  features?: Record<string, EntityCategory>;
+
   ideas?: Record<string, EntityCategory>;
   designs?: Record<string, EntityCategory>;
   architectures?: Record<string, EntityCategory>;
 }
 
-/** First-class project: aggregates design, ideas, features, tickets, prompts (and optional repo path). */
+/** First-class project: aggregates design, ideas, tickets, prompts (and optional repo path). */
 export interface Project {
   id: string;
   name: string;
@@ -26,7 +26,7 @@ export interface Project {
   repoPath?: string;
   promptIds: number[];
   ticketIds: string[];
-  featureIds: string[];
+
   ideaIds: number[];
   /** IDs of designs saved to library (linkable in link section). Optional for backward compat. */
   designIds?: string[];
@@ -38,22 +38,13 @@ export interface Project {
   specFiles?: { name: string; path: string; content?: string }[];
   /** Spec .md file paths linked to the Tickets card (e.g. .cursor/planner/tickets.md). Shown in Tickets card; drag from Project Spec to add. */
   specFilesTickets?: string[];
-  /** Spec .md file paths linked to the Features card (e.g. .cursor/planner/features.md, .cursor/feature-<id>.md). Shown in Features card; drag from Project Spec to add. */
-  specFilesFeatures?: string[];
+
   created_at?: string;
   updated_at?: string;
 }
 
-export interface Feature {
-  id: string;
-  title: string;
-  ticket_ids: string[];
-  prompt_ids: number[];
-  project_paths: string[];
-  created_at: string;
-  updated_at: string;
-}
 
-export type ProjectTabCategory = "design" | "ideas" | "features" | "tickets" | "prompts" | "architecture";
+
+export type ProjectTabCategory = "design" | "ideas" | "tickets" | "prompts" | "architecture";
 
 export type { PromptRecord } from "./prompt";

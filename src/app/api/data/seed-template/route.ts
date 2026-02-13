@@ -53,18 +53,6 @@ interface TicketRecord {
   updated_at?: string;
 }
 
-/** Feature = milestone; must have at least one ticket. */
-interface FeatureRecord {
-  id: string;
-  title: string;
-  /** At least one ticket; a feature groups work items for this milestone. */
-  ticket_ids: string[];
-  prompt_ids: number[];
-  project_paths: string[];
-  created_at?: string;
-  updated_at?: string;
-}
-
 interface IdeaRecord {
   id: number;
   title: string;
@@ -99,26 +87,10 @@ const RECURRING_PROMPT_TITLES = [
 const RECURRING_PROMPT_CONTENT =
   "Follow the project's established patterns. Read .cursor/* and FEATURES.md first. Break work into small steps. Commit after each logical unit. Run tests and build before pushing.";
 
-/** Major features for the template (1 idea, 1 design, 1 architecture). Each maps to a slice of multiphased tickets. */
-const MAJOR_FEATURE_TITLES = [
-  "User authentication & authorization",
-  "Landing page & marketing",
-  "Core API & data layer",
-  "Dashboard & analytics",
-  "Settings & configuration",
-  "Documentation & onboarding",
-  "Testing & quality",
-  "Deployment & DevOps",
-  "Security & compliance",
-  "Performance & monitoring",
-  "Notifications & messaging",
-  "Integration & extensibility",
-];
-
 const PHASES = ["Discovery", "Design", "Build", "Launch", "Review"] as const;
 const TICKET_CATEGORIZERS = ["backlog", "task", "spike", "bug", "review"] as const;
 
-/** POST: seed one template project with 10 prompts, categorized multiphased tickets, major features (for 1 idea, 1 design, 1 architecture) */
+/** POST: seed one template project with 10 prompts, categorized multiphased tickets (for 1 idea, 1 design, 1 architecture) */
 export async function POST() {
   try {
     const now = new Date().toISOString();
@@ -128,9 +100,6 @@ export async function POST() {
     );
     const ticketsExisting = (readJson<TicketRecord[]>("tickets.json") ?? []).filter(
       (t): t is TicketRecord => t != null && typeof t.id === "string"
-    );
-    const featuresExisting = (readJson<FeatureRecord[]>("features.json") ?? []).filter(
-      (f): f is FeatureRecord => f != null && typeof f.id === "string"
     );
     const ideasExisting = (readJson<IdeaRecord[]>("ideas.json") ?? []).filter(
       (i): i is IdeaRecord => i != null && typeof i.id === "number"
@@ -181,36 +150,10 @@ export async function POST() {
       };
     });
 
-    const newFeatureIds: string[] = [];
-    const features: FeatureRecord[] = [];
-    let ticketOffset = 0;
-    const numFeatures = MAJOR_FEATURE_TITLES.length;
-    const ticketsPerFeatureBase = Math.floor(totalTickets / numFeatures);
-    const remainder = totalTickets % numFeatures;
-    for (let f = 0; f < numFeatures; f++) {
-      const id = crypto.randomUUID();
-      newFeatureIds.push(id);
-      const ticketsForThisFeature = Math.max(1, ticketsPerFeatureBase + (f < remainder ? 1 : 0));
-      const slice = newTicketIds.slice(ticketOffset, ticketOffset + ticketsForThisFeature);
-      ticketOffset += slice.length;
-      if (slice.length === 0) continue; // feature must have at least one ticket
-      const promptIndex = f % newPromptRecords.length;
-      features.push({
-        id,
-        title: MAJOR_FEATURE_TITLES[f],
-        ticket_ids: slice,
-        prompt_ids: [newPromptRecords[promptIndex].id],
-        project_paths: [],
-        created_at: now,
-        updated_at: now,
-      });
-    }
-    const newFeatures = features;
-
     const newIdea: IdeaRecord = {
       id: nextIdeaId,
       title: "Template project idea",
-      description: "A template project for demos and testing, with recurring prompts, tickets, features, one idea, one design, and one architecture definition.",
+      description: "A template project for demos and testing, with recurring prompts, tickets, one idea, one design, and one architecture definition.",
       category: "webapp",
       source: "template",
       created_at: now,
@@ -274,7 +217,6 @@ export async function POST() {
 - **Testability**: Core logic testable without UI, DB, or external services.`,
       scenarios: `- Medium to large applications with clear domain logic.
 - When you need to swap UI or persistence without changing business rules.
-- When multiple UIs (web, CLI, API) share the same core.
 - When team wants clear boundaries and testability.`,
       references: "Robert C. Martin, Clean Architecture (book).",
       anti_patterns: "Putting business logic in controllers or DB layer; letting outer layers leak into domain.",
@@ -295,30 +237,22 @@ export async function POST() {
         const categorizer = TICKET_CATEGORIZERS[i % TICKET_CATEGORIZERS.length];
         ticketsMap[tid] = { phase, step, organization: "Team", categorizer, other: "task" };
       });
-      const featuresMap: Record<string, EntityCategory> = {};
-      newFeatures.forEach((feat, i) => {
-        const firstTicketIndex = newTicketIds.indexOf(feat.ticket_ids?.[0] ?? "");
-        const phase = firstTicketIndex >= 0 ? PHASES[Math.floor(firstTicketIndex / ticketsPerPhase)] : PHASES[i % PHASES.length];
-        const step = String((i % 3) + 1);
-        featuresMap[feat.id] = { phase, step, organization: "Product", categorizer: "feature", other: "scope" };
-      });
       const ideasMap: Record<string, EntityCategory> = {};
       ideasMap[String(newIdea.id)] = { phase: "Discovery", step: "1", organization: "Product", categorizer: "idea", other: "concept" };
       const designsMap: Record<string, EntityCategory> = {};
       designsMap[designId] = { phase: "Design", step: "1", organization: "Design", categorizer: "design", other: "ui-spec" };
       const architecturesMap: Record<string, EntityCategory> = {};
       architecturesMap[architectureId] = { phase: "Design", step: "1", organization: "Tech", categorizer: "architecture", other: "best-practice" };
-      return { prompts: promptsMap, tickets: ticketsMap, features: featuresMap, ideas: ideasMap, designs: designsMap, architectures: architecturesMap };
+      return { prompts: promptsMap, tickets: ticketsMap, ideas: ideasMap, designs: designsMap, architectures: architecturesMap };
     };
 
     const projectId = crypto.randomUUID();
     const newProject: Project = {
       id: projectId,
       name: "Template project",
-      description: "Seed project with 10 prompts, categorized multiphased tickets, major features for 1 idea, 1 design, 1 architecture.",
+      description: "Seed project with 10 prompts, categorized multiphased tickets, for 1 idea, 1 design, 1 architecture.",
       promptIds: newPromptRecords.map((p) => p.id),
       ticketIds: newTicketIds,
-      featureIds: newFeatureIds,
       ideaIds: [newIdea.id],
       designIds: [designId],
       architectureIds: [architectureId],
@@ -329,7 +263,6 @@ export async function POST() {
 
     writeJson("prompts-export.json", [...promptsExisting, ...newPromptRecords]);
     writeJson("tickets.json", [...ticketsExisting, ...newTickets]);
-    writeJson("features.json", [...featuresExisting, ...newFeatures]);
     writeJson("ideas.json", [...ideasExisting, newIdea]);
     writeJson("designs.json", [...designsExisting, newDesign]);
     writeJson("architectures.json", [...architecturesExisting, newArchitecture]);
@@ -341,7 +274,6 @@ export async function POST() {
       counts: {
         prompts: newPromptRecords.length,
         tickets: newTickets.length,
-        features: newFeatures.length,
         ideas: 1,
         designs: 1,
         architectures: 1,

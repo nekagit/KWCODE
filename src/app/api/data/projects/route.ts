@@ -46,7 +46,7 @@ export async function GET() {
   }
 }
 
-/** POST: create a new project. Body: { name, description?, repoPath?, promptIds?, ticketIds?, featureIds?, ideaIds? } */
+/** POST: create a new project. Body: { name, description?, repoPath?, promptIds?, ticketIds?, ideaIds? } */
 export async function POST(request: NextRequest) {
   try {
     const parsed = await parseAndValidate(request, createProjectSchema);
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       repoPath: body.repoPath?.trim() || undefined,
       promptIds: body.promptIds ?? [],
       ticketIds: body.ticketIds ?? [],
-      featureIds: body.featureIds ?? [],
+
       ideaIds: body.ideaIds ?? [],
       designIds: body.designIds ?? [],
       architectureIds: body.architectureIds ?? [],

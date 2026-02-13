@@ -36,19 +36,6 @@ export interface AnalysisPromptRecord {
   content: string;
 }
 
-/** Feature with nested tickets and prompts (import creates these and links to project). */
-export interface AnalysisFeature {
-  title: string;
-  tickets: AnalysisTicket[];
-  prompts: AnalysisPromptRecord[];
-}
-
-/** Implemented feature (reference only; optional to create as tickets/features). */
-export interface AnalysisFeatureImplemented {
-  title: string;
-  description?: string;
-}
-
 /** Error or risk from analysis. */
 export interface AnalysisError {
   severity: string;
@@ -64,12 +51,6 @@ export interface ProjectAnalysisSchema {
   architecture?: AnalysisArchitecture | AnalysisArchitecture[];
   /** One or more design definitions. */
   design?: AnalysisDesign | AnalysisDesign[];
-  /** Features to create (each with tickets and prompts). */
-  features?: AnalysisFeature[];
-  /** Already implemented features (for reference). */
-  featuresImplemented?: AnalysisFeatureImplemented[];
-  /** Missing features; same structure as features; import treats like features. */
-  missingFeatures?: AnalysisFeature[];
   /** Errors, risks, anti-patterns. */
   errors?: AnalysisError[];
 }
@@ -88,9 +69,4 @@ export function analysisDesigns(d: ProjectAnalysisSchema["design"]): AnalysisDes
   return Array.isArray(d) ? d : [d];
 }
 
-/** All features to import (features + missingFeatures). */
-export function analysisFeaturesToImport(schema: ProjectAnalysisSchema): AnalysisFeature[] {
-  const features = schema.features ?? [];
-  const missing = schema.missingFeatures ?? [];
-  return [...features, ...missing];
-}
+

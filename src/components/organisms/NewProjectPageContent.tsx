@@ -10,7 +10,7 @@ export function NewProjectPageContent() {
   return (
     <SingleContentPage
       title="New project"
-      description="Create a project to group design, ideas, features, tickets, and prompts. You can add links to prompts, tickets, features, and ideas from the project details page."
+      description="Create a project to group design, ideas, tickets, and prompts. You can add links to prompts, tickets, and ideas from the project details page."
       backLink="/projects"
       layout="simple"
       className={c["0"]}

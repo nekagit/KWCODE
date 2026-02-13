@@ -128,7 +128,7 @@ export function ProjectDetailsPageContent() {
   }
 
   const ticketCount = project.ticketIds?.length ?? 0;
-  const featureCount = project.featureIds?.length ?? 0;
+
   const designCount = project.designIds?.length ?? 0;
   const ideaCount = project.ideaIds?.length ?? 0;
   const architectureCount = project.architectureIds?.length ?? 0;
@@ -218,14 +218,7 @@ export function ProjectDetailsPageContent() {
                   color="bg-blue-500/10 border-blue-500/20 text-blue-400"
                 />
               )}
-              {featureCount > 0 && (
-                <CountBadge
-                  icon={<Hash className="size-2.5" />}
-                  count={featureCount}
-                  label="features"
-                  color="bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
-                />
-              )}
+
               {designCount > 0 && (
                 <CountBadge
                   icon={<Hash className="size-2.5" />}

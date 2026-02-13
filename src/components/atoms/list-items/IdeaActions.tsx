@@ -48,7 +48,7 @@ export const IdeaActions: React.FC<IdeaActionsProps> = ({
       <Button
         size="sm"
         variant="default"
-        title="Generate a full project from this idea (prompts, tickets, features, design, architecture)"
+        title="Generate a full project from this idea (prompts, tickets, design, architecture)"
         disabled={generatingProjectIdeaId !== null}
         onClick={() => onGenerateProject(idea.id)}
       >

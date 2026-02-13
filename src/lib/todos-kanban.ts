@@ -1,17 +1,5 @@
 /**
- * Parsed feature from .cursor/planner/features.md (checklist line with ticket refs).
- */
-export type ParsedFeature = {
-  id: string;
-  title: string;
-  ticketRefs: number[];
-  done: boolean;
-  /** Agents from .cursor/agents (filenames without .md), e.g. ["frontend-dev", "backend-dev"]. */
-  agents?: string[];
-};
-
-/**
- * Parsed ticket from .cursor/planner/tickets.md (checklist item under a feature and priority).
+ * Parsed ticket from .cursor/planner/tickets.md (checklist item).
  */
 export type ParsedTicket = {
   id: string;
@@ -19,6 +7,7 @@ export type ParsedTicket = {
   title: string;
   description?: string;
   priority: "P0" | "P1" | "P2" | "P3";
+  // Kept for backward compatibility in markdown parsing, but effectively unused/informational
   featureName: string;
   done: boolean;
   status: "Todo" | "Done";
@@ -36,7 +25,6 @@ export type KanbanColumn = {
  * JSON structure used for Kanban display and export.
  */
 export type TodosKanbanData = {
-  features: ParsedFeature[];
   tickets: ParsedTicket[];
   /** ISO date when parsed (for display). */
   parsedAt: string;
@@ -44,49 +32,21 @@ export type TodosKanbanData = {
   columns: Record<string, KanbanColumn>;
 };
 
-const FEATURE_CHECKLIST_RE = /^-\s*\[([ x])\]\s+(.+)$/gm;
 const TICKET_REF_RE = /#(\d+)/g;
 
-/**
- * Parse .cursor/planner/features.md into a list of features (checklist items with optional #N refs).
- */
-export function parseFeaturesMd(content: string): ParsedFeature[] {
-  if (!content?.trim()) return [];
-  const features: ParsedFeature[] = [];
-  let match: RegExpExecArray | null;
-  FEATURE_CHECKLIST_RE.lastIndex = 0;
-  while ((match = FEATURE_CHECKLIST_RE.exec(content)) !== null) {
-    const done = match[1].toLowerCase() === "x";
-    let rest = match[2].trim();
-    const agentsMatch = rest.match(/\s*—\s*((?:@[\w-]+\s*)+)\s*$/);
-    const agents = agentsMatch
-      ? agentsMatch[1].trim().split(/\s+/).map((s) => s.replace(/^@/, "")).filter(Boolean)
-      : undefined;
-    if (agents?.length) rest = rest.replace(/\s*—\s*(?:@[\w-]+\s*)+\s*$/, "").trim();
-    const ticketRefs: number[] = [];
-    let refM: RegExpExecArray | null;
-    TICKET_REF_RE.lastIndex = 0;
-    while ((refM = TICKET_REF_RE.exec(rest)) !== null) ticketRefs.push(parseInt(refM[1], 10));
-    const title = rest.replace(/\s*—\s*#[\d,\s#]+$/, "").replace(/\s*#\d+(\s*,\s*#\d+)*\s*$/, "").trim() || rest;
-    const id = `feature-${features.length + 1}-${title.slice(0, 30).replace(/\s+/g, "-")}`;
-    features.push({ id, title, ticketRefs, done, ...(agents?.length ? { agents } : {}) });
-  }
-  return features;
-}
-
 const PRIORITY_HEADER_RE = /^###\s+(P[0-3])\s+/m;
-const FEATURE_HEADER_RE = /^####\s*Feature:\s*(.+?)(?:\n|$)/gm;
 const TICKET_ITEM_RE = /^-\s*\[([ x])\]\s+#(\d+)\s+(.+?)(?:\s*—\s*(.+))?$/gm;
 
 /**
- * Parse .cursor/planner/tickets.md into a list of tickets (checklist items by priority and feature).
+ * Parse .cursor/planner/tickets.md into a list of tickets (checklist items by priority).
  */
 export function parseTicketsMd(content: string): ParsedTicket[] {
   if (!content?.trim()) return [];
   const tickets: ParsedTicket[] = [];
   const lines = content.split("\n");
   let currentPriority: "P0" | "P1" | "P2" | "P3" = "P0";
-  let currentFeature = "";
+  // We generally ignore feature grouping now, but we can capture it if present for the ticket record
+  let currentFeature = "General";
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -131,17 +91,15 @@ export function parseTicketsMd(content: string): ParsedTicket[] {
 }
 
 /**
- * Build Kanban data from .cursor/planner/tickets.md and .cursor/planner/features.md content.
+ * Build Kanban data from .cursor/planner/tickets.md.
  * Column mapping: ticket.done → done; !ticket.done → backlog or in_progress when id is in inProgressIds.
  * @param inProgressIds optional list of ticket ids to place in "In progress" column (persisted in .cursor/planner/kanban-state.json).
  */
 export function buildKanbanFromMd(
   ticketsMd: string,
-  featuresMd: string,
   inProgressIds: string[] = []
 ): TodosKanbanData {
   const tickets = parseTicketsMd(ticketsMd);
-  const features = parseFeaturesMd(featuresMd);
   const inProgressSet = new Set(inProgressIds);
   const columns: Record<string, KanbanColumn> = {
     backlog: { name: "Backlog", items: [] },
@@ -159,7 +117,6 @@ export function buildKanbanFromMd(
     }
   }
   return {
-    features,
     tickets,
     parsedAt: new Date().toISOString(),
     columns,
@@ -196,10 +153,10 @@ export function applyInProgressState(
 }
 
 /**
- * Parse both markdown contents into a single JSON structure for Kanban and export.
- * Prefer buildKanbanFromMd when you have raw markdown; this remains for callers passing project IDs.
+ * Parse markdown content into a single JSON structure for Kanban and export.
+ * Prefer buildKanbanFromMd when you have raw markdown.
  */
-export function parseTodosToKanban(featureIds: string[] | undefined, ticketIds: string[] | undefined): TodosKanbanData {
+export function parseTodosToKanban(ticketIds: string[] | undefined): TodosKanbanData {
   const columns: Record<string, KanbanColumn> = {
     backlog: { name: "Backlog", items: [] },
     in_progress: { name: "In progress", items: [] },
@@ -207,7 +164,6 @@ export function parseTodosToKanban(featureIds: string[] | undefined, ticketIds: 
     testing: { name: "Testing", items: [] },
   };
   return {
-    features: [],
     tickets: [],
     parsedAt: new Date().toISOString(),
     columns,
@@ -253,19 +209,29 @@ export function serializeTicketsToMd(
   const byPriority = new Map<ParsedTicket["priority"], ParsedTicket[]>();
   for (const p of PRIORITY_ORDER) byPriority.set(p, []);
   for (const t of tickets) byPriority.get(t.priority)!.push(t);
+
   for (const p of PRIORITY_ORDER) {
     const priorityTickets = byPriority.get(p)!;
     if (priorityTickets.length === 0) continue;
     const label = p === "P0" ? "Critical / foundation" : p === "P1" ? "High / quality and maintainability" : p === "P2" ? "Medium / polish and scale" : "Lower / later";
     lines.push(`### ${p} — ${label}`, "");
+
+    // Group by feature name purely for visual organization in the markdown, 
+    // even though "Features" as an entity are gone.
     const byFeature = new Map<string, ParsedTicket[]>();
     for (const t of priorityTickets) {
-      const fn = t.featureName || "Uncategorized";
+      const fn = t.featureName || "General";
       if (!byFeature.has(fn)) byFeature.set(fn, []);
       byFeature.get(fn)!.push(t);
     }
+
     for (const [featureName, featureTickets] of byFeature) {
       featureTickets.sort((a, b) => a.number - b.number);
+      // We keep the #### Header to maintain structure, or we could remove it. 
+      // Keeping it "Feature: Name" for minimal diffs in existing files, 
+      // but maybe just "Group: Name" or just output tickets if we want to kill the concept.
+      // User asked to remove features functionality.
+      // Let's keep a visual grouping but maybe simpler.
       lines.push(`#### Feature: ${featureName}`, "");
       for (const t of featureTickets) {
         const checkbox = t.done ? "[x]" : "[ ]";
@@ -279,29 +245,6 @@ export function serializeTicketsToMd(
   lines.push("## Next steps", "", "1. Add or update tickets in the Kanban.", "");
   return lines.join("\n").replace(/\n{3,}/g, "\n\n");
 }
-
-/**
- * Serialize parsed features to .cursor/planner/features.md content (intro + Major features + checklist lines).
- */
-export function serializeFeaturesToMd(features: ParsedFeature[]): string {
-  const lines: string[] = [
-    "# Features roadmap",
-    "",
-    "Features below are derived from `.cursor/planner/tickets.md`. Each major feature groups one or more work items (tickets); ticket numbers are listed so the Kanban and project details page parse and stay in sync.",
-    "",
-    "## Major features",
-    "",
-  ];
-  for (const f of features) {
-    const checkbox = f.done ? "[x]" : "[ ]";
-    const refs = f.ticketRefs.length > 0 ? ` — ${f.ticketRefs.map((n) => `#${n}`).join(", ")}` : "";
-    const agentSuffix = f.agents?.length ? ` — ${f.agents.map((a) => `@${a}`).join(" ")}` : "";
-    lines.push(`- ${checkbox} ${f.title}${refs}${agentSuffix}`);
-  }
-  return lines.join("\n");
-}
-
-const TICKET_LINE_RE = /^(-\s*)\[\s\](\s+#\d+\s+.+)$/gm;
 
 /**
  * Mark given ticket numbers as done in .cursor/planner/tickets.md content.
@@ -330,129 +273,26 @@ export function markTicketsNotDone(tickets: ParsedTicket[], ticketIds: string[])
 }
 
 /**
- * Validation result for features.md and tickets.md correlation (per .cursor/sync.md).
+ * Validation result for tickets.md.
  */
-export type CorrelationValidation = {
+export type ValidationResult = {
   ok: boolean;
-  /** Human-readable summary message. */
   message: string;
-  /** Detailed issues (errors) and info (e.g. tickets not in features). */
-  details: string[];
-  /** Indicates if there are invalid features (features referencing non-existent tickets or tickets not linked to project). */
-  hasInvalidFeatures: boolean;
 };
 
 /**
- * Validate features.md and tickets.md correlation per .cursor/sync.md.
- * Errors (cause ok=false): refs in features that don't exist in tickets; features without ticket refs;
- * feature names in tickets without matching feature in features.
- * Info (in details but ok=true): tickets not referenced in any feature.
+ * Validate tickets.md format.
  */
-export function validateFeaturesTicketsCorrelation(
+export function validateTicketsFormat(
   kanbanData: TodosKanbanData
-): CorrelationValidation {
-  const details: string[] = [];
-  const features = kanbanData.features;
-  const tickets = kanbanData.tickets;
-
-  const ticketNumbers = new Set(tickets.map((t) => t.number));
-  const refsInFeatures = new Set(features.flatMap((f) => f.ticketRefs));
-  const ticketsFeatureNames = new Set(tickets.map((t) => t.featureName.toLowerCase().trim()).filter(Boolean));
-
-  const refsOnlyInFeatures = [...refsInFeatures].filter((n) => !ticketNumbers.has(n));
-  const ticketsNotInFeatures = [...ticketNumbers].filter((n) => !refsInFeatures.has(n));
-
-  let hasInvalidFeatures = false;
-
-  if (refsOnlyInFeatures.length > 0) {
-    details.push(
-      `Ticket number(s) in features.md not found in tickets.md: #${refsOnlyInFeatures.sort((a, b) => a - b).join(", #")}.`
-    );
-    hasInvalidFeatures = true;
-  }
-  if (features.some((f) => f.ticketRefs.length === 0)) {
-    const withoutRefs = features.filter((f) => f.ticketRefs.length === 0).map((f) => f.title);
-    details.push(
-      `features.md has checklist items without ticket refs (#N): ${withoutRefs.join("; ")}. Each feature should reference at least one ticket.`
-    );
-    hasInvalidFeatures = true;
-  }
-  const featureTitlesLower = new Set(features.map((f) => f.title.toLowerCase().trim()));
-  const missingFeatures = [...ticketsFeatureNames].filter(
-    (fn) => ![...featureTitlesLower].some((ft) => ft.includes(fn) || fn.includes(ft))
-  );
-  if (missingFeatures.length > 0 && ticketsFeatureNames.size > 0) {
-    details.push(
-      `Feature name(s) in tickets.md without matching feature in features.md: ${missingFeatures.join(", ")}. Add a feature line for each.`
-    );
-    hasInvalidFeatures = true;
-  }
-  const errorCount = details.length;
-  if (ticketsNotInFeatures.length > 0) {
-    details.push(
-      `Ticket(s) in tickets.md not referenced in any feature: #${ticketsNotInFeatures.sort((a, b) => a - b).join(", #")}. Add to a feature for full correlation.`
-    );
-  }
-
-  const ok = errorCount === 0;
+): ValidationResult {
+  // Currently, if we parsed tickets, it's generally "ok".
+  // We can add logic to ensure unique IDs or headers here if needed.
   return {
-    ok,
-    message: ok
-      ? "features.md and tickets.md are in sync (correlation and format check passed)."
-      : "features.md and tickets.md need to be aligned.",
-    details,
-    hasInvalidFeatures,
+    ok: true,
+    message: "Tickets parsed successfully.",
   };
 }
 
-/**
- * Mark the feature checklist line that has the given ticket refs as done in .cursor/planner/features.md.
- * Finds a line like `- [ ] Feature name — #1, #2` where the set of #N equals ticketRefs and sets [x].
- */
-export function markFeatureDoneByTicketRefs(featuresMd: string, ticketRefs: number[]): string {
-  if (!ticketRefs.length) return featuresMd;
-  const refSet = new Set(ticketRefs);
-  const lines = featuresMd.split("\n");
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const openMatch = line.match(/^(-\s*)\[\s\]\s+(.+)$/);
-    if (!openMatch) continue;
-    const rest = openMatch[2];
-    const refsInLine: number[] = [];
-    let m: RegExpExecArray | null;
-    const re = /#(\d+)/g;
-    while ((m = re.exec(rest)) !== null) refsInLine.push(parseInt(m[1], 10));
-    const lineSet = new Set(refsInLine);
-    if (refSet.size === lineSet.size && [...refSet].every((r) => lineSet.has(r))) {
-      lines[i] = line.replace(/^(-\s*)\[\s\]/, "$1[x]");
-      return lines.join("\n");
-    }
-  }
-  return featuresMd;
-}
-
-/**
- * Mark the feature checklist line that has the given ticket refs as not done in .cursor/planner/features.md.
- * Finds a line like `- [x] Feature name — #1, #2` where the set of #N equals ticketRefs and sets [ ].
- */
-export function markFeatureNotDoneByTicketRefs(featuresMd: string, ticketRefs: number[]): string {
-  if (!ticketRefs.length) return featuresMd;
-  const refSet = new Set(ticketRefs);
-  const lines = featuresMd.split("\n");
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const doneMatch = line.match(/^(-\s*)\[x\]\s+(.+)$/);
-    if (!doneMatch) continue;
-    const rest = doneMatch[2];
-    const refsInLine: number[] = [];
-    let m: RegExpExecArray | null;
-    const re = /#(\d+)/g;
-    while ((m = re.exec(rest)) !== null) refsInLine.push(parseInt(m[1], 10));
-    const lineSet = new Set(refsInLine);
-    if (refSet.size === lineSet.size && [...refSet].every((r) => lineSet.has(r))) {
-      lines[i] = line.replace(/^(-\s*)\[x\]/, "$1[ ]");
-      return lines.join("\n");
-    }
-  }
-  return featuresMd;
-}
+// Deprecated/stubbed for compatibility during refactor if needed, or removed.
+// Removed validateFeaturesTicketsCorrelation, parseFeaturesMd, serializeFeaturesToMd.

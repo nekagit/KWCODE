@@ -8,7 +8,6 @@ import {
   ArrowRight,
   Archive,
   RotateCcw,
-  Circle,
 } from "lucide-react";
 import type { ParsedTicket } from "@/lib/todos-kanban";
 import { cn, humanizeAgentId } from "@/lib/utils";
@@ -23,7 +22,6 @@ const PRIORITY_COLORS: Record<string, string> = {
 interface KanbanTicketCardProps {
   ticket: ParsedTicket;
   columnId: string;
-  featureBorderClass?: string;
   projectId: string;
   onMarkDone: (ticketId: string) => Promise<void>;
   onRedo: (ticketId: string) => Promise<void>;
@@ -34,7 +32,6 @@ interface KanbanTicketCardProps {
 export const KanbanTicketCard: React.FC<KanbanTicketCardProps> = ({
   ticket,
   columnId,
-  featureBorderClass,
   projectId,
   onMarkDone,
   onRedo,
@@ -51,7 +48,7 @@ export const KanbanTicketCard: React.FC<KanbanTicketCardProps> = ({
         "group relative flex flex-col gap-3 rounded-xl border bg-card/95 backdrop-blur-sm p-4 transition-all duration-300",
         "hover:bg-card hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5",
         isDone ? "opacity-60 grayscale-[0.5]" : "",
-        featureBorderClass ?? "border-border/60"
+        "border-border/60"
       )}
     >
       {/* Header: ID + Priority + Title */}

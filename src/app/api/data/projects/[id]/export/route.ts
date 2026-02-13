@@ -54,7 +54,6 @@ export interface ProjectExport {
   project: Project;
   prompts: { id: number; title: string; content?: string; category?: string | null; tags?: string[] | null; created_at?: string | null; updated_at?: string | null }[];
   tickets: { id: string; title: string; description?: string; status: string; priority?: number; created_at?: string; updated_at?: string }[];
-  features: { id: string; title: string; ticket_ids?: string[]; prompt_ids: number[]; project_paths: string[]; created_at?: string; updated_at?: string }[];
   ideas: { id: number; title: string; description: string; category: string; source?: string; created_at?: string; updated_at?: string }[];
   designs: DesignRecord[];
   architectures: ArchitectureRecord[];
@@ -76,7 +75,6 @@ export async function GET(
     const promptsRaw = readJson<{ id: number; title: string; content?: string; category?: string | null; tags?: string[] | null; created_at?: string | null; updated_at?: string | null }[]>("prompts-export.json");
     const promptsList = Array.isArray(promptsRaw) ? promptsRaw : [];
     const ticketsList = readJson<{ id: string; title: string; description?: string; status: string; priority?: number; created_at?: string; updated_at?: string }[]>("tickets.json") ?? [];
-    const featuresList = readJson<{ id: string; title: string; ticket_ids?: string[]; prompt_ids: number[]; project_paths: string[]; created_at?: string; updated_at?: string }[]>("features.json") ?? [];
     const ideasList = readJson<{ id: number; title: string; description: string; category: string; source?: string; created_at?: string; updated_at?: string }[]>("ideas.json") ?? [];
     const designsRaw = readJson<DesignRecord[]>("designs.json");
     const designsList = Array.isArray(designsRaw) ? designsRaw : [];
@@ -85,7 +83,6 @@ export async function GET(
 
     const promptIds = Array.isArray(project.promptIds) ? project.promptIds : [];
     const ticketIds = Array.isArray(project.ticketIds) ? project.ticketIds : [];
-    const featureIds = Array.isArray(project.featureIds) ? project.featureIds : [];
     const ideaIds = Array.isArray(project.ideaIds) ? project.ideaIds : [];
     const designIds = Array.isArray((project as { designIds?: string[] }).designIds) ? (project as { designIds: string[] }).designIds : [];
     const architectureIds = Array.isArray((project as { architectureIds?: string[] }).architectureIds) ? (project as { architectureIds: string[] }).architectureIds : [];
@@ -96,9 +93,6 @@ export async function GET(
     const tickets = ticketIds
       .map((tid) => ticketsList.find((t) => t.id === tid))
       .filter(Boolean) as ProjectExport["tickets"];
-    const features = featureIds
-      .map((fid) => featuresList.find((f) => f.id === fid))
-      .filter(Boolean) as ProjectExport["features"];
     const ideas = ideaIds
       .map((iid) => ideasList.find((i) => Number(i.id) === iid))
       .filter(Boolean) as ProjectExport["ideas"];
@@ -114,7 +108,6 @@ export async function GET(
       project,
       prompts,
       tickets,
-      features,
       ideas,
       designs,
       architectures,

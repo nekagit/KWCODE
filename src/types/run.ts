@@ -38,10 +38,4 @@ export interface FileEntry {
   path: string;
 }
 
-/** Minimal data for a feature (milestone) in the run queue: prompts + projects + label. */
-export interface FeatureQueueItem {
-  id: string;
-  title: string;
-  prompt_ids: number[];
-  project_paths: string[];
-}
+

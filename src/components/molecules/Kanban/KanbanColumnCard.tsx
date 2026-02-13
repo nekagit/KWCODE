@@ -15,7 +15,6 @@ const COLUMN_BG: Record<string, string> = {
 interface KanbanColumnCardProps {
   columnId: string;
   column: KanbanColumn;
-  featureColorByTitle: Record<string, string>;
   projectId: string;
   handleMarkDone: (ticketId: string) => Promise<void>;
   handleRedo: (ticketId: string) => Promise<void>;
@@ -26,7 +25,6 @@ interface KanbanColumnCardProps {
 export const KanbanColumnCard: React.FC<KanbanColumnCardProps> = ({
   columnId,
   column,
-  featureColorByTitle,
   projectId,
   handleMarkDone,
   handleRedo,
@@ -53,11 +51,6 @@ export const KanbanColumnCard: React.FC<KanbanColumnCardProps> = ({
             key={ticket.id}
             ticket={ticket}
             columnId={columnId}
-            featureBorderClass={
-              ticket.featureName
-                ? featureColorByTitle[ticket.featureName]
-                : undefined
-            }
             projectId={projectId}
             onMarkDone={handleMarkDone}
             onRedo={handleRedo}

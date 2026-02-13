@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { promises as fs } from "node:fs";
 import {
-  parseFeaturesMd,
   parseTicketsMd,
 } from "@/lib/todos-kanban";
 
 const CURSOR_PATH = ".cursor";
 const PLANNER_PATH = `${CURSOR_PATH}/planner`;
-const FEATURES_MD_PATH = `${PLANNER_PATH}/features.md`;
+
 const TICKETS_MD_PATH = `${PLANNER_PATH}/tickets.md`;
 const PROMPTS_JSON_PATH = `${CURSOR_PATH}/prompt-records.json`; // Assuming prompts are stored in a JSON file
 const DESIGNS_JSON_PATH = `${CURSOR_PATH}/designs.json`; // Assuming designs are stored in a JSON file
@@ -68,10 +67,7 @@ async function getDesignsData(): Promise<unknown[]> {
   }
 }
 
-async function getFeaturesData(): Promise<unknown[]> {
-  const featuresMd = await safeReadFile(FEATURES_MD_PATH);
-  return parseFeaturesMd(featuresMd);
-}
+
 
 async function getTicketsData(): Promise<unknown[]> {
   const ticketsMd = await safeReadFile(TICKETS_MD_PATH);
@@ -83,7 +79,6 @@ export async function GET() {
     const allProjects = await getAllProjects();
     const activeProjects = await getActiveProjects();
     const tickets = await getTicketsData();
-    const features = await getFeaturesData();
     const prompts = await getPromptsData();
     const designs = await getDesignsData();
 
@@ -98,7 +93,6 @@ export async function GET() {
       activeProjects,
       prompts,
       tickets,
-      features,
       designs,
       kvEntries,
     });
@@ -110,7 +104,6 @@ export async function GET() {
       activeProjects: [],
       prompts: [],
       tickets: [],
-      features: [],
       designs: [],
       kvEntries: [],
       error: message,

@@ -4,4 +4,4 @@ Features below are derived from `.cursor/planner/tickets.md`. Each major feature
 
 ## Major features
 
-- [ ] Configuration — #2, #3
+- [ ] Configuration

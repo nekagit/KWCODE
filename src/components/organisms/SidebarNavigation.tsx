@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { LayoutDashboard, MessageSquare, Terminal, Folders, Ticket as TicketIcon, Layers, Lightbulb, LayoutGrid, Building2, PanelLeftClose, PanelLeftOpen, TestTube2, ScrollText, Play, Settings, Moon } from "lucide-react";
+import { LayoutDashboard, MessageSquare, Terminal, Folders, Ticket as TicketIcon, Layers, Lightbulb, LayoutGrid, Building2, PanelLeftClose, PanelLeftOpen, TestTube2, ScrollText, Play, Settings, Moon, Palette, FileText } from "lucide-react";
 import { NavLinkItem } from "@/components/molecules/Navigation/NavLinkItem";
 import { useQuickActions } from "@/context/quick-actions-context";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -25,18 +25,19 @@ const getNavItems = (): {
     iconClassName: c["14"],
   },
   toolsNavItems: [
+    { href: "/design", label: "Design", icon: Palette, iconClassName: c["14"] },
+    { href: "/documentation", label: "Documentation", icon: FileText, iconClassName: c["15"] },
     { href: "/testing", label: "Testing", icon: TestTube2, iconClassName: c["15"] },
     { href: "/architecture", label: "Architecture", icon: Building2, iconClassName: c["16"] },
-    { href: "/?tab=all", label: "Database", icon: LayoutGrid, tab: "all", iconClassName: c["17"] },
     { href: "/ideas", label: "Ideas", icon: Lightbulb, iconClassName: c["18"] },
   ],
   workNavItems: [
     { href: "/projects", label: "Projects", icon: Folders, iconClassName: c["14"] },
     { href: "/?tab=tickets", label: "Tickets", icon: TicketIcon, tab: "tickets", iconClassName: c["18"] },
-    { href: "/?tab=feature", label: "Feature", icon: Layers, tab: "feature", iconClassName: c["15"] },
     { href: "/prompts", label: "Prompts", icon: MessageSquare, iconClassName: c["16"] },
   ],
   bottomNavItems: [
+    { href: "/?tab=all", label: "Database", icon: LayoutGrid, tab: "all", iconClassName: c["17"] },
     { href: "/run", label: "Run", icon: Play, iconClassName: c["17"] },
     { href: "/configuration", label: "Configuration", icon: Settings, iconClassName: c["14"] },
     { href: "/loading-screen", label: "Loading", icon: Moon, iconClassName: c["19"] },

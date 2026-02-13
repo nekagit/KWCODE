@@ -25,7 +25,7 @@ export function ProjectsTabContent({
     <Card
       title="Active repos (for this run)"
       subtitle={
-        "Check repo paths to include when running prompts. Order is preserved. Save writes cursor_projects.json. For project pages (design, ideas, features, tickets, prompts), use Projects in the sidebar."
+        "Check repo paths to include when running prompts. Order is preserved. Save writes cursor_projects.json. For project pages (design, ideas, tickets, prompts), use Projects in the sidebar."
       }
       footerButtons={
         <ButtonGroup alignment="right">

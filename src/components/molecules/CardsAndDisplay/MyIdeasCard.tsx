@@ -66,7 +66,7 @@ export function MyIdeasCard({
         throw new Error(err.error || err.detail || res.statusText);
       }
       const data = await res.json();
-      toast.success("Project created with prompts, tickets, features, design, and architecture.");
+      toast.success("Project created with prompts, tickets, design, and architecture.");
       if (data.project?.id) {
         router.push(`/projects/${data.project.id}`);
       }
