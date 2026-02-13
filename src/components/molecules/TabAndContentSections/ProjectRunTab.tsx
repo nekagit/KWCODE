@@ -16,7 +16,12 @@ import {
   type ParsedTicket,
   type ParsedFeature,
 } from "@/lib/todos-kanban";
-import { buildKanbanContextBlock, combinePromptRecordWithKanban } from "@/lib/analysis-prompt";
+import {
+  buildKanbanContextBlock,
+  combinePromptRecordWithKanban,
+  buildTicketPromptBlock,
+  combineTicketPromptWithUserPrompt,
+} from "@/lib/analysis-prompt";
 import { EmptyState, LoadingState } from "@/components/shared/EmptyState";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { Button } from "@/components/ui/button";
@@ -340,6 +345,8 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
       {/* ═══ Command Center ═══ */}
       <WorkerCommandCenter
         projectPath={project.repoPath.trim()}
+        projectId={projectId}
+        repoPath={project.repoPath ?? ""}
         kanbanData={kanbanData}
       />
 
@@ -433,12 +440,17 @@ function WorkerStatusBar() {
 
 function WorkerCommandCenter({
   projectPath,
+  projectId,
+  repoPath,
   kanbanData,
 }: {
   projectPath: string;
+  projectId: string;
+  repoPath: string;
   kanbanData: TodosKanbanData | null;
 }) {
   const runImplementAll = useRunStore((s) => s.runImplementAll);
+  const runImplementAllForTickets = useRunStore((s) => s.runImplementAllForTickets);
   const stopAllImplementAll = useRunStore((s) => s.stopAllImplementAll);
   const clearImplementAllLogs = useRunStore((s) => s.clearImplementAllLogs);
   const archiveImplementAllLogs = useRunStore((s) => s.archiveImplementAllLogs);
@@ -456,18 +468,60 @@ function WorkerCommandCenter({
       selectedPromptId != null
         ? prompts.find((p) => String(p.id) === selectedPromptId)
         : null;
-    const userPrompt = prompt?.content?.trim() ?? "";
-    const kanbanContext = kanbanData ? buildKanbanContextBlock(kanbanData) : "";
-    const combinedPrompt = combinePromptRecordWithKanban(kanbanContext, userPrompt);
-    const promptContent = combinedPrompt.trim() || undefined;
+    const selectedPromptContent = prompt?.content?.trim() ?? "";
+    const tickets = kanbanData?.columns?.in_progress?.items ?? [];
+
     setLoading(true);
     try {
-      await runImplementAll(projectPath, promptContent);
-      toast.success(
-        promptContent
-          ? "Implement All started (selected prompt + ticket info). Check the terminals below."
-          : "Implement All started. For interactive agent (no prompt), use Open in system terminal."
-      );
+      // Always read .cursor/prompts/worker.md as the base prompt
+      const workerMd = repoPath
+        ? (await readProjectFileOrEmpty(projectId, ".cursor/prompts/worker.md", repoPath))?.trim() ?? ""
+        : "";
+      // Combine: worker.md base + user-selected prompt (if any)
+      const userPrompt = [workerMd, selectedPromptContent].filter(Boolean).join("\n\n---\n\n");
+
+      if (tickets.length > 0) {
+        const slots: Array<{ slot: 1 | 2 | 3; promptContent: string; label: string }> = [];
+        const ticketsToRun = tickets.slice(0, 3);
+        for (let i = 0; i < ticketsToRun.length; i++) {
+          const ticket = ticketsToRun[i];
+          const slot = (i + 1) as 1 | 2 | 3;
+          let agentMd: string | null = null;
+          if (ticket.agents?.length && repoPath) {
+            const parts: string[] = [];
+            for (const agentId of ticket.agents) {
+              const content = await readProjectFileOrEmpty(
+                projectId,
+                `.cursor/agents/${agentId}.md`,
+                repoPath
+              );
+              if (content?.trim()) parts.push(content.trim());
+            }
+            if (parts.length) agentMd = parts.join("\n\n---\n\n");
+          }
+          const ticketBlock = buildTicketPromptBlock(ticket, agentMd);
+          const promptContent = combineTicketPromptWithUserPrompt(ticketBlock, userPrompt).trim();
+          slots.push({
+            slot,
+            promptContent: promptContent || ticketBlock.trim(),
+            label: `Ticket #${ticket.number}: ${ticket.title}`,
+          });
+        }
+        await runImplementAllForTickets(projectPath, slots);
+        toast.success(
+          `${slots.length} ticket run(s) started. Check the terminals below.`
+        );
+      } else {
+        const kanbanContext = kanbanData ? buildKanbanContextBlock(kanbanData) : "";
+        const combinedPrompt = combinePromptRecordWithKanban(kanbanContext, userPrompt);
+        const promptContent = combinedPrompt.trim() || undefined;
+        await runImplementAll(projectPath, promptContent);
+        toast.success(
+          promptContent
+            ? "Implement All started (worker prompt + ticket info). Check the terminals below."
+            : "Implement All started. For interactive agent (no prompt), use Open in system terminal."
+        );
+      }
     } catch {
       toast.error("Failed to start Implement All");
     } finally {

@@ -25,7 +25,8 @@
 
 #### Feature: Configuration
 
-- [ ] #1 Implement additional design templates in configuration page — Add a variety of new design templates for users to choose from on the configuration page, enhancing customization options.
+- [ ] #2 Create dashboard with metrics and quick actions — Develop a user-friendly dashboard that displays key metrics and provides quick action buttons for common tasks. Ensure the dashboard is intuitive and visually appealing. — @backend-dev
+- [ ] #3 Implement Design and Documentation Page in Tools — Create a new page within the tools section for design and documentation, ensuring it aligns with existing configurations and user experience standards. — @backend-dev @frontend-dev @solution-architect
 
 ## Next steps
 

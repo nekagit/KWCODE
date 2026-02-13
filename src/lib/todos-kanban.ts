@@ -6,8 +6,8 @@ export type ParsedFeature = {
   title: string;
   ticketRefs: number[];
   done: boolean;
-  /** Agent from .cursor/agents (filename without .md), e.g. "frontend-dev". */
-  agent?: string;
+  /** Agents from .cursor/agents (filenames without .md), e.g. ["frontend-dev", "backend-dev"]. */
+  agents?: string[];
 };
 
 /**
@@ -22,8 +22,8 @@ export type ParsedTicket = {
   featureName: string;
   done: boolean;
   status: "Todo" | "Done";
-  /** Agent from .cursor/agents (filename without .md), e.g. "frontend-dev". */
-  agent?: string;
+  /** Agents from .cursor/agents (filenames without .md), e.g. ["frontend-dev", "backend-dev"]. */
+  agents?: string[];
 };
 
 /** Kanban column for UI (e.g. backlog, in_progress, done, testing). */
@@ -58,16 +58,18 @@ export function parseFeaturesMd(content: string): ParsedFeature[] {
   while ((match = FEATURE_CHECKLIST_RE.exec(content)) !== null) {
     const done = match[1].toLowerCase() === "x";
     let rest = match[2].trim();
-    const agentMatch = rest.match(/\s*—\s*@([\w-]+)\s*$/);
-    const agent = agentMatch ? agentMatch[1] : undefined;
-    if (agent) rest = rest.replace(/\s*—\s*@[\w-]+\s*$/, "").trim();
+    const agentsMatch = rest.match(/\s*—\s*((?:@[\w-]+\s*)+)\s*$/);
+    const agents = agentsMatch
+      ? agentsMatch[1].trim().split(/\s+/).map((s) => s.replace(/^@/, "")).filter(Boolean)
+      : undefined;
+    if (agents?.length) rest = rest.replace(/\s*—\s*(?:@[\w-]+\s*)+\s*$/, "").trim();
     const ticketRefs: number[] = [];
     let refM: RegExpExecArray | null;
     TICKET_REF_RE.lastIndex = 0;
     while ((refM = TICKET_REF_RE.exec(rest)) !== null) ticketRefs.push(parseInt(refM[1], 10));
     const title = rest.replace(/\s*—\s*#[\d,\s#]+$/, "").replace(/\s*#\d+(\s*,\s*#\d+)*\s*$/, "").trim() || rest;
     const id = `feature-${features.length + 1}-${title.slice(0, 30).replace(/\s+/g, "-")}`;
-    features.push({ id, title, ticketRefs, done, ...(agent && { agent }) });
+    features.push({ id, title, ticketRefs, done, ...(agents?.length ? { agents } : {}) });
   }
   return features;
 }
@@ -103,9 +105,11 @@ export function parseTicketsMd(content: string): ParsedTicket[] {
       const done = tMatch[1].toLowerCase() === "x";
       const num = parseInt(tMatch[2], 10);
       let rest = tMatch[3].trim();
-      const agentMatch = rest.match(/\s*—\s*@([\w-]+)\s*$/);
-      const agent = agentMatch ? agentMatch[1] : undefined;
-      if (agent) rest = rest.replace(/\s*—\s*@[\w-]+\s*$/, "").trim();
+      const agentsMatch = rest.match(/\s*—\s*((?:@[\w-]+\s*)+)\s*$/);
+      const agents = agentsMatch
+        ? agentsMatch[1].trim().split(/\s+/).map((s) => s.replace(/^@/, "")).filter(Boolean)
+        : undefined;
+      if (agents?.length) rest = rest.replace(/\s*—\s*(?:@[\w-]+\s*)+\s*$/, "").trim();
       const dashIdx = rest.indexOf(" — ");
       const title = dashIdx >= 0 ? rest.slice(0, dashIdx).trim() : rest;
       const description = dashIdx >= 0 ? rest.slice(dashIdx + 3).trim() : undefined;
@@ -119,7 +123,7 @@ export function parseTicketsMd(content: string): ParsedTicket[] {
         featureName: currentFeature,
         done,
         status: done ? "Done" : "Todo",
-        ...(agent && { agent }),
+        ...(agents?.length ? { agents } : {}),
       });
     }
   }
@@ -266,7 +270,7 @@ export function serializeTicketsToMd(
       for (const t of featureTickets) {
         const checkbox = t.done ? "[x]" : "[ ]";
         const desc = t.description ? ` — ${t.description}` : "";
-        const agentSuffix = t.agent ? ` — @${t.agent}` : "";
+        const agentSuffix = t.agents?.length ? ` — ${t.agents.map((a) => `@${a}`).join(" ")}` : "";
         lines.push(`- ${checkbox} #${t.number} ${t.title}${desc}${agentSuffix}`);
       }
       lines.push("");
@@ -291,7 +295,7 @@ export function serializeFeaturesToMd(features: ParsedFeature[]): string {
   for (const f of features) {
     const checkbox = f.done ? "[x]" : "[ ]";
     const refs = f.ticketRefs.length > 0 ? ` — ${f.ticketRefs.map((n) => `#${n}`).join(", ")}` : "";
-    const agentSuffix = f.agent ? ` — @${f.agent}` : "";
+    const agentSuffix = f.agents?.length ? ` — ${f.agents.map((a) => `@${a}`).join(" ")}` : "";
     lines.push(`- ${checkbox} ${f.title}${refs}${agentSuffix}`);
   }
   return lines.join("\n");

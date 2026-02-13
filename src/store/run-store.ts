@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { invoke, isTauri } from "@/lib/tauri";
+import { isImplementAllRun } from "@/lib/run-helpers";
 import { getApiErrorMessage } from "@/lib/utils";
 import { toast } from "sonner";
 import {
@@ -61,6 +62,11 @@ export interface RunActions {
   stopScript: () => Promise<void>;
   stopRun: (runId: string) => Promise<void>;
   runImplementAll: (projectPath: string, promptContent?: string) => Promise<string | null>;
+  /** Run one Implement All run per slot (1–3) with distinct prompt and label; used when tickets are in queue. */
+  runImplementAllForTickets: (
+    projectPath: string,
+    slots: Array<{ slot: 1 | 2 | 3; promptContent: string; label: string }>
+  ) => Promise<string | null>;
   /** Run a single setup prompt (design/ideas/etc.) and open it in the floating terminal. */
   runSetupPrompt: (projectPath: string, promptContent: string, label: string) => Promise<string | null>;
   setFloatingTerminalRunId: (id: string | null) => void;
@@ -415,6 +421,52 @@ export const useRunStore = create<RunStore>()((set, get) => ({
     }
   },
 
+  runImplementAllForTickets: async (projectPath, slots) => {
+    const { setError } = get();
+    const path = projectPath?.trim();
+    if (!path) {
+      set({ error: "Project path is required for Implement All" });
+      return null;
+    }
+    if (!slots.length) {
+      set({ error: "At least one slot is required" });
+      return null;
+    }
+    set({ error: null });
+    let firstRunId: string | null = null;
+    try {
+      for (let i = 0; i < slots.length; i++) {
+        const { slot, promptContent, label } = slots[i];
+        const { run_id } = await invoke<{ run_id: string }>("run_implement_all", {
+          projectPath: path,
+          slot,
+          promptContent: promptContent.trim() || null,
+        });
+        if (firstRunId == null) firstRunId = run_id;
+        set((s) => ({
+          runningRuns: [
+            ...s.runningRuns,
+            {
+              runId: run_id,
+              label,
+              logLines: [],
+              status: "running" as const,
+              startedAt: Date.now(),
+            },
+          ],
+          selectedRunId: run_id,
+        }));
+        if (i < slots.length - 1) {
+          await new Promise((r) => setTimeout(r, 400));
+        }
+      }
+      return firstRunId;
+    } catch (e) {
+      set({ error: e instanceof Error ? e.message : String(e) });
+      return null;
+    }
+  },
+
   runSetupPrompt: async (projectPath, promptContent, label) => {
     const path = projectPath?.trim();
     if (!path) {
@@ -475,10 +527,8 @@ export const useRunStore = create<RunStore>()((set, get) => ({
 
   stopAllImplementAll: async () => {
     const { runningRuns, stopRun } = get();
-    const isImplementAll = (r: RunInfo) =>
-      r.label === "Implement All" || r.label.startsWith("Implement All (");
     const implementAllRunning = runningRuns.filter(
-      (r) => isImplementAll(r) && r.status === "running"
+      (r) => isImplementAllRun(r) && r.status === "running"
     );
     for (const r of implementAllRunning) {
       await stopRun(r.runId);
@@ -486,20 +536,16 @@ export const useRunStore = create<RunStore>()((set, get) => ({
   },
 
   clearImplementAllLogs: () => {
-    const isImplementAll = (r: RunInfo) =>
-      r.label === "Implement All" || r.label.startsWith("Implement All (");
     set((s) => ({
       runningRuns: s.runningRuns.map((r) =>
-        isImplementAll(r) ? { ...r, logLines: [] } : r
+        isImplementAllRun(r) ? { ...r, logLines: [] } : r
       ),
     }));
   },
 
   archiveImplementAllLogs: () => {
-    const isImplementAll = (r: RunInfo) =>
-      r.label === "Implement All" || r.label.startsWith("Implement All (");
     set((s) => {
-      const implementAllRuns = s.runningRuns.filter((r) => isImplementAll(r));
+      const implementAllRuns = s.runningRuns.filter((r) => isImplementAllRun(r));
       const allLogLines = implementAllRuns.flatMap((r) =>
         r.logLines.length ? [`--- ${r.label} (${r.runId}) ---`, ...r.logLines] : []
       );

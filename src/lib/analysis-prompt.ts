@@ -193,3 +193,50 @@ export function combinePromptRecordWithKanban(kanbanContext: string, userPromptR
   if (!trimmed) return kanbanContext;
   return `${kanbanContext}\n\n---\n\n${trimmed}`;
 }
+
+/** Minimal ticket shape for building a per-ticket prompt (matches ParsedTicket). */
+export type TicketPromptTicket = {
+  number: number;
+  title: string;
+  description?: string;
+  priority: string;
+  featureName: string;
+  agents?: string[];
+};
+
+/**
+ * Build the combined prompt block for one ticket: ticket details + optional agent instructions.
+ * Used by Worker "Implement All" when running one terminal per in-progress ticket.
+ * @param ticket - Ticket fields (number, title, description, priority, featureName, agents).
+ * @param agentMdContent - Concatenated content of .cursor/agents/<id>.md for each ticket.agents, or null/empty.
+ */
+export function buildTicketPromptBlock(ticket: TicketPromptTicket, agentMdContent: string | null): string {
+  const agents = ticket.agents?.length ? ticket.agents : undefined;
+  const lines: string[] = [
+    "## Ticket",
+    "",
+    `**#${ticket.number}** — ${ticket.title}`,
+    "",
+    `- **Priority:** ${ticket.priority}`,
+    `- **Feature:** ${ticket.featureName || "—"}`,
+    ...(agents?.length ? [`- **Agents:** ${agents.map((a) => `@${a}`).join(", ")}`] : []),
+    "",
+  ];
+  if (ticket.description?.trim()) {
+    lines.push("### Description", "", ticket.description.trim(), "");
+  }
+  const agentContent = (agentMdContent ?? "").trim();
+  if (agentContent) {
+    lines.push("---", "", "## Agent instructions", "", agentContent, "");
+  }
+  return lines.join("\n");
+}
+
+/**
+ * Combine ticket+agent prompt block with the user's selected prompt (e.g. from Command Center).
+ */
+export function combineTicketPromptWithUserPrompt(ticketBlock: string, userPromptRecord: string): string {
+  const trimmed = (userPromptRecord ?? "").trim();
+  if (!trimmed) return ticketBlock;
+  return `${ticketBlock}\n\n---\n\n${trimmed}`;
+}

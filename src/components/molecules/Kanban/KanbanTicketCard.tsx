@@ -146,11 +146,11 @@ export const KanbanTicketCard: React.FC<KanbanTicketCardProps> = ({
             </span>
           </div>
         )}
-        {ticket.agent && (
-          <Badge variant="secondary" className="text-[10px] font-medium px-1.5 py-0 bg-violet-500/10 text-violet-600 border border-violet-500/20 hover:bg-violet-500/10">
-            {humanizeAgentId(ticket.agent)}
+        {ticket.agents?.map((id) => (
+          <Badge key={id} variant="secondary" className="text-[10px] font-medium px-1.5 py-0 bg-violet-500/10 text-violet-600 border border-violet-500/20 hover:bg-violet-500/10">
+            {humanizeAgentId(id)}
           </Badge>
-        )}
+        ))}
       </div>
     </div>
   );

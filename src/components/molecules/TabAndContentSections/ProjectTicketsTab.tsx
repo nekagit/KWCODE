@@ -82,6 +82,9 @@ import { TerminalSlot } from "@/components/shared/TerminalSlot";
 
 const PRIORITIES: Array<"P0" | "P1" | "P2" | "P3"> = ["P0", "P1", "P2", "P3"];
 
+/** Agent ids to never auto-assign to generated tickets (e.g. devops, requirements). */
+const EXCLUDED_AGENT_IDS = ["devops", "requirements"];
+
 /** Tailwind border/text classes per feature index so features and their tickets share the same color. */
 const FEATURE_COLOR_PALETTE = [
   { border: "border-l-blue-500", text: "text-blue-400", bg: "bg-blue-500/10", ticketBorder: "border-l-2 border-l-blue-500" },
@@ -350,8 +353,8 @@ export function ProjectTicketsTab({
     priority: "P0" | "P1" | "P2" | "P3";
     featureName: string;
   } | null>(null);
-  /** When a ticket is generated, we assign one agent from .cursor/agents; stored here for display and for newTicket.agent. */
-  const [assignedAgentForGenerated, setAssignedAgentForGenerated] = useState<string | null>(null);
+  /** When a ticket is generated, we assign all agents from .cursor/agents; stored here for display and for newTicket.agents. */
+  const [assignedAgentsForGenerated, setAssignedAgentsForGenerated] = useState<string[]>([]);
   const [generatingTicket, setGeneratingTicket] = useState(false);
 
   /* ── Data loading ── */
@@ -829,7 +832,7 @@ export function ProjectTicketsTab({
     }
     setGeneratingTicket(true);
     setGeneratedTicket(null);
-    setAssignedAgentForGenerated(null);
+    setAssignedAgentsForGenerated([]);
     try {
       const existingFeatures = kanbanData?.features.map((f) => f.title) ?? [];
       const res = await fetch("/api/generate-ticket-from-prompt", {
@@ -871,7 +874,7 @@ export function ProjectTicketsTab({
       featureName,
       done: false,
       status: "Todo",
-      ...(assignedAgentForGenerated && { agent: assignedAgentForGenerated }),
+      ...(assignedAgentsForGenerated.length > 0 && { agents: assignedAgentsForGenerated }),
     };
     const updatedTickets = [newTicket, ...kanbanData.tickets];
     let features = kanbanData.features.map((f) =>
@@ -905,7 +908,7 @@ export function ProjectTicketsTab({
       const inProgressIds = kanbanData.columns.in_progress?.items.map((t) => t.id) ?? [];
       setKanbanData(buildKanbanFromMd(ticketsMd, featuresMd, inProgressIds));
       setGeneratedTicket(null);
-      setAssignedAgentForGenerated(null);
+      setAssignedAgentsForGenerated([]);
       setPlannerPromptInput("");
       setPlannerPromptTextarea("");
       toast.success(`Ticket #${nextNumber} added to backlog.`);
@@ -914,12 +917,12 @@ export function ProjectTicketsTab({
     } finally {
       setSaving(false);
     }
-  }, [project, projectId, kanbanData, generatedTicket, assignedAgentForGenerated]);
+  }, [project, projectId, kanbanData, generatedTicket, assignedAgentsForGenerated]);
 
-  /** When a ticket is generated, assign one agent from .cursor/agents (first .md file). */
+  /** When a ticket is generated, assign all agents from .cursor/agents (.md files). */
   useEffect(() => {
     if (!generatedTicket) {
-      setAssignedAgentForGenerated(null);
+      setAssignedAgentsForGenerated([]);
       return;
     }
     if (!project?.repoPath) return;
@@ -928,14 +931,13 @@ export function ProjectTicketsTab({
       try {
         const list = await listProjectFiles(projectId, ".cursor/agents", project.repoPath);
         const mdFiles = list.filter((e) => !e.isDirectory && e.name.toLowerCase().endsWith(".md"));
-        const first = mdFiles[0];
-        if (!cancelled && first) {
-          setAssignedAgentForGenerated(first.name.replace(/\.md$/i, ""));
-        } else if (!cancelled) {
-          setAssignedAgentForGenerated(null);
-        }
+        const excluded = new Set(EXCLUDED_AGENT_IDS.map((x) => x.toLowerCase()));
+        const ids = mdFiles
+          .map((e) => e.name.replace(/\.md$/i, ""))
+          .filter((id) => !excluded.has(id.toLowerCase()));
+        if (!cancelled) setAssignedAgentsForGenerated(ids);
       } catch {
-        if (!cancelled) setAssignedAgentForGenerated(null);
+        if (!cancelled) setAssignedAgentsForGenerated([]);
       }
     })();
     return () => { cancelled = true; };
@@ -1217,10 +1219,14 @@ export function ProjectTicketsTab({
                           <p><span className="font-medium">Description:</span> {generatedTicket.description}</p>
                         )}
                         <p><span className="font-medium">Priority:</span> {generatedTicket.priority} · <span className="font-medium">Feature:</span> {generatedTicket.featureName}</p>
-                        {assignedAgentForGenerated ? (
-                          <p><span className="font-medium">Assigned agent:</span> <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-violet-500/10 text-violet-600 border border-violet-500/20">{humanizeAgentId(assignedAgentForGenerated)}</span></p>
+                        {assignedAgentsForGenerated.length > 0 ? (
+                          <p><span className="font-medium">Assigned agents:</span>{" "}
+                            {assignedAgentsForGenerated.map((id) => (
+                              <span key={id} className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-violet-500/10 text-violet-600 border border-violet-500/20 mr-1 mb-1">{humanizeAgentId(id)}</span>
+                            ))}
+                          </p>
                         ) : (
-                          <p className="text-muted-foreground text-xs">No agent (add .md files to .cursor/agents to assign one)</p>
+                          <p className="text-muted-foreground text-xs">No agents (add .md files to .cursor/agents to assign)</p>
                         )}
                       </div>
                       <ButtonGroup alignment="left">
@@ -1325,11 +1331,11 @@ export function ProjectTicketsTab({
                           <h4 className={cn("font-semibold text-sm leading-tight", feature.done && "line-through")}>
                             {feature.title}
                           </h4>
-                          {feature.agent && (
-                            <span className="inline-flex items-center w-fit px-1.5 py-0.5 rounded text-[10px] font-medium bg-violet-500/10 text-violet-600 border border-violet-500/20">
-                              {humanizeAgentId(feature.agent)}
+                          {feature.agents?.map((id) => (
+                            <span key={id} className="inline-flex items-center w-fit px-1.5 py-0.5 rounded text-[10px] font-medium bg-violet-500/10 text-violet-600 border border-violet-500/20 mr-1">
+                              {humanizeAgentId(id)}
                             </span>
-                          )}
+                          ))}
                         </div>
                         <button
                           onClick={() => !feature.done && handleMarkFeatureDone(feature)}
