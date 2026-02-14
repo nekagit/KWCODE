@@ -34,6 +34,9 @@ import { SetupDocBlock } from "@/components/molecules/TabAndContentSections/Setu
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { cn } from "@/lib/utils";
 import { SectionCard, MetadataBadge, CountBadge } from "@/components/shared/DisplayPrimitives";
+import { initializeProjectRepo } from "@/lib/api-projects";
+import { toast } from "sonner";
+import { Sparkles } from "lucide-react";
 
 const TAB_CONFIG = [
   { value: "setup", label: "Setup", icon: Settings, color: "text-violet-400", activeGlow: "shadow-violet-500/10" },
@@ -49,6 +52,7 @@ export function ProjectDetailsPageContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("setup");
+  const [initializing, setInitializing] = useState(false);
 
   const mountedRef = useRef(true);
   useEffect(() => {
@@ -188,61 +192,92 @@ export function ProjectDetailsPageContent() {
               )}
             </div>
 
-            {/* Metadata badges */}
-            <div className="flex flex-wrap items-center gap-2 mt-1">
-              {project.repoPath && (
-                <MetadataBadge
-                  icon={<FolderOpen className="size-3" />}
-                  color="bg-primary/10 border-primary/20 text-primary"
-                >
-                  <span className="truncate max-w-[220px] normal-case">
-                    {project.repoPath}
-                  </span>
-                </MetadataBadge>
-              )}
-              {project.created_at && (
-                <MetadataBadge
-                  icon={<Calendar className="size-3" />}
-                  color="bg-muted/50 border-border/50 text-muted-foreground"
-                >
-                  <span className="normal-case">
-                    {new Date(project.created_at).toLocaleDateString()}
-                  </span>
-                </MetadataBadge>
-              )}
-              {ticketCount > 0 && (
-                <CountBadge
-                  icon={<Hash className="size-2.5" />}
-                  count={ticketCount}
-                  label="tickets"
-                  color="bg-blue-500/10 border-blue-500/20 text-blue-400"
-                />
-              )}
+            {/* Metadata badges + Initialize Button */}
+            <div className="flex flex-wrap items-center justify-between gap-4 mt-1">
+              <div className="flex flex-wrap items-center gap-2">
+                {project.repoPath && (
+                  <MetadataBadge
+                    icon={<FolderOpen className="size-3" />}
+                    color="bg-primary/10 border-primary/20 text-primary"
+                  >
+                    <span className="truncate max-w-[220px] normal-case">
+                      {project.repoPath}
+                    </span>
+                  </MetadataBadge>
+                )}
+                {/* Initialize Button */}
+                {project.repoPath && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2.5 text-[10px] font-semibold uppercase tracking-wider gap-1.5 border-primary/20 hover:bg-primary/5 hover:border-primary/40 transition-all duration-300 shadow-sm"
+                    onClick={async () => {
+                      if (initializing) return;
+                      setInitializing(true);
+                      try {
+                        await initializeProjectRepo(projectId, project.repoPath!);
+                        toast.success("Project initialized with tech stack!");
+                        fetchProject(); // Refresh to show new files
+                      } catch (err) {
+                        toast.error(err instanceof Error ? err.message : "Failed to initialize");
+                      } finally {
+                        setInitializing(false);
+                      }
+                    }}
+                    disabled={initializing}
+                  >
+                    {initializing ? (
+                      <Loader2 className="size-3 animate-spin" />
+                    ) : (
+                      <Sparkles className="size-3 text-amber-400" />
+                    )}
+                    {initializing ? "Initializing..." : "Initialize"}
+                  </Button>
+                )}
+                {project.created_at && (
+                  <MetadataBadge
+                    icon={<Calendar className="size-3" />}
+                    color="bg-muted/50 border-border/50 text-muted-foreground"
+                  >
+                    <span className="normal-case">
+                      {new Date(project.created_at).toLocaleDateString()}
+                    </span>
+                  </MetadataBadge>
+                )}
+                {ticketCount > 0 && (
+                  <CountBadge
+                    icon={<Hash className="size-2.5" />}
+                    count={ticketCount}
+                    label="tickets"
+                    color="bg-blue-500/10 border-blue-500/20 text-blue-400"
+                  />
+                )}
 
-              {designCount > 0 && (
-                <CountBadge
-                  icon={<Hash className="size-2.5" />}
-                  count={designCount}
-                  label="designs"
-                  color="bg-violet-500/10 border-violet-500/20 text-violet-400"
-                />
-              )}
-              {ideaCount > 0 && (
-                <CountBadge
-                  icon={<Hash className="size-2.5" />}
-                  count={ideaCount}
-                  label="ideas"
-                  color="bg-amber-500/10 border-amber-500/20 text-amber-400"
-                />
-              )}
-              {architectureCount > 0 && (
-                <CountBadge
-                  icon={<Hash className="size-2.5" />}
-                  count={architectureCount}
-                  label="architectures"
-                  color="bg-teal-500/10 border-teal-500/20 text-teal-400"
-                />
-              )}
+                {designCount > 0 && (
+                  <CountBadge
+                    icon={<Hash className="size-2.5" />}
+                    count={designCount}
+                    label="designs"
+                    color="bg-violet-500/10 border-violet-500/20 text-violet-400"
+                  />
+                )}
+                {ideaCount > 0 && (
+                  <CountBadge
+                    icon={<Hash className="size-2.5" />}
+                    count={ideaCount}
+                    label="ideas"
+                    color="bg-amber-500/10 border-amber-500/20 text-amber-400"
+                  />
+                )}
+                {architectureCount > 0 && (
+                  <CountBadge
+                    icon={<Hash className="size-2.5" />}
+                    count={architectureCount}
+                    label="architectures"
+                    color="bg-teal-500/10 border-teal-500/20 text-teal-400"
+                  />
+                )}
+              </div>
             </div>
           </div>
         </div>

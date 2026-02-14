@@ -15,7 +15,9 @@ export function NewProjectPageContent() {
       layout="simple"
       className={c["0"]}
     >
-      <NewProjectForm />
+      <div className="mt-8 max-w-2xl">
+        <NewProjectForm />
+      </div>
     </SingleContentPage>
   );
 }

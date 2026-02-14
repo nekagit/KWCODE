@@ -83,7 +83,7 @@ export function NewProjectForm() {
       title="Project"
       subtitle="Name and optional description and repo path."
     >
-      <Form onSubmit={handleSubmit}>
+      <Form onSubmit={handleSubmit} className="space-y-8">
         <ProjectInput
           id="name"
           label="Name"

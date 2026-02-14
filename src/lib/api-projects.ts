@@ -231,3 +231,90 @@ export async function listProjectFiles(
   return json.files;
 }
 
+import {
+  INITIAL_ARCHITECT_PROMPT,
+  INITIAL_FRONTEND_PROMPT,
+  INITIAL_BACKEND_PROMPT,
+  INITIAL_SETUP_ARCHITECTURE,
+  INITIAL_SETUP_DESIGN,
+  INITIAL_SETUP_DOCUMENTATION,
+  INITIAL_SETUP_TESTING,
+  INITIAL_SETUP_IDEAS,
+  INITIAL_TICKETS_TEMPLATE,
+  INITIAL_FEATURES_TEMPLATE,
+  INITIAL_PROMPT_ARCHITECTURE,
+  INITIAL_PROMPT_DESIGN,
+  INITIAL_PROMPT_TESTING,
+  INITIAL_PROMPT_IDEAS,
+  INITIAL_PROMPT_DOCUMENTATION,
+  INITIAL_PROMPT_TICKETS,
+  INITIAL_PROMPT_FEATURES,
+  INITIAL_PROMPT_WORKER
+} from "./initialization-templates";
+
+/** Fetches canonical agent template from public/cursor-templates/agents; falls back to inline constant if unavailable. */
+async function getAgentTemplateContent(name: string, fallback: string): Promise<string> {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const base = window.location.origin;
+    const res = await fetch(`${base}/cursor-templates/agents/${name}.md`);
+    if (res.ok) return await res.text();
+  } catch {
+    // ignore
+  }
+  return fallback;
+}
+
+/**
+ * Initializes a project repository with a standard .cursor structure and high-quality prompt templates.
+ * Agent .md files are loaded from public/cursor-templates/agents/ (full KWCode agent content); fallback to inline templates if fetch fails.
+ */
+export async function initializeProjectRepo(projectId: string, repoPath: string): Promise<void> {
+  const now = new Date().toISOString().split("T")[0];
+
+  const [archContent, frontendContent, backendContent] = await Promise.all([
+    getAgentTemplateContent("solution-architect", INITIAL_ARCHITECT_PROMPT),
+    getAgentTemplateContent("frontend-dev", INITIAL_FRONTEND_PROMPT),
+    getAgentTemplateContent("backend-dev", INITIAL_BACKEND_PROMPT),
+  ]);
+
+  const filesToWrite = [
+    // Agents (full content from cursor-templates when available)
+    { path: ".cursor/agents/solution-architect.md", content: archContent },
+    { path: ".cursor/agents/frontend-dev.md", content: frontendContent },
+    { path: ".cursor/agents/backend-dev.md", content: backendContent },
+
+    // Planner
+    { path: ".cursor/planner/tickets.md", content: INITIAL_TICKETS_TEMPLATE.replace(/\[PROJECT_NAME\]/g, projectId).replace(/\[DATE\]/g, now) },
+    { path: ".cursor/planner/features.md", content: INITIAL_FEATURES_TEMPLATE },
+    { path: ".cursor/planner/kanban-state.json", content: JSON.stringify({ inProgressIds: [] }, null, 2) },
+
+    // Prompts
+    { path: ".cursor/prompts/architecture.md", content: INITIAL_PROMPT_ARCHITECTURE },
+    { path: ".cursor/prompts/design.md", content: INITIAL_PROMPT_DESIGN },
+    { path: ".cursor/prompts/testing.md", content: INITIAL_PROMPT_TESTING },
+    { path: ".cursor/prompts/ideas.md", content: INITIAL_PROMPT_IDEAS },
+    { path: ".cursor/prompts/documentation.md", content: INITIAL_PROMPT_DOCUMENTATION },
+    { path: ".cursor/prompts/tickets.md", content: INITIAL_PROMPT_TICKETS },
+    { path: ".cursor/prompts/features.md", content: INITIAL_PROMPT_FEATURES },
+    { path: ".cursor/prompts/worker.md", content: INITIAL_PROMPT_WORKER },
+
+    // Setup
+    { path: ".cursor/setup/architecture.md", content: INITIAL_SETUP_ARCHITECTURE.replace(/\[PROJECT_NAME\]/g, projectId) },
+    { path: ".cursor/setup/design.md", content: INITIAL_SETUP_DESIGN.replace(/\[PROJECT_NAME\]/g, projectId) },
+    { path: ".cursor/setup/documentation.md", content: INITIAL_SETUP_DOCUMENTATION.replace(/\[PROJECT_NAME\]/g, projectId) },
+    { path: ".cursor/setup/testing.md", content: INITIAL_SETUP_TESTING.replace(/\[PROJECT_NAME\]/g, projectId) },
+    { path: ".cursor/setup/ideas.md", content: INITIAL_SETUP_IDEAS.replace(/\[PROJECT_NAME\]/g, projectId) },
+  ];
+
+  for (const file of filesToWrite) {
+    await writeProjectFile(projectId, file.path, file.content, repoPath);
+  }
+
+  // Ensure gitkeeps for organizational clarity
+  await writeProjectFile(projectId, ".cursor/agents/.gitkeep", "", repoPath);
+  await writeProjectFile(projectId, ".cursor/setup/.gitkeep", "", repoPath);
+  await writeProjectFile(projectId, ".cursor/prompts/.gitkeep", "", repoPath);
+  await writeProjectFile(projectId, ".cursor/planner/.gitkeep", "", repoPath);
+}
+

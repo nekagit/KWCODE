@@ -1,6 +1,7 @@
-import React from 'react';
-import { cn } from '@/lib/utils';
-import sharedClasses from './shared-classes';
+import React from "react";
+import { createPortal } from "react-dom";
+import { cn } from "@/lib/utils";
+import sharedClasses from "./shared-classes";
 
 interface DialogProps {
   title: string;
@@ -14,10 +15,18 @@ interface DialogProps {
   bodyClassName?: string;
 }
 
-export const Dialog: React.FC<DialogProps> = ({ title, children, onClose, actions, isOpen, panelClassName, bodyClassName }) => {
+export const Dialog: React.FC<DialogProps> = ({
+  title,
+  children,
+  onClose,
+  actions,
+  isOpen,
+  panelClassName,
+  bodyClassName,
+}) => {
   if (!isOpen) return null;
 
-  return (
+  const content = (
     <div data-shared-ui className={sharedClasses.Dialog.overlay}>
       <div className={cn(sharedClasses.Dialog.panel, panelClassName)}>
         <div className={sharedClasses.Dialog.header}>
@@ -31,12 +40,12 @@ export const Dialog: React.FC<DialogProps> = ({ title, children, onClose, action
         </div>
         {actions && (
           <div className={sharedClasses.Dialog.actions}>
-            <div className={sharedClasses.Dialog.actionsInner}>
-              {actions}
-            </div>
+            <div className={sharedClasses.Dialog.actionsInner}>{actions}</div>
           </div>
         )}
       </div>
     </div>
   );
+
+  return createPortal(content, document.body);
 };
