@@ -1,0 +1,21 @@
+{
+  "name": "React + Node + PostgreSQL",
+  "description": "Full-stack with React frontend, Node backend, PostgreSQL database.",
+  "frontend": {
+    "framework": "React",
+    "styling": "TailwindCSS or Styled-Components",
+    "state": "Redux or Zustand",
+    "routing": "React-Router",
+    "testing": "Vitest + Testing Library",
+    "build": "Vite or Webpack"
+  },
+  "backend": {
+    "runtime": "Node.js",
+    "framework": "Express or Fastify",
+    "database": "PostgreSQL",
+    "orm": "Prisma or node-pg",
+    "auth": "JWT or Passport",
+    "testing": "Vitest or Jest + Supertest",
+    "validation": "Zod or Joi"
+  }
+}

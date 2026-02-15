@@ -11,6 +11,10 @@ import {
   FolderGit2,
   Folder,
   RefreshCw,
+  FolderOpen,
+  Flag,
+  Workflow,
+  BookOpen,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { listProjectFiles, readProjectFileOrEmpty, type FileEntry } from "@/lib/api-projects";
@@ -40,11 +44,15 @@ const SETUP_FOLDERS: {
   icon: LucideIcon;
   accent: AccentColor;
 }[] = [
+  { id: "project", label: "Project", path: ".cursor/project", description: "Project info, tech stack, roadmap", icon: FolderOpen, accent: "sky" },
   { id: "adr", label: "ADR", path: ".cursor/adr", description: "Architecture decision records", icon: FileText, accent: "violet" },
   { id: "agents", label: "Agents", path: ".cursor/agents", description: "Agent definitions and roles", icon: Bot, accent: "cyan" },
   { id: "planner", label: "Planner", path: ".cursor/planner", description: "Tickets, project plan, Kanban state", icon: ListTodo, accent: "blue" },
+  { id: "milestones", label: "Milestones", path: ".cursor/milestones", description: "Milestone definitions and templates", icon: Flag, accent: "orange" },
   { id: "prompts", label: "Prompts", path: ".cursor/prompts", description: "Prompt templates per phase", icon: MessageSquare, accent: "amber" },
   { id: "setup", label: "Setup", path: ".cursor/setup", description: "Setup files in .cursor/setup", icon: Settings, accent: "emerald" },
+  { id: "worker", label: "Worker", path: ".cursor/worker", description: "Worker queue and ticket workflow", icon: Workflow, accent: "rose" },
+  { id: "documentation", label: "Documentation", path: ".cursor/documentation", description: "Setup guide, architecture, best practices", icon: BookOpen, accent: "teal" },
   { id: "rules", label: "Rules", path: ".cursor/rules", description: "Cursor rules and conventions", icon: Folder, accent: "teal" },
 ];
 

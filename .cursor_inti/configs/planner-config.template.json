@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "description": "Planner configuration template. Copy to .cursor/planner/planner-config.json and customize.",
+  "defaultPriority": "P1",
+  "priorities": ["P0", "P1", "P2", "P3"],
+  "ticketFormat": {
+    "checklistItem": "- [ ] #N Title — description",
+    "doneItem": "- [x] #N Title — description"
+  },
+  "featuresSource": ".cursor/planner/features.md",
+  "ticketsSource": ".cursor/planner/tickets.md",
+  "kanbanStateSource": ".cursor/planner/kanban-state.json"
+}

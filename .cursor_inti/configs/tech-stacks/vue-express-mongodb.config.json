@@ -1,0 +1,21 @@
+{
+  "name": "Vue + Express + MongoDB",
+  "description": "Full-stack with Vue frontend, Express backend, MongoDB database.",
+  "frontend": {
+    "framework": "Vue",
+    "styling": "TailwindCSS or Vue scoped CSS",
+    "state": "Pinia",
+    "routing": "Vue-Router",
+    "testing": "Vitest + Vue Test Utils",
+    "build": "Vite"
+  },
+  "backend": {
+    "runtime": "Node.js",
+    "framework": "Express",
+    "database": "MongoDB",
+    "orm": "Mongoose",
+    "auth": "JWT or Passport",
+    "testing": "Vitest or Jest + Supertest",
+    "validation": "Zod or Joi"
+  }
+}

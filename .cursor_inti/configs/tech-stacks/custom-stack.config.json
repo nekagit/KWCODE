@@ -1,0 +1,21 @@
+{
+  "name": "Custom stack",
+  "description": "Define your own frontend and backend choices. Use with initialize-project.sh or copy into .cursor/setup/frontend.json and backend.json.",
+  "frontend": {
+    "framework": "",
+    "styling": "",
+    "state": "",
+    "routing": "",
+    "testing": "",
+    "build": ""
+  },
+  "backend": {
+    "runtime": "",
+    "framework": "",
+    "database": "",
+    "orm": "",
+    "auth": "",
+    "testing": "",
+    "validation": ""
+  }
+}
