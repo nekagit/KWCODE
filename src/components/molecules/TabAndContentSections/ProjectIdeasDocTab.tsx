@@ -7,13 +7,12 @@ import {
   Loader2,
   Lightbulb,
   Plus,
-  Trash2,
   FileText,
   Sparkles,
   ChevronDown,
   ChevronUp,
-  ScanSearch,
 } from "lucide-react";
+import { AnalyzeButtonSplit } from "@/components/molecules/ControlsAndButtons/AnalyzeButtonSplit";
 import { readProjectFileOrEmpty, writeProjectFile, analyzeProjectDoc } from "@/lib/api-projects";
 import { isTauri } from "@/lib/tauri";
 import { useRunStore, registerRunCompleteHandler } from "@/store/run-store";
@@ -98,15 +97,6 @@ export function ProjectIdeasDocTab({ project, projectId }: ProjectIdeasDocTabPro
       }
     },
     [projectId, project.repoPath]
-  );
-
-  const deleteIdea = useCallback(
-    async (ideaId: string) => {
-      if (!parsed) return;
-      const next = parsed.ideas.filter((i) => i.id !== ideaId);
-      await saveDoc(parsed.intro, next, parsed.format);
-    },
-    [parsed, saveDoc]
   );
 
   const runTempTicket = useRunStore((s) => s.runTempTicket);
@@ -247,16 +237,14 @@ export function ProjectIdeasDocTab({ project, projectId }: ProjectIdeasDocTabPro
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-medium text-muted-foreground">Ideas roadmap (ideas.md)</h2>
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="default"
-            size="sm"
-            className="gap-1.5"
-            onClick={handleAnalyze}
-            disabled={analyzing}
-          >
-            {analyzing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ScanSearch className="h-3.5 w-3.5" />}
-            Analyze
-          </Button>
+          <AnalyzeButtonSplit
+            promptPath={IDEAS_PROMPT_PATH}
+            projectId={projectId}
+            repoPath={project.repoPath ?? undefined}
+            onAnalyze={handleAnalyze}
+            analyzing={analyzing}
+            label="Analyze"
+          />
           <Button
             variant="outline"
             size="sm"
@@ -328,58 +316,6 @@ export function ProjectIdeasDocTab({ project, projectId }: ProjectIdeasDocTabPro
                 Improve & add
               </Button>
             </div>
-          </SectionCard>
-
-          {/* Idea cards */}
-          <SectionCard accentColor="amber">
-            <div className="flex items-center gap-2 mb-3">
-              <Lightbulb className="h-4 w-4 text-amber-500" />
-              <h3 className="text-sm font-semibold">Ideas</h3>
-              {parsed.ideas.length > 0 && (
-                <span className="text-xs text-muted-foreground">
-                  {parsed.ideas.length} item{parsed.ideas.length !== 1 ? "s" : ""}
-                </span>
-              )}
-            </div>
-            {parsed.ideas.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-border/60 bg-muted/10 p-6 text-center text-sm text-muted-foreground">
-                No ideas yet. Add one above or edit {IDEAS_SETUP_PATH} in your repo.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {parsed.ideas.map((idea) => (
-                  <div
-                    key={idea.id}
-                    className="flex flex-col gap-2 rounded-lg border border-border/60 bg-card/80 p-3"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <h4 className="text-sm font-medium leading-tight">{idea.title}</h4>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => {
-                          if (confirm("Remove this idea from ideas.md?")) deleteIdea(idea.id);
-                        }}
-                        aria-label="Delete idea"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    {idea.body ? (
-                      <div
-                        className={cn("text-xs text-muted-foreground [&_p]:mb-1 last:[&_p]:mb-0", markdownClasses)}
-                      >
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {String(idea.body).slice(0, 500) + (idea.body.length > 500 ? "…" : "")}
-                        </ReactMarkdown>
-                      </div>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            )}
           </SectionCard>
         </div>
       </ScrollArea>

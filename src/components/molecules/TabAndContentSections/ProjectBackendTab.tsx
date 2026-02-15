@@ -12,8 +12,8 @@ import {
   FileText,
   Network,
   Building2,
-  ScanSearch,
 } from "lucide-react";
+import { AnalyzeButtonSplit } from "@/components/molecules/ControlsAndButtons/AnalyzeButtonSplit";
 import { readProjectFileOrEmpty, writeProjectFile, analyzeProjectDoc } from "@/lib/api-projects";
 import type { Project } from "@/types/project";
 import type { BackendSetupJson } from "@/types/setup-json";
@@ -146,10 +146,11 @@ export function ProjectBackendTab({ project, projectId }: ProjectBackendTabProps
       <div className="flex items-center justify-between gap-4">
         <h2 className="text-sm font-medium text-muted-foreground">Backend tech stack, entities, endpoints</h2>
         <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="default"
-            onClick={async () => {
+          <AnalyzeButtonSplit
+            promptPath={BACKEND_PROMPT_PATH}
+            projectId={projectId}
+            repoPath={project.repoPath ?? undefined}
+            onAnalyze={async () => {
               setAnalyzing(true);
               try {
                 await analyzeProjectDoc(projectId, BACKEND_PROMPT_PATH, BACKEND_ANALYSIS_OUTPUT_PATH, project.repoPath ?? undefined);
@@ -160,12 +161,9 @@ export function ProjectBackendTab({ project, projectId }: ProjectBackendTabProps
                 setAnalyzing(false);
               }
             }}
-            disabled={analyzing}
-            className="gap-2"
-          >
-            {analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanSearch className="h-4 w-4" />}
-            Analyze
-          </Button>
+            analyzing={analyzing}
+            label="Analyze"
+          />
           <Button
             size="sm"
             onClick={save}

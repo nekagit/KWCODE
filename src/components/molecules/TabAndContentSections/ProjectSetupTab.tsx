@@ -15,8 +15,8 @@ import {
   Flag,
   Workflow,
   BookOpen,
-  ScanSearch,
 } from "lucide-react";
+import { AnalyzeButtonSplit } from "@/components/molecules/ControlsAndButtons/AnalyzeButtonSplit";
 import type { LucideIcon } from "lucide-react";
 import { listProjectFiles, readProjectFileOrEmpty, analyzeProjectDoc, type FileEntry } from "@/lib/api-projects";
 import { parseTicketsMd } from "@/lib/todos-kanban";
@@ -331,13 +331,12 @@ export function ProjectSetupTab({ project, projectId }: ProjectSetupTabProps) {
                     <div className="flex flex-wrap items-center gap-2 mb-3">
                       <span className="text-xs font-medium text-muted-foreground">Analyze:</span>
                       {SETUP_ANALYZE_CONFIG.map(({ key, label, promptPath, outputPath }) => (
-                        <Button
+                        <AnalyzeButtonSplit
                           key={key}
-                          variant="default"
-                          size="sm"
-                          className="gap-1.5 h-7 text-xs"
-                          disabled={analyzingKey !== null}
-                          onClick={async () => {
+                          promptPath={promptPath}
+                          projectId={projectId}
+                          repoPath={project.repoPath ?? undefined}
+                          onAnalyze={async () => {
                             setAnalyzingKey(key);
                             try {
                               await analyzeProjectDoc(projectId, promptPath, outputPath, project.repoPath ?? undefined);
@@ -349,14 +348,9 @@ export function ProjectSetupTab({ project, projectId }: ProjectSetupTabProps) {
                               setAnalyzingKey(null);
                             }
                           }}
-                        >
-                          {analyzingKey === key ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <ScanSearch className="h-3 w-3" />
-                          )}
-                          {label}
-                        </Button>
+                          analyzing={analyzingKey === key}
+                          label={label}
+                        />
                       ))}
                     </div>
                     {files.length === 0 ? (

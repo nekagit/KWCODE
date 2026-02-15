@@ -20,20 +20,30 @@ Running: agent -p "<prompt>" (print mode)
 Running: agent -p "<prompt>" (print mode)
 
 
-The full testing strategy document is in `.cursor/setup/testing.md`. It includes:
-The full testing strategy document is in `.cursor/setup/testing.md`. It includes:
+Completed two updates:
+Completed two updates:
 
 
-- **Testing landscape** — Architecture, current setup (0% coverage, Playwright configured, no E2E specs yet), critical flows (Projects CRUD, run store/Tauri, AI generation, navigation, Kanban, theme), and challenges (AI, Tauri, file system, events).
-- **Testing landscape** — Architecture, current setup (0% coverage, Playwright configured, no E2E specs yet), critical flows (Projects CRUD, run store/Tauri, AI generation, navigation, Kanban, theme), and challenges (AI, Tauri, file system, events).
-- **Sections 1–13** — Philosophy and principles, stack and tools (Vitest, RTL, Playwright), organization and naming, unit standards (Zod, utils, run-store, hooks), component standards (RTL, forms, dialogs, loading/error/empty), E2E (POM, fixtures, API mocking, visual regression), API route testing, Tauri/native testing, AI testing (OpenAI mocks), accessibility, performance, CI/CD, and anti-patterns.
-- **Sections 1–13** — Philosophy and principles, stack and tools (Vitest, RTL, Playwright), organization and naming, unit standards (Zod, utils, run-store, hooks), component standards (RTL, forms, dialogs, loading/error/empty), E2E (POM, fixtures, API mocking, visual regression), API route testing, Tauri/native testing, AI testing (OpenAI mocks), accessibility, performance, CI/CD, and anti-patterns.
-- **Appendix** — Command summary and key file paths.
-- **Appendix** — Command summary and key file paths.
+1. **`.cursor/setup/testing.md`**  
+1. **`.cursor/setup/testing.md`**  
+   Replaced the previous terminal output with a full testing strategy document that includes:
+   Replaced the previous terminal output with a full testing strategy document that includes:
+   - **Testing landscape** — App type (Next.js + Tauri), current setup (0% coverage, Playwright only), critical flows (Projects CRUD, run store/Tauri, AI generation, navigation, Kanban, theme), and challenges (AI, Tauri, file system, events).
+   - **Testing landscape** — App type (Next.js + Tauri), current setup (0% coverage, Playwright only), critical flows (Projects CRUD, run store/Tauri, AI generation, navigation, Kanban, theme), and challenges (AI, Tauri, file system, events).
+   - **Sections 1–13** — Philosophy and pyramid, stack (Vitest, RTL, Playwright), organization and naming, unit standards (Zod, `api-validation`, run-store, hooks), component standards (RTL, forms, dialogs, loading/error/empty), E2E (POM, fixtures, API mocking, visual regression), API route testing, Tauri/native testing, AI testing (OpenAI mocks), accessibility, performance, CI/CD, and anti-patterns.
+   - **Sections 1–13** — Philosophy and pyramid, stack (Vitest, RTL, Playwright), organization and naming, unit standards (Zod, `api-validation`, run-store, hooks), component standards (RTL, forms, dialogs, loading/error/empty), E2E (POM, fixtures, API mocking, visual regression), API route testing, Tauri/native testing, AI testing (OpenAI mocks), accessibility, performance, CI/CD, and anti-patterns.
+   - **Appendix** — Command summary and key file paths (`run-store`, `src/lib/tauri.ts`, `api-validation`, `data/projects.json`, generate-* routes, baseURL 4000).
+   - **Appendix** — Command summary and key file paths (`run-store`, `src/lib/tauri.ts`, `api-validation`, `data/projects.json`, generate-* routes, baseURL 4000).
 
 
-The doc is tailored to KWCode (run-store, `src/lib/tauri.ts`, `api-validation.ts`, file-based `data/projects.json`, generate-* routes, baseURL 4000) and uses the tech stack from your project (Next.js, Tailwind, Zustand, shadcn/ui, Zod, Playwright). Version date is set to 2026-02-15.
-The doc is tailored to KWCode (run-store, `src/lib/tauri.ts`, `api-validation.ts`, file-based `data/projects.json`, generate-* routes, baseURL 4000) and uses the tech stack from your project (Next.js, Tailwind, Zustand, shadcn/ui, Zod, Playwright). Version date is set to 2026-02-15.
+   The doc is tailored to KWCode and uses your tech stack (Next.js 16, Tailwind, Zustand, shadcn/ui, Zod, Playwright). Version set to 1.0, date 2026-02-15.
+   The doc is tailored to KWCode and uses your tech stack (Next.js 16, Tailwind, Zustand, shadcn/ui, Zod, Playwright). Version set to 1.0, date 2026-02-15.
+
+
+2. **`.cursor/adr/0010-testing-strategy-and-standards.md`**  
+2. **`.cursor/adr/0010-testing-strategy-and-standards.md`**  
+   New ADR that records the decision to adopt this testing strategy and points to `.cursor/setup/testing.md` and related files.
+   New ADR that records the decision to adopt this testing strategy and points to `.cursor/setup/testing.md` and related files.
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

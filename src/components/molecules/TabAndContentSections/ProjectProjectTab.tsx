@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Loader2, FileText, FolderOpen, RefreshCw, ScanSearch } from "lucide-react";
+import { Loader2, FileText, FolderOpen, RefreshCw } from "lucide-react";
+import { AnalyzeButtonSplit } from "@/components/molecules/ControlsAndButtons/AnalyzeButtonSplit";
 import { listProjectFiles, readProjectFileOrEmpty, analyzeProjectDoc, type FileEntry } from "@/lib/api-projects";
 import type { Project } from "@/types/project";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -180,22 +181,26 @@ export function ProjectProjectTab({ project, projectId }: ProjectProjectTabProps
                   {formatUpdatedAt(new Date(latestUpdated).toISOString())}
                 </MetadataBadge>
               )}
-              <Button variant="default" size="sm" onClick={async () => {
-                setAnalyzing(true);
-                try {
-                  await analyzeProjectDoc(projectId, PROJECT_PROMPT_PATH, PROJECT_OUTPUT_PATH, project.repoPath ?? undefined);
-                  await loadFiles();
-                  setSelectedFile("PROJECT-INFO.md");
-                  toast.success("Project info updated from prompt.");
-                } catch (e) {
-                  toast.error(e instanceof Error ? e.message : "Analyze failed");
-                } finally {
-                  setAnalyzing(false);
-                }
-              }} disabled={analyzing} className="gap-1.5">
-                {analyzing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ScanSearch className="h-3.5 w-3.5" />}
-                Analyze
-              </Button>
+              <AnalyzeButtonSplit
+                promptPath={PROJECT_PROMPT_PATH}
+                projectId={projectId}
+                repoPath={project.repoPath ?? undefined}
+                onAnalyze={async () => {
+                  setAnalyzing(true);
+                  try {
+                    await analyzeProjectDoc(projectId, PROJECT_PROMPT_PATH, PROJECT_OUTPUT_PATH, project.repoPath ?? undefined);
+                    await loadFiles();
+                    setSelectedFile("PROJECT-INFO.md");
+                    toast.success("Project info updated from prompt.");
+                  } catch (e) {
+                    toast.error(e instanceof Error ? e.message : "Analyze failed");
+                  } finally {
+                    setAnalyzing(false);
+                  }
+                }}
+                analyzing={analyzing}
+                label="Analyze"
+              />
               <Button variant="ghost" size="sm" onClick={loadFiles} disabled={loadingList} className="gap-1.5">
                 {loadingList ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
                 Refresh
