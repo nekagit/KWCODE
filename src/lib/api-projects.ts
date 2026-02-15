@@ -4,6 +4,7 @@
  */
 import { invoke, isTauri } from "@/lib/tauri";
 import type { Project } from "@/types/project";
+import { useRunStore } from "@/store/run-store";
 
 export type CreateProjectBody = {
   name: string;
@@ -266,24 +267,188 @@ export async function initializeProjectRepo(projectId: string, repoPath: string)
   }
 }
 
+const DEFAULT_TAURI_API_BASE = "http://127.0.0.1:4000";
+
+/** Base URL for API when using fetch (e.g. in Tauri, webview origin may not be the Next server). */
+function getApiBase(): string {
+  if (typeof window === "undefined") return "";
+  if (isTauri) {
+    const envBase =
+      typeof process !== "undefined" && process.env && (process.env as Record<string, string>).NEXT_PUBLIC_API_BASE;
+    return (envBase && envBase.trim()) || DEFAULT_TAURI_API_BASE;
+  }
+  return window.location.origin;
+}
+
 /**
  * Run the analyze-project-doc API: read prompt from project repo, send current doc + prompt to LLM, write result to output path.
- * Uses POST /api/analyze-project-doc (browser or Tauri with Next server).
+ * In Tauri: fetches prompt only, then runs agent via runTempTicket (Run tab); output is written when the run exits.
+ * In browser: uses POST /api/analyze-project-doc (runs agent on server and writes output).
+ * Pass repoPath when the project may not exist in the Next server's data/projects.json (e.g. in Tauri, projects come from Rust).
  */
 export async function analyzeProjectDoc(
   projectId: string,
   promptPath: string,
-  outputPath: string
+  outputPath: string,
+  repoPath?: string
 ): Promise<void> {
-  const base = typeof window !== "undefined" ? window.location.origin : "";
+  if (isTauri && repoPath?.trim()) {
+    const base = getApiBase();
+    const body = { projectId, promptPath, outputPath, repoPath: repoPath.trim(), promptOnly: true as const };
+    const res = await fetch(`${base}/api/analyze-project-doc`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = (await res.json().catch(() => ({}))) as { error?: string; hint?: string; prompt?: string };
+    if (!res.ok) {
+      const msg = data.error || res.statusText || "Analyze failed";
+      const hint = data.hint ? ` ${data.hint}` : "";
+      throw new Error(msg + hint);
+    }
+    const prompt = typeof data.prompt === "string" ? data.prompt : "";
+    if (!prompt) throw new Error("No prompt returned from API");
+    const label = "Analyze: " + (outputPath.split("/").pop() || outputPath).replace(/\.[^.]+$/, "").slice(0, 40);
+    await useRunStore.getState().runTempTicket(repoPath.trim(), prompt, label, {
+      projectId,
+      outputPath,
+      payload: { repoPath: repoPath.trim() },
+    });
+    return;
+  }
+
+  const base = getApiBase();
+  const body: { projectId: string; promptPath: string; outputPath: string; repoPath?: string } = {
+    projectId,
+    promptPath,
+    outputPath,
+  };
+  if (repoPath?.trim()) body.repoPath = repoPath.trim();
   const res = await fetch(`${base}/api/analyze-project-doc`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ projectId, promptPath, outputPath }),
+    body: JSON.stringify(body),
   });
-  const data = await res.json().catch(() => ({}));
+  const data = (await res.json().catch(() => ({}))) as { error?: string; hint?: string };
   if (!res.ok) {
-    throw new Error((data as { error?: string }).error || res.statusText || "Analyze failed");
+    const msg = data.error || res.statusText || "Analyze failed";
+    const hint = data.hint ? ` ${data.hint}` : "";
+    throw new Error(msg + hint);
   }
 }
 
+/* ═══ Analyze queue (worker tab): prompts as tickets, 3 at a time ═══ */
+
+export const ANALYZE_QUEUE_PATH = ".cursor/worker/queue/analyze-jobs.json";
+
+export type AnalyzeJobStatus = "pending" | "running" | "done" | "failed";
+
+export type AnalyzeJob = {
+  id: string;
+  promptPath: string;
+  outputPath: string;
+  status: AnalyzeJobStatus;
+};
+
+export type AnalyzeQueueData = { jobs: AnalyzeJob[] };
+
+/** Default 8 analyze jobs (same order as ANALYZE_ALL_CONFIG). */
+export const DEFAULT_ANALYZE_JOBS: Omit<AnalyzeJob, "status">[] = [
+  { id: "ideas", promptPath: ".cursor/prompts/ideas.md", outputPath: ".cursor/setup/ideas.md" },
+  { id: "project", promptPath: ".cursor/prompts/project.md", outputPath: ".cursor/project/PROJECT-INFO.md" },
+  { id: "design", promptPath: ".cursor/prompts/design.md", outputPath: ".cursor/setup/design.md" },
+  { id: "architecture", promptPath: ".cursor/prompts/architecture.md", outputPath: ".cursor/setup/architecture.md" },
+  { id: "testing", promptPath: ".cursor/prompts/testing.md", outputPath: ".cursor/setup/testing.md" },
+  { id: "documentation", promptPath: ".cursor/prompts/documentation.md", outputPath: ".cursor/setup/documentation.md" },
+  { id: "frontend", promptPath: ".cursor/prompts/frontend.md", outputPath: ".cursor/setup/frontend-analysis.md" },
+  { id: "backend", promptPath: ".cursor/prompts/backend.md", outputPath: ".cursor/setup/backend-analysis.md" },
+];
+
+/** Write the analyze queue to the project repo (all jobs pending). */
+export async function writeAnalyzeQueue(
+  projectId: string,
+  repoPath: string,
+  jobs: Omit<AnalyzeJob, "status">[] = DEFAULT_ANALYZE_JOBS
+): Promise<void> {
+  const data: AnalyzeQueueData = {
+    jobs: jobs.map((j) => ({ ...j, status: "pending" as AnalyzeJobStatus })),
+  };
+  await writeProjectFile(projectId, ANALYZE_QUEUE_PATH, JSON.stringify(data, null, 2), repoPath);
+}
+
+/** Read the analyze queue from the project repo. */
+export async function readAnalyzeQueue(
+  projectId: string,
+  repoPath?: string
+): Promise<AnalyzeQueueData | null> {
+  const raw = await readProjectFileOrEmpty(projectId, ANALYZE_QUEUE_PATH, repoPath);
+  if (!raw.trim()) return null;
+  try {
+    const data = JSON.parse(raw) as AnalyzeQueueData;
+    if (!Array.isArray(data.jobs)) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+const ANALYZE_CONCURRENCY = 3;
+
+/**
+ * Process the analyze queue: run up to ANALYZE_CONCURRENCY (3) jobs at a time.
+ * getQueue/setQueue read/write the queue file (e.g. via readAnalyzeQueue + writeProjectFile).
+ */
+export async function runAnalyzeQueueProcessing(
+  projectId: string,
+  repoPath: string,
+  options: {
+    getQueue: () => Promise<AnalyzeQueueData | null>;
+    setQueue: (data: AnalyzeQueueData) => Promise<void>;
+    onProgress?: (completed: number, total: number) => void;
+    onJobComplete?: (id: string, status: "done" | "failed") => void;
+  }
+): Promise<{ completed: number; failed: number }> {
+  const { getQueue, setQueue, onProgress, onJobComplete } = options;
+  let completed = 0;
+  let failed = 0;
+
+  const runOne = async (job: AnalyzeJob): Promise<"done" | "failed"> => {
+    try {
+      await analyzeProjectDoc(projectId, job.promptPath, job.outputPath, repoPath);
+      onJobComplete?.(job.id, "done");
+      return "done";
+    } catch {
+      onJobComplete?.(job.id, "failed");
+      return "failed";
+    }
+  };
+
+  while (true) {
+    const data = await getQueue();
+    if (!data?.jobs?.length) break;
+    const pending = data.jobs.filter((j) => j.status === "pending");
+    if (pending.length === 0) break;
+
+    const batch = pending.slice(0, ANALYZE_CONCURRENCY);
+    for (const j of batch) {
+      j.status = "running";
+    }
+    await setQueue(data);
+
+    const results = await Promise.all(batch.map(runOne));
+    completed += results.filter((r) => r === "done").length;
+    failed += results.filter((r) => r === "failed").length;
+
+    const next = await getQueue();
+    if (!next) break;
+    const batchIds = new Set(batch.map((b) => b.id));
+    for (let i = 0; i < results.length; i++) {
+      const job = next.jobs.find((j) => j.id === batch[i].id);
+      if (job) job.status = results[i];
+    }
+    await setQueue(next);
+    onProgress?.(completed + failed, next.jobs.length);
+  }
+
+  return { completed, failed };
+}

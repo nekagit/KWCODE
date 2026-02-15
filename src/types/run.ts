@@ -19,6 +19,16 @@ export interface PromptRecordItem {
   content: string;
 }
 
+/** Metadata for post-run actions (write file, parse and notify). Used by temp tickets. */
+export interface RunMeta {
+  projectId?: string;
+  outputPath?: string;
+  /** How to handle stdout when run exits: write_file | parse_ideas | parse_ticket | parse_architectures | parse_prompt | parse_project_from_idea | improve_idea */
+  onComplete?: string;
+  /** Extra payload for onComplete handlers (e.g. repoPath for writeProjectFile). */
+  payload?: Record<string, unknown>;
+}
+
 export interface Run {
   runId: string;
   label: string;
@@ -28,6 +38,8 @@ export interface Run {
   startedAt?: number;
   /** When the run finished (ms since epoch). Set on script-exited for duration. */
   doneAt?: number;
+  /** Optional metadata for post-run actions (temp tickets). */
+  meta?: RunMeta;
 }
 
 /** Alias for Run used by run store and UI. */

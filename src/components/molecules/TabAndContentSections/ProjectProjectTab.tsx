@@ -183,7 +183,7 @@ export function ProjectProjectTab({ project, projectId }: ProjectProjectTabProps
               <Button variant="default" size="sm" onClick={async () => {
                 setAnalyzing(true);
                 try {
-                  await analyzeProjectDoc(projectId, PROJECT_PROMPT_PATH, PROJECT_OUTPUT_PATH);
+                  await analyzeProjectDoc(projectId, PROJECT_PROMPT_PATH, PROJECT_OUTPUT_PATH, project.repoPath ?? undefined);
                   await loadFiles();
                   setSelectedFile("PROJECT-INFO.md");
                   toast.success("Project info updated from prompt.");

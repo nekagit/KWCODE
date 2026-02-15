@@ -11,6 +11,7 @@ import {
   type Timing,
   type PromptRecordItem,
   type RunInfo,
+  type RunMeta,
 } from "@/types/run";
 
 export interface RunState {
@@ -63,6 +64,13 @@ export interface RunActions {
   ) => Promise<string | null>;
   /** Run a single setup prompt (design/ideas/etc.) and open it in the floating terminal. */
   runSetupPrompt: (projectPath: string, promptContent: string, label: string) => Promise<string | null>;
+  /** Run a temporary ticket (single prompt) on slot 1 with optional meta for post-run actions. */
+  runTempTicket: (
+    projectPath: string,
+    promptContent: string,
+    label: string,
+    meta?: RunMeta
+  ) => Promise<string | null>;
   setFloatingTerminalRunId: (id: string | null) => void;
   clearFloatingTerminal: () => void;
   stopAllImplementAll: () => Promise<void>;
@@ -79,6 +87,19 @@ export interface RunActions {
 }
 
 export type RunStore = RunState & RunActions;
+
+/** Registry for one-time handlers when a temp ticket run completes (key = onComplete + ':' + (payload.projectId ?? payload.requestId ?? runId)). */
+const runCompleteHandlers = new Map<string, (stdout: string) => void>();
+
+export function registerRunCompleteHandler(key: string, handler: (stdout: string) => void): void {
+  runCompleteHandlers.set(key, handler);
+}
+
+export function takeRunCompleteHandler(key: string): ((stdout: string) => void) | undefined {
+  const h = runCompleteHandlers.get(key);
+  runCompleteHandlers.delete(key);
+  return h;
+}
 
 const initialState: RunState = {
   isTauriEnv: null,
@@ -425,6 +446,44 @@ export const useRunStore = create<RunStore>()((set, get) => ({
     }
   },
 
+  runTempTicket: async (projectPath, promptContent, label, meta) => {
+    const path = projectPath?.trim();
+    if (!path) {
+      set({ error: "Project path is required" });
+      return null;
+    }
+    if (!promptContent?.trim()) {
+      set({ error: "Prompt content is empty" });
+      return null;
+    }
+    set({ error: null });
+    try {
+      const { run_id } = await invoke<{ run_id: string }>("run_implement_all", {
+        projectPath: path,
+        slot: 1,
+        promptContent: promptContent.trim(),
+      });
+      set((s) => ({
+        runningRuns: [
+          ...s.runningRuns,
+          {
+            runId: run_id,
+            label,
+            logLines: [],
+            status: "running" as const,
+            startedAt: Date.now(),
+            meta: meta ?? undefined,
+          },
+        ],
+        selectedRunId: run_id,
+      }));
+      return run_id;
+    } catch (e) {
+      set({ error: e instanceof Error ? e.message : String(e) });
+      return null;
+    }
+  },
+
   setFloatingTerminalRunId: (id) => set({ floatingTerminalRunId: id }),
 
   clearFloatingTerminal: () => set({ floatingTerminalRunId: null }),
@@ -548,6 +607,7 @@ export function useRunState() {
       archivedImplementAllLogs: s.archivedImplementAllLogs,
       getTimingForRun: s.getTimingForRun,
       runSetupPrompt: s.runSetupPrompt,
+      runTempTicket: s.runTempTicket,
       floatingTerminalRunId: s.floatingTerminalRunId,
       setFloatingTerminalRunId: s.setFloatingTerminalRunId,
       clearFloatingTerminal: s.clearFloatingTerminal,

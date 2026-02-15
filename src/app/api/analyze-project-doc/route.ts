@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
-import OpenAI from "openai";
+import { runAgentPrompt } from "@/lib/agent-runner";
 import type { Project } from "@/types/project";
 
 function findDataDir(): string {
@@ -27,11 +27,19 @@ function readProjects(): Project[] {
   }
 }
 
+function repoAllowed(resolvedRepo: string, cwd: string): boolean {
+  const cwdResolved = path.resolve(cwd);
+  return (
+    resolvedRepo.startsWith(cwdResolved) ||
+    path.dirname(resolvedRepo) === path.dirname(cwdResolved)
+  );
+}
+
 function readFileInRepo(repoPath: string, relativePath: string, cwd: string): string | null {
   const normalized = path.normalize(relativePath.trim());
   if (normalized.startsWith("..") || path.isAbsolute(normalized)) return null;
   const resolvedRepo = path.resolve(repoPath);
-  if (!resolvedRepo.startsWith(cwd)) return null;
+  if (!repoAllowed(resolvedRepo, cwd)) return null;
   const resolved = path.resolve(resolvedRepo, normalized);
   if (!resolved.startsWith(resolvedRepo)) return null;
   if (!fs.existsSync(resolved) || !fs.statSync(resolved).isFile()) return null;
@@ -42,7 +50,7 @@ function writeFileInRepo(repoPath: string, relativePath: string, content: string
   const normalized = path.normalize(relativePath.trim());
   if (normalized.startsWith("..") || path.isAbsolute(normalized)) return false;
   const resolvedRepo = path.resolve(repoPath);
-  if (!resolvedRepo.startsWith(cwd)) return false;
+  if (!repoAllowed(resolvedRepo, cwd)) return false;
   const resolved = path.resolve(resolvedRepo, normalized);
   if (!resolved.startsWith(resolvedRepo)) return false;
   const dir = path.dirname(resolved);
@@ -61,16 +69,54 @@ function stripCodeFence(raw: string): string {
   return trimmed;
 }
 
-export async function POST(request: NextRequest) {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json(
-      { error: "OPENAI_API_KEY is not set. Add it in .env.local." },
-      { status: 500 }
-    );
+/** Build a short "current project data" string from the repo: top-level layout + tech stack if present. */
+function getCurrentProjectData(resolvedRepo: string): string {
+  const lines: string[] = [];
+  try {
+    const entries = fs.readdirSync(resolvedRepo, { withFileTypes: true });
+    const names = entries
+      .filter((e) => !e.name.startsWith(".") || e.name === ".cursor")
+      .map((e) => (e.isDirectory() ? `${e.name}/` : e.name))
+      .sort((a, b) => a.localeCompare(b));
+    if (names.length) {
+      lines.push("Repo layout (top level):", names.join(" "), "");
+    }
+  } catch {
+    // ignore
   }
+  const techPath = path.join(resolvedRepo, ".cursor", "technologies", "tech-stack.json");
+  if (fs.existsSync(techPath) && fs.statSync(techPath).isFile()) {
+    try {
+      const tech = fs.readFileSync(techPath, "utf-8").trim().slice(0, 2000);
+      if (tech) lines.push("Tech stack (.cursor/technologies/tech-stack.json):", tech, "");
+    } catch {
+      // ignore
+    }
+  }
+  const pkgPath = path.join(resolvedRepo, "package.json");
+  if (fs.existsSync(pkgPath) && fs.statSync(pkgPath).isFile()) {
+    try {
+      const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8")) as Record<string, unknown>;
+      const name = pkg.name;
+      const scripts = pkg.scripts as Record<string, string> | undefined;
+      const deps = pkg.dependencies as Record<string, string> | undefined;
+      const parts = [name && `name: ${name}`];
+      if (scripts && typeof scripts === "object") {
+        parts.push("scripts: " + Object.keys(scripts).slice(0, 12).join(", "));
+      }
+      if (deps && typeof deps === "object") {
+        parts.push("deps: " + Object.keys(deps).slice(0, 15).join(", "));
+      }
+      if (parts.length) lines.push("package.json:", parts.filter(Boolean).join(" | "), "");
+    } catch {
+      // ignore
+    }
+  }
+  return lines.length ? ["Current project data:", "", ...lines].join("\n") : "";
+}
 
-  let body: { projectId: string; promptPath: string; outputPath: string };
+export async function POST(request: NextRequest) {
+  let body: { projectId?: string; repoPath?: string; promptPath: string; outputPath: string; promptOnly?: boolean };
   try {
     body = await request.json();
   } catch {
@@ -78,33 +124,39 @@ export async function POST(request: NextRequest) {
   }
 
   const projectId = typeof body.projectId === "string" ? body.projectId.trim() : "";
+  const repoPathFromBody = typeof body.repoPath === "string" ? body.repoPath.trim() : "";
   const promptPath = typeof body.promptPath === "string" ? body.promptPath.trim() : "";
   const outputPath = typeof body.outputPath === "string" ? body.outputPath.trim() : "";
+  const promptOnly = body.promptOnly === true;
 
-  if (!projectId || !promptPath || !outputPath) {
+  if (!promptPath || !outputPath) {
     return NextResponse.json(
-      { error: "Missing projectId, promptPath, or outputPath" },
+      { error: "Missing promptPath or outputPath" },
       { status: 400 }
     );
   }
 
   const cwd = process.cwd();
-  const projects = readProjects();
-  const project = projects.find((p) => p.id === projectId);
-  if (!project) {
-    return NextResponse.json({ error: "Project not found" }, { status: 404 });
-  }
+  let repoPath: string;
+  let projectName: string;
 
-  const repoPath = project.repoPath?.trim();
-  if (!repoPath) {
+  const projects = readProjects();
+  const project = projectId ? projects.find((p) => p.id === projectId) : null;
+  if (project?.repoPath?.trim()) {
+    repoPath = project.repoPath.trim();
+    projectName = project.name ?? "Project";
+  } else if (repoPathFromBody) {
+    repoPath = repoPathFromBody;
+    projectName = project?.name ?? "Project";
+  } else {
     return NextResponse.json(
-      { error: "Project has no repo path; cannot analyze" },
-      { status: 400 }
+      { error: "Project not found. Provide projectId (and ensure project exists in data/projects.json) or repoPath in the request body." },
+      { status: 404 }
     );
   }
 
   const resolvedRepo = path.resolve(repoPath);
-  if (!resolvedRepo.startsWith(cwd)) {
+  if (!repoAllowed(resolvedRepo, cwd)) {
     return NextResponse.json(
       { error: "Project repo is outside app directory; analysis not allowed" },
       { status: 403 }
@@ -114,20 +166,26 @@ export async function POST(request: NextRequest) {
   const promptContent = readFileInRepo(repoPath, promptPath, cwd);
   if (!promptContent || !promptContent.trim()) {
     return NextResponse.json(
-      { error: `Prompt not found at ${promptPath}` },
+      {
+        error: `Prompt not found at ${promptPath}`,
+        hint: "Run Initialize on this project to copy .cursor prompts from the template, or add the prompt file manually.",
+      },
       { status: 400 }
     );
   }
 
   const currentContent = readFileInRepo(repoPath, outputPath, cwd) ?? "";
-  const projectName = project.name ?? "Project";
+  const projectData = getCurrentProjectData(resolvedRepo);
 
-  const systemPrompt = `You are a senior engineer. You will be given the current content of a project document and instructions (a prompt). Your task is to output the updated document content only. Output the full document as markdown (or as instructed). Do not add a preamble, explanation, or code fence—output the document content that should be written to the file. Base the update on the current state and the instructions.`;
+  const systemPrompt = `You are a senior engineer. You will be given the project name, current project data (repo layout, tech stack, package.json), the current content of a project document, and instructions (a prompt). Your task is to output the updated document content only. Output the full document as markdown (or as instructed). Do not add a preamble, explanation, or code fence—output the document content that should be written to the file. Base the update on the current project data and the instructions.`;
 
   const userContent = [
     `Project: ${projectName}`,
     "",
-    "Current content of the target file:",
+    projectData || "",
+    projectData ? "---" : "",
+    "",
+    "Current content of the target file (to update):",
     currentContent || "(empty or file does not exist yet)",
     "",
     "---",
@@ -135,20 +193,18 @@ export async function POST(request: NextRequest) {
     "Instructions (prompt):",
     "",
     promptContent.trim(),
-  ].join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const combinedPrompt = [systemPrompt, "", userContent].join("\n");
+
+  if (promptOnly) {
+    return NextResponse.json({ prompt: combinedPrompt });
+  }
 
   try {
-    const openai = new OpenAI({ apiKey });
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userContent },
-      ],
-      temperature: 0.3,
-    });
-
-    const raw = completion.choices[0]?.message?.content?.trim() ?? "";
+    const raw = await runAgentPrompt(resolvedRepo, combinedPrompt);
     const content = stripCodeFence(raw);
 
     const written = writeFileInRepo(repoPath, outputPath, content, cwd);
@@ -163,7 +219,11 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json(
-      { error: "OpenAI request failed", detail: message },
+      {
+        error: "Agent request failed",
+        detail: message,
+        hint: "Ensure the agent CLI is installed and in PATH (or set AGENT_CLI_PATH).",
+      },
       { status: 502 }
     );
   }

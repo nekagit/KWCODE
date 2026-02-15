@@ -29,7 +29,7 @@
     { "id": "ep3", "method": "GET", "path": "/api/data/projects/[id]/file", "description": "Read project file" },
     { "id": "ep4", "method": "POST", "path": "/api/data/projects/[id]/file", "description": "Write project file" },
     { "id": "ep5", "method": "GET", "path": "/api/data/cursor-init-template", "description": ".cursor_inti template for Initialize" },
-    { "id": "ep6", "method": "POST", "path": "/api/check-openai", "description": "Validate OpenAI API key" },
+    { "id": "ep6", "method": "POST", "path": "/api/check-openai", "description": "Deprecated; LLM features use agent CLI (agent -p)" },
     { "id": "ep7", "method": "POST", "path": "/api/generate-ticket-from-prompt", "description": "Generate ticket from prompt" },
     { "id": "ep8", "method": "POST", "path": "/api/generate-prompt-from-kanban", "description": "Generate prompt from Kanban" }
   ]

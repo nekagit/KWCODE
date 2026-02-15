@@ -340,7 +340,7 @@ export function ProjectSetupTab({ project, projectId }: ProjectSetupTabProps) {
                           onClick={async () => {
                             setAnalyzingKey(key);
                             try {
-                              await analyzeProjectDoc(projectId, promptPath, outputPath);
+                              await analyzeProjectDoc(projectId, promptPath, outputPath, project.repoPath ?? undefined);
                               await loadAll();
                               toast.success(`${label} doc updated.`);
                             } catch (e) {

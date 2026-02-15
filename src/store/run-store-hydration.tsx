@@ -2,7 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { listen, isTauri } from "@/lib/tauri";
-import { useRunStore } from "./run-store";
+import { writeProjectFile } from "@/lib/api-projects";
+import { useRunStore, takeRunCompleteHandler } from "./run-store";
 
 /**
  * Runs side effects that hydrate the run store: Tauri env detection,
@@ -65,6 +66,7 @@ export function RunStoreHydration() {
     listen<{ run_id: string }>("script-exited", (event) => {
       const { run_id } = event.payload;
       const store = useRunStore.getState();
+      const run = store.runningRuns.find((r) => r.runId === run_id);
       const now = Date.now();
       store.setRunInfos((prev) =>
         prev.map((r) =>
@@ -74,6 +76,48 @@ export function RunStoreHydration() {
         )
       );
       store.runNextInQueue(run_id);
+
+      if (run?.meta) {
+        const stdout = run.logLines.join("\n");
+        if (run.meta.projectId && run.meta.outputPath) {
+          const repoPath =
+            typeof run.meta.payload?.repoPath === "string"
+              ? run.meta.payload.repoPath
+              : undefined;
+          writeProjectFile(
+            run.meta.projectId,
+            run.meta.outputPath,
+            stdout,
+            repoPath
+          ).catch((err) => {
+            console.error("[run-exited] writeProjectFile failed:", err);
+          });
+        }
+        if (run.meta.onComplete) {
+          const key =
+            run.meta.onComplete +
+            ":" +
+            (run.meta.payload?.projectId ?? run.meta.payload?.requestId ?? run_id);
+          const handler = takeRunCompleteHandler(key);
+          if (handler) {
+            try {
+              handler(stdout);
+            } catch (err) {
+              console.error("[run-exited] runComplete handler error:", err);
+            }
+          }
+          window.dispatchEvent(
+            new CustomEvent("run-complete", {
+              detail: {
+                runId: run_id,
+                onComplete: run.meta.onComplete,
+                stdout,
+                meta: run.meta,
+              },
+            })
+          );
+        }
+      }
     }).then((fn) => {
       if (!cancelled) unlistenExitedRef.current = fn;
     });

@@ -15,6 +15,8 @@ import {
   writeProjectFile,
   listProjectFiles,
 } from "@/lib/api-projects";
+import { isTauri } from "@/lib/tauri";
+import { useRunStore, registerRunCompleteHandler } from "@/store/run-store";
 import { cn } from "@/lib/utils";
 
 const MILESTONES_DIR = ".cursor/milestones";
@@ -162,6 +164,8 @@ export function ProjectMilestonesTab({
     );
   }, []);
 
+  const runTempTicket = useRunStore((s) => s.runTempTicket);
+
   const handleGenerateTicket = useCallback(
     async (phase: (typeof MILESTONE_PHASES)[number]) => {
       const input = specificInputs[phase.phaseNumber]?.trim() || "";
@@ -183,9 +187,59 @@ export function ProjectMilestonesTab({
         }
       }
 
+      if (!project.repoPath?.trim()) {
+        toast.error("Project repo path is required");
+        return;
+      }
+
       setGeneratingPhase(phase.phaseNumber);
       setGeneratedTicket(null);
       try {
+        if (isTauri) {
+          const res = await fetch("/api/generate-ticket-from-prompt", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt, existingFeatures, projectPath: project.repoPath, promptOnly: true }),
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            toast.error(data.error || "Failed to generate ticket");
+            return;
+          }
+          const promptText = data.prompt;
+          if (!promptText) {
+            toast.error("No prompt returned");
+            return;
+          }
+          const requestId = `milestone-${phase.phaseNumber}-${Date.now()}`;
+          const phaseNum = phase.phaseNumber;
+          registerRunCompleteHandler(`parse_ticket_milestone:${requestId}`, (stdout: string) => {
+            const jsonMatch = stdout.match(/\{[\s\S]*\}/);
+            const jsonStr = jsonMatch ? jsonMatch[0] : stdout;
+            try {
+              const parsed = JSON.parse(jsonStr) as { title?: string; description?: string; priority?: string; featureName?: string };
+              const priority = ["P0", "P1", "P2", "P3"].includes(parsed.priority ?? "") ? parsed.priority! : "P1";
+              setGeneratedTicket({
+                phaseNumber: phaseNum,
+                ticket: {
+                  title: String(parsed.title ?? "").trim().slice(0, 200),
+                  description: typeof parsed.description === "string" ? parsed.description.trim().slice(0, 2000) : undefined,
+                  priority: priority as "P0" | "P1" | "P2" | "P3",
+                  featureName: String(parsed.featureName ?? "Uncategorized").trim().slice(0, 100),
+                },
+              });
+            } catch {
+              toast.error("Could not parse agent output");
+            }
+            setGeneratingPhase(null);
+          });
+          await runTempTicket(project.repoPath.trim(), promptText, `Generate ticket (Phase ${phase.phaseNumber})`, {
+            onComplete: "parse_ticket_milestone",
+            payload: { requestId },
+          });
+          toast.success("Generate ticket running in Run tab.");
+          return;
+        }
         const res = await fetch("/api/generate-ticket-from-prompt", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -211,7 +265,7 @@ export function ProjectMilestonesTab({
         setGeneratingPhase(null);
       }
     },
-    [specificInputs, project.repoPath, projectId]
+    [specificInputs, project.repoPath, projectId, runTempTicket]
   );
 
   const handleAddToBacklog = useCallback(async () => {

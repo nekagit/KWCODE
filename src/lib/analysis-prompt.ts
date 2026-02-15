@@ -114,8 +114,9 @@ export function buildKanbanContextBlock(data: KanbanContextData): string {
       });
       lines.push("");
     });
+  } else {
+    lines.push("_No tickets parsed yet. Run Sync on the Todos tab after creating .cursor/planner/tickets.md._");
   }
-  lines.push("_No tickets parsed yet. Run Sync on the Todos tab after creating .cursor/planner/tickets.md._");
   lines.push("");
   return lines.join("\n");
 }

@@ -15,6 +15,8 @@ import {
   ScanSearch,
 } from "lucide-react";
 import { readProjectFileOrEmpty, writeProjectFile, analyzeProjectDoc } from "@/lib/api-projects";
+import { isTauri } from "@/lib/tauri";
+import { useRunStore, registerRunCompleteHandler } from "@/store/run-store";
 import {
   parseIdeasMd,
   serializeIdeasMd,
@@ -107,11 +109,54 @@ export function ProjectIdeasDocTab({ project, projectId }: ProjectIdeasDocTabPro
     [parsed, saveDoc]
   );
 
+  const runTempTicket = useRunStore((s) => s.runTempTicket);
+
   const addImprovedIdea = useCallback(async () => {
     const raw = newIdeaRaw.trim();
-    if (!raw || !parsed) return;
+    if (!raw || !parsed || !project.repoPath?.trim()) return;
     setImproving(true);
     try {
+      if (isTauri) {
+        const res = await fetch(`/api/data/projects/${projectId}/improve-idea`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            rawIdea: raw,
+            projectName: project.name,
+            promptOnly: true,
+          }),
+        });
+        if (!res.ok) {
+          const j = await res.json().catch(() => ({}));
+          throw new Error((j as { error?: string }).error || res.statusText);
+        }
+        const data = (await res.json()) as { prompt?: string };
+        const prompt = data.prompt;
+        if (!prompt) throw new Error("No prompt returned");
+        const key = `improve_idea:${projectId}`;
+        registerRunCompleteHandler(key, async (stdout: string) => {
+          const improved = stdout.trim() || raw;
+          const currentParsed = parsed;
+          if (!currentParsed) return;
+          const nextIdeas = [...currentParsed.ideas];
+          if (currentParsed.format === "numbered") {
+            const { title, body } = improvedTextToTitleAndBody(improved);
+            nextIdeas.push(buildNumberedBlock(title, body, nextIdeas.length + 1));
+          } else {
+            nextIdeas.push(buildBulletBlock(improved));
+          }
+          await saveDoc(currentParsed.intro, nextIdeas, currentParsed.format);
+          setNewIdeaRaw("");
+          toast.success("Idea added to ideas.md");
+          setImproving(false);
+        });
+        await runTempTicket(project.repoPath.trim(), prompt, "Improve idea", {
+          onComplete: "improve_idea",
+          payload: { projectId },
+        });
+        toast.success("Improve idea running in Run tab.");
+        return;
+      }
       const res = await fetch(`/api/data/projects/${projectId}/improve-idea`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -140,12 +185,12 @@ export function ProjectIdeasDocTab({ project, projectId }: ProjectIdeasDocTabPro
     } finally {
       setImproving(false);
     }
-  }, [newIdeaRaw, parsed, projectId, project.name, saveDoc]);
+  }, [newIdeaRaw, parsed, projectId, project.name, project.repoPath, runTempTicket, saveDoc]);
 
   const handleAnalyze = useCallback(async () => {
     setAnalyzing(true);
     try {
-      await analyzeProjectDoc(projectId, IDEAS_PROMPT_PATH, IDEAS_SETUP_PATH);
+      await analyzeProjectDoc(projectId, IDEAS_PROMPT_PATH, IDEAS_SETUP_PATH, project.repoPath ?? undefined);
       await fetchDoc();
       toast.success("Ideas doc updated from prompt.");
     } catch (e) {

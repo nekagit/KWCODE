@@ -20,22 +20,18 @@ Running: agent -p "<prompt>" (print mode)
 Running: agent -p "<prompt>" (print mode)
 
 
-Updated `.cursor/project/PROJECT-INFO.md` with:
-Updated `.cursor/project/PROJECT-INFO.md` with:
+Created `.cursor/setup/backend-analysis.md` with:
+Created `.cursor/setup/backend-analysis.md` with:
 
 
-- **Name:** run-prompts (from package.json)
-- **Name:** run-prompts (from package.json)
-- **Description:** One short paragraph describing the app (project/prompt/ticket management, AI workflows, browser + optional Tauri desktop)
-- **Description:** One short paragraph describing the app (project/prompt/ticket management, AI workflows, browser + optional Tauri desktop)
-- **Tech stack summary:** Table for frontend (Next.js 16, React, shadcn, Tailwind, Zustand, Tauri), backend (Next.js API, Node, SQLite/rusqlite, Zod, OpenAI/agent), tooling (ESLint, TypeScript, Playwright, npm), plus pointers to `.cursor/setup/frontend.json` and `backend.json`
-- **Tech stack summary:** Table for frontend (Next.js 16, React, shadcn, Tailwind, Zustand, Tauri), backend (Next.js API, Node, SQLite/rusqlite, Zod, OpenAI/agent), tooling (ESLint, TypeScript, Playwright, npm), plus pointers to `.cursor/setup/frontend.json` and `backend.json`
-- **Links:** Placeholders for repo and docs URLs
-- **Links:** Placeholders for repo and docs URLs
-
-
-The file is about one page and uses the repo layout, tech stack, and package.json you provided.
-The file is about one page and uses the repo layout, tech stack, and package.json you provided.
+1. **Tech stack** – Node.js, Next.js 16 App Router API routes, REST/JSON, no DB, Zod validation, no auth.
+1. **Tech stack** – Node.js, Next.js 16 App Router API routes, REST/JSON, no DB, Zod validation, no auth.
+2. **Entities** – Project, Prompt record, Idea, Design, Architecture, Ticket; table of main fields and where types/schemas live (`src/types/`, `api-validation.ts`).
+2. **Entities** – Project, Prompt record, Idea, Design, Architecture, Ticket; table of main fields and where types/schemas live (`src/types/`, `api-validation.ts`).
+3. **API routes** – Data CRUD (`/api/data`, projects, prompts, ideas, files, dashboard-metrics), config/templates (technologies, february-folders, seed), and generation/analysis (`generate-*`, `analyze-project-doc`).
+3. **API routes** – Data CRUD (`/api/data`, projects, prompts, ideas, files, dashboard-metrics), config/templates (technologies, february-folders, seed), and generation/analysis (`generate-*`, `analyze-project-doc`).
+4. **Data layer** – `data/*.json` as main store, `findDataDir()` for location, plus `.cursor/` (planner/tickets.md, prompt-records.json, designs.json, projects.json) for some reads; file-only, no SQLite.
+4. **Data layer** – `data/*.json` as main store, `findDataDir()` for location, plus `.cursor/` (planner/tickets.md, prompt-records.json, designs.json, projects.json) for some reads; file-only, no SQLite.
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

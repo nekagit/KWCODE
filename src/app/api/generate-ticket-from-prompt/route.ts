@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import path from "path";
+import { runAgentPrompt } from "@/lib/agent-runner";
 
 /** Ticket shape returned by AI for .cursor/planner/tickets.md (see .cursor/tickets-format.md). */
 type GeneratedTicket = {
@@ -16,15 +17,7 @@ function isValidPriority(s: string): s is "P0" | "P1" | "P2" | "P3" {
 }
 
 export async function POST(request: NextRequest) {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json(
-      { error: "OPENAI_API_KEY is not set. Add it in .env.local." },
-      { status: 500 }
-    );
-  }
-
-  let body: { prompt: string; existingFeatures?: string[] };
+  let body: { prompt: string; existingFeatures?: string[]; projectPath?: string; promptOnly?: boolean };
   try {
     body = await request.json();
   } catch {
@@ -42,8 +35,7 @@ export async function POST(request: NextRequest) {
   const existingFeatures = Array.isArray(body.existingFeatures)
     ? body.existingFeatures.filter((f) => typeof f === "string")
     : [];
-
-  const openai = new OpenAI({ apiKey });
+  const promptOnly = body.promptOnly === true;
 
   const systemPrompt = `You are a product assistant that turns a short user request into a single work item (ticket) for a development backlog.
 
@@ -58,17 +50,17 @@ Output only a single JSON object with exactly these keys (no markdown, no code f
       ? `Existing feature names in this project (prefer reusing one if it fits): ${existingFeatures.join(", ")}\n\nUser request:\n${prompt}`
       : `User request:\n${prompt}`;
 
-  try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userContent },
-      ],
-      temperature: 0.3,
-    });
+  const combinedPrompt = [systemPrompt, "", userContent].join("\n");
+  const cwd = typeof body.projectPath === "string" && body.projectPath.trim()
+    ? path.resolve(body.projectPath.trim())
+    : path.resolve(process.cwd());
 
-    const raw = completion.choices[0]?.message?.content?.trim() ?? "";
+  if (promptOnly) {
+    return NextResponse.json({ prompt: combinedPrompt });
+  }
+
+  try {
+    const raw = await runAgentPrompt(cwd, combinedPrompt);
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     const jsonStr = jsonMatch ? jsonMatch[0] : raw;
     let parsed: Record<string, unknown>;
@@ -101,7 +93,7 @@ Output only a single JSON object with exactly these keys (no markdown, no code f
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json(
-      { error: "OpenAI request failed", detail: message },
+      { error: "Agent request failed", detail: message },
       { status: 502 }
     );
   }

@@ -153,7 +153,7 @@ export function ProjectFrontendTab({ project, projectId }: ProjectFrontendTabPro
             onClick={async () => {
               setAnalyzing(true);
               try {
-                await analyzeProjectDoc(projectId, FRONTEND_PROMPT_PATH, FRONTEND_ANALYSIS_OUTPUT_PATH);
+                await analyzeProjectDoc(projectId, FRONTEND_PROMPT_PATH, FRONTEND_ANALYSIS_OUTPUT_PATH, project.repoPath ?? undefined);
                 toast.success("Frontend analysis updated.");
               } catch (e) {
                 toast.error(e instanceof Error ? e.message : "Analyze failed");

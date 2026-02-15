@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
-import OpenAI from "openai";
+import { runAgentPrompt } from "@/lib/agent-runner";
 import type { Project, ProjectEntityCategories, EntityCategory } from "@/types/project";
 import type { ArchitectureRecord } from "@/types/architecture";
 import type { DesignConfig, SectionKind, PageTemplateId } from "@/types/design";
@@ -126,22 +126,15 @@ interface AIModel {
   architectures: { name: string; category: string; description: string; practices: string; scenarios: string }[];
 }
 
-/** POST: generate a full project from an idea (or ideaId). Body: { idea: { title, description, category } } or { ideaId: number } */
+/** POST: generate a full project from an idea (or ideaId). Body: { idea: { title, description, category } } or { ideaId: number }. Use promptOnly: true to return { prompt } without running. */
 export async function POST(request: NextRequest) {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json(
-      { error: "OPENAI_API_KEY is not set. Add it in .env.local." },
-      { status: 500 }
-    );
-  }
-
-  let body: { idea?: { title: string; description: string; category: string }; ideaId?: number };
+  let body: { idea?: { title: string; description: string; category: string }; ideaId?: number; promptOnly?: boolean };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
+  const promptOnly = body.promptOnly === true;
 
   let idea: { title: string; description: string; category: string };
   let ideaIdToLink: number;
@@ -181,28 +174,23 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const openai = new OpenAI({ apiKey });
   const userPromptRecord = buildPromptRecord(idea);
+  const combinedPrompt = `You output only a single valid JSON object with keys prompts, tickets, design, architectures. No markdown, no code fence, no other text.
 
+${userPromptRecord}`;
+
+  if (promptOnly) {
+    return NextResponse.json({ prompt: combinedPrompt });
+  }
+
+  const cwd = path.resolve(process.cwd());
   let raw: string;
   try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You output only a single valid JSON object with keys prompts, tickets, design, architectures. No markdown, no code fence, no other text.",
-        },
-        { role: "user", content: userPromptRecord },
-      ],
-      temperature: 0.5,
-    });
-    raw = completion.choices[0]?.message?.content?.trim() ?? "";
+    raw = await runAgentPrompt(cwd, combinedPrompt);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json(
-      { error: "OpenAI request failed", detail: message },
+      { error: "Agent request failed", detail: message },
       { status: 502 }
     );
   }

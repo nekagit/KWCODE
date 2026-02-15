@@ -8,6 +8,7 @@ import {
   ArrowRight,
   Archive,
   RotateCcw,
+  Trash2,
 } from "lucide-react";
 import type { ParsedTicket } from "@/lib/todos-kanban";
 import { cn, humanizeAgentId } from "@/lib/utils";
@@ -72,7 +73,7 @@ export const KanbanTicketCard: React.FC<KanbanTicketCardProps> = ({
                   size="icon"
                   variant="ghost"
                   onClick={(e) => { e.stopPropagation(); onArchive(ticket.id); }}
-                  title="Archive"
+                  title="Archive (remove from board)"
                   className="size-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                 >
                   <Archive className="size-3" />
@@ -111,6 +112,15 @@ export const KanbanTicketCard: React.FC<KanbanTicketCardProps> = ({
                 </Button>
               </>
             )}
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={(e) => { e.stopPropagation(); onArchive(ticket.id); }}
+              title="Delete (remove from board)"
+              className="size-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="size-3" />
+            </Button>
           </div>
         </div>
 

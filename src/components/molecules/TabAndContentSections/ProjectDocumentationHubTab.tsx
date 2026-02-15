@@ -207,7 +207,7 @@ export function ProjectDocumentationHubTab({ project, projectId }: ProjectDocume
               <Button variant="default" size="sm" onClick={async () => {
                 setAnalyzing(true);
                 try {
-                  await analyzeProjectDoc(projectId, DOCUMENTATION_PROMPT_PATH, FALLBACK_PATH);
+                  await analyzeProjectDoc(projectId, DOCUMENTATION_PROMPT_PATH, FALLBACK_PATH, project.repoPath ?? undefined);
                   await loadFiles();
                   if (fallbackMode) await loadFallback();
                   else if (selectedFile) await loadContent(selectedFile);

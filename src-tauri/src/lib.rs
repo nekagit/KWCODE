@@ -535,11 +535,15 @@ fn list_files_under_root(root: String, path: String) -> Result<Vec<DirListingEnt
     let root_buf = PathBuf::from(root.trim());
     let root_canonical = root_buf.canonicalize().map_err(|e| e.to_string())?;
     let path_buf = PathBuf::from(path.trim().trim_start_matches('/'));
-    let dir = if path_buf.as_os_str().is_empty() || path_buf == Path::new(".") {
+    let full = if path_buf.as_os_str().is_empty() || path_buf == Path::new(".") {
         root_canonical.clone()
     } else {
-        root_canonical.join(path_buf).canonicalize().map_err(|e| e.to_string())?
+        root_canonical.join(path_buf)
     };
+    if !full.exists() {
+        return Ok(vec![]);
+    }
+    let dir = full.canonicalize().map_err(|e| e.to_string())?;
     if !dir.starts_with(&root_canonical) {
         return Err("Path must be under project root".to_string());
     }

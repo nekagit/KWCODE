@@ -152,7 +152,7 @@ export function ProjectBackendTab({ project, projectId }: ProjectBackendTabProps
             onClick={async () => {
               setAnalyzing(true);
               try {
-                await analyzeProjectDoc(projectId, BACKEND_PROMPT_PATH, BACKEND_ANALYSIS_OUTPUT_PATH);
+                await analyzeProjectDoc(projectId, BACKEND_PROMPT_PATH, BACKEND_ANALYSIS_OUTPUT_PATH, project.repoPath ?? undefined);
                 toast.success("Backend analysis updated.");
               } catch (e) {
                 toast.error(e instanceof Error ? e.message : "Analyze failed");

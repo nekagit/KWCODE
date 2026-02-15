@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 
 export const generatePromptRecordSchema = z.object({
   description: z.string().min(1, "description is required").max(10000),
+  promptOnly: z.boolean().optional(),
 });
 
 export const generateTicketsOptionsSchema = z.object({
@@ -45,12 +46,14 @@ export const generateTicketsSchema = z.object({
 export const generateIdeasSchema = z.object({
   topic: z.string().min(1, "topic is required").max(2000),
   count: z.number().int().min(1).max(10).optional().default(5),
+  promptOnly: z.boolean().optional(),
 });
 
 /** Body for improving a raw idea with AI (e.g. for ideas.md). */
 export const improveIdeaSchema = z.object({
   rawIdea: z.string().min(1, "rawIdea is required").max(5000),
   projectName: z.string().max(200).optional(),
+  promptOnly: z.boolean().optional(),
 });
 
 export const generateDesignSchema = z.object({

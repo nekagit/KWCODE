@@ -1,8 +1,19 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import type { Project } from "@/types/project";
-import { readProjectFile, readProjectFileOrEmpty, writeProjectFile, listProjectFiles } from "@/lib/api-projects";
+import {
+  readProjectFile,
+  readProjectFileOrEmpty,
+  writeProjectFile,
+  listProjectFiles,
+  readAnalyzeQueue,
+  writeAnalyzeQueue,
+  runAnalyzeQueueProcessing,
+  ANALYZE_QUEUE_PATH,
+  type AnalyzeJob,
+  type AnalyzeQueueData,
+} from "@/lib/api-projects";
 import { isTauri } from "@/lib/tauri";
 import {
   buildKanbanFromMd,
@@ -39,9 +50,10 @@ import {
   Layers,
   Workflow,
   FileText,
+  ScanSearch,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { isImplementAllRun } from "@/lib/run-helpers";
+import { isImplementAllRun, parseTicketNumberFromRunLabel } from "@/lib/run-helpers";
 import { StatusPill } from "@/components/shared/DisplayPrimitives";
 import { TerminalSlot } from "@/components/shared/TerminalSlot";
 import { KanbanTicketCard } from "@/components/molecules/Kanban/KanbanTicketCard";
@@ -59,6 +71,18 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
   const [kanbanData, setKanbanData] = useState<TodosKanbanData | null>(null);
   const [kanbanLoading, setKanbanLoading] = useState(false);
   const [kanbanError, setKanbanError] = useState<string | null>(null);
+
+  const runningRuns = useRunStore((s) => s.runningRuns);
+  const ticketNumbersShownInTerminals = useMemo(() => {
+    const implementAll = runningRuns.filter(isImplementAllRun);
+    const last3 = implementAll.slice(-3);
+    const set = new Set<number>();
+    for (const run of last3) {
+      const n = parseTicketNumberFromRunLabel(run.label);
+      if (n != null) set.add(n);
+    }
+    return set;
+  }, [runningRuns]);
 
   const KANBAN_STATE_PATH = ".cursor/planner/kanban-state.json";
 
@@ -227,16 +251,10 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
       {/* ═══ Queue & workflow (.cursor/worker) ═══ */}
       <WorkerQueueSection projectId={projectId} repoPath={project.repoPath ?? ""} />
 
-      {/* ═══ Ticket Queue (In Progress) ═══ */}
-      <WorkerTicketQueue
-        kanbanData={kanbanData}
-        projectId={projectId}
-        handleMarkDone={handleMarkDone}
-        handleRedo={handleRedo}
-        handleArchive={handleArchive}
-      />
+      {/* ═══ Analyze queue (8 prompts, 3 at a time) ═══ */}
+      <WorkerAnalyzeQueueSection projectId={projectId} repoPath={project.repoPath ?? ""} />
 
-      {/* ═══ Command Center ═══ */}
+      {/* ═══ Command Center (Implement All) ═══ */}
       <WorkerCommandCenter
         projectPath={project.repoPath.trim()}
         projectId={projectId}
@@ -244,8 +262,24 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
         kanbanData={kanbanData}
       />
 
-      {/* ═══ Terminals ═══ */}
-      <WorkerTerminalsSection />
+      {/* ═══ Terminals + ticket per slot (each ticket directly below its terminal) ═══ */}
+      <WorkerTerminalsSection
+        kanbanData={kanbanData}
+        projectId={projectId}
+        handleMarkDone={handleMarkDone}
+        handleRedo={handleRedo}
+        handleArchive={handleArchive}
+      />
+
+      {/* ═══ Other in-progress tickets (not currently in a terminal slot) ═══ */}
+      <WorkerTicketQueue
+        kanbanData={kanbanData}
+        projectId={projectId}
+        handleMarkDone={handleMarkDone}
+        handleRedo={handleRedo}
+        handleArchive={handleArchive}
+        ticketNumbersShownInTerminals={ticketNumbersShownInTerminals}
+      />
     </div>
   );
 }
@@ -410,6 +444,129 @@ function WorkerQueueSection({ projectId, repoPath }: { projectId: string; repoPa
             </div>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Analyze queue — 8 prompts as jobs, process 3 at a time
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function WorkerAnalyzeQueueSection({ projectId, repoPath }: { projectId: string; repoPath: string }) {
+  const [data, setData] = useState<AnalyzeQueueData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
+
+  const loadQueue = useCallback(async () => {
+    if (!repoPath) {
+      setData(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      const q = await readAnalyzeQueue(projectId, repoPath);
+      setData(q);
+    } catch {
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [projectId, repoPath]);
+
+  useEffect(() => {
+    loadQueue();
+  }, [loadQueue]);
+
+  const pendingCount = data?.jobs?.filter((j) => j.status === "pending").length ?? 0;
+  const hasPending = pendingCount > 0;
+
+  if (!repoPath) return null;
+
+  return (
+    <div className="rounded-2xl border border-border/40 bg-card/50 overflow-hidden backdrop-blur-sm">
+      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border/40">
+        <div className="flex items-center gap-2">
+          <ScanSearch className="size-4 text-primary" />
+          <span className="text-xs font-semibold">Analyze queue</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-[10px]"
+            disabled={loading || processing}
+            onClick={async () => {
+              await writeAnalyzeQueue(projectId, repoPath);
+              await loadQueue();
+              toast.success("8 jobs enqueued.");
+            }}
+          >
+            Enqueue (8 jobs)
+          </Button>
+          <Button
+            variant="default"
+            size="sm"
+            className="h-7 text-[10px]"
+            disabled={!hasPending || processing}
+            onClick={async () => {
+              setProcessing(true);
+              try {
+                const { completed, failed } = await runAnalyzeQueueProcessing(projectId, repoPath, {
+                  getQueue: () => readAnalyzeQueue(projectId, repoPath),
+                  setQueue: (d) =>
+                    writeProjectFile(projectId, ANALYZE_QUEUE_PATH, JSON.stringify(d, null, 2), repoPath),
+                });
+                await loadQueue();
+                if (failed === 0) toast.success(`All ${completed} done.`);
+                else toast.warning(`${completed} done, ${failed} failed.`);
+              } finally {
+                setProcessing(false);
+              }
+            }}
+          >
+            {processing ? (
+              <>
+                <Loader2 className="size-3.5 animate-spin mr-1" />
+                Process…
+              </>
+            ) : (
+              "Process (3 at a time)"
+            )}
+          </Button>
+        </div>
+      </div>
+      <div className="p-4 min-h-[80px]">
+        {loading ? (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" />
+            <span className="text-xs">Loading queue…</span>
+          </div>
+        ) : !data?.jobs?.length ? (
+          <p className="text-xs text-muted-foreground">
+            No analyze queue. Click &quot;Enqueue (8 jobs)&quot; to add ideas, project, design, architecture, testing, documentation, frontend, backend.
+          </p>
+        ) : (
+          <ul className="space-y-1.5">
+            {data.jobs.map((job: AnalyzeJob) => (
+              <li key={job.id} className="flex items-center gap-2 text-xs">
+                <span className="font-mono text-foreground/90">{job.id}</span>
+                <span
+                  className={cn(
+                    "rounded border px-1.5 py-0.5 text-[10px] font-medium capitalize",
+                    job.status === "done" && "bg-emerald-500/10 border-emerald-500/25 text-emerald-400",
+                    job.status === "failed" && "bg-rose-500/10 border-rose-500/25 text-rose-400",
+                    job.status === "running" && "bg-amber-500/10 border-amber-500/25 text-amber-400",
+                    job.status === "pending" && "bg-muted/30 border-border/50 text-muted-foreground"
+                  )}
+                >
+                  {job.status}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
@@ -663,10 +820,22 @@ function WorkerCommandCenter({
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Terminals Section
+   Terminals Section — each terminal with its ticket directly below
    ═══════════════════════════════════════════════════════════════════════════ */
 
-function WorkerTerminalsSection() {
+function WorkerTerminalsSection({
+  kanbanData,
+  projectId,
+  handleMarkDone,
+  handleRedo,
+  handleArchive,
+}: {
+  kanbanData: TodosKanbanData | null;
+  projectId: string;
+  handleMarkDone: (id: string) => Promise<void>;
+  handleRedo: (id: string) => Promise<void>;
+  handleArchive: (id: string) => Promise<void>;
+}) {
   const runningRuns = useRunStore((s) => s.runningRuns);
   const implementAllRuns = runningRuns.filter(isImplementAllRun);
 
@@ -675,6 +844,8 @@ function WorkerTerminalsSection() {
     implementAllRuns[implementAllRuns.length - 2] ?? null,
     implementAllRuns[implementAllRuns.length - 1] ?? null,
   ];
+
+  const inProgressTickets = kanbanData?.columns?.in_progress?.items ?? [];
 
   return (
     <div className="rounded-2xl border border-border/40 bg-card/50 backdrop-blur-sm overflow-hidden">
@@ -688,17 +859,47 @@ function WorkerTerminalsSection() {
             Terminal Output
           </h3>
           <p className="text-[10px] text-muted-foreground normal-case">
-            Live output from the last 3 Implement All runs
+            Each terminal shows the ticket executing in it directly below
           </p>
         </div>
       </div>
 
-      {/* Terminals Grid */}
+      {/* Terminals: each column = terminal + ticket below */}
       <div className="px-4 pb-4">
-        <div className="grid w-full grid-cols-1 gap-3 lg:grid-cols-3">
-          {runsForSlots.map((run, i) => (
-            <TerminalSlot key={i} run={run} slotIndex={i} />
-          ))}
+        <div className="grid w-full grid-cols-1 gap-4 lg:grid-cols-3">
+          {runsForSlots.map((run, i) => {
+            const ticketNum = parseTicketNumberFromRunLabel(run?.label ?? undefined);
+            const ticket = ticketNum != null
+              ? inProgressTickets.find((t) => t.number === ticketNum) ?? null
+              : null;
+            return (
+              <div key={i} className="flex flex-col gap-3">
+                <TerminalSlot run={run} slotIndex={i} />
+                {/* Ticket executing in this terminal — directly below */}
+                <div className="min-h-[100px]">
+                  {ticket ? (
+                    <div className="w-full max-w-[340px] mx-auto lg:max-w-none">
+                      <KanbanTicketCard
+                        ticket={ticket}
+                        columnId="in_progress"
+                        projectId={projectId}
+                        onMarkDone={handleMarkDone}
+                        onRedo={handleRedo}
+                        onArchive={handleArchive}
+                        onMoveToInProgress={async () => {}}
+                      />
+                    </div>
+                  ) : run?.label ? (
+                    <div className="rounded-lg border border-border/40 bg-muted/30 px-3 py-2">
+                      <p className="text-[11px] text-muted-foreground font-medium truncate" title={run.label}>
+                        {run.label}
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -717,16 +918,26 @@ function WorkerTicketQueue({
   handleMarkDone,
   handleRedo,
   handleArchive,
+  ticketNumbersShownInTerminals = new Set(),
 }: {
   kanbanData: TodosKanbanData | null;
   projectId: string;
   handleMarkDone: (id: string) => Promise<void>;
   handleRedo: (id: string) => Promise<void>;
   handleArchive: (id: string) => Promise<void>;
+  /** Ticket numbers already shown below terminals; only list the rest here. */
+  ticketNumbersShownInTerminals?: Set<number>;
 }) {
   if (!kanbanData) return null;
 
-  const tickets = kanbanData.columns.in_progress?.items ?? [];
+  const allInProgress = kanbanData.columns.in_progress?.items ?? [];
+  const tickets = ticketNumbersShownInTerminals.size > 0
+    ? allInProgress.filter((t) => !ticketNumbersShownInTerminals.has(t.number))
+    : allInProgress;
+
+  if (tickets.length === 0 && allInProgress.length > 0) {
+    return null;
+  }
 
   return (
     <div className="rounded-2xl border border-border/40 bg-gradient-to-r from-blue-500/[0.04] to-violet-500/[0.04] backdrop-blur-sm overflow-hidden flex flex-col">
@@ -736,9 +947,9 @@ function WorkerTicketQueue({
           <Layers className="size-3.5 text-blue-400" />
         </div>
         <div>
-          <h3 className="text-xs font-semibold text-foreground tracking-tight">In progress queue</h3>
+          <h3 className="text-xs font-semibold text-foreground tracking-tight">Other in progress</h3>
           <p className="text-[10px] text-muted-foreground normal-case">
-            All tickets from the kanban In progress column
+            Tickets not currently running in a terminal above
           </p>
         </div>
         <div className="ml-auto flex items-center gap-2">
@@ -767,7 +978,7 @@ function WorkerTicketQueue({
                   onMarkDone={handleMarkDone}
                   onRedo={handleRedo}
                   onArchive={handleArchive}
-                  onMoveToInProgress={async () => { }}
+                  onMoveToInProgress={async () => {}}
                 />
               </div>
             ))}

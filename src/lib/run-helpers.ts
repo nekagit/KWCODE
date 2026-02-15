@@ -9,6 +9,13 @@ export const isImplementAllRun = (r: { label: string }) =>
     r.label.startsWith("Implement All (") ||
     r.label.startsWith("Ticket #");
 
+/** Parse ticket number from run label e.g. "Ticket #3: My title" → 3. Returns null if not a ticket run. */
+export function parseTicketNumberFromRunLabel(label: string | undefined): number | null {
+    if (!label?.startsWith("Ticket #")) return null;
+    const m = label.match(/Ticket #(\d+)/);
+    return m ? parseInt(m[1], 10) : null;
+}
+
 /** Format seconds as m:ss or Xs. */
 export function formatElapsed(seconds: number): string {
     if (seconds < 60) return `${Math.floor(seconds)}s`;

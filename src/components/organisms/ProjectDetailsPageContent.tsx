@@ -42,11 +42,22 @@ import { ProjectTestingTab } from "@/components/molecules/TabAndContentSections/
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { cn } from "@/lib/utils";
 import { SectionCard, MetadataBadge, CountBadge } from "@/components/shared/DisplayPrimitives";
-import { initializeProjectRepo, analyzeProjectDoc } from "@/lib/api-projects";
+import {
+  initializeProjectRepo,
+  writeAnalyzeQueue,
+  readAnalyzeQueue,
+  runAnalyzeQueueProcessing,
+  writeProjectFile,
+  ANALYZE_QUEUE_PATH,
+} from "@/lib/api-projects";
 import { toast } from "sonner";
 import { Sparkles, ScanSearch } from "lucide-react";
 
-/** Same prompt/output pairs as each tab's Analyze button — run in sequence for "Analyze all". */
+/**
+ * Each tab’s dedicated .md in .cursor, updated by agent -p using current project data.
+ * Prompt = .cursor/prompts/<name>.md, output = the .md file for that tab.
+ * "Analyze" (per tab or all) runs agent with: project name + repo layout + tech stack + package.json + current doc content + prompt instructions → writes output path.
+ */
 const ANALYZE_ALL_CONFIG: { promptPath: string; outputPath: string }[] = [
   { promptPath: ".cursor/prompts/ideas.md", outputPath: ".cursor/setup/ideas.md" },
   { promptPath: ".cursor/prompts/project.md", outputPath: ".cursor/project/PROJECT-INFO.md" },
@@ -84,6 +95,7 @@ export function ProjectDetailsPageContent() {
   const [activeTab, setActiveTab] = useState("setup");
   const [initializing, setInitializing] = useState(false);
   const [analyzingAll, setAnalyzingAll] = useState(false);
+  const [analyzingStep, setAnalyzingStep] = useState(0);
   const [plannerRefreshKey, setPlannerRefreshKey] = useState(0);
 
   const mountedRef = useRef(true);
@@ -266,33 +278,40 @@ export function ProjectDetailsPageContent() {
                     {initializing ? "Initializing..." : "Initialize"}
                   </Button>
                 )}
-                {/* Analyze all: runs each tab's Analyze in sequence */}
+                {/* Analyze all: enqueue 8 jobs into worker queue and process 3 at a time */}
                 {project.repoPath && (
                   <Button
                     variant="outline"
                     size="sm"
                     className="h-7 px-2.5 text-[10px] font-semibold uppercase tracking-wider gap-1.5 border-primary/20 hover:bg-primary/5 hover:border-primary/40 transition-all duration-300 shadow-sm"
+                    title={`Enqueue ${ANALYZE_ALL_CONFIG.length} analyze jobs and run 3 at a time (see Worker tab)`}
                     onClick={async () => {
                       if (analyzingAll) return;
                       setAnalyzingAll(true);
-                      const errors: string[] = [];
+                      setAnalyzingStep(0);
+                      const repoPath = project.repoPath ?? "";
+                      const total = ANALYZE_ALL_CONFIG.length;
                       try {
-                        for (const { promptPath, outputPath } of ANALYZE_ALL_CONFIG) {
-                          try {
-                            await analyzeProjectDoc(projectId, promptPath, outputPath);
-                          } catch (e) {
-                            errors.push(`${promptPath}: ${e instanceof Error ? e.message : String(e)}`);
-                          }
-                        }
+                        await writeAnalyzeQueue(projectId, repoPath);
+                        const { completed, failed } = await runAnalyzeQueueProcessing(projectId, repoPath, {
+                          getQueue: () => readAnalyzeQueue(projectId, repoPath),
+                          setQueue: (data) =>
+                            writeProjectFile(projectId, ANALYZE_QUEUE_PATH, JSON.stringify(data, null, 2), repoPath),
+                          onProgress: (done) => setAnalyzingStep(done),
+                        });
+                        setAnalyzingStep(0);
                         await fetchProject();
-                        if (errors.length === 0) {
-                          toast.success("All docs updated from prompts.");
+                        if (failed === 0) {
+                          toast.success(`All ${total} docs updated.`);
                         } else {
-                          toast.warning(`Updated with ${errors.length} error(s). Check console.`);
-                          console.warn("Analyze all errors:", errors);
+                          toast.warning(`${completed} done, ${failed} failed.`, {
+                            description: "See Worker tab for queue.",
+                            duration: 8000,
+                          });
                         }
                       } catch (err) {
-                        toast.error(err instanceof Error ? err.message : "Analyze all failed");
+                        setAnalyzingStep(0);
+                        toast.error(err instanceof Error ? err.message : "Analyze all failed", { duration: 8000 });
                       } finally {
                         setAnalyzingAll(false);
                       }
@@ -304,7 +323,9 @@ export function ProjectDetailsPageContent() {
                     ) : (
                       <ScanSearch className="size-3 text-primary" />
                     )}
-                    {analyzingAll ? "Analyzing..." : "Analyze"}
+                    {analyzingAll
+                      ? `Analyzing ${analyzingStep}/${ANALYZE_ALL_CONFIG.length}…`
+                      : "Analyze all"}
                   </Button>
                 )}
                 {project.created_at && (

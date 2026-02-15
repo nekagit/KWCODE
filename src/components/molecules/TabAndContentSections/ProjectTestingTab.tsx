@@ -210,7 +210,7 @@ export function ProjectTestingTab({ project, projectId }: ProjectTestingTabProps
               <Button variant="default" size="sm" onClick={async () => {
                 setAnalyzing(true);
                 try {
-                  await analyzeProjectDoc(projectId, TESTING_PROMPT_PATH, SETUP_TESTING_PATH);
+                  await analyzeProjectDoc(projectId, TESTING_PROMPT_PATH, SETUP_TESTING_PATH, project.repoPath ?? undefined);
                   await loadList();
                   setSelectedPath(SETUP_TESTING_PATH);
                   toast.success("Testing doc updated from prompt.");

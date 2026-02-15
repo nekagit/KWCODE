@@ -5,6 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
 import { useRunState } from "@/context/run-state";
+import { isTauri } from "@/lib/tauri";
+import { useRunStore, registerRunCompleteHandler } from "@/store/run-store";
 import { PromptRecordActionButtons } from "@/components/molecules/ControlsAndButtons/PromptRecordActionButtons";
 import { PromptRecordTable } from "@/components/molecules/ListsAndTables/PromptRecordTable";
 import { PromptRecordFormDialog } from "@/components/molecules/FormsAndDialogs/PromptRecordFormDialog";
@@ -166,12 +168,50 @@ export function PromptRecordsPageContent() {
     }
   }, [formId, formTitle, formContent, refreshData, setError, fetchFullPromptRecords]);
 
+  const runTempTicket = useRunStore((s) => s.runTempTicket);
+  const defaultProjectPath = useRunStore((s) => s.activeProjects[0] ?? s.allProjects[0] ?? "");
+
   const handleGenerate = useCallback(async () => {
     if (!generateDescription.trim()) return;
     setGenerateLoading(true);
     setGenerateResult(null);
     setError(null);
     try {
+      if (isTauri && defaultProjectPath) {
+        const res = await fetch("/api/generate-prompt", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ description: generateDescription.trim(), promptOnly: true }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || err.detail || res.statusText);
+        }
+        const data = (await res.json()) as { prompt?: string };
+        const prompt = data.prompt;
+        if (!prompt) throw new Error("No prompt returned");
+        const requestId = `prompt-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        registerRunCompleteHandler(`parse_prompt:${requestId}`, (stdout: string) => {
+          const jsonMatch = stdout.match(/\{[\s\S]*\}/);
+          const jsonStr = jsonMatch ? jsonMatch[0] : stdout;
+          try {
+            const parsed = JSON.parse(jsonStr) as { title?: string; content?: string };
+            setGenerateResult({
+              title: String(parsed.title ?? "Generated prompt").slice(0, 500),
+              content: String(parsed.content ?? "").slice(0, 50000),
+            });
+          } catch {
+            setError("Could not parse agent output");
+          }
+          setGenerateLoading(false);
+        });
+        await runTempTicket(defaultProjectPath, prompt, "Generate prompt", {
+          onComplete: "parse_prompt",
+          payload: { requestId },
+        });
+        toast.success("Generate prompt running in Run tab.");
+        return;
+      }
       const res = await fetch("/api/generate-prompt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -188,7 +228,7 @@ export function PromptRecordsPageContent() {
     } finally {
       setGenerateLoading(false);
     }
-  }, [generateDescription, setError]);
+  }, [generateDescription, setError, defaultProjectPath, runTempTicket]);
 
   const useGeneratedAndCreate = useCallback(() => {
     if (generateResult) {
