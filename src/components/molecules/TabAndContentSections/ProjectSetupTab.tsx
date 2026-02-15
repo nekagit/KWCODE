@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Loader2,
   FileText,
@@ -15,9 +15,10 @@ import {
   Flag,
   Workflow,
   BookOpen,
+  ScanSearch,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { listProjectFiles, readProjectFileOrEmpty, type FileEntry } from "@/lib/api-projects";
+import { listProjectFiles, readProjectFileOrEmpty, analyzeProjectDoc, type FileEntry } from "@/lib/api-projects";
 import { parseTicketsMd } from "@/lib/todos-kanban";
 import type { Project } from "@/types/project";
 import type { AccentColor } from "@/components/shared/DisplayPrimitives";
@@ -35,6 +36,15 @@ import {
 } from "@/components/ui/table";
 import { ProjectAgentsSection } from "@/components/molecules/TabAndContentSections/ProjectAgentsSection";
 import { ProjectFilesTab } from "@/components/molecules/TabAndContentSections/ProjectFilesTab";
+import { toast } from "sonner";
+
+const SETUP_ANALYZE_CONFIG: { key: string; label: string; promptPath: string; outputPath: string }[] = [
+  { key: "design", label: "Design", promptPath: ".cursor/prompts/design.md", outputPath: ".cursor/setup/design.md" },
+  { key: "architecture", label: "Architecture", promptPath: ".cursor/prompts/architecture.md", outputPath: ".cursor/setup/architecture.md" },
+  { key: "testing", label: "Testing", promptPath: ".cursor/prompts/testing.md", outputPath: ".cursor/setup/testing.md" },
+  { key: "documentation", label: "Documentation", promptPath: ".cursor/prompts/documentation.md", outputPath: ".cursor/setup/documentation.md" },
+  { key: "ideas", label: "Ideas", promptPath: ".cursor/prompts/ideas.md", outputPath: ".cursor/setup/ideas.md" },
+];
 
 const SETUP_FOLDERS: {
   id: string;
@@ -44,13 +54,13 @@ const SETUP_FOLDERS: {
   icon: LucideIcon;
   accent: AccentColor;
 }[] = [
+  { id: "setup", label: "Setup", path: ".cursor/setup", description: "Setup files in .cursor/setup", icon: Settings, accent: "emerald" },
   { id: "project", label: "Project", path: ".cursor/project", description: "Project info, tech stack, roadmap", icon: FolderOpen, accent: "sky" },
   { id: "adr", label: "ADR", path: ".cursor/adr", description: "Architecture decision records", icon: FileText, accent: "violet" },
   { id: "agents", label: "Agents", path: ".cursor/agents", description: "Agent definitions and roles", icon: Bot, accent: "cyan" },
   { id: "planner", label: "Planner", path: ".cursor/planner", description: "Tickets, project plan, Kanban state", icon: ListTodo, accent: "blue" },
   { id: "milestones", label: "Milestones", path: ".cursor/milestones", description: "Milestone definitions and templates", icon: Flag, accent: "orange" },
   { id: "prompts", label: "Prompts", path: ".cursor/prompts", description: "Prompt templates per phase", icon: MessageSquare, accent: "amber" },
-  { id: "setup", label: "Setup", path: ".cursor/setup", description: "Setup files in .cursor/setup", icon: Settings, accent: "emerald" },
   { id: "worker", label: "Worker", path: ".cursor/worker", description: "Worker queue and ticket workflow", icon: Workflow, accent: "rose" },
   { id: "documentation", label: "Documentation", path: ".cursor/documentation", description: "Setup guide, architecture, best practices", icon: BookOpen, accent: "teal" },
   { id: "rules", label: "Rules", path: ".cursor/rules", description: "Cursor rules and conventions", icon: Folder, accent: "teal" },
@@ -94,6 +104,7 @@ export function ProjectSetupTab({ project, projectId }: ProjectSetupTabProps) {
   const [entriesByFolder, setEntriesByFolder] = useState<Record<string, FileEntry[]>>({});
   const [loading, setLoading] = useState(true);
   const [plannerTicketStats, setPlannerTicketStats] = useState<{ total: number; done: number } | null>(null);
+  const [analyzingKey, setAnalyzingKey] = useState<string | null>(null);
 
   const loadFolder = useCallback(
     async (path: string): Promise<FileEntry[]> => {
@@ -108,34 +119,44 @@ export function ProjectSetupTab({ project, projectId }: ProjectSetupTabProps) {
     [projectId, project.repoPath]
   );
 
-  const loadAll = useCallback(async () => {
+  const cancelledRef = useRef(false);
+
+  const loadAll = useCallback(async (getIsCancelled?: () => boolean) => {
     if (!project.repoPath) {
-      setLoading(false);
+      if (!getIsCancelled?.()) setLoading(false);
       return;
     }
-    setLoading(true);
+    if (!getIsCancelled?.()) setLoading(true);
     const next: Record<string, FileEntry[]> = {};
     for (const folder of SETUP_FOLDERS) {
+      if (getIsCancelled?.()) return;
       const list = await loadFolder(folder.path);
+      if (getIsCancelled?.()) return;
       next[folder.id] = list;
     }
+    if (getIsCancelled?.()) return;
     setEntriesByFolder(next);
 
     // Planner: load tickets.md for stats
     try {
       const ticketsMd = await readProjectFileOrEmpty(projectId, ".cursor/planner/tickets.md", project.repoPath);
+      if (getIsCancelled?.()) return;
       const tickets = parseTicketsMd(ticketsMd || "");
       const total = tickets.length;
       const done = tickets.filter((t) => t.done).length;
       setPlannerTicketStats({ total, done });
     } catch {
-      setPlannerTicketStats(null);
+      if (!getIsCancelled?.()) setPlannerTicketStats(null);
     }
-    setLoading(false);
+    if (!getIsCancelled?.()) setLoading(false);
   }, [project.repoPath, projectId, loadFolder]);
 
   useEffect(() => {
-    loadAll();
+    cancelledRef.current = false;
+    loadAll(() => cancelledRef.current);
+    return () => {
+      cancelledRef.current = true;
+    };
   }, [loadAll]);
 
   if (!project.repoPath?.trim()) {
@@ -167,6 +188,28 @@ export function ProjectSetupTab({ project, projectId }: ProjectSetupTabProps) {
     <div className="w-full flex flex-col gap-6">
       <ScrollArea className="flex-1">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pr-4">
+          {/* Project Files — full width, at top */}
+          <SectionCard accentColor="rose" className="lg:col-span-2">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500">
+                    <FolderGit2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">Project Files</h3>
+                    <p className="text-xs text-muted-foreground">Files in .cursor directory</p>
+                  </div>
+                </div>
+                <Button variant="ghost" size="sm" onClick={loadAll} disabled={loading} className="gap-1.5">
+                  {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                  Refresh
+                </Button>
+              </div>
+              <ProjectFilesTab project={project} projectId={projectId} />
+            </div>
+          </SectionCard>
+
           {SETUP_FOLDERS.map((folder) => {
             const files = fileEntries(folder.id);
             const count = files.length;
@@ -285,6 +328,37 @@ export function ProjectSetupTab({ project, projectId }: ProjectSetupTabProps) {
 
                 {folder.id === "setup" && (
                   <>
+                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                      <span className="text-xs font-medium text-muted-foreground">Analyze:</span>
+                      {SETUP_ANALYZE_CONFIG.map(({ key, label, promptPath, outputPath }) => (
+                        <Button
+                          key={key}
+                          variant="default"
+                          size="sm"
+                          className="gap-1.5 h-7 text-xs"
+                          disabled={analyzingKey !== null}
+                          onClick={async () => {
+                            setAnalyzingKey(key);
+                            try {
+                              await analyzeProjectDoc(projectId, promptPath, outputPath);
+                              await loadAll();
+                              toast.success(`${label} doc updated.`);
+                            } catch (e) {
+                              toast.error(e instanceof Error ? e.message : "Analyze failed");
+                            } finally {
+                              setAnalyzingKey(null);
+                            }
+                          }}
+                        >
+                          {analyzingKey === key ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <ScanSearch className="h-3 w-3" />
+                          )}
+                          {label}
+                        </Button>
+                      ))}
+                    </div>
                     {files.length === 0 ? (
                       <p className="text-xs text-muted-foreground">No files in this folder.</p>
                     ) : (
@@ -312,28 +386,6 @@ export function ProjectSetupTab({ project, projectId }: ProjectSetupTabProps) {
               </SectionCard>
             );
           })}
-
-          {/* Project Files — full width */}
-          <SectionCard accentColor="rose" className="lg:col-span-2">
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500">
-                    <FolderGit2 className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-foreground">Project Files</h3>
-                    <p className="text-xs text-muted-foreground">Files in .cursor directory</p>
-                  </div>
-                </div>
-                <Button variant="ghost" size="sm" onClick={loadAll} disabled={loading} className="gap-1.5">
-                  {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-                  Refresh
-                </Button>
-              </div>
-              <ProjectFilesTab project={project} projectId={projectId} />
-            </div>
-          </SectionCard>
         </div>
       </ScrollArea>
     </div>

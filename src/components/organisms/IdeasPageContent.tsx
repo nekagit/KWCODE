@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 import { IdeaTemplateCard } from "@/components/molecules/CardsAndDisplay/IdeaTemplateCard";
@@ -53,23 +53,30 @@ export function IdeasPageContent() {
   const [formCategory, setFormCategory] = useState<IdeaCategory>("other");
   const [formId, setFormId] = useState<number | undefined>(undefined);
   const [saveLoading, setSaveLoading] = useState(false);
+  const cancelledRef = useRef(false);
 
   const loadIdeas = useCallback(async () => {
     try {
       const res = await fetch("/api/data/ideas");
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
-      setMyIdeas(Array.isArray(data) ? data : []);
+      if (!cancelledRef.current) setMyIdeas(Array.isArray(data) ? data : []);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to load ideas");
-      setMyIdeas([]);
+      if (!cancelledRef.current) {
+        toast.error(e instanceof Error ? e.message : "Failed to load ideas");
+        setMyIdeas([]);
+      }
     } finally {
-      setLoading(false);
+      if (!cancelledRef.current) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    cancelledRef.current = false;
     loadIdeas();
+    return () => {
+      cancelledRef.current = true;
+    };
   }, [loadIdeas]);
 
   const openCreate = useCallback(() => {

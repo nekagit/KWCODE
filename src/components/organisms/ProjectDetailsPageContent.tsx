@@ -27,6 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Project } from "@/types/project";
 import { getProjectResolved, deleteProject } from "@/lib/api-projects";
 import { ProjectIdeasTab } from "@/components/molecules/TabAndContentSections/ProjectIdeasTab";
+import { ProjectIdeasDocTab } from "@/components/molecules/TabAndContentSections/ProjectIdeasDocTab";
 import { ProjectTicketsTab } from "@/components/molecules/TabAndContentSections/ProjectTicketsTab";
 import { ProjectGitTab } from "@/components/molecules/TabAndContentSections/ProjectGitTab";
 import { ProjectRunTab } from "@/components/molecules/TabAndContentSections/ProjectRunTab";
@@ -37,21 +38,34 @@ import { ProjectSetupTab } from "@/components/molecules/TabAndContentSections/Pr
 import { ProjectSetupDocTab } from "@/components/molecules/TabAndContentSections/ProjectSetupDocTab";
 import { ProjectDocumentationHubTab } from "@/components/molecules/TabAndContentSections/ProjectDocumentationHubTab";
 import { ProjectProjectTab } from "@/components/molecules/TabAndContentSections/ProjectProjectTab";
+import { ProjectTestingTab } from "@/components/molecules/TabAndContentSections/ProjectTestingTab";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { cn } from "@/lib/utils";
 import { SectionCard, MetadataBadge, CountBadge } from "@/components/shared/DisplayPrimitives";
-import { initializeProjectRepo } from "@/lib/api-projects";
+import { initializeProjectRepo, analyzeProjectDoc } from "@/lib/api-projects";
 import { toast } from "sonner";
-import { Sparkles } from "lucide-react";
+import { Sparkles, ScanSearch } from "lucide-react";
+
+/** Same prompt/output pairs as each tab's Analyze button — run in sequence for "Analyze all". */
+const ANALYZE_ALL_CONFIG: { promptPath: string; outputPath: string }[] = [
+  { promptPath: ".cursor/prompts/ideas.md", outputPath: ".cursor/setup/ideas.md" },
+  { promptPath: ".cursor/prompts/project.md", outputPath: ".cursor/project/PROJECT-INFO.md" },
+  { promptPath: ".cursor/prompts/design.md", outputPath: ".cursor/setup/design.md" },
+  { promptPath: ".cursor/prompts/architecture.md", outputPath: ".cursor/setup/architecture.md" },
+  { promptPath: ".cursor/prompts/testing.md", outputPath: ".cursor/setup/testing.md" },
+  { promptPath: ".cursor/prompts/documentation.md", outputPath: ".cursor/setup/documentation.md" },
+  { promptPath: ".cursor/prompts/frontend.md", outputPath: ".cursor/setup/frontend-analysis.md" },
+  { promptPath: ".cursor/prompts/backend.md", outputPath: ".cursor/setup/backend-analysis.md" },
+];
 
 const TAB_ROW_1 = [
-  { value: "setup", label: "Setup", icon: Settings, color: "text-violet-400", activeGlow: "shadow-violet-500/10" },
+  { value: "ideas", label: "Ideas", icon: Lightbulb, color: "text-amber-400", activeGlow: "shadow-amber-500/10" },
   { value: "project", label: "Project", icon: FolderOpen, color: "text-sky-400", activeGlow: "shadow-sky-500/10" },
+  { value: "setup", label: "Setup", icon: Settings, color: "text-violet-400", activeGlow: "shadow-violet-500/10" },
   { value: "frontend", label: "Frontend", icon: Monitor, color: "text-cyan-400", activeGlow: "shadow-cyan-500/10" },
   { value: "backend", label: "Backend", icon: Server, color: "text-orange-400", activeGlow: "shadow-orange-500/10" },
-  { value: "documentation", label: "Documentation", icon: FileText, color: "text-teal-400", activeGlow: "shadow-teal-500/10" },
-  { value: "ideas", label: "Ideas", icon: Lightbulb, color: "text-amber-400", activeGlow: "shadow-amber-500/10" },
   { value: "testing", label: "Testing", icon: TestTube2, color: "text-emerald-400", activeGlow: "shadow-emerald-500/10" },
+  { value: "documentation", label: "Documentation", icon: FileText, color: "text-teal-400", activeGlow: "shadow-teal-500/10" },
 ] as const;
 
 const TAB_ROW_2 = [
@@ -69,6 +83,7 @@ export function ProjectDetailsPageContent() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("setup");
   const [initializing, setInitializing] = useState(false);
+  const [analyzingAll, setAnalyzingAll] = useState(false);
   const [plannerRefreshKey, setPlannerRefreshKey] = useState(0);
 
   const mountedRef = useRef(true);
@@ -251,6 +266,47 @@ export function ProjectDetailsPageContent() {
                     {initializing ? "Initializing..." : "Initialize"}
                   </Button>
                 )}
+                {/* Analyze all: runs each tab's Analyze in sequence */}
+                {project.repoPath && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2.5 text-[10px] font-semibold uppercase tracking-wider gap-1.5 border-primary/20 hover:bg-primary/5 hover:border-primary/40 transition-all duration-300 shadow-sm"
+                    onClick={async () => {
+                      if (analyzingAll) return;
+                      setAnalyzingAll(true);
+                      const errors: string[] = [];
+                      try {
+                        for (const { promptPath, outputPath } of ANALYZE_ALL_CONFIG) {
+                          try {
+                            await analyzeProjectDoc(projectId, promptPath, outputPath);
+                          } catch (e) {
+                            errors.push(`${promptPath}: ${e instanceof Error ? e.message : String(e)}`);
+                          }
+                        }
+                        await fetchProject();
+                        if (errors.length === 0) {
+                          toast.success("All docs updated from prompts.");
+                        } else {
+                          toast.warning(`Updated with ${errors.length} error(s). Check console.`);
+                          console.warn("Analyze all errors:", errors);
+                        }
+                      } catch (err) {
+                        toast.error(err instanceof Error ? err.message : "Analyze all failed");
+                      } finally {
+                        setAnalyzingAll(false);
+                      }
+                    }}
+                    disabled={analyzingAll}
+                  >
+                    {analyzingAll ? (
+                      <Loader2 className="size-3 animate-spin" />
+                    ) : (
+                      <ScanSearch className="size-3 text-primary" />
+                    )}
+                    {analyzingAll ? "Analyzing..." : "Analyze"}
+                  </Button>
+                )}
                 {project.created_at && (
                   <MetadataBadge
                     icon={<Calendar className="size-3" />}
@@ -398,7 +454,7 @@ export function ProjectDetailsPageContent() {
             value="testing"
             className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
           >
-            <ProjectSetupDocTab project={project} projectId={projectId} setupKey="testing" />
+            <ProjectTestingTab project={project} projectId={projectId} />
           </TabsContent>
 
           {/* ── Documentation Tab ── */}
@@ -415,7 +471,7 @@ export function ProjectDetailsPageContent() {
             className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
           >
             <div className="space-y-6">
-              <ProjectSetupDocTab project={project} projectId={projectId} setupKey="ideas" />
+              <ProjectIdeasDocTab project={project} projectId={projectId} />
               <SectionCard accentColor="amber">
                 <ProjectIdeasTab project={project} projectId={projectId} showHeader={true} />
               </SectionCard>

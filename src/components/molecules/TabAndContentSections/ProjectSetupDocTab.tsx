@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Loader2, FileText, TestTube2, Lightbulb } from "lucide-react";
@@ -46,26 +46,35 @@ export function ProjectSetupDocTab({ project, projectId, setupKey }: ProjectSetu
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDoc = useCallback(async () => {
+  const cancelledRef = useRef(false);
+
+  const fetchDoc = useCallback(async (getIsCancelled?: () => boolean) => {
     if (!project.repoPath) {
-      setLoading(false);
+      if (!getIsCancelled?.()) setLoading(false);
       return;
     }
-    setLoading(true);
-    setError(null);
+    if (!getIsCancelled?.()) setLoading(true);
+    if (!getIsCancelled?.()) setError(null);
     try {
       const text = await readProjectFileOrEmpty(projectId, path, project.repoPath);
+      if (getIsCancelled?.()) return;
       setContent(text && text.trim() ? text : null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-      setContent(null);
+      if (!getIsCancelled?.()) {
+        setError(e instanceof Error ? e.message : String(e));
+        setContent(null);
+      }
     } finally {
-      setLoading(false);
+      if (!getIsCancelled?.()) setLoading(false);
     }
   }, [projectId, path, project.repoPath]);
 
   useEffect(() => {
-    fetchDoc();
+    cancelledRef.current = false;
+    fetchDoc(() => cancelledRef.current);
+    return () => {
+      cancelledRef.current = true;
+    };
   }, [fetchDoc]);
 
   const config = CONFIG[setupKey];

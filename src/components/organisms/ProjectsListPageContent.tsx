@@ -73,7 +73,7 @@ export function ProjectsListPageContent() {
     return () => {
       cancelled = true;
     };
-  }, [refetch]);
+  }, []);
 
   return (
     <div className={c["0"]}>

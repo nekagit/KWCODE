@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Loader2,
   Save,
@@ -12,8 +12,9 @@ import {
   FileText,
   Network,
   Building2,
+  ScanSearch,
 } from "lucide-react";
-import { readProjectFileOrEmpty, writeProjectFile } from "@/lib/api-projects";
+import { readProjectFileOrEmpty, writeProjectFile, analyzeProjectDoc } from "@/lib/api-projects";
 import type { Project } from "@/types/project";
 import type { BackendSetupJson } from "@/types/setup-json";
 import {
@@ -39,6 +40,8 @@ import { SetupDocBlock } from "@/components/molecules/TabAndContentSections/Setu
 import { ProjectArchitectureTab } from "@/components/molecules/TabAndContentSections/ProjectArchitectureTab";
 
 const SETUP_PATH = ".cursor/setup/backend.json";
+const BACKEND_PROMPT_PATH = ".cursor/prompts/backend.md";
+const BACKEND_ANALYSIS_OUTPUT_PATH = ".cursor/setup/backend-analysis.md";
 
 interface ProjectBackendTabProps {
   project: Project;
@@ -50,28 +53,38 @@ export function ProjectBackendTab({ project, projectId }: ProjectBackendTabProps
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
 
-  const fetchData = useCallback(async () => {
+  const cancelledRef = useRef(false);
+
+  const fetchData = useCallback(async (getIsCancelled?: () => boolean) => {
     if (!project.repoPath) {
-      setData(getDefaultBackendSetup());
-      setLoading(false);
+      if (!getIsCancelled?.()) setData(getDefaultBackendSetup());
+      if (!getIsCancelled?.()) setLoading(false);
       return;
     }
-    setLoading(true);
-    setError(null);
+    if (!getIsCancelled?.()) setLoading(true);
+    if (!getIsCancelled?.()) setError(null);
     try {
       const raw = await readProjectFileOrEmpty(projectId, SETUP_PATH, project.repoPath);
+      if (getIsCancelled?.()) return;
       setData(parseBackendSetupJson(raw));
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-      setData(getDefaultBackendSetup());
+      if (!getIsCancelled?.()) {
+        setError(e instanceof Error ? e.message : String(e));
+        setData(getDefaultBackendSetup());
+      }
     } finally {
-      setLoading(false);
+      if (!getIsCancelled?.()) setLoading(false);
     }
   }, [projectId, project.repoPath]);
 
   useEffect(() => {
-    fetchData();
+    cancelledRef.current = false;
+    fetchData(() => cancelledRef.current);
+    return () => {
+      cancelledRef.current = true;
+    };
   }, [fetchData]);
 
   const save = useCallback(async () => {
@@ -132,19 +145,41 @@ export function ProjectBackendTab({ project, projectId }: ProjectBackendTabProps
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <h2 className="text-sm font-medium text-muted-foreground">Backend tech stack, entities, endpoints</h2>
-        <Button
-          size="sm"
-          onClick={save}
-          disabled={saving}
-          className="gap-2"
-        >
-          {saving ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Save className="h-4 w-4" />
-          )}
-          Save
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="default"
+            onClick={async () => {
+              setAnalyzing(true);
+              try {
+                await analyzeProjectDoc(projectId, BACKEND_PROMPT_PATH, BACKEND_ANALYSIS_OUTPUT_PATH);
+                toast.success("Backend analysis updated.");
+              } catch (e) {
+                toast.error(e instanceof Error ? e.message : "Analyze failed");
+              } finally {
+                setAnalyzing(false);
+              }
+            }}
+            disabled={analyzing}
+            className="gap-2"
+          >
+            {analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ScanSearch className="h-4 w-4" />}
+            Analyze
+          </Button>
+          <Button
+            size="sm"
+            onClick={save}
+            disabled={saving}
+            className="gap-2"
+          >
+            {saving ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
+            Save
+          </Button>
+        </div>
       </div>
 
       <ScrollArea className="h-[calc(100vh-14rem)]">

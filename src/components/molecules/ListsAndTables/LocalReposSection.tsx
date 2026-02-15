@@ -21,8 +21,13 @@ export function LocalReposSection() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const done = () => setLoading(false);
-    const apply = (paths: string[]) => setLocalPaths(Array.isArray(paths) ? paths : []);
+    let cancelled = false;
+    const done = () => {
+      if (!cancelled) setLoading(false);
+    };
+    const apply = (paths: string[]) => {
+      if (!cancelled) setLocalPaths(Array.isArray(paths) ? paths : []);
+    };
 
     const fetchFromApi = () =>
       fetch("/api/data/february-folders")
@@ -32,19 +37,29 @@ export function LocalReposSection() {
 
     if (isTauri) {
       fetchFromApi().then((folders) => {
+        if (cancelled) return;
         if (folders.length > 0) {
           apply(folders);
           done();
           return;
         }
         invoke<string[]>("list_february_folders")
-          .then((paths) => apply(paths ?? []))
-          .catch(() => apply([]))
+          .then((paths) => {
+            if (!cancelled) apply(paths ?? []);
+          })
+          .catch(() => {
+            if (!cancelled) apply([]);
+          })
           .finally(done);
       });
     } else {
-      fetchFromApi().then(apply).finally(done);
+      fetchFromApi().then((paths) => {
+        if (!cancelled) apply(paths);
+      }).finally(done);
     }
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const triggerLabel =

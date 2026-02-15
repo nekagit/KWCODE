@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw, GitBranch, FolderGit2, GitPullRequest, GitCommit, Upload } from "lucide-react";
@@ -64,34 +64,43 @@ export function ProjectGitTab({ project, projectId }: ProjectGitTabProps) {
 
   const repoPath = project.repoPath?.trim() ?? "";
 
-  const fetchGitInfo = useCallback(async () => {
+  const cancelledRef = useRef(false);
+
+  const fetchGitInfo = useCallback(async (getIsCancelled?: () => boolean) => {
     if (!project.repoPath?.trim()) {
-      setGitInfo(null);
-      setError(null);
+      if (!getIsCancelled?.()) setGitInfo(null);
+      if (!getIsCancelled?.()) setError(null);
       return;
     }
     if (!isTauri) {
-      setGitInfo(null);
-      setError("Git info is only available in the desktop app.");
+      if (!getIsCancelled?.()) setGitInfo(null);
+      if (!getIsCancelled?.()) setError("Git info is only available in the desktop app.");
       return;
     }
-    setLoading(true);
-    setError(null);
+    if (!getIsCancelled?.()) setLoading(true);
+    if (!getIsCancelled?.()) setError(null);
     try {
       const info = await invoke<GitInfo>("get_git_info", {
         projectPath: project.repoPath.trim(),
       });
+      if (getIsCancelled?.()) return;
       setGitInfo(info);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-      setGitInfo(null);
+      if (!getIsCancelled?.()) {
+        setError(e instanceof Error ? e.message : String(e));
+        setGitInfo(null);
+      }
     } finally {
-      setLoading(false);
+      if (!getIsCancelled?.()) setLoading(false);
     }
   }, [project.repoPath]);
 
   useEffect(() => {
-    fetchGitInfo();
+    cancelledRef.current = false;
+    fetchGitInfo(() => cancelledRef.current);
+    return () => {
+      cancelledRef.current = true;
+    };
   }, [fetchGitInfo]);
 
   const handlePull = useCallback(async () => {

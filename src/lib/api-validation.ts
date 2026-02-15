@@ -47,6 +47,12 @@ export const generateIdeasSchema = z.object({
   count: z.number().int().min(1).max(10).optional().default(5),
 });
 
+/** Body for improving a raw idea with AI (e.g. for ideas.md). */
+export const improveIdeaSchema = z.object({
+  rawIdea: z.string().min(1, "rawIdea is required").max(5000),
+  projectName: z.string().max(200).optional(),
+});
+
 export const generateDesignSchema = z.object({
   description: z.string().min(1, "description is required").max(5000),
   templateId: z.string().max(100).optional().default("landing"),

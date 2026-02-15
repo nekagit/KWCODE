@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
     Folder,
     FileText,
@@ -41,17 +41,20 @@ export function ProjectFilesTab({ project, projectId }: ProjectFilesTabProps) {
     const [previewFile, setPreviewFile] = useState<{ path: string; content: string } | null>(null);
     const [previewLoading, setPreviewLoading] = useState(false);
 
-    const fetchFiles = useCallback(async () => {
+    const cancelledRef = useRef(false);
+
+    const fetchFiles = useCallback(async (getIsCancelled?: () => boolean) => {
         if (!project.repoPath) {
-            setError("No repository path set for this project.");
-            setLoading(false);
+            if (!getIsCancelled?.()) setError("No repository path set for this project.");
+            if (!getIsCancelled?.()) setLoading(false);
             return;
         }
 
-        setLoading(true);
-        setError(null);
+        if (!getIsCancelled?.()) setLoading(true);
+        if (!getIsCancelled?.()) setError(null);
         try {
             const entries = await listProjectFiles(projectId, currentPath, project.repoPath);
+            if (getIsCancelled?.()) return;
             // Sort: directories first, then files
             entries.sort((a, b) => {
                 if (a.isDirectory === b.isDirectory) {
@@ -61,15 +64,21 @@ export function ProjectFilesTab({ project, projectId }: ProjectFilesTabProps) {
             });
             setFiles(entries);
         } catch (e) {
-            console.error("Failed to list files:", e);
-            setError(e instanceof Error ? e.message : String(e));
+            if (!getIsCancelled?.()) {
+                console.error("Failed to list files:", e);
+                setError(e instanceof Error ? e.message : String(e));
+            }
         } finally {
-            setLoading(false);
+            if (!getIsCancelled?.()) setLoading(false);
         }
     }, [projectId, currentPath, project.repoPath]);
 
     useEffect(() => {
-        fetchFiles();
+        cancelledRef.current = false;
+        fetchFiles(() => cancelledRef.current);
+        return () => {
+            cancelledRef.current = true;
+        };
     }, [fetchFiles]);
 
     const handleNavigate = (entry: FileEntry) => {

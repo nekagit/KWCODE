@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Bot, Loader2, FileText } from "lucide-react";
 import { listProjectFiles, readProjectFile, type FileEntry } from "@/lib/api-projects";
 import type { Project } from "@/types/project";
@@ -42,30 +42,39 @@ export function ProjectAgentsSection({ project, projectId }: ProjectAgentsSectio
   const [preview, setPreview] = useState<{ path: string; name: string; content: string } | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
 
-  const fetchAgents = useCallback(async () => {
+  const cancelledRef = useRef(false);
+
+  const fetchAgents = useCallback(async (getIsCancelled?: () => boolean) => {
     if (!project.repoPath) {
-      setError("No repository path set for this project.");
-      setLoading(false);
+      if (!getIsCancelled?.()) setError("No repository path set for this project.");
+      if (!getIsCancelled?.()) setLoading(false);
       return;
     }
-    setLoading(true);
-    setError(null);
+    if (!getIsCancelled?.()) setLoading(true);
+    if (!getIsCancelled?.()) setError(null);
     try {
       const list = await listProjectFiles(projectId, AGENTS_DIR, project.repoPath);
+      if (getIsCancelled?.()) return;
       const mdFiles = list
         .filter((e) => !e.isDirectory && e.name.toLowerCase().endsWith(".md"))
         .sort((a, b) => a.name.localeCompare(b.name));
       setEntries(mdFiles);
     } catch (e) {
-      console.error("Failed to list agents:", e);
-      setError(e instanceof Error ? e.message : String(e));
+      if (!getIsCancelled?.()) {
+        console.error("Failed to list agents:", e);
+        setError(e instanceof Error ? e.message : String(e));
+      }
     } finally {
-      setLoading(false);
+      if (!getIsCancelled?.()) setLoading(false);
     }
   }, [projectId, project.repoPath]);
 
   useEffect(() => {
-    fetchAgents();
+    cancelledRef.current = false;
+    fetchAgents(() => cancelledRef.current);
+    return () => {
+      cancelledRef.current = true;
+    };
   }, [fetchAgents]);
 
   const openPreview = async (entry: FileEntry) => {

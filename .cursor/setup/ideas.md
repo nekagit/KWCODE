@@ -40,33 +40,9 @@ KWCode becomes the **AI-native command center for Cursor developers** that turns
 
 ## 2. Tier 1 — High-Impact, Near-Term Ideas (1–3 Months)
 
-#### 1. Command Palette (⌘K)
-
-**Problem**: Power users must click through tabs and sidebar to reach projects, prompts, runs, or settings; no global search or quick actions.
-
-**Solution**: A command palette (⌘K / Ctrl+K) that fuzzy-searches over projects, prompts, tickets, and actions (e.g. “Run Implement All”, “Open project X”, “Sync Kanban”). Selecting an item navigates or runs the action. Optional: recent items and AI-suggested “next action” based on current project and Kanban state.
-
-**AI Integration**: Optional “suggest next action” entry that calls a small prompt with current project name, pending ticket count, and last run; model returns one suggested command (e.g. “Sync Kanban”, “Run Implement All for Project X”).
-
-**User Flow**:
-1. User presses ⌘K anywhere in the app.
-2. Palette opens with search input; list shows projects, prompts, quick actions, recent runs.
-3. User types “run implement” or “project kw” and selects the match.
-4. App navigates or triggers the action (e.g. open project → Run tab → Run Implement All).
-
-**Technical Approach**: Global keyboard listener (useEffect + keydown), modal with Combobox/Command component (shadcn Command or similar), client-side index of project names + prompt titles + action IDs. Optional: API route for “suggest next action” using gpt-4o-mini with minimal context.
-
-**Dependencies**: None beyond existing routes and state.
-
-**Effort**: M
-
-**Impact**: 🔥🔥 (significant)
-
-**Success Metrics**: Daily active use of ⌘K, reduction in clicks to reach Run/Project.
-
 ---
 
-#### 2. AI Prompt Chaining (Multi-Step Workflows)
+#### 1. AI Prompt Chaining (Multi-Step Workflows)
 
 **Problem**: Today, “Generate prompt from Kanban” produces one prompt; there is no way to define a sequence (e.g. “analyze codebase → update tickets → generate PR description”) with context passed between steps.
 
@@ -92,7 +68,9 @@ KWCode becomes the **AI-native command center for Cursor developers** that turns
 
 ---
 
-#### 3. Auto-Categorization and Tagging (ML-Based)
+---
+
+#### 2. Auto-Categorization and Tagging (ML-Based)
 
 **Problem**: Tickets and features are only categorized by manual feature name and priority; there’s no automatic tagging (e.g. “frontend”, “api”, “docs”) or phase/step labels that could improve filtering and reporting.
 
@@ -118,7 +96,9 @@ KWCode becomes the **AI-native command center for Cursor developers** that turns
 
 ---
 
-#### 4. Semantic Search Over Project Knowledge
+---
+
+#### 3. Semantic Search Over Project Knowledge
 
 **Problem**: Users can’t search across setup docs, tickets, and prompts by meaning—only by exact text or list scrolling.
 
@@ -143,7 +123,9 @@ KWCode becomes the **AI-native command center for Cursor developers** that turns
 
 ---
 
-#### 5. Smart Scheduling and Prioritization Suggestions
+---
+
+#### 4. Smart Scheduling and Prioritization Suggestions
 
 **Problem**: Users set priority (P0–P3) and feature manually; the app doesn’t suggest order or warn about overloaded features.
 
@@ -169,7 +151,9 @@ KWCode becomes the **AI-native command center for Cursor developers** that turns
 
 ---
 
-#### 6. Keyboard-First Workflows and Shortcuts
+---
+
+#### 5. Keyboard-First Workflows and Shortcuts
 
 **Problem**: Most actions require mouse; no consistent shortcuts for “Sync”, “Run”, “Next ticket”, or “Toggle theme”.
 
@@ -194,7 +178,9 @@ KWCode becomes the **AI-native command center for Cursor developers** that turns
 
 ---
 
-#### 7. One-Click Project Scaffolding (Templates)
+---
+
+#### 6. One-Click Project Scaffolding (Templates)
 
 **Problem**: Creating a new project is manual; there’s no template (e.g. “Next.js + Cursor planner”) that pre-creates .cursor/planner and optional setup docs.
 
@@ -220,7 +206,9 @@ KWCode becomes the **AI-native command center for Cursor developers** that turns
 
 ---
 
-#### 8. Usage Analytics Dashboard (Internal)
+---
+
+#### 7. Usage Analytics Dashboard (Internal)
 
 **Problem**: No visibility into which features are used (Run vs. Planner vs. Setup), how often Implement All or prompt generation is used, or where users drop off.
 
@@ -245,7 +233,9 @@ KWCode becomes the **AI-native command center for Cursor developers** that turns
 
 ---
 
-#### 9. GitHub / GitLab OAuth and Repo Linking
+---
+
+#### 8. GitHub / GitLab OAuth and Repo Linking
 
 **Problem**: Repo path is manual; users can’t “link GitHub repo” and have branches/PRs surfaced in-app.
 
@@ -271,7 +261,9 @@ KWCode becomes the **AI-native command center for Cursor developers** that turns
 
 ---
 
-#### 10. Customizable Dashboard and Widgets
+---
+
+#### 9. Customizable Dashboard and Widgets
 
 **Problem**: Home and project views are fixed; users can’t pin “Recent runs” or “Pending tickets” where they want.
 
@@ -297,7 +289,9 @@ KWCode becomes the **AI-native command center for Cursor developers** that turns
 
 ---
 
-#### 11. Real-Time Kanban Sync Indicator and Conflict Handling
+---
+
+#### 10. Real-Time Kanban Sync Indicator and Conflict Handling
 
 **Problem**: If two sessions or Cursor + app edit .cursor/planner at once, last write wins; no indication of “file changed on disk” or merge strategy.
 
@@ -322,7 +316,9 @@ KWCode becomes the **AI-native command center for Cursor developers** that turns
 
 ---
 
-#### 12. Slack / Discord Webhooks for Run Completion
+---
+
+#### 11. Slack / Discord Webhooks for Run Completion
 
 **Problem**: Users who run long Implement All or setup prompts have to keep the app open to know when it’s done.
 
@@ -348,7 +344,9 @@ KWCode becomes the **AI-native command center for Cursor developers** that turns
 
 ---
 
-#### 13. Hot Reload / Live Preview for Setup Docs
+---
+
+#### 12. Hot Reload / Live Preview for Setup Docs
 
 **Problem**: When running a setup prompt (e.g. design.md), user has to wait for completion and then open the file to see results.
 
@@ -375,7 +373,9 @@ KWCode becomes the **AI-native command center for Cursor developers** that turns
 
 ## 3. Tier 2 — Medium-Term Innovation (3–6 Months)
 
-#### 14. Multi-Agent Orchestration (Architect → Frontend → Backend → QA)
+---
+
+#### 13. Multi-Agent Orchestration (Architect → Frontend → Backend → QA)
 
 **Problem**: Today, one prompt or one “Implement All” run does everything; there’s no separation of roles (e.g. architect writes spec, frontend implements UI, backend implements API, QA suggests tests).
 
@@ -401,7 +401,9 @@ KWCode becomes the **AI-native command center for Cursor developers** that turns
 
 ---
 
-#### 15. Vector-Backed Project Knowledge Base (RAG for Prompts)
+---
+
+#### 14. Vector-Backed Project Knowledge Base (RAG for Prompts)
 
 **Problem**: Generated prompts and runs don’t have access to a structured “project memory” (past decisions, ADRs, setup docs) beyond what’s in the current prompt.
 
@@ -427,7 +429,9 @@ KWCode becomes the **AI-native command center for Cursor developers** that turns
 
 ---
 
-#### 16. Custom Workflow Builder (Drag-Drop Nodes)
+---
+
+#### 15. Custom Workflow Builder (Drag-Drop Nodes)
 
 **Problem**: Prompt chains and agent workflows are defined in forms; power users may want a visual flow (triggers → steps → conditions).
 
@@ -453,7 +457,9 @@ KWCode becomes the **AI-native command center for Cursor developers** that turns
 
 ---
 
-#### 17. Session Sharing and Live Collaboration
+---
+
+#### 16. Session Sharing and Live Collaboration
 
 **Problem**: Only one person can use the app per project at a time from a file perspective; no “invite teammate to view this run” or “live cursor” for planning.
 
@@ -478,7 +484,9 @@ KWCode becomes the **AI-native command center for Cursor developers** that turns
 
 ---
 
-#### 18. Self-Improving Prompt Templates (A/B and Learn)
+---
+
+#### 17. Self-Improving Prompt Templates (A/B and Learn)
 
 **Problem**: Default prompts for “generate ticket” or “generate prompt from Kanban” are static; we don’t learn from which outputs users keep or edit.
 
@@ -504,7 +512,9 @@ KWCode becomes the **AI-native command center for Cursor developers** that turns
 
 ---
 
-#### 19. Automated Documentation Generation (Code → Docs)
+---
+
+#### 18. Automated Documentation Generation (Code → Docs)
 
 **Problem**: Keeping .cursor/setup docs (design, architecture, features) up to date with the codebase is manual; they drift.
 
@@ -530,7 +540,9 @@ KWCode becomes the **AI-native command center for Cursor developers** that turns
 
 ---
 
-#### 20. Approval Workflows and Gating
+---
+
+#### 19. Approval Workflows and Gating
 
 **Problem**: In teams, some actions (e.g. “Run Implement All on prod”, “Delete project”) should require a second approval or a role check.
 
@@ -558,7 +570,9 @@ KWCode becomes the **AI-native command center for Cursor developers** that turns
 
 ## 4. Tier 3 — Moonshot / R&D Explorations (6–12 Months)
 
-#### 21. Local LLM Integration (Ollama / llama.cpp)
+---
+
+#### 20. Local LLM Integration (Ollama / llama.cpp)
 
 **Problem**: All AI features depend on OpenAI; users who want offline or privacy-first workflows can’t use them.
 
@@ -583,7 +597,9 @@ KWCode becomes the **AI-native command center for Cursor developers** that turns
 
 ---
 
-#### 22. Proactive “AI Pair” (Background Suggestions)
+---
+
+#### 21. Proactive “AI Pair” (Background Suggestions)
 
 **Problem**: Users have to remember to run “Generate prompt” or “Suggest order”; the app is reactive.
 
@@ -609,7 +625,9 @@ KWCode becomes the **AI-native command center for Cursor developers** that turns
 
 ---
 
-#### 23. Cross-Project Meta-Learning and Recommendations
+---
+
+#### 22. Cross-Project Meta-Learning and Recommendations
 
 **Problem**: Each project is isolated; we don’t use patterns from other projects (e.g. “projects like this usually add a testing ticket next”).
 
@@ -634,7 +652,9 @@ KWCode becomes the **AI-native command center for Cursor developers** that turns
 
 ---
 
-#### 24. Voice-Driven Commands (Natural Language)
+---
+
+#### 23. Voice-Driven Commands (Natural Language)
 
 **Problem**: Hands-free or accessibility need: “Run Implement All for KWCode” or “What’s the status of my runs?”
 
@@ -659,7 +679,9 @@ KWCode becomes the **AI-native command center for Cursor developers** that turns
 
 ---
 
-#### 25. One-Click Deploy (Vercel / Netlify / Railway)
+---
+
+#### 24. One-Click Deploy (Vercel / Netlify / Railway)
 
 **Problem**: After Implement All or feature work, users deploy manually; no “Ship it” from the app.
 

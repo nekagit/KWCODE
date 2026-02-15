@@ -266,3 +266,24 @@ export async function initializeProjectRepo(projectId: string, repoPath: string)
   }
 }
 
+/**
+ * Run the analyze-project-doc API: read prompt from project repo, send current doc + prompt to LLM, write result to output path.
+ * Uses POST /api/analyze-project-doc (browser or Tauri with Next server).
+ */
+export async function analyzeProjectDoc(
+  projectId: string,
+  promptPath: string,
+  outputPath: string
+): Promise<void> {
+  const base = typeof window !== "undefined" ? window.location.origin : "";
+  const res = await fetch(`${base}/api/analyze-project-doc`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ projectId, promptPath, outputPath }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error((data as { error?: string }).error || res.statusText || "Analyze failed");
+  }
+}
+

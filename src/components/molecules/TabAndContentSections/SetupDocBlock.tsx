@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Loader2, FileText, BookOpen, Play } from "lucide-react";
@@ -66,21 +66,24 @@ export function SetupDocBlock({
     : null;
   const isFloatingRunning = floatingRun?.status === "running";
 
-  const fetchDoc = useCallback(async () => {
+  const fetchDoc = useCallback(async (getIsCancelled?: () => boolean) => {
     if (!project.repoPath) {
-      setLoading(false);
+      if (!getIsCancelled?.()) setLoading(false);
       return;
     }
-    setLoading(true);
-    setError(null);
+    if (!getIsCancelled?.()) setLoading(true);
+    if (!getIsCancelled?.()) setError(null);
     try {
       const text = await readProjectFileOrEmpty(projectId, setupPath, project.repoPath);
+      if (getIsCancelled?.()) return;
       setContent(text && text.trim() ? text : null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-      setContent(null);
+      if (!getIsCancelled?.()) {
+        setError(e instanceof Error ? e.message : String(e));
+        setContent(null);
+      }
     } finally {
-      setLoading(false);
+      if (!getIsCancelled?.()) setLoading(false);
     }
   }, [projectId, setupPath, project.repoPath]);
 
@@ -95,8 +98,13 @@ export function SetupDocBlock({
     }
   }, [projectId, promptPath, project.repoPath]);
 
+  const cancelledRef = useRef(false);
   useEffect(() => {
-    fetchDoc();
+    cancelledRef.current = false;
+    fetchDoc(() => cancelledRef.current);
+    return () => {
+      cancelledRef.current = true;
+    };
   }, [fetchDoc]);
 
   const openSetupDialog = () => setShowSetupDialog(true);

@@ -76,7 +76,7 @@ export function HomePageContent() {
 
   useEffect(() => {
     if (isTauri) loadTickets();
-  }, [loadTickets]);
+  }, [loadTickets, isTauri]);
 
   // Browser: load tickets and kv entries from /api/data (reads data/*.json)
   useEffect(() => {

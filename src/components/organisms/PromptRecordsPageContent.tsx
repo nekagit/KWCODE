@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
@@ -48,24 +48,30 @@ export function PromptRecordsPageContent() {
 
   const [fullPromptRecords, setFullPromptRecords] = useState<PromptRecordRecord[]>([]);
   const [tableLoading, setTableLoading] = useState(true);
+  const cancelledRef = useRef(false);
 
   const fetchFullPromptRecords = useCallback(async () => {
     setTableLoading(true);
     try {
       const res = await fetch("/api/data/prompts");
+      if (cancelledRef.current) return;
       if (res.ok) {
         const list: PromptRecordRecord[] = await res.json();
-        setFullPromptRecords(Array.isArray(list) ? list : []);
+        if (!cancelledRef.current) setFullPromptRecords(Array.isArray(list) ? list : []);
       }
     } catch {
-      setFullPromptRecords([]);
+      if (!cancelledRef.current) setFullPromptRecords([]);
     } finally {
-      setTableLoading(false);
+      if (!cancelledRef.current) setTableLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    cancelledRef.current = false;
     fetchFullPromptRecords();
+    return () => {
+      cancelledRef.current = true;
+    };
   }, [fetchFullPromptRecords]);
 
   const openCreate = useCallback(() => {

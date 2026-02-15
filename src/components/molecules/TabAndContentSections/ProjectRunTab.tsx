@@ -267,20 +267,29 @@ function WorkerQueueSection({ projectId, repoPath }: { projectId: string; repoPa
       setLoading(false);
       return;
     }
+    let cancelled = false;
     setLoading(true);
     Promise.all([
       listProjectFiles(projectId, ".cursor/worker/queue", repoPath),
       listProjectFiles(projectId, ".cursor/worker/workflows", repoPath),
     ])
       .then(([queue, workflows]) => {
+        if (cancelled) return;
         setQueueFiles(queue.filter((e) => !e.isDirectory).map((e) => e.name));
         setWorkflowFiles(workflows.filter((e) => !e.isDirectory).map((e) => e.name));
       })
       .catch(() => {
-        setQueueFiles([]);
-        setWorkflowFiles([]);
+        if (!cancelled) {
+          setQueueFiles([]);
+          setWorkflowFiles([]);
+        }
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [projectId, repoPath]);
 
   useEffect(() => {
@@ -288,13 +297,23 @@ function WorkerQueueSection({ projectId, repoPath }: { projectId: string; repoPa
       setPreviewContent(null);
       return;
     }
+    let cancelled = false;
     setLoadingPreview(true);
     const name = previewPath.split("/").pop() ?? "";
     const subdir = previewPath.includes("workflows/") ? ".cursor/worker/workflows" : ".cursor/worker/queue";
     readProjectFileOrEmpty(projectId, `${subdir}/${name}`, repoPath)
-      .then((t) => setPreviewContent(t?.trim() ?? null))
-      .catch(() => setPreviewContent(null))
-      .finally(() => setLoadingPreview(false));
+      .then((t) => {
+        if (!cancelled) setPreviewContent(t?.trim() ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setPreviewContent(null);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingPreview(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [projectId, repoPath, previewPath]);
 
   if (!repoPath) return null;
