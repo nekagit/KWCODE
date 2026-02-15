@@ -16,21 +16,25 @@ import {
   Calendar,
   ArrowLeft,
   Hash,
+  Monitor,
+  Server,
+  Flag,
+  TestTube2,
+  FileText,
+  Lightbulb,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Project } from "@/types/project";
 import { getProjectResolved, deleteProject } from "@/lib/api-projects";
-import { ProjectDesignTab } from "@/components/molecules/TabAndContentSections/ProjectDesignTab";
 import { ProjectIdeasTab } from "@/components/molecules/TabAndContentSections/ProjectIdeasTab";
 import { ProjectTicketsTab } from "@/components/molecules/TabAndContentSections/ProjectTicketsTab";
 import { ProjectGitTab } from "@/components/molecules/TabAndContentSections/ProjectGitTab";
 import { ProjectRunTab } from "@/components/molecules/TabAndContentSections/ProjectRunTab";
-import { ProjectArchitectureTab } from "@/components/molecules/TabAndContentSections/ProjectArchitectureTab";
-import { ProjectTestingTab } from "@/components/molecules/TabAndContentSections/ProjectTestingTab";
-import { ProjectDocumentationTab } from "@/components/molecules/TabAndContentSections/ProjectDocumentationTab";
-import { ProjectFilesTab } from "@/components/molecules/TabAndContentSections/ProjectFilesTab";
-import { ProjectAgentsSection } from "@/components/molecules/TabAndContentSections/ProjectAgentsSection";
-import { SetupDocBlock } from "@/components/molecules/TabAndContentSections/SetupDocBlock";
+import { ProjectMilestonesTab } from "@/components/molecules/TabAndContentSections/ProjectMilestonesTab";
+import { ProjectFrontendTab } from "@/components/molecules/TabAndContentSections/ProjectFrontendTab";
+import { ProjectBackendTab } from "@/components/molecules/TabAndContentSections/ProjectBackendTab";
+import { ProjectSetupTab } from "@/components/molecules/TabAndContentSections/ProjectSetupTab";
+import { ProjectSetupDocTab } from "@/components/molecules/TabAndContentSections/ProjectSetupDocTab";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { cn } from "@/lib/utils";
 import { SectionCard, MetadataBadge, CountBadge } from "@/components/shared/DisplayPrimitives";
@@ -38,8 +42,17 @@ import { initializeProjectRepo } from "@/lib/api-projects";
 import { toast } from "sonner";
 import { Sparkles } from "lucide-react";
 
-const TAB_CONFIG = [
+const TAB_ROW_1 = [
   { value: "setup", label: "Setup", icon: Settings, color: "text-violet-400", activeGlow: "shadow-violet-500/10" },
+  { value: "frontend", label: "Frontend", icon: Monitor, color: "text-cyan-400", activeGlow: "shadow-cyan-500/10" },
+  { value: "backend", label: "Backend", icon: Server, color: "text-orange-400", activeGlow: "shadow-orange-500/10" },
+  { value: "documentation", label: "Documentation", icon: FileText, color: "text-teal-400", activeGlow: "shadow-teal-500/10" },
+  { value: "ideas", label: "Ideas", icon: Lightbulb, color: "text-amber-400", activeGlow: "shadow-amber-500/10" },
+  { value: "testing", label: "Testing", icon: TestTube2, color: "text-emerald-400", activeGlow: "shadow-emerald-500/10" },
+] as const;
+
+const TAB_ROW_2 = [
+  { value: "milestones", label: "Milestones", icon: Flag, color: "text-fuchsia-400", activeGlow: "shadow-fuchsia-500/10" },
   { value: "todo", label: "Planner", icon: ListTodo, color: "text-blue-400", activeGlow: "shadow-blue-500/10" },
   { value: "run", label: "Worker", icon: Play, color: "text-emerald-400", activeGlow: "shadow-emerald-500/10" },
   { value: "git", label: "Versioning", icon: FolderGit2, color: "text-amber-400", activeGlow: "shadow-amber-500/10" },
@@ -53,6 +66,7 @@ export function ProjectDetailsPageContent() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("setup");
   const [initializing, setInitializing] = useState(false);
+  const [plannerRefreshKey, setPlannerRefreshKey] = useState(0);
 
   const mountedRef = useRef(true);
   useEffect(() => {
@@ -289,33 +303,58 @@ export function ProjectDetailsPageContent() {
           className="w-full"
           data-testid="project-detail-tabs"
         >
-          {/* Tab Navigation */}
-          <div className="mb-6">
+          {/* Tab Navigation — two rows */}
+          <div className="mb-6 flex flex-col gap-2">
             <TabsList
-              className="inline-flex h-auto gap-1 rounded-xl bg-muted/20 border border-border/40 p-1.5 backdrop-blur-sm"
+              className="inline-flex h-auto flex-col gap-1.5 rounded-xl bg-muted/20 border border-border/40 p-1.5 backdrop-blur-sm w-full sm:w-auto"
               aria-label="Project sections"
             >
-              {TAB_CONFIG.map((tab) => (
-                <TabsTrigger
-                  key={tab.value}
-                  value={tab.value}
-                  data-testid={`tab-${tab.value}`}
-                  className={cn(
-                    "relative flex items-center gap-2 rounded-lg px-4 py-2.5 text-xs font-medium transition-all duration-200",
-                    "data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground data-[state=inactive]:hover:bg-muted/40",
-                    "data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=active]:border data-[state=active]:border-border/50",
-                    activeTab === tab.value && tab.activeGlow
-                  )}
-                >
-                  <tab.icon
+              <div className="flex flex-wrap gap-1">
+                {TAB_ROW_1.map((tab) => (
+                  <TabsTrigger
+                    key={tab.value}
+                    value={tab.value}
+                    data-testid={`tab-${tab.value}`}
                     className={cn(
-                      "size-4 shrink-0 transition-colors duration-200",
-                      activeTab === tab.value ? tab.color : ""
+                      "relative flex items-center gap-2 rounded-lg px-4 py-2.5 text-xs font-medium transition-all duration-200",
+                      "data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground data-[state=inactive]:hover:bg-muted/40",
+                      "data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=active]:border data-[state=active]:border-border/50",
+                      activeTab === tab.value && tab.activeGlow
                     )}
-                  />
-                  {tab.label}
-                </TabsTrigger>
-              ))}
+                  >
+                    <tab.icon
+                      className={cn(
+                        "size-4 shrink-0 transition-colors duration-200",
+                        activeTab === tab.value ? tab.color : ""
+                      )}
+                    />
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {TAB_ROW_2.map((tab) => (
+                  <TabsTrigger
+                    key={tab.value}
+                    value={tab.value}
+                    data-testid={`tab-${tab.value}`}
+                    className={cn(
+                      "relative flex items-center gap-2 rounded-lg px-4 py-2.5 text-xs font-medium transition-all duration-200",
+                      "data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground data-[state=inactive]:hover:bg-muted/40",
+                      "data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=active]:border data-[state=active]:border-border/50",
+                      activeTab === tab.value && tab.activeGlow
+                    )}
+                  >
+                    <tab.icon
+                      className={cn(
+                        "size-4 shrink-0 transition-colors duration-200",
+                        activeTab === tab.value ? tab.color : ""
+                      )}
+                    />
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
+              </div>
             </TabsList>
           </div>
 
@@ -324,71 +363,52 @@ export function ProjectDetailsPageContent() {
             value="setup"
             className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
           >
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <ProjectAgentsSection project={project} projectId={projectId} />
-              <SectionCard accentColor="rose" className="lg:col-span-2">
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500">
-                      <FolderGit2 className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-semibold text-foreground">Project Files</h3>
-                      <p className="text-xs text-muted-foreground">Files in .cursor directory</p>
-                    </div>
-                  </div>
-                  <ProjectFilesTab project={project} projectId={projectId} />
-                </div>
-              </SectionCard>
-              <SectionCard accentColor="violet">
-                <div className="flex flex-col gap-4">
-                  <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Design</h3>
-                  <SetupDocBlock project={project} projectId={projectId} setupKey="design" />
-                  <ProjectDesignTab project={project} projectId={projectId} showHeader={false} />
-                </div>
-              </SectionCard>
+            <ProjectSetupTab project={project} projectId={projectId} />
+          </TabsContent>
+
+          {/* ── Frontend Tab ── */}
+          <TabsContent
+            value="frontend"
+            className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
+          >
+            <ProjectFrontendTab project={project} projectId={projectId} />
+          </TabsContent>
+
+          {/* ── Backend Tab ── */}
+          <TabsContent
+            value="backend"
+            className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
+          >
+            <ProjectBackendTab project={project} projectId={projectId} />
+          </TabsContent>
+
+          {/* ── Testing Tab ── */}
+          <TabsContent
+            value="testing"
+            className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
+          >
+            <ProjectSetupDocTab project={project} projectId={projectId} setupKey="testing" />
+          </TabsContent>
+
+          {/* ── Documentation Tab ── */}
+          <TabsContent
+            value="documentation"
+            className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
+          >
+            <ProjectSetupDocTab project={project} projectId={projectId} setupKey="documentation" />
+          </TabsContent>
+
+          {/* ── Ideas Tab ── */}
+          <TabsContent
+            value="ideas"
+            className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
+          >
+            <div className="space-y-6">
+              <ProjectSetupDocTab project={project} projectId={projectId} setupKey="ideas" />
               <SectionCard accentColor="amber">
-                <div className="flex flex-col gap-4">
-                  <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Ideas</h3>
-                  <SetupDocBlock project={project} projectId={projectId} setupKey="ideas" />
-                  <ProjectIdeasTab project={project} projectId={projectId} showHeader={false} />
-                </div>
-              </SectionCard>
-              <SectionCard accentColor="blue">
-                <div className="flex flex-col gap-4">
-                  <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Architecture</h3>
-                  <SetupDocBlock project={project} projectId={projectId} setupKey="architecture" />
-                  <ProjectArchitectureTab
-                    project={project}
-                    projectId={projectId}
-                    showHeader={false}
-                  />
-                </div>
-              </SectionCard>
-              <SectionCard accentColor="emerald">
-                <div className="flex flex-col gap-4">
-                  <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Testing</h3>
-                  <SetupDocBlock project={project} projectId={projectId} setupKey="testing" />
-                  <ProjectTestingTab
-                    project={project}
-                    projectId={projectId}
-                    showHeader={false}
-                  />
-                </div>
-              </SectionCard>
-              <SectionCard accentColor="teal">
-                <div className="flex flex-col gap-4">
-                  <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Documentation</h3>
-                  <SetupDocBlock project={project} projectId={projectId} setupKey="documentation" />
-                  <ProjectDocumentationTab
-                    project={project}
-                    projectId={projectId}
-                    showHeader={false}
-                  />
-                </div>
+                <ProjectIdeasTab project={project} projectId={projectId} showHeader={true} />
               </SectionCard>
             </div>
-
           </TabsContent>
 
           {/* ── Planner Tab ── */}
@@ -396,11 +416,25 @@ export function ProjectDetailsPageContent() {
             value="todo"
             className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
           >
-            <div className="rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-4 md:p-6">
+            <div key={plannerRefreshKey} className="rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-4 md:p-6">
               <ProjectTicketsTab
                 project={project}
                 projectId={projectId}
                 fetchProject={fetchProject}
+              />
+            </div>
+          </TabsContent>
+
+          {/* ── Milestones Tab ── */}
+          <TabsContent
+            value="milestones"
+            className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
+          >
+            <div className="rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-4 md:p-6">
+              <ProjectMilestonesTab
+                project={project}
+                projectId={projectId}
+                onTicketAdded={() => setPlannerRefreshKey((k) => k + 1)}
               />
             </div>
           </TabsContent>

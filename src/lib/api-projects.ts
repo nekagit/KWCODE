@@ -231,90 +231,38 @@ export async function listProjectFiles(
   return json.files;
 }
 
-import {
-  INITIAL_ARCHITECT_PROMPT,
-  INITIAL_FRONTEND_PROMPT,
-  INITIAL_BACKEND_PROMPT,
-  INITIAL_SETUP_ARCHITECTURE,
-  INITIAL_SETUP_DESIGN,
-  INITIAL_SETUP_DOCUMENTATION,
-  INITIAL_SETUP_TESTING,
-  INITIAL_SETUP_IDEAS,
-  INITIAL_TICKETS_TEMPLATE,
-  INITIAL_FEATURES_TEMPLATE,
-  INITIAL_PROMPT_ARCHITECTURE,
-  INITIAL_PROMPT_DESIGN,
-  INITIAL_PROMPT_TESTING,
-  INITIAL_PROMPT_IDEAS,
-  INITIAL_PROMPT_DOCUMENTATION,
-  INITIAL_PROMPT_TICKETS,
-  INITIAL_PROMPT_FEATURES,
-  INITIAL_PROMPT_WORKER
-} from "./initialization-templates";
-
-/** Fetches canonical agent template from public/cursor-templates/agents; falls back to inline constant if unavailable. */
-async function getAgentTemplateContent(name: string, fallback: string): Promise<string> {
-  if (typeof window === "undefined") return fallback;
-  try {
-    const base = window.location.origin;
-    const res = await fetch(`${base}/cursor-templates/agents/${name}.md`);
-    if (res.ok) return await res.text();
-  } catch {
-    // ignore
-  }
-  return fallback;
-}
-
 /**
- * Initializes a project repository with a standard .cursor structure and high-quality prompt templates.
- * Agent .md files are loaded from public/cursor-templates/agents/ (full KWCode agent content); fallback to inline templates if fetch fails.
+ * Initializes a project's .cursor folder by copying exactly the contents of .cursor_inti (same structure, renamed to .cursor).
+ * Nothing more: no inline templates, no extra files. Template is read from API (browser) or Tauri command (desktop).
  */
 export async function initializeProjectRepo(projectId: string, repoPath: string): Promise<void> {
-  const now = new Date().toISOString().split("T")[0];
-
-  const [archContent, frontendContent, backendContent] = await Promise.all([
-    getAgentTemplateContent("solution-architect", INITIAL_ARCHITECT_PROMPT),
-    getAgentTemplateContent("frontend-dev", INITIAL_FRONTEND_PROMPT),
-    getAgentTemplateContent("backend-dev", INITIAL_BACKEND_PROMPT),
-  ]);
-
-  const filesToWrite = [
-    // Agents (full content from cursor-templates when available)
-    { path: ".cursor/agents/solution-architect.md", content: archContent },
-    { path: ".cursor/agents/frontend-dev.md", content: frontendContent },
-    { path: ".cursor/agents/backend-dev.md", content: backendContent },
-
-    // Planner
-    { path: ".cursor/planner/tickets.md", content: INITIAL_TICKETS_TEMPLATE.replace(/\[PROJECT_NAME\]/g, projectId).replace(/\[DATE\]/g, now) },
-    { path: ".cursor/planner/features.md", content: INITIAL_FEATURES_TEMPLATE },
-    { path: ".cursor/planner/kanban-state.json", content: JSON.stringify({ inProgressIds: [] }, null, 2) },
-
-    // Prompts
-    { path: ".cursor/prompts/architecture.md", content: INITIAL_PROMPT_ARCHITECTURE },
-    { path: ".cursor/prompts/design.md", content: INITIAL_PROMPT_DESIGN },
-    { path: ".cursor/prompts/testing.md", content: INITIAL_PROMPT_TESTING },
-    { path: ".cursor/prompts/ideas.md", content: INITIAL_PROMPT_IDEAS },
-    { path: ".cursor/prompts/documentation.md", content: INITIAL_PROMPT_DOCUMENTATION },
-    { path: ".cursor/prompts/tickets.md", content: INITIAL_PROMPT_TICKETS },
-    { path: ".cursor/prompts/features.md", content: INITIAL_PROMPT_FEATURES },
-    { path: ".cursor/prompts/worker.md", content: INITIAL_PROMPT_WORKER },
-
-    // Setup
-    { path: ".cursor/setup/architecture.md", content: INITIAL_SETUP_ARCHITECTURE.replace(/\[PROJECT_NAME\]/g, projectId) },
-    { path: ".cursor/setup/design.md", content: INITIAL_SETUP_DESIGN.replace(/\[PROJECT_NAME\]/g, projectId) },
-    { path: ".cursor/setup/documentation.md", content: INITIAL_SETUP_DOCUMENTATION.replace(/\[PROJECT_NAME\]/g, projectId) },
-    { path: ".cursor/setup/testing.md", content: INITIAL_SETUP_TESTING.replace(/\[PROJECT_NAME\]/g, projectId) },
-    { path: ".cursor/setup/ideas.md", content: INITIAL_SETUP_IDEAS.replace(/\[PROJECT_NAME\]/g, projectId) },
-  ];
-
-  for (const file of filesToWrite) {
-    await writeProjectFile(projectId, file.path, file.content, repoPath);
+  let files: Record<string, string>;
+  if (isTauri) {
+    try {
+      files = await invoke<Record<string, string>>("get_cursor_init_template", {});
+    } catch (e) {
+      throw new Error(
+        "Failed to load .cursor_inti template. In Tauri, ensure .cursor_inti exists next to the app."
+      );
+    }
+  } else {
+    const base = typeof window !== "undefined" ? window.location.origin : "";
+    const res = await fetch(`${base}/api/data/cursor-init-template`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error((err as { error?: string }).error || "Failed to load .cursor_inti template");
+    }
+    const json = (await res.json()) as { files?: Record<string, string> };
+    files = json.files ?? {};
   }
-
-  // Ensure gitkeeps for organizational clarity
-  await writeProjectFile(projectId, ".cursor/agents/.gitkeep", "", repoPath);
-  await writeProjectFile(projectId, ".cursor/setup/.gitkeep", "", repoPath);
-  await writeProjectFile(projectId, ".cursor/prompts/.gitkeep", "", repoPath);
-  await writeProjectFile(projectId, ".cursor/planner/.gitkeep", "", repoPath);
+  if (Object.keys(files).length === 0) {
+    throw new Error(".cursor_inti folder is empty or not found");
+  }
+  for (const [relativePath, content] of Object.entries(files)) {
+    const normalized = relativePath.replace(/\\/g, "/");
+    if (!normalized || normalized.startsWith("..")) continue;
+    const cursorPath = `.cursor/${normalized}`;
+    await writeProjectFile(projectId, cursorPath, content, repoPath);
+  }
 }
 

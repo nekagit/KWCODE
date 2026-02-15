@@ -1,0 +1,17 @@
+{
+  "version": "1.0",
+  "title": "Backend",
+  "overview": "Describe your backend tech stack, entities, and API endpoints. Add KPIs, tech stack items, entities, and endpoints below.",
+  "kpis": [
+    { "id": "sample", "label": "Example metric", "value": "0", "unit": "" }
+  ],
+  "techStack": [
+    { "id": "t1", "category": "Runtime", "name": "(e.g. Node, Deno, Tauri)", "version": "" }
+  ],
+  "entities": [
+    { "id": "e1", "name": "EntityName", "description": "Short description", "keyFields": "id, name, ..." }
+  ],
+  "endpoints": [
+    { "id": "ep1", "method": "GET", "path": "/api/...", "description": "Brief description" }
+  ]
+}

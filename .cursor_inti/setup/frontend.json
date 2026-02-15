@@ -1,0 +1,17 @@
+{
+  "version": "1.0",
+  "title": "Frontend",
+  "overview": "Describe your frontend tech stack, main entities, and routes. Add KPIs, tech stack items, entities, and routes below.",
+  "kpis": [
+    { "id": "sample", "label": "Example metric", "value": "0", "unit": "" }
+  ],
+  "techStack": [
+    { "id": "t1", "category": "Framework", "name": "(e.g. Next.js, Vite, Remix)", "version": "" }
+  ],
+  "entities": [
+    { "id": "e1", "name": "EntityName", "purpose": "Short description", "typeLocation": "src/types/..." }
+  ],
+  "routes": [
+    { "id": "r1", "page": "Page name", "route": "/path", "component": "ComponentName" }
+  ]
+}

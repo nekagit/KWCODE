@@ -1,0 +1,36 @@
+{
+  "version": "1.0",
+  "title": "Backend",
+  "overview": "Next.js API routes (REST), SQLite (data/app.db) via rusqlite in Tauri; browser uses same API. File I/O: data/ and .cursor/. Validation: Zod. External: OpenAI for generation routes.",
+  "kpis": [
+    { "id": "k1", "label": "API route groups", "value": "10+", "unit": "" },
+    { "id": "k2", "label": "Entities (tables)", "value": "7", "unit": "" }
+  ],
+  "techStack": [
+    { "id": "t1", "category": "Runtime", "name": "Node (Next.js server)", "version": "" },
+    { "id": "t2", "category": "Desktop", "name": "Tauri v2 (Rust)", "version": "" },
+    { "id": "t3", "category": "API", "name": "Next.js Route Handlers", "version": "" },
+    { "id": "t4", "category": "Database", "name": "SQLite (rusqlite)", "version": "" },
+    { "id": "t5", "category": "Validation", "name": "Zod", "version": "" },
+    { "id": "t6", "category": "External", "name": "OpenAI API", "version": "" }
+  ],
+  "entities": [
+    { "id": "e1", "name": "Ticket", "description": "Work item / task", "keyFields": "id, title, description, status, priority, feature_id" },
+    { "id": "e2", "name": "Feature", "description": "Milestone grouping tickets", "keyFields": "id, title, description, status, ticket_ids" },
+    { "id": "e3", "name": "Prompt", "description": "Reusable prompt template", "keyFields": "id, title, content" },
+    { "id": "e4", "name": "Design", "description": "Design configuration", "keyFields": "id, title, sections, template_id" },
+    { "id": "e5", "name": "Architecture", "description": "Architecture document", "keyFields": "id, title, template_id, sections" },
+    { "id": "e6", "name": "Project", "description": "Managed project", "keyFields": "id, name, repoPath, promptIds, ticketIds, ideaIds, designIds, architectureIds" },
+    { "id": "e7", "name": "Idea", "description": "AI-generated idea", "keyFields": "id, title, description" }
+  ],
+  "endpoints": [
+    { "id": "ep1", "method": "GET", "path": "/api/data/projects", "description": "List projects" },
+    { "id": "ep2", "method": "POST", "path": "/api/data/projects", "description": "Create project" },
+    { "id": "ep3", "method": "GET", "path": "/api/data/projects/[id]/file", "description": "Read project file" },
+    { "id": "ep4", "method": "POST", "path": "/api/data/projects/[id]/file", "description": "Write project file" },
+    { "id": "ep5", "method": "GET", "path": "/api/data/cursor-init-template", "description": ".cursor_inti template for Initialize" },
+    { "id": "ep6", "method": "POST", "path": "/api/check-openai", "description": "Validate OpenAI API key" },
+    { "id": "ep7", "method": "POST", "path": "/api/generate-ticket-from-prompt", "description": "Generate ticket from prompt" },
+    { "id": "ep8", "method": "POST", "path": "/api/generate-prompt-from-kanban", "description": "Generate prompt from Kanban" }
+  ]
+}

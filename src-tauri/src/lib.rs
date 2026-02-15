@@ -630,6 +630,38 @@ fn list_cursor_folder(project_path: String) -> Result<Vec<FileEntry>, String> {
     Ok(entries)
 }
 
+/// Read all files under .cursor_inti (relative to app/project root) and return a map of relative path -> content for Initialize.
+#[tauri::command]
+fn get_cursor_init_template() -> Result<std::collections::HashMap<String, String>, String> {
+    let root = project_root()?;
+    let template_dir = root.join(".cursor_inti");
+    if !template_dir.exists() || !template_dir.is_dir() {
+        return Err(".cursor_inti folder not found".to_string());
+    }
+    let mut out = std::collections::HashMap::new();
+    fn collect(
+        dir: &std::path::Path,
+        base: &std::path::Path,
+        out: &mut std::collections::HashMap<String, String>,
+    ) -> Result<(), String> {
+        for e in std::fs::read_dir(dir).map_err(|e| e.to_string())? {
+            let e = e.map_err(|e| e.to_string())?;
+            let path = e.path();
+            if path.is_file() {
+                let rel = path.strip_prefix(base).map_err(|e| e.to_string())?;
+                let rel_str = rel.to_string_lossy().replace('\\', "/");
+                let content = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
+                out.insert(rel_str, content);
+            } else if path.is_dir() {
+                collect(&path, base, out)?;
+            }
+        }
+        Ok(())
+    }
+    collect(&template_dir, &template_dir, &mut out)?;
+    Ok(out)
+}
+
 /// Write a spec file into the project directory (e.g. project_path + "/.cursor/design-x.md").
 /// Creates parent directories if needed. relative_path should be like ".cursor/design-abc.md".
 #[tauri::command]
@@ -1896,6 +1928,7 @@ pub fn run() {
             list_files_under_root,
             list_scripts,
             list_cursor_folder,
+            get_cursor_init_template,
             write_spec_file,
             archive_cursor_file,
             get_git_info,
