@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import type { Project } from "@/types/project";
-import { readProjectFile, readProjectFileOrEmpty, writeProjectFile } from "@/lib/api-projects";
+import { readProjectFile, readProjectFileOrEmpty, writeProjectFile, listProjectFiles } from "@/lib/api-projects";
 import { isTauri } from "@/lib/tauri";
 import {
   buildKanbanFromMd,
@@ -20,6 +20,7 @@ import {
 import { EmptyState, LoadingState } from "@/components/shared/EmptyState";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useRunStore } from "@/store/run-store";
 import { toast } from "sonner";
 import {
@@ -36,6 +37,8 @@ import {
   Activity,
   MonitorUp,
   Layers,
+  Workflow,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isImplementAllRun } from "@/lib/run-helpers";
@@ -221,6 +224,9 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
       {/* ═══ Status Bar ═══ */}
       <WorkerStatusBar />
 
+      {/* ═══ Queue & workflow (.cursor/worker) ═══ */}
+      <WorkerQueueSection projectId={projectId} repoPath={project.repoPath ?? ""} />
+
       {/* ═══ Ticket Queue (In Progress) ═══ */}
       <WorkerTicketQueue
         kanbanData={kanbanData}
@@ -240,6 +246,152 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
 
       {/* ═══ Terminals ═══ */}
       <WorkerTerminalsSection />
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Queue & workflow — .cursor/worker/queue and .cursor/worker/workflows
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function WorkerQueueSection({ projectId, repoPath }: { projectId: string; repoPath: string }) {
+  const [queueFiles, setQueueFiles] = useState<string[]>([]);
+  const [workflowFiles, setWorkflowFiles] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [previewPath, setPreviewPath] = useState<string | null>(null);
+  const [previewContent, setPreviewContent] = useState<string | null>(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+
+  useEffect(() => {
+    if (!repoPath) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    Promise.all([
+      listProjectFiles(projectId, ".cursor/worker/queue", repoPath),
+      listProjectFiles(projectId, ".cursor/worker/workflows", repoPath),
+    ])
+      .then(([queue, workflows]) => {
+        setQueueFiles(queue.filter((e) => !e.isDirectory).map((e) => e.name));
+        setWorkflowFiles(workflows.filter((e) => !e.isDirectory).map((e) => e.name));
+      })
+      .catch(() => {
+        setQueueFiles([]);
+        setWorkflowFiles([]);
+      })
+      .finally(() => setLoading(false));
+  }, [projectId, repoPath]);
+
+  useEffect(() => {
+    if (!previewPath || !repoPath) {
+      setPreviewContent(null);
+      return;
+    }
+    setLoadingPreview(true);
+    const name = previewPath.split("/").pop() ?? "";
+    const subdir = previewPath.includes("workflows/") ? ".cursor/worker/workflows" : ".cursor/worker/queue";
+    readProjectFileOrEmpty(projectId, `${subdir}/${name}`, repoPath)
+      .then((t) => setPreviewContent(t?.trim() ?? null))
+      .catch(() => setPreviewContent(null))
+      .finally(() => setLoadingPreview(false));
+  }, [projectId, repoPath, previewPath]);
+
+  if (!repoPath) return null;
+
+  const totalFiles = queueFiles.length + workflowFiles.length;
+  if (loading && totalFiles === 0) {
+    return (
+      <div className="rounded-2xl border border-border/40 bg-card/50 p-4 backdrop-blur-sm">
+        <div className="flex items-center gap-2">
+          <Workflow className="size-4 text-rose-500" />
+          <span className="text-xs font-medium">Queue & workflow</span>
+          <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
+
+  if (totalFiles === 0) {
+    return (
+      <div className="rounded-2xl border border-border/40 bg-card/50 p-4 backdrop-blur-sm">
+        <div className="flex items-center gap-2">
+          <Workflow className="size-4 text-rose-500" />
+          <span className="text-xs font-medium">Queue & workflow</span>
+        </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          No files in .cursor/worker/queue or .cursor/worker/workflows. Add ready.md, in-progress.md, completed.md, or ticket-workflow.md.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl border border-border/40 bg-card/50 overflow-hidden backdrop-blur-sm">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-border/40">
+        <Workflow className="size-4 text-rose-500" />
+        <span className="text-xs font-semibold">Queue & workflow</span>
+      </div>
+      <div className="flex flex-col sm:flex-row gap-0 divide-y sm:divide-y-0 sm:divide-x divide-border/40">
+        <div className="flex-1 p-4 min-w-0">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-[10px] font-medium text-muted-foreground mb-1.5">.cursor/worker/queue/</p>
+              <ul className="space-y-1">
+                {queueFiles.map((name) => (
+                  <li key={name}>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewPath(`.cursor/worker/queue/${name}`)}
+                      className={cn(
+                        "text-xs font-mono hover:underline text-left",
+                        previewPath === `.cursor/worker/queue/${name}` ? "text-rose-500 font-medium" : "text-foreground/80"
+                      )}
+                    >
+                      {name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="text-[10px] font-medium text-muted-foreground mb-1.5">.cursor/worker/workflows/</p>
+              <ul className="space-y-1">
+                {workflowFiles.map((name) => (
+                  <li key={name}>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewPath(`.cursor/worker/workflows/${name}`)}
+                      className={cn(
+                        "text-xs font-mono hover:underline text-left",
+                        previewPath === `.cursor/worker/workflows/${name}` ? "text-rose-500 font-medium" : "text-foreground/80"
+                      )}
+                    >
+                      {name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div className="flex-1 min-w-0 max-h-[200px] sm:max-h-[160px] overflow-hidden flex flex-col">
+          {loadingPreview ? (
+            <div className="flex items-center justify-center flex-1 p-4">
+              <Loader2 className="size-4 animate-spin text-muted-foreground" />
+            </div>
+          ) : previewContent ? (
+            <ScrollArea className="flex-1 p-3">
+              <pre className="text-[11px] text-muted-foreground whitespace-pre-wrap font-sans">{previewContent}</pre>
+            </ScrollArea>
+          ) : (
+            <div className="flex items-center justify-center flex-1 p-4 text-xs text-muted-foreground">
+              <FileText className="size-4 mr-1.5" />
+              Click a file to preview
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

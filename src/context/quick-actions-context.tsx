@@ -2,25 +2,18 @@
 
 import React, { createContext, useCallback, useContext, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { ScrollText, Play, Settings, Plus } from "lucide-react";
+import { Settings, Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { useRunState } from "@/store/run-store";
-import RunPage from "@/app/run/page";
 import ConfigurationPage from "@/app/configuration/page";
 
-type QuickModal = "log" | "run" | "config" | null;
+type QuickModal = "config" | null;
 
 interface QuickActionsContextValue {
-  openLogModal: (runId?: string | null) => void;
-  openRunModal: () => void;
   openConfigModal: () => void;
 }
 
@@ -32,68 +25,20 @@ export function useQuickActions() {
   return ctx;
 }
 
-function LogModalContent({ initialRunId }: { initialRunId?: string | null }) {
-  const { runningRuns, selectedRunId, setSelectedRunId } = useRunState();
-  const run = React.useMemo(() => {
-    if (initialRunId != null) return runningRuns.find((r) => r.runId === initialRunId);
-    if (selectedRunId != null) return runningRuns.find((r) => r.runId === selectedRunId);
-    return runningRuns[runningRuns.length - 1];
-  }, [runningRuns, selectedRunId, initialRunId]);
-  const displayLogLines = run?.logLines ?? [];
-  const running = runningRuns.some((r) => r.status === "running");
-  const logEndRef = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    if (initialRunId != null) setSelectedRunId(initialRunId);
-  }, [initialRunId, setSelectedRunId]);
-
-  React.useEffect(() => {
-    logEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [displayLogLines.length]);
-
-  return (
-    <div className="space-y-4">
-      <DialogHeader>
-        <DialogTitle>Script output</DialogTitle>
-        <DialogDescription>
-          {run
-            ? `Live output: ${run.label ?? "Run"}`
-            : "Select a run from the top-right to view its output, or start a run from Feature or PromptRecords."}
-        </DialogDescription>
-      </DialogHeader>
-      <ScrollArea className="h-[400px] rounded border bg-muted/30 p-3 font-mono text-sm">
-        {displayLogLines.length === 0 && !running && (
-          <p className="text-muted-foreground">
-            No output yet. Run a feature or start from the PromptRecords page, then open running terminals (top-right) to view.
-          </p>
-        )}
-        {displayLogLines.map((line, i) => (
-          <div key={i} className="whitespace-pre-wrap break-all">
-            {line}
-          </div>
-        ))}
-        <div ref={logEndRef} />
-      </ScrollArea>
-    </div>
-  );
-}
-
 const FAB_ACTIONS = [
-  { id: "log" as const, label: "Log", icon: ScrollText, iconClassName: "text-info/90" },
-  { id: "run" as const, label: "Run", icon: Play, iconClassName: "text-destructive/90" },
   { id: "config" as const, label: "Configuration", icon: Settings, iconClassName: "text-success/90" },
 ] as const;
 
-/** Flutter-style FAB: always-visible main button bottom-right; hover reveals 3 action circles (Log, Run, Configuration). Portaled to body so it is never clipped by overflow-hidden on AppShell. */
+/** Flutter-style FAB: always-visible main button bottom-right; hover reveals Configuration action. Portaled to body so it is never clipped by overflow-hidden on AppShell. */
 export function QuickActionsFAB() {
-  const { openLogModal, openRunModal, openConfigModal } = useQuickActions();
+  const { openConfigModal } = useQuickActions();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
   const fabContent = (
     <div
       className="fixed bottom-6 right-6 z-[99999] flex flex-col items-end gap-3 pointer-events-none"
-      aria-label="Quick actions (Run, Log, Configuration)"
+      aria-label="Quick actions (Configuration)"
     >
       <div className="pointer-events-auto flex flex-col items-end gap-3">
         <div className="group flex flex-col items-end gap-3">
@@ -109,8 +54,6 @@ export function QuickActionsFAB() {
                   "0 2px 4px -1px rgba(0,0,0,0.06), 0 4px 6px -1px rgba(0,0,0,0.1), 0 6px 12px -2px rgba(0,0,0,0.08)",
               }}
               onClick={() => {
-                if (action.id === "log") openLogModal();
-                if (action.id === "run") openRunModal();
                 if (action.id === "config") openConfigModal();
               }}
             >
@@ -125,7 +68,7 @@ export function QuickActionsFAB() {
             }}
             role="button"
             tabIndex={0}
-            aria-label="Open quick actions (Log, Run, Configuration)"
+            aria-label="Open quick actions (Configuration)"
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
@@ -146,46 +89,20 @@ export function QuickActionsFAB() {
 
 export function QuickActionsProvider({ children }: { children: React.ReactNode }) {
   const [modal, setModal] = useState<QuickModal>(null);
-  const [logModalRunId, setLogModalRunId] = useState<string | null>(null);
 
-  const openLogModal = useCallback((runId?: string | null) => {
-    setLogModalRunId(runId ?? null);
-    setModal("log");
-  }, []);
-  const openRunModal = useCallback(() => setModal("run"), []);
   const openConfigModal = useCallback(() => setModal("config"), []);
 
   const value: QuickActionsContextValue = {
-    openLogModal,
-    openRunModal,
     openConfigModal,
   };
 
   const closeModal = useCallback(() => {
     setModal(null);
-    setLogModalRunId(null);
   }, []);
 
   return (
     <QuickActionsContext.Provider value={value}>
       {children}
-
-      {/* Modals */}
-      <Dialog open={modal === "log"} onOpenChange={(open) => !open && closeModal()}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
-          <LogModalContent initialRunId={logModalRunId} />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={modal === "run"} onOpenChange={(open) => !open && closeModal()}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0">
-          <ScrollArea className="max-h-[85vh]">
-            <div className="p-6">
-              <RunPage />
-            </div>
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={modal === "config"} onOpenChange={(open) => !open && closeModal()}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0">

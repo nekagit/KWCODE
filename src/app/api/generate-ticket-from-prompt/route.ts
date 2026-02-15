@@ -86,9 +86,8 @@ Output only a single JSON object with exactly these keys (no markdown, no code f
       typeof parsed.description === "string" && parsed.description.trim()
         ? parsed.description.trim().slice(0, 2000)
         : undefined;
-    const priority = isValidPriority(parsed.priority)
-      ? parsed.priority
-      : "P1";
+    const rawPriority = String(parsed.priority ?? "P1");
+    const priority = isValidPriority(rawPriority) ? rawPriority : "P1";
     const featureName = String(parsed.featureName ?? "Uncategorized").trim().slice(0, 100);
 
     const result: GeneratedTicket = {

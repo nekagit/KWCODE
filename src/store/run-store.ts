@@ -53,6 +53,8 @@ export interface RunActions {
 
   stopScript: () => Promise<void>;
   stopRun: (runId: string) => Promise<void>;
+  /** Called when a run exits (e.g. from Tauri); no-op if queue not used. */
+  runNextInQueue: (runId: string) => void;
   runImplementAll: (projectPath: string, promptContent?: string) => Promise<string | null>;
   /** Run one Implement All run per slot (1–3) with distinct prompt and label; used when tickets are in queue. */
   runImplementAllForTickets: (
@@ -442,6 +444,10 @@ export const useRunStore = create<RunStore>()((set, get) => ({
     }
   },
 
+  runNextInQueue: () => {
+    // No-op: queue handling not used after Run page removal
+  },
+
   stopAllImplementAll: async () => {
     const { runningRuns, stopRun } = get();
     const implementAllRunning = runningRuns.filter(
@@ -534,6 +540,7 @@ export function useRunState() {
       runWithParams: s.runWithParams,
       stopScript: s.stopScript,
       stopRun: s.stopRun,
+      runNextInQueue: s.runNextInQueue,
       runImplementAll: s.runImplementAll,
       stopAllImplementAll: s.stopAllImplementAll,
       clearImplementAllLogs: s.clearImplementAllLogs,

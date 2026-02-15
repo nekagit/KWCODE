@@ -11,11 +11,9 @@ import type { Project } from "@/types/project";
 import { ProjectsTabContent } from "@/components/molecules/TabAndContentSections/ProjectsTabContent";
 import { AllDataTabContent } from "@/components/molecules/TabAndContentSections/AllDataTabContent";
 import { DatabaseDataTabContent } from "@/components/molecules/TabAndContentSections/DatabaseDataTabContent";
-import { LogTabContent } from "@/components/molecules/TabAndContentSections/LogTabContent";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { DashboardTabContent } from "@/components/molecules/TabAndContentSections/DashboardTabContent";
 import { PromptsTabContent } from "@/components/molecules/TabAndContentSections/PromptsTabContent";
-import { TicketsTabContent } from "@/components/molecules/TabAndContentSections/TicketsTabContent";
 import { getOrganismClasses } from "./organism-classes";
 
 import type { Ticket, TicketRow, TicketStatus } from "@/types/ticket";
@@ -35,7 +33,7 @@ interface IdeaRecord {
 
 function tabFromParams(searchParams: ReturnType<typeof useSearchParams> | null): string {
   const t = searchParams?.get("tab") ?? null;
-  return (t && ["dashboard", "projects", "tickets", "all", "data", "log", "prompts"].includes(t) ? t : "dashboard") as string;
+  return (t && ["dashboard", "projects", "prompts", "all", "data"].includes(t) ? t : "dashboard") as string;
 }
 
 export function HomePageContent() {
@@ -53,8 +51,6 @@ export function HomePageContent() {
     selectedPromptRecordIds,
     setSelectedPromptRecordIds,
     runningRuns,
-    selectedRunId,
-    setSelectedRunId,
     runWithParams,
     isTauriEnv,
   } = useRunState();
@@ -66,7 +62,6 @@ export function HomePageContent() {
   const [ideas, setIdeas] = useState<IdeaRecord[]>([]);
   const [ideasLoading, setIdeasLoading] = useState(false);
   const [tabError, setTabError] = useState<string | null>(null);
-  const running = runningRuns.some((r) => r.status === "running");
 
   const loadTickets = useCallback(async () => {
     if (!isTauri) return;
@@ -145,11 +140,6 @@ export function HomePageContent() {
     await saveTickets(tickets.filter((t) => t.id !== id));
   };
 
-  const displayLogLines =
-    selectedRunId != null
-      ? runningRuns.find((r) => r.runId === selectedRunId)?.logLines ?? []
-      : runningRuns[runningRuns.length - 1]?.logLines ?? [];
-
   return (
     <Tabs value={tab} onValueChange={(v) => navigateToTab(v as string)} className={c["0"]} data-testid="home-page-tabs">
       <div className={c["1"]}>
@@ -162,9 +152,7 @@ export function HomePageContent() {
 
         <TabsContent value="dashboard" className={c["4"]}>
           <DashboardTabContent
-            runningRuns={runningRuns}
             navigateToTab={navigateToTab}
-            setSelectedRunId={setSelectedRunId}
             tickets={tickets}
             updateTicket={updateTicket}
             deleteTicket={deleteTicket}
@@ -177,16 +165,6 @@ export function HomePageContent() {
             prompts={prompts}
             selectedPromptRecordIds={selectedPromptRecordIds}
             setSelectedPromptRecordIds={setSelectedPromptRecordIds}
-          />
-        </TabsContent>
-
-        <TabsContent value="tickets" className={c["6"]}>
-          <TicketsTabContent
-            tickets={tickets}
-            saveTickets={saveTickets}
-            updateTicket={updateTicket}
-            deleteTicket={deleteTicket}
-            setError={setTabError}
           />
         </TabsContent>
 
@@ -220,15 +198,6 @@ export function HomePageContent() {
             tickets={tickets}
             allProjects={allProjects}
             activeProjects={activeProjects}
-          />
-        </TabsContent>
-
-        <TabsContent value="log" className={c["11"]}>
-          <LogTabContent
-            displayLogLines={displayLogLines}
-            selectedRunId={selectedRunId}
-            runningRuns={runningRuns}
-            running={running}
           />
         </TabsContent>
       </div>

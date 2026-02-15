@@ -113,9 +113,6 @@ export function AllDataTabContent({
           <p className={classes[15]}>
             Configure page layout, colors, typography, and sections. Generate markdown for implementation.
           </p>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/design">Open Design page</Link>
-          </Button>
         </Card>
       </div>
     </div>

@@ -1,7 +1,5 @@
 "use client";
 
-import { Play, Square } from "lucide-react";
-import Link from "next/link";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import { StartButton } from "@/components/atoms/buttons/StartButton";
 import { StopButton } from "@/components/atoms/buttons/StopButton";
@@ -38,11 +36,6 @@ export function RunControls({
         text="Timing (delays between operations) is configured on the"
         linkHref="/configuration"
         linkText="Configuration"
-      />
-      <PageFooterText
-        text="View output in the"
-        linkHref="/?tab=log"
-        linkText="Log"
       />
     </div>
   );

@@ -539,9 +539,6 @@
       "h-4 w-4 mr-2",
       "h-4 w-4 mr-2"
     ],
-    "LayoutAndNavigation/RunPageHeader.tsx": [
-      "text-xs bg-muted px-1 rounded"
-    ],
     "LayoutAndNavigation/ThemedPageLayout.tsx": [
       "space-y-6",
       "h-4 w-4"
@@ -648,11 +645,6 @@
     ],
     "TabAndContentSections/FeatureTabContent.tsx": [
       "mt-0"
-    ],
-    "TabAndContentSections/LogTabContent.tsx": [
-      "h-[400px] surface-card bg-muted/40 p-3 font-mono text-sm",
-      "text-muted-foreground/90",
-      "whitespace-pre-wrap break-all"
     ],
     "TabAndContentSections/MyDefinitionsTabContent.tsx": [
       "mt-6"
@@ -892,9 +884,6 @@
     ],
     "TabAndContentSections/TestingTemplatesTabContent.tsx": [
       "mt-6 space-y-6"
-    ],
-    "TabAndContentSections/TicketsTabContent.tsx": [
-      "mt-0"
     ],
     "Tables/DataTableHeader.tsx": [
       "-ml-2 h-8",

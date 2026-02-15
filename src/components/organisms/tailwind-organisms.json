@@ -1,14 +1,6 @@
 {
-  "ArchitecturePageContent.tsx": {
-    "0": "text-primary/90"
-  },
   "ConfigurationPageContent.tsx": {
     "0": "size-5 text-primary/90"
-  },
-  "DesignPageContent.tsx": {
-    "0": "min-h-screen bg-background space-y-8 pb-20 container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 animate-fade-in",
-    "1": "size-6 text-primary/90",
-    "2": "rounded-xl border border-border/60 bg-muted/30 p-6 text-center text-muted-foreground"
   },
   "HomePageContent.tsx": {
     "0": "flex flex-1 flex-col",
@@ -55,10 +47,6 @@
     "6": "underline hover:text-foreground transition-colors",
     "7": "text-sm text-muted-foreground py-4"
   },
-  "RunPageContent.tsx": {
-    "0": "space-y-6",
-    "1": "border-amber-500/50 bg-amber-500/10"
-  },
   "SidebarNavigation.tsx": {
     "0": "flex flex-col flex-1 min-h-0 gap-3 mt-3",
     "1": "flex flex-col flex-1 min-h-0 border-t border-border/40 pt-3 gap-0.5",
@@ -84,28 +72,6 @@
   "SingleContentPage.tsx": {
     "0": "size-4",
     "1": "space-y-6"
-  },
-  "DocumentationPageContent.tsx": {
-    "0": "min-h-screen bg-background space-y-8 pb-20 container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 animate-fade-in",
-    "1": "size-6 text-info/90"
-  },
-  "TestingPageContent.tsx": {
-    "0": "min-h-screen bg-background space-y-8 pb-20 container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 animate-fade-in",
-    "1": "size-6 text-info/90",
-    "2": "w-full space-y-6",
-    "3": "inline-flex h-auto p-1.5 rounded-2xl bg-muted/20 backdrop-blur-md border border-border/40 gap-2 items-center justify-start overflow-x-auto w-full sm:w-auto mx-auto sm:mx-0 shadow-sm",
-    "4": "inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 border border-transparent data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:border-border/50 data-[state=active]:shadow-sm hover:bg-muted/40",
-    "5": "size-4",
-    "6": "inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 border border-transparent data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:border-border/50 data-[state=active]:shadow-sm hover:bg-muted/40",
-    "7": "size-4",
-    "8": "inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 border border-transparent data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:border-border/50 data-[state=active]:shadow-sm hover:bg-muted/40",
-    "9": "size-4",
-    "10": "inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 border border-transparent data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:border-border/50 data-[state=active]:shadow-sm hover:bg-muted/40",
-    "11": "size-4",
-    "12": "mt-0 pt-0 pb-6 space-y-6 animate-fade-in-up",
-    "13": "mt-0 pt-0 pb-6 space-y-6 animate-fade-in-up",
-    "14": "mt-0 pt-0 pb-6 animate-fade-in-up",
-    "15": "mt-0 pt-0 pb-6 animate-fade-in-up"
   },
   "ThreeTabResourcePageContent.tsx": {
     "0": "min-h-screen bg-background space-y-8 pb-20 container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 animate-fade-in"

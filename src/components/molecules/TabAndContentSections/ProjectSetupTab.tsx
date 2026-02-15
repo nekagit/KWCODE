@@ -256,7 +256,7 @@ export function ProjectSetupTab({ project, projectId }: ProjectSetupTabProps) {
                   </>
                 )}
 
-                {["adr", "prompts", "rules"].includes(folder.id) && (
+                {["adr", "prompts", "rules", "project", "milestones", "worker", "documentation"].includes(folder.id) && (
                   <>
                     {files.length === 0 ? (
                       <p className="text-xs text-muted-foreground">No files in this folder.</p>

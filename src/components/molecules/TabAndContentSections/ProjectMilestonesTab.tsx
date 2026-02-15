@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SectionCard } from "@/components/shared/DisplayPrimitives";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { Flag, Copy, Loader2, PlusCircle } from "lucide-react";
+import { Flag, Copy, Loader2, PlusCircle, FileText } from "lucide-react";
 import { toast } from "sonner";
 import type { Project } from "@/types/project";
 import {
@@ -13,6 +15,12 @@ import {
   writeProjectFile,
   listProjectFiles,
 } from "@/lib/api-projects";
+import { cn } from "@/lib/utils";
+
+const MILESTONES_DIR = ".cursor/milestones";
+
+const markdownClasses =
+  "text-sm text-foreground [&_h1]:text-lg [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-semibold [&_h3]:text-sm [&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_pre]:bg-muted/50 [&_pre]:p-3 [&_pre]:rounded-md [&_pre]:overflow-x-auto [&_code]:bg-muted/50 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_p]:mb-2 last:[&_p]:mb-0 [&_table]:border-collapse [&_th]:border [&_td]:border [&_th]:px-2 [&_td]:px-2 [&_th]:py-1 [&_td]:py-1";
 import {
   parseTicketsMd,
   serializeTicketsToMd,
@@ -91,6 +99,61 @@ export function ProjectMilestonesTab({
     ticket: GeneratedTicket;
   } | null>(null);
   const [addingToBacklog, setAddingToBacklog] = useState(false);
+
+  const [milestoneFiles, setMilestoneFiles] = useState<string[]>([]);
+  const [selectedMilestoneFile, setSelectedMilestoneFile] = useState<string | null>(null);
+  const [milestoneContent, setMilestoneContent] = useState<string | null>(null);
+  const [loadingMilestoneList, setLoadingMilestoneList] = useState(true);
+  const [loadingMilestoneContent, setLoadingMilestoneContent] = useState(false);
+
+  useEffect(() => {
+    if (!project.repoPath) {
+      setLoadingMilestoneList(false);
+      return;
+    }
+    let cancelled = false;
+    setLoadingMilestoneList(true);
+    listProjectFiles(projectId, MILESTONES_DIR, project.repoPath)
+      .then((list) => {
+        if (cancelled) return;
+        const md = list
+          .filter((e) => !e.isDirectory && (e.name.endsWith(".md") || e.name.endsWith(".milestone.md")))
+          .map((e) => e.name)
+          .sort();
+        setMilestoneFiles(md);
+      })
+      .catch(() => {
+        if (!cancelled) setMilestoneFiles([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingMilestoneList(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId, project.repoPath]);
+
+  useEffect(() => {
+    if (!selectedMilestoneFile || !project.repoPath) {
+      setMilestoneContent(null);
+      return;
+    }
+    let cancelled = false;
+    setLoadingMilestoneContent(true);
+    readProjectFileOrEmpty(projectId, `${MILESTONES_DIR}/${selectedMilestoneFile}`, project.repoPath)
+      .then((text) => {
+        if (!cancelled) setMilestoneContent(text?.trim() || null);
+      })
+      .catch(() => {
+        if (!cancelled) setMilestoneContent(null);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingMilestoneContent(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId, project.repoPath, selectedMilestoneFile]);
 
   const handleCopyContext = useCallback((text: string) => {
     navigator.clipboard.writeText(text).then(
@@ -228,6 +291,59 @@ export function ProjectMilestonesTab({
         Use the phase context and your specific inputs to generate tickets; add
         them to the backlog from here or from Planner.
       </p>
+
+      {/* Milestone files — .cursor/milestones/ */}
+      <SectionCard accentColor="orange">
+        <div className="flex items-center gap-2 mb-3">
+          <FileText className="h-4 w-4 text-orange-500" />
+          <h3 className="text-sm font-semibold">Milestone files</h3>
+        </div>
+        <p className="text-xs text-muted-foreground mb-3">
+          Files in <code className="rounded bg-muted px-1 py-0.5">{MILESTONES_DIR}</code>. Click to view.
+        </p>
+        {loadingMilestoneList ? (
+          <div className="flex items-center gap-2 py-4">
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Loading…</span>
+          </div>
+        ) : milestoneFiles.length === 0 ? (
+          <p className="text-xs text-muted-foreground">No milestone files found.</p>
+        ) : (
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-wrap gap-1.5 min-w-0">
+              {milestoneFiles.map((name) => (
+                <Button
+                  key={name}
+                  variant={selectedMilestoneFile === name ? "secondary" : "outline"}
+                  size="sm"
+                  className="font-mono text-xs"
+                  onClick={() => setSelectedMilestoneFile(name)}
+                >
+                  {name}
+                </Button>
+              ))}
+            </div>
+            <div className="flex-1 min-w-0 border border-border/60 rounded-md overflow-hidden">
+              {loadingMilestoneContent ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : milestoneContent ? (
+                <ScrollArea className="h-[280px]">
+                  <div className={cn("p-3", markdownClasses)}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{milestoneContent}</ReactMarkdown>
+                  </div>
+                </ScrollArea>
+              ) : (
+                <div className="p-4 text-xs text-muted-foreground text-center">
+                  Select a file to preview.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </SectionCard>
+
       <ScrollArea className="flex-1">
         <div className="flex flex-col gap-4 pr-4">
           {MILESTONE_PHASES.map((phase) => (

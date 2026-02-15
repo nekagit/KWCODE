@@ -575,7 +575,7 @@ export function ProjectTicketsTab({
     setGeneratedTicket(null);
     setAssignedAgentsForGenerated([]);
     try {
-      const existingFeatures = []; // No longer tracking features
+      const existingFeatures: string[] = []; // No longer tracking features
       const res = await fetch("/api/generate-ticket-from-prompt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -778,7 +778,6 @@ export function ProjectTicketsTab({
                               key={columnId}
                               columnId={columnId}
                               column={column}
-                              featureColorByTitle={{}}
                               projectId={projectId}
                               handleMarkDone={handleMarkDone}
                               handleRedo={handleRedo}

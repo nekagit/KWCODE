@@ -265,12 +265,8 @@ export function PromptRecordsPageContent() {
               <CardTitle className={c["2"]}>All prompts data</CardTitle>
               <CardDescription className={c["3"]}>
                 Full list of prompts with id, title, category, tags, dates, and content preview.
-                Select in the table for run (script <code className={c["4"]}>-p ID ...</code>); go
-                to the{" "}
-                <Link href="/run" className={c["5"]}>
-                  Run
-                </Link>{" "}
-                page to set prompts and run. Edit or delete from the table. Configure timing on the{" "}
+                Select in the table for run (script <code className={c["4"]}>-p ID ...</code>).
+                Edit or delete from the table. Configure timing on the{" "}
                 <Link href="/configuration" className={c["6"]}>
                   Configuration
                 </Link>{" "}

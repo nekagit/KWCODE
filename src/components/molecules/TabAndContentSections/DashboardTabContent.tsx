@@ -2,16 +2,13 @@ import { QuickActions } from "@/components/organisms/QuickActions";
 import { TicketBoard } from "@/components/organisms/TicketBoard";
 import { DashboardMetricsCards } from "@/components/molecules/CardsAndDisplay/DashboardMetricsCards";
 import type { TicketRow } from "@/types/ticket";
-import type { RunInfo } from "@/types/run";
 import { useRouter } from "next/navigation";
 import { getClasses } from "@/components/molecules/tailwind-molecules";
 
 const classes = getClasses("TabAndContentSections/DashboardTabContent.tsx");
 
 interface DashboardTabContentProps {
-  runningRuns: RunInfo[];
   navigateToTab: (tab: string) => void;
-  setSelectedRunId: (id: string | null) => void;
   tickets: TicketRow[];
   updateTicket: (id: string, updates: Partial<TicketRow>) => Promise<void>;
   deleteTicket: (id: string) => Promise<void>;
@@ -19,9 +16,7 @@ interface DashboardTabContentProps {
 }
 
 export function DashboardTabContent({
-  runningRuns,
   navigateToTab,
-  setSelectedRunId,
   tickets,
   updateTicket,
   deleteTicket,
@@ -35,9 +30,7 @@ export function DashboardTabContent({
       </section>
       <section className="mb-6">
         <QuickActions
-          runningRuns={runningRuns}
           navigateToTab={navigateToTab}
-          setSelectedRunId={setSelectedRunId}
           router={router}
         />
       </section>

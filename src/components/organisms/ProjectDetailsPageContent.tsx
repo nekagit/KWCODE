@@ -35,6 +35,8 @@ import { ProjectFrontendTab } from "@/components/molecules/TabAndContentSections
 import { ProjectBackendTab } from "@/components/molecules/TabAndContentSections/ProjectBackendTab";
 import { ProjectSetupTab } from "@/components/molecules/TabAndContentSections/ProjectSetupTab";
 import { ProjectSetupDocTab } from "@/components/molecules/TabAndContentSections/ProjectSetupDocTab";
+import { ProjectDocumentationHubTab } from "@/components/molecules/TabAndContentSections/ProjectDocumentationHubTab";
+import { ProjectProjectTab } from "@/components/molecules/TabAndContentSections/ProjectProjectTab";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { cn } from "@/lib/utils";
 import { SectionCard, MetadataBadge, CountBadge } from "@/components/shared/DisplayPrimitives";
@@ -44,6 +46,7 @@ import { Sparkles } from "lucide-react";
 
 const TAB_ROW_1 = [
   { value: "setup", label: "Setup", icon: Settings, color: "text-violet-400", activeGlow: "shadow-violet-500/10" },
+  { value: "project", label: "Project", icon: FolderOpen, color: "text-sky-400", activeGlow: "shadow-sky-500/10" },
   { value: "frontend", label: "Frontend", icon: Monitor, color: "text-cyan-400", activeGlow: "shadow-cyan-500/10" },
   { value: "backend", label: "Backend", icon: Server, color: "text-orange-400", activeGlow: "shadow-orange-500/10" },
   { value: "documentation", label: "Documentation", icon: FileText, color: "text-teal-400", activeGlow: "shadow-teal-500/10" },
@@ -366,6 +369,14 @@ export function ProjectDetailsPageContent() {
             <ProjectSetupTab project={project} projectId={projectId} />
           </TabsContent>
 
+          {/* ── Project Tab ── */}
+          <TabsContent
+            value="project"
+            className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
+          >
+            <ProjectProjectTab project={project} projectId={projectId} />
+          </TabsContent>
+
           {/* ── Frontend Tab ── */}
           <TabsContent
             value="frontend"
@@ -395,7 +406,7 @@ export function ProjectDetailsPageContent() {
             value="documentation"
             className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
           >
-            <ProjectSetupDocTab project={project} projectId={projectId} setupKey="documentation" />
+            <ProjectDocumentationHubTab project={project} projectId={projectId} />
           </TabsContent>
 
           {/* ── Ideas Tab ── */}
