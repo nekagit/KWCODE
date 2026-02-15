@@ -558,7 +558,7 @@
       "py-8 text-center text-muted-foreground/90 text-sm",
       "text-sm text-muted-foreground/90",
       "text-sm text-muted-foreground/90",
-      "surface-card bg-muted/30 max-h-[520px]",
+      "surface-card bg-muted/30 max-h-[min(720px,70vh)] overflow-y-auto",
       "p-2 space-y-0.5",
       "w-full",
       "border-b",

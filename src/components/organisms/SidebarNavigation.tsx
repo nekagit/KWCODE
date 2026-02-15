@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { LayoutDashboard, MessageSquare, Folders, Lightbulb, LayoutGrid, Settings, Moon } from "lucide-react";
+import { LayoutDashboard, MessageSquare, Folders, Lightbulb, Cpu, LayoutGrid, Settings, Moon } from "lucide-react";
 import { NavLinkItem } from "@/components/molecules/Navigation/NavLinkItem";
 import { getOrganismClasses } from "./organism-classes";
 
@@ -23,6 +23,7 @@ const getNavItems = (): {
   },
   toolsNavItems: [
     { href: "/ideas", label: "Ideas", icon: Lightbulb, iconClassName: c["18"] },
+    { href: "/technologies", label: "Technologies", icon: Cpu, iconClassName: c["14"] },
   ],
   workNavItems: [
     { href: "/projects", label: "Projects", icon: Folders, iconClassName: c["14"] },

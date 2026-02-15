@@ -26,7 +26,10 @@ function getStoredSidebarWidth(): number {
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [sidebarWidth, setSidebarWidth] = useState(() => getStoredSidebarWidth());
+  const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_DEFAULT);
+  useEffect(() => {
+    setSidebarWidth(getStoredSidebarWidth());
+  }, []);
   const [isResizing, setIsResizing] = useState(false);
   const resizeStartX = useRef(0);
   const resizeStartWidth = useRef(SIDEBAR_DEFAULT);
@@ -82,9 +85,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <aside
         className="flex shrink-0 flex-col border-r border-border/60 bg-sidebar h-screen overflow-hidden relative"
         style={{
-          width: currentWidth,
+          width: `${currentWidth}px`,
           transition: isResizing ? "none" : "width 200ms ease-in-out",
         }}
+        suppressHydrationWarning
       >
         {/* Branded header */}
         <div

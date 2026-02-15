@@ -1071,24 +1071,43 @@ fn get_all_projects() -> Result<Vec<String>, String> {
     with_db(db::get_all_projects)
 }
 
-/// Collect all direct subdirectory paths under `dir`. No filter by name—every subdir and symlink is included.
+/// Collect direct subdirectory paths under `dir` only (one level). Include every entry that is a directory or a symlink (so we don't drop folders or symlinks on macOS).
 fn list_subdir_paths(dir: &Path) -> Result<Vec<String>, String> {
     let mut paths = vec![];
-    for entry in std::fs::read_dir(dir).map_err(|e| e.to_string())? {
-        let entry = entry.map_err(|e| e.to_string())?;
-        let path = entry.path();
-        let is_dir = path.is_dir();
-        let is_symlink = entry.file_type().map(|ft| ft.is_symlink()).unwrap_or(false);
-        if is_dir || is_symlink {
-            let path_str = path
-                .canonicalize()
-                .ok()
-                .and_then(|c| c.to_str().map(String::from))
-                .unwrap_or_else(|| path.to_string_lossy().to_string());
-            paths.push(path_str);
+    let entries = std::fs::read_dir(dir).map_err(|e| e.to_string())?;
+    for entry in entries {
+        let entry = match entry {
+            Ok(e) => e,
+            Err(_) => continue,
+        };
+        let name = entry.file_name();
+        let name_str = name.to_string_lossy();
+        if name_str == "." || name_str == ".." {
+            continue;
         }
+        if name_str.starts_with('.') {
+            continue;
+        }
+        let full = dir.join(&name);
+        let is_symlink = entry.file_type().map(|ft| ft.is_symlink()).unwrap_or(false);
+        let is_dir = full.is_dir();
+        if !is_dir && !is_symlink {
+            continue;
+        }
+        let path_str = full.to_string_lossy().to_string();
+        paths.push(path_str);
     }
     Ok(paths)
+}
+
+/// One entry in the debug listing: why it was included or skipped.
+#[derive(serde::Serialize)]
+struct FebruaryFolderDebugEntry {
+    name: String,
+    included: bool,
+    is_dir: bool,
+    is_symlink: bool,
+    file_type_err: Option<String>,
 }
 
 /// Parse FEBRUARY_DIR= value from a line of .env content.
@@ -1109,36 +1128,44 @@ fn parse_february_dir_line(line: &str) -> Option<PathBuf> {
     }
 }
 
-/// Read one line from path_file and return it as PathBuf if absolute and existing dir.
-fn read_february_dir_from_file(path_file: &Path) -> Option<PathBuf> {
-    let line = std::fs::read_to_string(path_file).ok()?.lines().next()?.trim().to_string();
-    if line.is_empty() {
-        return None;
+/// Read all lines from path_file; return path as PathBuf if absolute and existing dir.
+fn read_february_dirs_from_file(path_file: &Path) -> Vec<PathBuf> {
+    let content = match std::fs::read_to_string(path_file) {
+        Ok(c) => c,
+        Err(_) => return vec![],
+    };
+    let mut out = vec![];
+    for line in content.lines() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        let pb = PathBuf::from(line);
+        if pb.is_absolute() && pb.is_dir() {
+            out.push(pb);
+        }
     }
-    let pb = PathBuf::from(line);
-    if pb.is_absolute() && pb.is_dir() {
-        Some(pb)
-    } else {
-        None
-    }
+    out
 }
 
-/// Read projects root path from data/february-dir.txt. Check project data dir, cwd/data, then walk up from exe.
-fn february_dir_from_data_file() -> Option<PathBuf> {
+/// Read all projects root paths from data/february-dir.txt (one path per line). Check project data dir, cwd/data, then walk up from exe.
+fn february_dirs_from_data_file() -> Vec<PathBuf> {
     if let Ok(ws) = project_root() {
         let data = data_dir(&ws);
         let path_file = data.join("february-dir.txt");
         if path_file.exists() {
-            if let Some(pb) = read_february_dir_from_file(&path_file) {
-                return Some(pb);
+            let dirs = read_february_dirs_from_file(&path_file);
+            if !dirs.is_empty() {
+                return dirs;
             }
         }
     }
     if let Ok(cwd) = std::env::current_dir() {
         let path_file = cwd.join("data").join("february-dir.txt");
         if path_file.exists() {
-            if let Some(pb) = read_february_dir_from_file(&path_file) {
-                return Some(pb);
+            let dirs = read_february_dirs_from_file(&path_file);
+            if !dirs.is_empty() {
+                return dirs;
             }
         }
     }
@@ -1150,8 +1177,9 @@ fn february_dir_from_data_file() -> Option<PathBuf> {
             }
             let path_file = dir.join("data").join("february-dir.txt");
             if path_file.exists() {
-                if let Some(pb) = read_february_dir_from_file(&path_file) {
-                    return Some(pb);
+                let dirs = read_february_dirs_from_file(&path_file);
+                if !dirs.is_empty() {
+                    return dirs;
                 }
             }
             if let Some(p) = dir.parent() {
@@ -1161,36 +1189,77 @@ fn february_dir_from_data_file() -> Option<PathBuf> {
             }
         }
     }
-    None
+    vec![]
 }
 
-/// Read FEBRUARY_DIR from process env or from .env file (project root, cwd, or near executable).
-fn resolve_february_dir() -> Option<PathBuf> {
-    if let Some(pb) = february_dir_from_data_file() {
-        return Some(pb);
+/// Parse FEBRUARY_DIR= value from a line; may contain multiple paths separated by ; or ,.
+fn parse_february_dir_line_multi(line: &str) -> Vec<PathBuf> {
+    let line = line.trim();
+    if !line.starts_with("FEBRUARY_DIR=") {
+        return vec![];
     }
-    if let Some(pb) = std::env::var("FEBRUARY_DIR").ok().filter(|p| !p.trim().is_empty()).map(|p| PathBuf::from(p.trim())) {
+    let value = line["FEBRUARY_DIR=".len()..].trim().trim_matches('"').trim_matches('\'');
+    let mut out = vec![];
+    for part in value.split(&[';', ','][..]) {
+        let part = part.trim();
+        if part.is_empty() {
+            continue;
+        }
+        let pb = PathBuf::from(part);
         if pb.is_absolute() {
-            return Some(pb);
+            out.push(pb);
         }
     }
-    let try_env_file = |path: &Path| -> Option<PathBuf> {
-        let content = std::fs::read_to_string(path).ok()?;
-        for line in content.lines() {
-            if let Some(pb) = parse_february_dir_line(line) {
-                return Some(pb);
+    out
+}
+
+/// All configured projects roots: data/february-dir.txt (all lines) + FEBRUARY_DIR (split by ; or ,).
+fn resolve_february_dirs() -> Vec<PathBuf> {
+    let mut candidates: Vec<PathBuf> = february_dirs_from_data_file();
+    if !candidates.is_empty() {
+        return candidates;
+    }
+    if let Ok(val) = std::env::var("FEBRUARY_DIR") {
+        for part in val.split(&[';', ','][..]) {
+            let part = part.trim();
+            if part.is_empty() {
+                continue;
+            }
+            let pb = PathBuf::from(part);
+            if pb.is_absolute() {
+                candidates.push(pb);
             }
         }
-        None
+    }
+    if !candidates.is_empty() {
+        return candidates;
+    }
+    let try_env_file = |path: &Path| -> Vec<PathBuf> {
+        let content = match std::fs::read_to_string(path) {
+            Ok(c) => c,
+            Err(_) => return vec![],
+        };
+        for line in content.lines() {
+            let parsed = parse_february_dir_line_multi(line);
+            if !parsed.is_empty() {
+                return parsed;
+            }
+            if let Some(pb) = parse_february_dir_line(line) {
+                return vec![pb];
+            }
+        }
+        vec![]
     };
     if let Ok(ws) = project_root() {
-        if let Some(pb) = try_env_file(&ws.join(".env")) {
-            return Some(pb);
+        let dirs = try_env_file(&ws.join(".env"));
+        if !dirs.is_empty() {
+            return dirs;
         }
     }
     if let Ok(cwd) = std::env::current_dir() {
-        if let Some(pb) = try_env_file(&cwd.join(".env")) {
-            return Some(pb);
+        let dirs = try_env_file(&cwd.join(".env"));
+        if !dirs.is_empty() {
+            return dirs;
         }
     }
     if let Ok(exe) = std::env::current_exe() {
@@ -1199,8 +1268,9 @@ fn resolve_february_dir() -> Option<PathBuf> {
             if dir.as_os_str().is_empty() {
                 break;
             }
-            if let Some(pb) = try_env_file(&dir.join(".env")) {
-                return Some(pb);
+            let dirs = try_env_file(&dir.join(".env"));
+            if !dirs.is_empty() {
+                return dirs;
             }
             if let Some(p) = dir.parent() {
                 dir = p.to_path_buf();
@@ -1209,28 +1279,144 @@ fn resolve_february_dir() -> Option<PathBuf> {
             }
         }
     }
-    None
+    vec![]
 }
 
-/// List all subdirectories of the configured projects root. Used by Projects page Local repos card.
-/// No filter by name—every folder is included. Path from data file or FEBRUARY_DIR (env or .env); else parent of project root.
-#[tauri::command]
-fn list_february_folders() -> Result<Vec<String>, String> {
-    let mut candidates: Vec<PathBuf> = vec![];
+/// Debug: list every read_dir entry with included/is_dir/is_symlink so we can see why a folder is skipped.
+fn list_subdir_paths_debug(dir: &Path) -> Result<Vec<FebruaryFolderDebugEntry>, String> {
+    let mut out = vec![];
+    let entries = std::fs::read_dir(dir).map_err(|e| e.to_string())?;
+    for entry in entries {
+        let (name_str, is_dir, is_symlink, file_type_err) = match &entry {
+            Ok(e) => {
+                let name = e.file_name();
+                let name_str = name.to_string_lossy().to_string();
+                if name_str == "." || name_str == ".." || name_str.starts_with('.') {
+                    continue;
+                }
+                let full = dir.join(&name);
+                let ft = e.file_type();
+                let (is_symlink, file_type_err) = match &ft {
+                    Ok(ft) => (ft.is_symlink(), None),
+                    Err(e) => (false, Some(e.to_string())),
+                };
+                let is_dir = full.is_dir();
+                (name_str, is_dir, is_symlink, file_type_err)
+            }
+            Err(e) => {
+                out.push(FebruaryFolderDebugEntry {
+                    name: format!("<error: {}>", e),
+                    included: false,
+                    is_dir: false,
+                    is_symlink: false,
+                    file_type_err: Some(e.to_string()),
+                });
+                continue;
+            }
+        };
+        let included = is_dir || is_symlink;
+        out.push(FebruaryFolderDebugEntry {
+            name: name_str,
+            included,
+            is_dir,
+            is_symlink,
+            file_type_err,
+        });
+    }
+    Ok(out)
+}
 
-    if let Some(pb) = resolve_february_dir() {
-        let pb_canon = pb.canonicalize().ok().unwrap_or(pb);
-        if pb_canon.is_dir() {
-            candidates.push(pb_canon);
+/// Debug: return raw folder names from the first configured root (to verify what the backend sees).
+#[tauri::command]
+fn list_february_folders_debug() -> Result<serde_json::Value, String> {
+    let mut candidates: Vec<PathBuf> = resolve_february_dirs()
+        .into_iter()
+        .filter(|pb| pb.is_dir())
+        .collect();
+    if candidates.is_empty() {
+        if let Ok(ws) = project_root() {
+            if let Some(parent) = ws.parent() {
+                let parent_buf = parent.to_path_buf();
+                if parent_buf.is_dir() {
+                    candidates.push(parent_buf);
+                }
+            }
         }
     }
+    let root = candidates.first().cloned().unwrap_or_else(PathBuf::new);
+    let root_str = root.to_string_lossy().to_string();
+    let names: Vec<String> = list_subdir_paths(&root)
+        .unwrap_or_default()
+        .into_iter()
+        .filter_map(|p| PathBuf::from(&p).file_name().map(|n| n.to_string_lossy().to_string()))
+        .collect();
+    let out = serde_json::json!({
+        "root": root_str,
+        "count": names.len(),
+        "names": names
+    });
+    Ok(out)
+}
+
+/// Debug: return every read_dir entry with included/is_dir/is_symlink/file_type_err so we can see why a folder is skipped.
+#[tauri::command]
+fn list_february_folders_debug_entries() -> Result<serde_json::Value, String> {
+    let mut candidates: Vec<PathBuf> = resolve_february_dirs()
+        .into_iter()
+        .filter(|pb| pb.is_dir())
+        .collect();
+    if candidates.is_empty() {
+        if let Ok(ws) = project_root() {
+            if let Some(parent) = ws.parent() {
+                let parent_buf = parent.to_path_buf();
+                if parent_buf.is_dir() {
+                    candidates.push(parent_buf);
+                }
+            }
+        }
+    }
+    let root = candidates.first().cloned().unwrap_or_else(PathBuf::new);
+    let root_str = root.to_string_lossy().to_string();
+    let entries = list_subdir_paths_debug(&root).unwrap_or_default();
+    let skipped: Vec<&FebruaryFolderDebugEntry> = entries.iter().filter(|e| !e.included).collect();
+    let out = serde_json::json!({
+        "root": root_str,
+        "total_entries": entries.len(),
+        "included_count": entries.iter().filter(|e| e.included).count(),
+        "skipped": skipped.iter().map(|e| serde_json::json!({
+            "name": e.name,
+            "is_dir": e.is_dir,
+            "is_symlink": e.is_symlink,
+            "file_type_err": e.file_type_err
+        })).collect::<Vec<_>>(),
+        "entries": entries.iter().map(|e| serde_json::json!({
+            "name": e.name,
+            "included": e.included,
+            "is_dir": e.is_dir,
+            "is_symlink": e.is_symlink,
+            "file_type_err": e.file_type_err
+        })).collect::<Vec<_>>()
+    });
+    Ok(out)
+}
+
+/// List all subdirectories of the configured projects root(s). Used by Projects page Local repos card.
+/// No filter by name—every folder is included. Paths from data/february-dir.txt (one per line) or FEBRUARY_DIR (; or , separated); else parent of project root.
+#[tauri::command]
+fn list_february_folders() -> Result<Vec<String>, String> {
+    let mut candidates: Vec<PathBuf> = resolve_february_dirs()
+        .into_iter()
+        .filter(|pb| pb.is_dir())
+        .collect();
+    let mut seen = HashSet::new();
+    candidates.retain(|pb| seen.insert(pb.clone()));
 
     if candidates.is_empty() {
         if let Ok(ws) = project_root() {
             if let Some(parent) = ws.parent() {
                 let parent_buf = parent.to_path_buf();
                 let canonical_parent = parent_buf.canonicalize().ok().unwrap_or(parent_buf);
-                if canonical_parent.is_dir() && !candidates.iter().any(|c| c == &canonical_parent) {
+                if canonical_parent.is_dir() {
                     candidates.push(canonical_parent);
                 }
             }
@@ -1947,6 +2133,8 @@ pub fn run() {
             get_project_resolved,
             get_project_export,
             list_february_folders,
+            list_february_folders_debug,
+            list_february_folders_debug_entries,
             get_active_projects,
             get_prompts,
             save_prompts,

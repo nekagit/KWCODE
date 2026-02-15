@@ -2,21 +2,16 @@ import { NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 
-/** All direct subdirectories under dir. No filter by name—every folder is included. */
+/** Direct subdirectories under dir only (one level). Include every entry that is a directory or symlink by type; no existsSync so we don't skip valid folders on macOS. */
 function listSubdirPaths(dir: string): string[] {
   const folders: string[] = [];
   try {
     const names = fs.readdirSync(dir, { withFileTypes: true });
     for (const d of names) {
-      const isDir = d.isDirectory();
-      const isLink = d.isSymbolicLink();
-      if (!isDir && !isLink) continue;
+      if (d.name === "." || d.name === "..") continue;
+      if (!d.isDirectory() && !d.isSymbolicLink()) continue;
       const full = path.join(dir, d.name);
-      try {
-        folders.push(fs.realpathSync(full));
-      } catch {
-        folders.push(path.resolve(full));
-      }
+      folders.push(path.resolve(full));
     }
   } catch {
     // ignore unreadable dir
@@ -33,21 +28,24 @@ function getDataDir(): string {
   return cwd;
 }
 
-/** Read projects root path from data/february-dir.txt (one line). Highest priority. */
-function februaryDirFromDataFile(): string | null {
+/** Read all projects root paths from data/february-dir.txt (one path per line). Highest priority. */
+function februaryDirCandidatesFromDataFile(): string[] {
   const dataDir = getDataDir();
   const filePath = path.join(dataDir, "february-dir.txt");
+  const out: string[] = [];
   try {
-    if (!fs.existsSync(filePath)) return null;
+    if (!fs.existsSync(filePath)) return out;
     const content = fs.readFileSync(filePath, "utf-8");
-    const line = content.split("\n")[0]?.trim();
-    if (!line) return null;
-    const resolved = path.resolve(line);
-    if (fs.existsSync(resolved) && fs.statSync(resolved).isDirectory()) return resolved;
+    for (const line of content.split("\n")) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      const resolved = path.resolve(trimmed);
+      if (fs.existsSync(resolved) && fs.statSync(resolved).isDirectory()) out.push(resolved);
+    }
   } catch {
     // ignore
   }
-  return null;
+  return out;
 }
 
 /**
@@ -58,23 +56,29 @@ function februaryDirFromDataFile(): string | null {
 export async function GET() {
   try {
     const candidates: string[] = [];
-    const addCandidate = (p: string) => {
-      try {
-        const resolved = fs.realpathSync(p);
-        if (fs.existsSync(resolved) && fs.statSync(resolved).isDirectory() && !candidates.includes(resolved))
-          candidates.push(resolved);
-      } catch {
-        const abs = path.resolve(p);
-        if (fs.existsSync(abs) && fs.statSync(abs).isDirectory() && !candidates.includes(abs)) candidates.push(abs);
-      }
+    const addCandidate = (p: string, resolveSymlinks: boolean) => {
+      const abs = path.resolve(p);
+      if (!fs.existsSync(abs) || !fs.statSync(abs).isDirectory()) return;
+      const toAdd = resolveSymlinks
+        ? (() => {
+            try {
+              const r = fs.realpathSync(abs);
+              return fs.existsSync(r) && fs.statSync(r).isDirectory() ? r : abs;
+            } catch {
+              return abs;
+            }
+          })()
+        : abs;
+      if (toAdd && !candidates.includes(toAdd)) candidates.push(toAdd);
     };
-    const fromFile = februaryDirFromDataFile();
-    if (fromFile) addCandidate(fromFile);
+    const fromFile = februaryDirCandidatesFromDataFile();
+    fromFile.forEach((p) => addCandidate(p, false));
     if (candidates.length === 0 && process.env.FEBRUARY_DIR?.trim()) {
-      addCandidate(process.env.FEBRUARY_DIR.trim());
+      const envPaths = process.env.FEBRUARY_DIR.split(/[;,\n]/).map((s) => s.trim()).filter(Boolean);
+      envPaths.forEach((p) => addCandidate(p, false));
     }
     if (candidates.length === 0) {
-      addCandidate(path.resolve(process.cwd(), ".."));
+      addCandidate(path.resolve(process.cwd(), ".."), false);
     }
 
     const seen = new Set<string>();

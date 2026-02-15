@@ -1,0 +1,28 @@
+{
+  "name": "Preferred stack",
+  "description": "Default technologies for future projects.",
+  "frontend": {
+    "framework": "Next.js",
+    "styling": "Tailwind CSS",
+    "state": "Zustand",
+    "components": "shadcn/ui",
+    "routing": "Next.js App Router",
+    "testing": "Vitest + Testing Library",
+    "build": "Turbopack / Vite"
+  },
+  "backend": {
+    "runtime": "Node.js",
+    "framework": "Next.js API Routes / Express",
+    "database": "Supabase (PostgreSQL)",
+    "orm": "Prisma or Drizzle",
+    "auth": "Clerk",
+    "testing": "Vitest + Supertest",
+    "validation": "Zod"
+  },
+  "tooling": {
+    "lint": "ESLint",
+    "format": "Prettier",
+    "e2e": "Playwright",
+    "packageManager": "pnpm or npm"
+  }
+}
