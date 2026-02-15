@@ -1,0 +1,12 @@
+{
+  "version": "1.0",
+  "title": "Frontend",
+  "overview": "Fill in: framework, styling, state, components, routing, testing.",
+  "kpis": [
+    { "id": "k1", "label": "(e.g. Components)", "value": "", "unit": "" },
+    { "id": "k2", "label": "(e.g. Pages)", "value": "", "unit": "" }
+  ],
+  "techStack": [],
+  "entities": [],
+  "routes": []
+}

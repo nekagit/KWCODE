@@ -6,6 +6,8 @@ import remarkGfm from "remark-gfm";
 import { Loader2, FileText, BookOpen, RefreshCw } from "lucide-react";
 import { AnalyzeButtonSplit } from "@/components/molecules/ControlsAndButtons/AnalyzeButtonSplit";
 import { listProjectFiles, readProjectFileOrEmpty, analyzeProjectDoc, type FileEntry } from "@/lib/api-projects";
+import { isTauri } from "@/lib/tauri";
+import { useRunStore } from "@/store/run-store";
 import type { Project } from "@/types/project";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SectionCard, CountBadge, MetadataBadge } from "@/components/shared/DisplayPrimitives";
@@ -49,9 +51,11 @@ function formatUpdatedAt(updatedAt: string): string {
 interface ProjectDocumentationHubTabProps {
   project: Project;
   projectId: string;
+  docsRefreshKey?: number;
 }
 
-export function ProjectDocumentationHubTab({ project, projectId }: ProjectDocumentationHubTabProps) {
+export function ProjectDocumentationHubTab({ project, projectId, docsRefreshKey }: ProjectDocumentationHubTabProps) {
+  const runTempTicket = useRunStore((s) => s.runTempTicket);
   const [entries, setEntries] = useState<FileEntry[]>([]);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [content, setContent] = useState<string | null>(null);
@@ -85,7 +89,7 @@ export function ProjectDocumentationHubTab({ project, projectId }: ProjectDocume
 
   useEffect(() => {
     loadFiles();
-  }, [loadFiles]);
+  }, [loadFiles, docsRefreshKey]);
 
   const loadContent = useCallback(
     async (filename: string) => {
@@ -131,7 +135,7 @@ export function ProjectDocumentationHubTab({ project, projectId }: ProjectDocume
     } else {
       setContent(null);
     }
-  }, [selectedFile, entries.length, loadingList, project.repoPath, loadContent, loadFallback]);
+  }, [selectedFile, entries.length, loadingList, project.repoPath, loadContent, loadFallback, docsRefreshKey]);
 
   const latestUpdated =
     entries.length > 0
@@ -212,7 +216,17 @@ export function ProjectDocumentationHubTab({ project, projectId }: ProjectDocume
                 onAnalyze={async () => {
                   setAnalyzing(true);
                   try {
-                    await analyzeProjectDoc(projectId, DOCUMENTATION_PROMPT_PATH, FALLBACK_PATH, project.repoPath ?? undefined);
+                    const result = await analyzeProjectDoc(
+                      projectId,
+                      DOCUMENTATION_PROMPT_PATH,
+                      FALLBACK_PATH,
+                      project.repoPath ?? undefined,
+                      { runTempTicket: isTauri ? runTempTicket : undefined }
+                    );
+                    if (result?.viaWorker) {
+                      toast.success("Analyze started. See Worker tab.");
+                      return;
+                    }
                     await loadFiles();
                     if (fallbackMode) await loadFallback();
                     else if (selectedFile) await loadContent(selectedFile);

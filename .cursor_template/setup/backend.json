@@ -1,0 +1,12 @@
+{
+  "version": "1.0",
+  "title": "Backend",
+  "overview": "Fill in: runtime, API style, database, validation, external services.",
+  "kpis": [
+    { "id": "k1", "label": "(e.g. API route groups)", "value": "", "unit": "" },
+    { "id": "k2", "label": "(e.g. Entities)", "value": "", "unit": "" }
+  ],
+  "techStack": [],
+  "entities": [],
+  "endpoints": []
+}

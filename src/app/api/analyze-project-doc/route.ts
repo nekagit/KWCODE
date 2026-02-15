@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 import { runAgentPrompt } from "@/lib/agent-runner";
+import { stripTerminalArtifacts, MIN_DOCUMENT_LENGTH } from "@/lib/strip-terminal-artifacts";
 import type { Project } from "@/types/project";
 
 function findDataDir(): string {
@@ -67,6 +68,17 @@ function stripCodeFence(raw: string): string {
   const fence = trimmed.match(/^```(\w*)\n?([\s\S]*?)```$/);
   if (fence) return fence[2].trim();
   return trimmed;
+}
+
+/** Placeholder written when the agent returns no usable document (so the file is not left empty). */
+function placeholderForOutputPath(outputPath: string, reason: "no_output" | "agent_failed"): string {
+  const name = path.basename(outputPath, path.extname(outputPath));
+  const title = name.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const reasonText =
+    reason === "agent_failed"
+      ? "The agent CLI could not be run. When starting the Next server, set AGENT_CLI_PATH to the full path of your agent binary (or ensure `agent` is in PATH). See .cursor/documentation/analyze-agent-setup.md for details."
+      : "The agent did not output the full document (only terminal or summary output). Run Analyze again when the agent is configured to print the document to stdout.";
+  return `# ${title}\n\n*This document could not be generated. ${reasonText}*\n`;
 }
 
 /** Build a short "current project data" string from the repo: top-level layout + tech stack if present. */
@@ -177,7 +189,14 @@ export async function POST(request: NextRequest) {
   const currentContent = readFileInRepo(repoPath, outputPath, cwd) ?? "";
   const projectData = getCurrentProjectData(resolvedRepo);
 
-  const systemPrompt = `You are a senior engineer. You will be given the project name, current project data (repo layout, tech stack, package.json), the current content of a project document, and instructions (a prompt). Your task is to output the updated document content only. Output the full document as markdown (or as instructed). Do not add a preamble, explanation, or code fence—output the document content that should be written to the file. Base the update on the current project data and the instructions.`;
+  const systemPrompt = `You are a senior engineer. You will be given the project name, current project data (repo layout, tech stack, package.json), the current content of a project document, and instructions (a prompt). Your task is to output the updated document content only.
+
+Rules:
+- Your output will REPLACE the entire file. The file is overwritten with whatever you output. Do not merge or append; output the complete new document. (Current content is provided for context only.)
+- Output ONLY the full document content that should be written to the file. Every section, every heading, every bullet point — the complete markdown. Do NOT output a summary, "Summary of what's in place", "Summary of what was done", or any meta-description. The output must be the entire document (e.g. for ideas.md: 600+ lines with all tiers, ideas, and sections), not a description of it.
+- No preamble, no code fence, no terminal-style banners or logs.
+- Follow the structure and format specified in the instructions (e.g. for ideas.md: use #### N. Title for ideas, or - [ ] for bullets, so the UI can parse it).
+- Output valid markdown that matches the target file's expected format. Base the update on the current project data and the instructions.`;
 
   const userContent = [
     `Project: ${projectName}`,
@@ -205,7 +224,24 @@ export async function POST(request: NextRequest) {
 
   try {
     const raw = await runAgentPrompt(resolvedRepo, combinedPrompt);
-    const content = stripCodeFence(raw);
+    const withoutArtifacts = stripTerminalArtifacts(raw);
+    const content = stripCodeFence(withoutArtifacts);
+
+    if (content.length < MIN_DOCUMENT_LENGTH) {
+      const placeholder = placeholderForOutputPath(outputPath, "no_output");
+      const written = writeFileInRepo(repoPath, outputPath, placeholder, cwd);
+      if (!written) {
+        return NextResponse.json(
+          { error: "Failed to write placeholder (invalid path or permission)" },
+          { status: 500 }
+        );
+      }
+      return NextResponse.json({
+        ok: true,
+        placeholder: true,
+        message: "Agent output was only terminal or summary; a placeholder was written. Run Analyze again when the agent outputs the full document.",
+      });
+    }
 
     const written = writeFileInRepo(repoPath, outputPath, content, cwd);
     if (!written) {
@@ -218,6 +254,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
+    const placeholder = placeholderForOutputPath(outputPath, "agent_failed");
+    const written = writeFileInRepo(repoPath, outputPath, placeholder, cwd);
+    if (written) {
+      return NextResponse.json({
+        ok: true,
+        placeholder: true,
+        message: `Agent failed (${message}). A placeholder was written. Ensure the agent CLI is in PATH or set AGENT_CLI_PATH.`,
+      });
+    }
     return NextResponse.json(
       {
         error: "Agent request failed",

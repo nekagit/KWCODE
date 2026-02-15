@@ -38,9 +38,10 @@ interface ProjectSetupDocTabProps {
   project: Project;
   projectId: string;
   setupKey: ProjectSetupDocKey;
+  docsRefreshKey?: number;
 }
 
-export function ProjectSetupDocTab({ project, projectId, setupKey }: ProjectSetupDocTabProps) {
+export function ProjectSetupDocTab({ project, projectId, setupKey, docsRefreshKey }: ProjectSetupDocTabProps) {
   const path = `${SETUP_DIR}/${setupKey}.md`;
   const [content, setContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -75,7 +76,7 @@ export function ProjectSetupDocTab({ project, projectId, setupKey }: ProjectSetu
     return () => {
       cancelledRef.current = true;
     };
-  }, [fetchDoc]);
+  }, [fetchDoc, docsRefreshKey]);
 
   const config = CONFIG[setupKey];
   const Icon = ICONS[setupKey];

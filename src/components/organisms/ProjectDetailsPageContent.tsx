@@ -26,7 +26,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Project } from "@/types/project";
 import { getProjectResolved, deleteProject } from "@/lib/api-projects";
-import { ProjectIdeasTab } from "@/components/molecules/TabAndContentSections/ProjectIdeasTab";
 import { ProjectIdeasDocTab } from "@/components/molecules/TabAndContentSections/ProjectIdeasDocTab";
 import { ProjectTicketsTab } from "@/components/molecules/TabAndContentSections/ProjectTicketsTab";
 import { ProjectGitTab } from "@/components/molecules/TabAndContentSections/ProjectGitTab";
@@ -48,6 +47,7 @@ import {
   readAnalyzeQueue,
   runAnalyzeQueueProcessing,
   writeProjectFile,
+  cleanAnalysisDocs,
   ANALYZE_QUEUE_PATH,
 } from "@/lib/api-projects";
 import { toast } from "sonner";
@@ -96,7 +96,9 @@ export function ProjectDetailsPageContent() {
   const [initializing, setInitializing] = useState(false);
   const [analyzingAll, setAnalyzingAll] = useState(false);
   const [analyzingStep, setAnalyzingStep] = useState(0);
+  const [cleaningDocs, setCleaningDocs] = useState(false);
   const [plannerRefreshKey, setPlannerRefreshKey] = useState(0);
+  const [docsRefreshKey, setDocsRefreshKey] = useState(0);
 
   const mountedRef = useRef(true);
   useEffect(() => {
@@ -104,6 +106,18 @@ export function ProjectDetailsPageContent() {
     return () => {
       mountedRef.current = false;
     };
+  }, []);
+
+  // When Analyze runs via Worker (analyze-doc), refresh doc tabs when the run completes.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { onComplete?: string };
+      if (detail?.onComplete === "analyze-doc") {
+        setDocsRefreshKey((k) => k + 1);
+      }
+    };
+    window.addEventListener("run-complete", handler);
+    return () => window.removeEventListener("run-complete", handler);
   }, []);
 
   const fetchProject = useCallback(async () => {
@@ -300,6 +314,7 @@ export function ProjectDetailsPageContent() {
                           onProgress: (done) => setAnalyzingStep(done),
                         });
                         setAnalyzingStep(0);
+                        setDocsRefreshKey((k) => k + 1);
                         await fetchProject();
                         if (failed === 0) {
                           toast.success(`All ${total} docs updated.`);
@@ -326,6 +341,37 @@ export function ProjectDetailsPageContent() {
                     {analyzingAll
                       ? `Analyzing ${analyzingStep}/${ANALYZE_ALL_CONFIG.length}…`
                       : "Analyze all"}
+                  </Button>
+                )}
+                {/* Clean cursor/terminal output from all analysis .md files */}
+                {project.repoPath && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2.5 text-[10px] font-semibold uppercase tracking-wider gap-1.5 border-amber-500/30 hover:bg-amber-500/5 hover:border-amber-500/50 transition-all duration-300 shadow-sm"
+                    title="Remove cursor/terminal log lines from ideas.md, design.md, and other analysis docs"
+                    onClick={async () => {
+                      if (cleaningDocs) return;
+                      setCleaningDocs(true);
+                      try {
+                        const { cleaned } = await cleanAnalysisDocs(projectId, project.repoPath ?? "");
+                        setDocsRefreshKey((k) => k + 1);
+                        await fetchProject();
+                        toast.success(`Cleaned ${cleaned} doc(s). Cursor output removed.`);
+                      } catch (err) {
+                        toast.error(err instanceof Error ? err.message : "Clean failed");
+                      } finally {
+                        setCleaningDocs(false);
+                      }
+                    }}
+                    disabled={cleaningDocs}
+                  >
+                    {cleaningDocs ? (
+                      <Loader2 className="size-3 animate-spin" />
+                    ) : (
+                      <FileText className="size-3 text-amber-500" />
+                    )}
+                    {cleaningDocs ? "Cleaning…" : "Clean cursor output"}
                   </Button>
                 )}
                 {project.created_at && (
@@ -443,7 +489,7 @@ export function ProjectDetailsPageContent() {
             value="setup"
             className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
           >
-            <ProjectSetupTab project={project} projectId={projectId} />
+            <ProjectSetupTab project={project} projectId={projectId} docsRefreshKey={docsRefreshKey} />
           </TabsContent>
 
           {/* ── Project Tab ── */}
@@ -451,7 +497,7 @@ export function ProjectDetailsPageContent() {
             value="project"
             className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
           >
-            <ProjectProjectTab project={project} projectId={projectId} />
+            <ProjectProjectTab project={project} projectId={projectId} docsRefreshKey={docsRefreshKey} />
           </TabsContent>
 
           {/* ── Frontend Tab ── */}
@@ -459,7 +505,7 @@ export function ProjectDetailsPageContent() {
             value="frontend"
             className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
           >
-            <ProjectFrontendTab project={project} projectId={projectId} />
+            <ProjectFrontendTab project={project} projectId={projectId} docsRefreshKey={docsRefreshKey} />
           </TabsContent>
 
           {/* ── Backend Tab ── */}
@@ -467,7 +513,7 @@ export function ProjectDetailsPageContent() {
             value="backend"
             className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
           >
-            <ProjectBackendTab project={project} projectId={projectId} />
+            <ProjectBackendTab project={project} projectId={projectId} docsRefreshKey={docsRefreshKey} />
           </TabsContent>
 
           {/* ── Testing Tab ── */}
@@ -475,7 +521,7 @@ export function ProjectDetailsPageContent() {
             value="testing"
             className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
           >
-            <ProjectTestingTab project={project} projectId={projectId} />
+            <ProjectTestingTab project={project} projectId={projectId} docsRefreshKey={docsRefreshKey} />
           </TabsContent>
 
           {/* ── Documentation Tab ── */}
@@ -483,7 +529,7 @@ export function ProjectDetailsPageContent() {
             value="documentation"
             className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
           >
-            <ProjectDocumentationHubTab project={project} projectId={projectId} />
+            <ProjectDocumentationHubTab project={project} projectId={projectId} docsRefreshKey={docsRefreshKey} />
           </TabsContent>
 
           {/* ── Ideas Tab ── */}
@@ -491,12 +537,7 @@ export function ProjectDetailsPageContent() {
             value="ideas"
             className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
           >
-            <div className="space-y-6">
-              <ProjectIdeasDocTab project={project} projectId={projectId} />
-              <SectionCard accentColor="amber">
-                <ProjectIdeasTab project={project} projectId={projectId} showHeader={true} />
-              </SectionCard>
-            </div>
+            <ProjectIdeasDocTab project={project} projectId={projectId} docsRefreshKey={docsRefreshKey} />
           </TabsContent>
 
           {/* ── Planner Tab ── */}

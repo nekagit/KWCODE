@@ -8,4 +8,4 @@
 
 - **Browser:** Open the URL shown by `npm run dev` (e.g. http://127.0.0.1:4000).
 - **Desktop:** Run `npm run tauri dev` for the Tauri build.
-- **Initialize a project:** Add a project, set repo path, click **Initialize** to copy `.cursor_inti` into the repo as `.cursor/`.
+- **Initialize a project:** Add a project, set repo path, click **Initialize** to copy `.cursor_template` into the repo as `.cursor/`.

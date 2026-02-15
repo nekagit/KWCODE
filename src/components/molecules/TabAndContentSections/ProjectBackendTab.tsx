@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { AnalyzeButtonSplit } from "@/components/molecules/ControlsAndButtons/AnalyzeButtonSplit";
 import { readProjectFileOrEmpty, writeProjectFile, analyzeProjectDoc } from "@/lib/api-projects";
+import { isTauri } from "@/lib/tauri";
+import { useRunStore } from "@/store/run-store";
 import type { Project } from "@/types/project";
 import type { BackendSetupJson } from "@/types/setup-json";
 import {
@@ -46,9 +48,11 @@ const BACKEND_ANALYSIS_OUTPUT_PATH = ".cursor/setup/backend-analysis.md";
 interface ProjectBackendTabProps {
   project: Project;
   projectId: string;
+  docsRefreshKey?: number;
 }
 
-export function ProjectBackendTab({ project, projectId }: ProjectBackendTabProps) {
+export function ProjectBackendTab({ project, projectId, docsRefreshKey }: ProjectBackendTabProps) {
+  const runTempTicket = useRunStore((s) => s.runTempTicket);
   const [data, setData] = useState<BackendSetupJson | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +89,7 @@ export function ProjectBackendTab({ project, projectId }: ProjectBackendTabProps
     return () => {
       cancelledRef.current = true;
     };
-  }, [fetchData]);
+  }, [fetchData, docsRefreshKey]);
 
   const save = useCallback(async () => {
     if (!data || !project.repoPath) return;
@@ -153,7 +157,18 @@ export function ProjectBackendTab({ project, projectId }: ProjectBackendTabProps
             onAnalyze={async () => {
               setAnalyzing(true);
               try {
-                await analyzeProjectDoc(projectId, BACKEND_PROMPT_PATH, BACKEND_ANALYSIS_OUTPUT_PATH, project.repoPath ?? undefined);
+                const result = await analyzeProjectDoc(
+                  projectId,
+                  BACKEND_PROMPT_PATH,
+                  BACKEND_ANALYSIS_OUTPUT_PATH,
+                  project.repoPath ?? undefined,
+                  { runTempTicket: isTauri ? runTempTicket : undefined }
+                );
+                if (result?.viaWorker) {
+                  toast.success("Analyze started. See Worker tab.");
+                  return;
+                }
+                await fetchData();
                 toast.success("Backend analysis updated.");
               } catch (e) {
                 toast.error(e instanceof Error ? e.message : "Analyze failed");
@@ -579,7 +594,7 @@ export function ProjectBackendTab({ project, projectId }: ProjectBackendTabProps
               <Building2 className="h-4 w-4 text-blue-500" />
               <h3 className="text-sm font-semibold">Architecture</h3>
             </div>
-            <SetupDocBlock project={project} projectId={projectId} setupKey="architecture" />
+            <SetupDocBlock project={project} projectId={projectId} setupKey="architecture" docsRefreshKey={docsRefreshKey} />
             <ProjectArchitectureTab project={project} projectId={projectId} showHeader={false} />
           </SectionCard>
         </div>

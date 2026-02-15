@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 
-const TEMPLATE_DIR = ".cursor_inti";
+const TEMPLATE_DIR = ".cursor_template";
 
 function readDirRecursive(dir: string, baseDir: string): Record<string, string> {
   const out: Record<string, string> = {};
@@ -24,7 +24,7 @@ function readDirRecursive(dir: string, baseDir: string): Record<string, string> 
   return out;
 }
 
-/** GET: returns all files under .cursor_inti as { files: { "agents/frontend-dev.md": "content...", ... } } for copying to project as .cursor/ */
+/** GET: returns all files under .cursor_template as { files: { "agents/frontend-dev.md": "content...", ... } } for copying to project as .cursor/ */
 export async function GET() {
   try {
     const cwd = process.cwd();

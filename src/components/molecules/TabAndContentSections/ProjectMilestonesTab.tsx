@@ -14,12 +14,16 @@ import {
   readProjectFileOrEmpty,
   writeProjectFile,
   listProjectFiles,
+  analyzeProjectDoc,
 } from "@/lib/api-projects";
+import { AnalyzeButtonSplit } from "@/components/molecules/ControlsAndButtons/AnalyzeButtonSplit";
 import { isTauri } from "@/lib/tauri";
 import { useRunStore, registerRunCompleteHandler } from "@/store/run-store";
 import { cn } from "@/lib/utils";
 
 const MILESTONES_DIR = ".cursor/milestones";
+const MILESTONE_PROMPT_PATH = ".cursor/prompts/milestone.md";
+const MILESTONE_OUTPUT_PATH = ".cursor/setup/milestone.md";
 
 const markdownClasses =
   "text-sm text-foreground [&_h1]:text-lg [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-semibold [&_h3]:text-sm [&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_pre]:bg-muted/50 [&_pre]:p-3 [&_pre]:rounded-md [&_pre]:overflow-x-auto [&_code]:bg-muted/50 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_p]:mb-2 last:[&_p]:mb-0 [&_table]:border-collapse [&_th]:border [&_td]:border [&_th]:px-2 [&_td]:px-2 [&_th]:py-1 [&_td]:py-1";
@@ -107,6 +111,7 @@ export function ProjectMilestonesTab({
   const [milestoneContent, setMilestoneContent] = useState<string | null>(null);
   const [loadingMilestoneList, setLoadingMilestoneList] = useState(true);
   const [loadingMilestoneContent, setLoadingMilestoneContent] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
 
   useEffect(() => {
     if (!project.repoPath) {
@@ -165,6 +170,29 @@ export function ProjectMilestonesTab({
   }, []);
 
   const runTempTicket = useRunStore((s) => s.runTempTicket);
+
+  const handleAnalyze = useCallback(async () => {
+    if (!project.repoPath?.trim()) return;
+    setAnalyzing(true);
+    try {
+      const result = await analyzeProjectDoc(
+        projectId,
+        MILESTONE_PROMPT_PATH,
+        MILESTONE_OUTPUT_PATH,
+        project.repoPath,
+        { runTempTicket: isTauri ? runTempTicket : undefined }
+      );
+      if (result?.viaWorker) {
+        toast.success("Analyze started. See Worker tab.");
+        return;
+      }
+      toast.success("Milestone analysis updated.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Analyze failed");
+    } finally {
+      setAnalyzing(false);
+    }
+  }, [projectId, project.repoPath, isTauri, runTempTicket]);
 
   const handleGenerateTicket = useCallback(
     async (phase: (typeof MILESTONE_PHASES)[number]) => {
@@ -339,12 +367,45 @@ export function ProjectMilestonesTab({
     );
   }
 
+  const hasNoMilestones =
+    !loadingMilestoneList && milestoneFiles.length === 0;
+
+  if (hasNoMilestones) {
+    return (
+      <EmptyState
+        icon={<Flag className="size-6 text-muted-foreground" />}
+        title="No milestones yet"
+        description="Run Analyze to generate milestone content, or add .md files to .cursor/milestones/."
+        action={
+          <AnalyzeButtonSplit
+            promptPath={MILESTONE_PROMPT_PATH}
+            projectId={projectId}
+            repoPath={project.repoPath ?? undefined}
+            onAnalyze={handleAnalyze}
+            analyzing={analyzing}
+            label="Analyze to generate"
+          />
+        }
+      />
+    );
+  }
+
   return (
     <div className="w-full flex flex-col gap-6">
-      <p className="text-sm text-muted-foreground">
-        Use the phase context and your specific inputs to generate tickets; add
-        them to the backlog from here or from Planner.
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-muted-foreground">
+          Use the phase context and your specific inputs to generate tickets; add
+          them to the backlog from here or from Planner.
+        </p>
+        <AnalyzeButtonSplit
+          promptPath={MILESTONE_PROMPT_PATH}
+          projectId={projectId}
+          repoPath={project.repoPath ?? undefined}
+          onAnalyze={handleAnalyze}
+          analyzing={analyzing}
+          label="Analyze"
+        />
+      </div>
 
       {/* Milestone files — .cursor/milestones/ */}
       <SectionCard accentColor="orange">
@@ -360,8 +421,6 @@ export function ProjectMilestonesTab({
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Loading…</span>
           </div>
-        ) : milestoneFiles.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No milestone files found.</p>
         ) : (
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex flex-wrap gap-1.5 min-w-0">

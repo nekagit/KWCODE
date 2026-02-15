@@ -6,6 +6,8 @@ import remarkGfm from "remark-gfm";
 import { Loader2, FileText, TestTube2, RefreshCw } from "lucide-react";
 import { AnalyzeButtonSplit } from "@/components/molecules/ControlsAndButtons/AnalyzeButtonSplit";
 import { listProjectFiles, readProjectFileOrEmpty, analyzeProjectDoc, type FileEntry } from "@/lib/api-projects";
+import { isTauri } from "@/lib/tauri";
+import { useRunStore } from "@/store/run-store";
 import type { Project } from "@/types/project";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SectionCard, CountBadge, MetadataBadge } from "@/components/shared/DisplayPrimitives";
@@ -51,9 +53,11 @@ type TestingItem = { name: string; path: string; size: number; updatedAt: string
 interface ProjectTestingTabProps {
   project: Project;
   projectId: string;
+  docsRefreshKey?: number;
 }
 
-export function ProjectTestingTab({ project, projectId }: ProjectTestingTabProps) {
+export function ProjectTestingTab({ project, projectId, docsRefreshKey }: ProjectTestingTabProps) {
+  const runTempTicket = useRunStore((s) => s.runTempTicket);
   const [items, setItems] = useState<TestingItem[]>([]);
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [content, setContent] = useState<string | null>(null);
@@ -111,7 +115,7 @@ export function ProjectTestingTab({ project, projectId }: ProjectTestingTabProps
 
   useEffect(() => {
     loadList();
-  }, [loadList]);
+  }, [loadList, docsRefreshKey]);
 
   const loadContent = useCallback(
     async (path: string) => {
@@ -137,7 +141,7 @@ export function ProjectTestingTab({ project, projectId }: ProjectTestingTabProps
     } else {
       setContent(null);
     }
-  }, [selectedPath, loadContent]);
+  }, [selectedPath, loadContent, docsRefreshKey]);
 
   const latestUpdated =
     items.length > 0
@@ -215,7 +219,17 @@ export function ProjectTestingTab({ project, projectId }: ProjectTestingTabProps
                 onAnalyze={async () => {
                   setAnalyzing(true);
                   try {
-                    await analyzeProjectDoc(projectId, TESTING_PROMPT_PATH, SETUP_TESTING_PATH, project.repoPath ?? undefined);
+                    const result = await analyzeProjectDoc(
+                      projectId,
+                      TESTING_PROMPT_PATH,
+                      SETUP_TESTING_PATH,
+                      project.repoPath ?? undefined,
+                      { runTempTicket: isTauri ? runTempTicket : undefined }
+                    );
+                    if (result?.viaWorker) {
+                      toast.success("Analyze started. See Worker tab.");
+                      return;
+                    }
                     await loadList();
                     setSelectedPath(SETUP_TESTING_PATH);
                     toast.success("Testing doc updated from prompt.");

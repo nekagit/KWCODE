@@ -4,7 +4,7 @@ import fs from "fs";
 
 const ROOT = process.cwd();
 const CURSOR_TECH = path.join(ROOT, ".cursor", "technologies");
-const CURSOR_INTI_TECH = path.join(ROOT, ".cursor_inti", "technologies");
+const CURSOR_TEMPLATE_TECH = path.join(ROOT, ".cursor_template", "technologies");
 
 /** Path is safe if it's a single filename or relative path under technologies (no ".."). */
 function isSafeTechnologiesPath(relativePath: string): boolean {
@@ -35,16 +35,16 @@ function readFileContent(dir: string, filename: string): string | null {
   }
 }
 
-/** GET: return { files: { "tech-stack.json": "...", ... } } from .cursor/technologies, fallback to .cursor_inti/technologies per file. */
+/** GET: return { files: { "tech-stack.json": "...", ... } } from .cursor/technologies, fallback to .cursor_template/technologies per file. */
 export async function GET() {
   try {
     const cursorFiles = listFiles(CURSOR_TECH);
-    const intiFiles = listFiles(CURSOR_INTI_TECH);
-    const allFilenames = [...new Set([...cursorFiles, ...intiFiles])];
+    const templateFiles = listFiles(CURSOR_TEMPLATE_TECH);
+    const allFilenames = [...new Set([...cursorFiles, ...templateFiles])];
     const files: Record<string, string> = {};
     for (const name of allFilenames) {
       const content =
-        readFileContent(CURSOR_TECH, name) ?? readFileContent(CURSOR_INTI_TECH, name);
+        readFileContent(CURSOR_TECH, name) ?? readFileContent(CURSOR_TEMPLATE_TECH, name);
       if (content != null) files[name] = content;
     }
     return NextResponse.json({ files });

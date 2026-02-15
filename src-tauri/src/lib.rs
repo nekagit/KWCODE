@@ -634,13 +634,13 @@ fn list_cursor_folder(project_path: String) -> Result<Vec<FileEntry>, String> {
     Ok(entries)
 }
 
-/// Read all files under .cursor_inti (relative to app/project root) and return a map of relative path -> content for Initialize.
+/// Read all files under .cursor_template (relative to app/project root) and return a map of relative path -> content for Initialize.
 #[tauri::command]
 fn get_cursor_init_template() -> Result<std::collections::HashMap<String, String>, String> {
     let root = project_root()?;
-    let template_dir = root.join(".cursor_inti");
+    let template_dir = root.join(".cursor_template");
     if !template_dir.exists() || !template_dir.is_dir() {
-        return Err(".cursor_inti folder not found".to_string());
+        return Err(".cursor_template folder not found".to_string());
     }
     let mut out = std::collections::HashMap::new();
     fn collect(

@@ -19,6 +19,8 @@ import {
 import { AnalyzeButtonSplit } from "@/components/molecules/ControlsAndButtons/AnalyzeButtonSplit";
 import type { LucideIcon } from "lucide-react";
 import { listProjectFiles, readProjectFileOrEmpty, analyzeProjectDoc, type FileEntry } from "@/lib/api-projects";
+import { isTauri } from "@/lib/tauri";
+import { useRunStore } from "@/store/run-store";
 import { parseTicketsMd } from "@/lib/todos-kanban";
 import type { Project } from "@/types/project";
 import type { AccentColor } from "@/components/shared/DisplayPrimitives";
@@ -98,9 +100,11 @@ function formatUpdatedAt(updatedAt: string): string {
 interface ProjectSetupTabProps {
   project: Project;
   projectId: string;
+  docsRefreshKey?: number;
 }
 
-export function ProjectSetupTab({ project, projectId }: ProjectSetupTabProps) {
+export function ProjectSetupTab({ project, projectId, docsRefreshKey }: ProjectSetupTabProps) {
+  const runTempTicket = useRunStore((s) => s.runTempTicket);
   const [entriesByFolder, setEntriesByFolder] = useState<Record<string, FileEntry[]>>({});
   const [loading, setLoading] = useState(true);
   const [plannerTicketStats, setPlannerTicketStats] = useState<{ total: number; done: number } | null>(null);
@@ -157,7 +161,7 @@ export function ProjectSetupTab({ project, projectId }: ProjectSetupTabProps) {
     return () => {
       cancelledRef.current = true;
     };
-  }, [loadAll]);
+  }, [loadAll, docsRefreshKey]);
 
   if (!project.repoPath?.trim()) {
     return (
@@ -339,7 +343,17 @@ export function ProjectSetupTab({ project, projectId }: ProjectSetupTabProps) {
                           onAnalyze={async () => {
                             setAnalyzingKey(key);
                             try {
-                              await analyzeProjectDoc(projectId, promptPath, outputPath, project.repoPath ?? undefined);
+                              const result = await analyzeProjectDoc(
+                                projectId,
+                                promptPath,
+                                outputPath,
+                                project.repoPath ?? undefined,
+                                { runTempTicket: isTauri ? runTempTicket : undefined }
+                              );
+                              if (result?.viaWorker) {
+                                toast.success(`Analyze started: ${label}. See Worker tab.`);
+                                return;
+                              }
                               await loadAll();
                               toast.success(`${label} doc updated.`);
                             } catch (e) {

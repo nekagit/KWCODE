@@ -18,12 +18,16 @@ import { isTauri } from "@/lib/tauri";
 import { useRunStore, registerRunCompleteHandler } from "@/store/run-store";
 import {
   parseIdeasMd,
+  parseIdeasMdStructured,
   serializeIdeasMd,
   buildNumberedBlock,
   buildBulletBlock,
   improvedTextToTitleAndBody,
+  getIdeaFields,
   type ParsedIdeasDoc,
   type IdeaBlock,
+  type IdeasStructuredDoc,
+  type IdeasStructuredSection,
 } from "@/lib/ideas-md";
 import type { Project } from "@/types/project";
 import { SectionCard } from "@/components/shared/DisplayPrimitives";
@@ -42,15 +46,19 @@ const markdownClasses =
 interface ProjectIdeasDocTabProps {
   project: Project;
   projectId: string;
+  docsRefreshKey?: number;
 }
 
-export function ProjectIdeasDocTab({ project, projectId }: ProjectIdeasDocTabProps) {
+export function ProjectIdeasDocTab({ project, projectId, docsRefreshKey }: ProjectIdeasDocTabProps) {
   const [content, setContent] = useState<string | null>(null);
   const [parsed, setParsed] = useState<ParsedIdeasDoc | null>(null);
+  const [structured, setStructured] = useState<IdeasStructuredDoc | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [introExpanded, setIntroExpanded] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["section-preamble", "section-0", "section-1", "section-2"]));
+  const [expandedIdeas, setExpandedIdeas] = useState<Set<string>>(new Set());
   const [showRawDialog, setShowRawDialog] = useState(false);
   const [newIdeaRaw, setNewIdeaRaw] = useState("");
   const [improving, setImproving] = useState(false);
@@ -66,7 +74,10 @@ export function ProjectIdeasDocTab({ project, projectId }: ProjectIdeasDocTabPro
     try {
       const text = await readProjectFileOrEmpty(projectId, IDEAS_SETUP_PATH, project.repoPath);
       setContent(text && text.trim() ? text : null);
-      setParsed(text && text.trim() ? parseIdeasMd(text) : { intro: "", ideas: [], format: "bullets" });
+      const parsedDoc = text && text.trim() ? parseIdeasMd(text) : { intro: "", ideas: [], format: "bullets" };
+      setParsed(parsedDoc);
+      const structuredDoc = text && text.trim() ? parseIdeasMdStructured(text) : { sections: [], isStructured: false };
+      setStructured(structuredDoc);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setContent(null);
@@ -78,7 +89,7 @@ export function ProjectIdeasDocTab({ project, projectId }: ProjectIdeasDocTabPro
 
   useEffect(() => {
     fetchDoc();
-  }, [fetchDoc]);
+  }, [fetchDoc, docsRefreshKey]);
 
   const saveDoc = useCallback(
     async (intro: string, ideas: IdeaBlock[], format: "numbered" | "bullets") => {
@@ -180,15 +191,29 @@ export function ProjectIdeasDocTab({ project, projectId }: ProjectIdeasDocTabPro
   const handleAnalyze = useCallback(async () => {
     setAnalyzing(true);
     try {
-      await analyzeProjectDoc(projectId, IDEAS_PROMPT_PATH, IDEAS_SETUP_PATH, project.repoPath ?? undefined);
+      const result = await analyzeProjectDoc(
+        projectId,
+        IDEAS_PROMPT_PATH,
+        IDEAS_SETUP_PATH,
+        project.repoPath ?? undefined,
+        { runTempTicket: isTauri ? runTempTicket : undefined }
+      );
+      if (result?.viaWorker) {
+        toast.success("Analyze started. See Worker tab.");
+        return;
+      }
       await fetchDoc();
-      toast.success("Ideas doc updated from prompt.");
+      if (result?.placeholder && result?.message) {
+        toast.warning("Placeholder written", { description: result.message, duration: 8000 });
+      } else {
+        toast.success("Ideas doc updated from prompt.");
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Analyze failed");
     } finally {
       setAnalyzing(false);
     }
-  }, [projectId, fetchDoc]);
+  }, [projectId, fetchDoc, isTauri, runTempTicket]);
 
   if (!project.repoPath) {
     return (
@@ -259,30 +284,140 @@ export function ProjectIdeasDocTab({ project, projectId }: ProjectIdeasDocTabPro
 
       <ScrollArea className="h-[calc(100vh-14rem)]">
         <div className="space-y-6 pr-4">
-          {/* Intro block (collapsible) */}
-          {parsed.intro && (
-            <SectionCard accentColor="amber">
-              <button
-                type="button"
-                className="flex w-full items-center gap-2 text-left"
-                onClick={() => setIntroExpanded((e) => !e)}
-              >
-                <Lightbulb className="h-4 w-4 text-amber-500 shrink-0" />
-                <h3 className="text-sm font-semibold">Context & vision</h3>
-                {introExpanded ? (
-                  <ChevronUp className="ml-auto h-4 w-4 text-muted-foreground" />
-                ) : (
-                  <ChevronDown className="ml-auto h-4 w-4 text-muted-foreground" />
-                )}
-              </button>
-              {introExpanded && (
-                <div className={cn("mt-3 p-2 pr-4", markdownClasses)}>
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {String(parsed.intro ?? "")}
-                  </ReactMarkdown>
-                </div>
+          {structured?.isStructured && structured.sections.length > 0 ? (
+            <>
+              {/* Structured roadmap: ## sections + #### idea cards */}
+              {structured.sections.map((section: IdeasStructuredSection) => {
+                const isExpanded = expandedSections.has(section.id);
+                const hasIdeas = section.ideas.length > 0;
+                return (
+                  <SectionCard key={section.id} accentColor="amber">
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-2 text-left"
+                      onClick={() =>
+                        setExpandedSections((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(section.id)) next.delete(section.id);
+                          else next.add(section.id);
+                          return next;
+                        })
+                      }
+                    >
+                      <Lightbulb className="h-4 w-4 text-amber-500 shrink-0" />
+                      <h3 className="text-sm font-semibold">{section.title}</h3>
+                      {hasIdeas && (
+                        <span className="text-[10px] text-muted-foreground font-normal">
+                          {section.ideas.length} idea{section.ideas.length !== 1 ? "s" : ""}
+                        </span>
+                      )}
+                      {isExpanded ? (
+                        <ChevronUp className="ml-auto h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="ml-auto h-4 w-4 text-muted-foreground" />
+                      )}
+                    </button>
+                    {isExpanded && (
+                      <div className="mt-3 space-y-4">
+                        {section.content && (
+                          <div className={cn("p-2 pr-4 rounded-md bg-muted/30", markdownClasses)}>
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{section.content}</ReactMarkdown>
+                          </div>
+                        )}
+                        {section.ideas.map((idea) => {
+                          const fields = getIdeaFields(idea.body);
+                          const ideaExpanded = expandedIdeas.has(idea.id);
+                          return (
+                            <div
+                              key={idea.id}
+                              className="rounded-lg border border-border/50 bg-card/50 overflow-hidden"
+                            >
+                              <button
+                                type="button"
+                                className="flex w-full items-center gap-2 p-3 text-left hover:bg-muted/30 transition-colors"
+                                onClick={() =>
+                                  setExpandedIdeas((prev) => {
+                                    const next = new Set(prev);
+                                    if (next.has(idea.id)) next.delete(idea.id);
+                                    else next.add(idea.id);
+                                    return next;
+                                  })
+                                }
+                              >
+                                <span className="text-xs font-medium text-amber-600/90 shrink-0">Idea</span>
+                                <span className="text-sm font-medium truncate flex-1">{idea.title}</span>
+                                {(fields.impact || fields.effort) && (
+                                  <span className="text-[10px] text-muted-foreground shrink-0">
+                                    {[fields.effort, fields.impact].filter(Boolean).join(" · ")}
+                                  </span>
+                                )}
+                                {ideaExpanded ? (
+                                  <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
+                                ) : (
+                                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                                )}
+                              </button>
+                              {ideaExpanded && (
+                                <div className="px-3 pb-3 pt-0 space-y-3 border-t border-border/40">
+                                  {fields.problem && (
+                                    <div>
+                                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">Problem</p>
+                                      <p className="text-xs text-foreground/90">{fields.problem.slice(0, 400)}{fields.problem.length > 400 ? "…" : ""}</p>
+                                    </div>
+                                  )}
+                                  {fields.solution && (
+                                    <div>
+                                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">Solution</p>
+                                      <p className="text-xs text-foreground/90">{fields.solution.slice(0, 400)}{fields.solution.length > 400 ? "…" : ""}</p>
+                                    </div>
+                                  )}
+                                  {(fields.impact || fields.effort || fields.successMetrics) && (
+                                    <div className="flex flex-wrap gap-2">
+                                      {fields.impact && <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-400">{fields.impact}</span>}
+                                      {fields.effort && <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{fields.effort}</span>}
+                                      {fields.successMetrics && <span className="text-[10px] text-muted-foreground truncate max-w-[200px]" title={fields.successMetrics}>{fields.successMetrics.slice(0, 60)}…</span>}
+                                    </div>
+                                  )}
+                                  <div className={cn("text-xs", markdownClasses)}>
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{idea.body}</ReactMarkdown>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </SectionCard>
+                );
+              })}
+            </>
+          ) : (
+            <>
+              {/* Legacy: single intro block when not structured */}
+              {parsed?.intro && (
+                <SectionCard accentColor="amber">
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 text-left"
+                    onClick={() => setIntroExpanded((e) => !e)}
+                  >
+                    <Lightbulb className="h-4 w-4 text-amber-500 shrink-0" />
+                    <h3 className="text-sm font-semibold">Context & vision</h3>
+                    {introExpanded ? (
+                      <ChevronUp className="ml-auto h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="ml-auto h-4 w-4 text-muted-foreground" />
+                    )}
+                  </button>
+                  {introExpanded && (
+                    <div className={cn("mt-3 p-2 pr-4", markdownClasses)}>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{String(parsed.intro ?? "")}</ReactMarkdown>
+                    </div>
+                  )}
+                </SectionCard>
               )}
-            </SectionCard>
+            </>
           )}
 
           {/* Add new idea */}

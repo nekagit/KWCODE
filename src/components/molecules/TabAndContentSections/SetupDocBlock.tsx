@@ -34,6 +34,7 @@ interface SetupDocBlockProps {
   className?: string;
   /** Max height of the doc preview area (default 160px) */
   maxHeight?: string;
+  docsRefreshKey?: number;
 }
 
 /** Minimal prose-style classes for markdown rendered in section and dialogs (no @tailwindcss/typography). */
@@ -45,6 +46,7 @@ export function SetupDocBlock({
   setupKey,
   className,
   maxHeight = "160px",
+  docsRefreshKey,
 }: SetupDocBlockProps) {
   const [content, setContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -105,7 +107,7 @@ export function SetupDocBlock({
     return () => {
       cancelledRef.current = true;
     };
-  }, [fetchDoc]);
+  }, [fetchDoc, docsRefreshKey]);
 
   const openSetupDialog = () => setShowSetupDialog(true);
   const openPromptDialog = async () => {

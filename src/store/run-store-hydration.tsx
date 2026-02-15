@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { listen, isTauri } from "@/lib/tauri";
 import { writeProjectFile } from "@/lib/api-projects";
+import { stripTerminalArtifacts, MIN_DOCUMENT_LENGTH } from "@/lib/strip-terminal-artifacts";
 import { useRunStore, takeRunCompleteHandler } from "./run-store";
 
 /**
@@ -79,19 +80,24 @@ export function RunStoreHydration() {
 
       if (run?.meta) {
         const stdout = run.logLines.join("\n");
-        if (run.meta.projectId && run.meta.outputPath) {
-          const repoPath =
-            typeof run.meta.payload?.repoPath === "string"
-              ? run.meta.payload.repoPath
-              : undefined;
+        // When Analyze runs via Worker (analyze-doc): strip terminal artifacts and write to outputPath.
+        if (
+          run.meta.onComplete === "analyze-doc" &&
+          run.meta.projectId &&
+          run.meta.outputPath &&
+          typeof run.meta.payload?.repoPath === "string"
+        ) {
+          const stripped = stripTerminalArtifacts(stdout);
+          const content =
+            stripped.length >= MIN_DOCUMENT_LENGTH
+              ? stripped
+              : `# ${run.meta.outputPath.replace(/^.*\//, "").replace(/\.md$/i, "")}\n\n*Output was too short or only terminal output. Run Analyze again.*\n`;
           writeProjectFile(
             run.meta.projectId,
             run.meta.outputPath,
-            stdout,
-            repoPath
-          ).catch((err) => {
-            console.error("[run-exited] writeProjectFile failed:", err);
-          });
+            content,
+            run.meta.payload.repoPath as string
+          ).catch((err) => console.error("[run-exited] writeProjectFile for analyze-doc failed:", err));
         }
         if (run.meta.onComplete) {
           const key =

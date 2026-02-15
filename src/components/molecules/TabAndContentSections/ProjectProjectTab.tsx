@@ -6,6 +6,8 @@ import remarkGfm from "remark-gfm";
 import { Loader2, FileText, FolderOpen, RefreshCw } from "lucide-react";
 import { AnalyzeButtonSplit } from "@/components/molecules/ControlsAndButtons/AnalyzeButtonSplit";
 import { listProjectFiles, readProjectFileOrEmpty, analyzeProjectDoc, type FileEntry } from "@/lib/api-projects";
+import { isTauri } from "@/lib/tauri";
+import { useRunStore } from "@/store/run-store";
 import type { Project } from "@/types/project";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SectionCard, CountBadge, MetadataBadge } from "@/components/shared/DisplayPrimitives";
@@ -49,9 +51,11 @@ function formatUpdatedAt(updatedAt: string): string {
 interface ProjectProjectTabProps {
   project: Project;
   projectId: string;
+  docsRefreshKey?: number;
 }
 
-export function ProjectProjectTab({ project, projectId }: ProjectProjectTabProps) {
+export function ProjectProjectTab({ project, projectId, docsRefreshKey }: ProjectProjectTabProps) {
+  const runTempTicket = useRunStore((s) => s.runTempTicket);
   const [entries, setEntries] = useState<FileEntry[]>([]);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [content, setContent] = useState<string | null>(null);
@@ -84,7 +88,7 @@ export function ProjectProjectTab({ project, projectId }: ProjectProjectTabProps
 
   useEffect(() => {
     loadFiles();
-  }, [loadFiles]);
+  }, [loadFiles, docsRefreshKey]);
 
   const loadContent = useCallback(
     async (filename: string) => {
@@ -111,7 +115,7 @@ export function ProjectProjectTab({ project, projectId }: ProjectProjectTabProps
     } else {
       setContent(null);
     }
-  }, [selectedFile, loadContent]);
+  }, [selectedFile, loadContent, docsRefreshKey]);
 
   const latestUpdated = entries.length
     ? entries.reduce((latest, e) => {
@@ -188,7 +192,17 @@ export function ProjectProjectTab({ project, projectId }: ProjectProjectTabProps
                 onAnalyze={async () => {
                   setAnalyzing(true);
                   try {
-                    await analyzeProjectDoc(projectId, PROJECT_PROMPT_PATH, PROJECT_OUTPUT_PATH, project.repoPath ?? undefined);
+                    const result = await analyzeProjectDoc(
+                      projectId,
+                      PROJECT_PROMPT_PATH,
+                      PROJECT_OUTPUT_PATH,
+                      project.repoPath ?? undefined,
+                      { runTempTicket: isTauri ? runTempTicket : undefined }
+                    );
+                    if (result?.viaWorker) {
+                      toast.success("Analyze started. See Worker tab.");
+                      return;
+                    }
                     await loadFiles();
                     setSelectedFile("PROJECT-INFO.md");
                     toast.success("Project info updated from prompt.");

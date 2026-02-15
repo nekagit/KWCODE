@@ -4,7 +4,7 @@ How to start a project, use agents, manage milestones and tickets, use the worke
 
 ## Start a new project
 
-1. In KWCode, add a project and set its repo path. Click **Initialize** to copy the template (`.cursor_inti`) into the repo as `.cursor/`.
+1. In KWCode, add a project and set its repo path. Click **Initialize** to copy the template (`.cursor_template`) into the repo as `.cursor/`.
 2. Optionally from the project root run:
    - `.cursor/scripts/initialize-project.sh` — fill project name, description, tech stack (writes `.cursor/project/*.md`).
    - `node .cursor/scripts/generate-milestones.js` — create milestone files under `.cursor/milestones/`.
@@ -34,5 +34,5 @@ How to start a project, use agents, manage milestones and tickets, use the worke
 
 ## Customize templates
 
-- To change what **new** projects get when they Initialize, edit the **`.cursor_inti`** folder in the KWCode repo. Do not remove or rename paths the app expects (e.g. `.cursor/planner/tickets.md`, `.cursor/agents/*.md`, `.cursor/prompts/worker.md`, `.cursor/setup/frontend.json`, `.cursor/setup/backend.json`).
-- Tech stack variants: add JSON under `.cursor_inti/configs/tech-stacks/` and reference them in scripts or docs.
+- To change what **new** projects get when they Initialize, edit the **`.cursor_template`** folder in the KWCode repo. Do not remove or rename paths the app expects (e.g. `.cursor/planner/tickets.md`, `.cursor/agents/*.md`, `.cursor/prompts/worker.md`, `.cursor/setup/frontend.json`, `.cursor/setup/backend.json`).
+- Tech stack variants: add JSON under `.cursor_template/configs/tech-stacks/` and reference them in scripts or docs.

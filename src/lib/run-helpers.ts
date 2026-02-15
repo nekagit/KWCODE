@@ -3,11 +3,12 @@
  * Previously duplicated across ProjectTicketsTab.tsx and ProjectRunTab.tsx.
  */
 
-/** Check whether a run is an "Implement All" run (legacy 3-slot or ticket-driven). */
+/** Check whether a run is shown in the Worker tab (Implement All, Ticket, or Analyze doc runs). */
 export const isImplementAllRun = (r: { label: string }) =>
     r.label === "Implement All" ||
     r.label.startsWith("Implement All (") ||
-    r.label.startsWith("Ticket #");
+    r.label.startsWith("Ticket #") ||
+    r.label.startsWith("Analyze:");
 
 /** Parse ticket number from run label e.g. "Ticket #3: My title" → 3. Returns null if not a ticket run. */
 export function parseTicketNumberFromRunLabel(label: string | undefined): number | null {

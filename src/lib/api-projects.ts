@@ -4,7 +4,6 @@
  */
 import { invoke, isTauri } from "@/lib/tauri";
 import type { Project } from "@/types/project";
-import { useRunStore } from "@/store/run-store";
 
 export type CreateProjectBody = {
   name: string;
@@ -233,7 +232,7 @@ export async function listProjectFiles(
 }
 
 /**
- * Initializes a project's .cursor folder by copying exactly the contents of .cursor_inti (same structure, renamed to .cursor).
+ * Initializes a project's .cursor folder by copying exactly the contents of .cursor_template (same structure, renamed to .cursor).
  * Nothing more: no inline templates, no extra files. Template is read from API (browser) or Tauri command (desktop).
  */
 export async function initializeProjectRepo(projectId: string, repoPath: string): Promise<void> {
@@ -243,7 +242,7 @@ export async function initializeProjectRepo(projectId: string, repoPath: string)
       files = await invoke<Record<string, string>>("get_cursor_init_template", {});
     } catch (e) {
       throw new Error(
-        "Failed to load .cursor_inti template. In Tauri, ensure .cursor_inti exists next to the app."
+        "Failed to load .cursor_template template. In Tauri, ensure .cursor_template exists next to the app."
       );
     }
   } else {
@@ -251,13 +250,13 @@ export async function initializeProjectRepo(projectId: string, repoPath: string)
     const res = await fetch(`${base}/api/data/cursor-init-template`);
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: res.statusText }));
-      throw new Error((err as { error?: string }).error || "Failed to load .cursor_inti template");
+      throw new Error((err as { error?: string }).error || "Failed to load .cursor_template template");
     }
     const json = (await res.json()) as { files?: Record<string, string> };
     files = json.files ?? {};
   }
   if (Object.keys(files).length === 0) {
-    throw new Error(".cursor_inti folder is empty or not found");
+    throw new Error(".cursor_template folder is empty or not found");
   }
   for (const [relativePath, content] of Object.entries(files)) {
     const normalized = relativePath.replace(/\\/g, "/");
@@ -280,41 +279,74 @@ function getApiBase(): string {
   return window.location.origin;
 }
 
+/** Options for analyzeProjectDoc. When in Tauri, pass runTempTicket so the agent runs in the Worker tab (same env as terminal) instead of on the server. */
+export type AnalyzeProjectDocOptions = {
+  runTempTicket?: (
+    projectPath: string,
+    promptContent: string,
+    label: string,
+    meta?: { projectId?: string; outputPath?: string; onComplete?: string; payload?: Record<string, unknown> }
+  ) => string | null;
+};
+
 /**
- * Run the analyze-project-doc API: read prompt from project repo, send current doc + prompt to LLM, write result to output path.
- * In Tauri: fetches prompt only, then runs agent via runTempTicket (Run tab); output is written when the run exits.
- * In browser: uses POST /api/analyze-project-doc (runs agent on server and writes output).
- * Pass repoPath when the project may not exist in the Next server's data/projects.json (e.g. in Tauri, projects come from Rust).
+ * Get the combined prompt for an analyze doc (API with promptOnly: true). Used in Tauri to run agent via Worker.
+ */
+export async function getAnalyzePromptOnly(
+  projectId: string,
+  promptPath: string,
+  outputPath: string,
+  repoPath?: string
+): Promise<string> {
+  const base = getApiBase();
+  const body: { projectId: string; promptPath: string; outputPath: string; repoPath?: string; promptOnly: true } = {
+    projectId,
+    promptPath,
+    outputPath,
+    promptOnly: true,
+  };
+  if (repoPath?.trim()) body.repoPath = repoPath.trim();
+  const res = await fetch(`${base}/api/analyze-project-doc`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = (await res.json().catch(() => ({}))) as { error?: string; hint?: string; prompt?: string };
+  if (!res.ok) {
+    const msg = data.error || res.statusText || "Failed to get prompt";
+    const hint = data.hint ? ` ${data.hint}` : "";
+    throw new Error(msg + hint);
+  }
+  if (typeof data.prompt !== "string" || !data.prompt.trim()) {
+    throw new Error("API did not return a prompt");
+  }
+  return data.prompt.trim();
+}
+
+/**
+ * Run analyze: in Tauri with runTempTicket, uses the Worker tab agent (same terminal env, no .env). In browser, uses POST /api/analyze-project-doc (server runs agent).
  */
 export async function analyzeProjectDoc(
   projectId: string,
   promptPath: string,
   outputPath: string,
-  repoPath?: string
-): Promise<void> {
-  if (isTauri && repoPath?.trim()) {
-    const base = getApiBase();
-    const body = { projectId, promptPath, outputPath, repoPath: repoPath.trim(), promptOnly: true as const };
-    const res = await fetch(`${base}/api/analyze-project-doc`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const data = (await res.json().catch(() => ({}))) as { error?: string; hint?: string; prompt?: string };
-    if (!res.ok) {
-      const msg = data.error || res.statusText || "Analyze failed";
-      const hint = data.hint ? ` ${data.hint}` : "";
-      throw new Error(msg + hint);
-    }
-    const prompt = typeof data.prompt === "string" ? data.prompt : "";
-    if (!prompt) throw new Error("No prompt returned from API");
-    const label = "Analyze: " + (outputPath.split("/").pop() || outputPath).replace(/\.[^.]+$/, "").slice(0, 40);
-    await useRunStore.getState().runTempTicket(repoPath.trim(), prompt, label, {
+  repoPath?: string,
+  options?: AnalyzeProjectDocOptions
+): Promise<{ placeholder?: boolean; message?: string; viaWorker?: boolean }> {
+  const path = repoPath?.trim();
+  if (isTauri && path && options?.runTempTicket) {
+    // Overwrite the file immediately so it is always replaced (no stale content); run will overwrite again with result.
+    const analyzingPlaceholder = `<!-- Analyzing -->\n\n*Analysis in progress. See Worker tab.*`;
+    await writeProjectFile(projectId, outputPath, analyzingPlaceholder, path);
+    const prompt = await getAnalyzePromptOnly(projectId, promptPath, outputPath, path);
+    const label = `Analyze: ${outputPath.replace(/^\.cursor\//, "").replace(/\.md$/i, "")}`;
+    options.runTempTicket(path, prompt, label, {
       projectId,
       outputPath,
-      payload: { repoPath: repoPath.trim() },
+      onComplete: "analyze-doc",
+      payload: { repoPath: path },
     });
-    return;
+    return { viaWorker: true };
   }
 
   const base = getApiBase();
@@ -329,12 +361,40 @@ export async function analyzeProjectDoc(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  const data = (await res.json().catch(() => ({}))) as { error?: string; hint?: string };
+  const data = (await res.json().catch(() => ({}))) as {
+    error?: string;
+    hint?: string;
+    ok?: boolean;
+    placeholder?: boolean;
+    message?: string;
+  };
   if (!res.ok) {
     const msg = data.error || res.statusText || "Analyze failed";
     const hint = data.hint ? ` ${data.hint}` : "";
     throw new Error(msg + hint);
   }
+  if (data.placeholder && data.message) {
+    return { placeholder: true, message: data.message };
+  }
+  return {};
+}
+
+/**
+ * Strip cursor/terminal output from all analysis .md files in the repo.
+ * POST /api/clean-analysis-docs with projectId and repoPath.
+ */
+export async function cleanAnalysisDocs(projectId: string, repoPath: string): Promise<{ cleaned: number; skipped: number }> {
+  const base = getApiBase();
+  const res = await fetch(`${base}/api/clean-analysis-docs`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ projectId, repoPath: repoPath.trim() }),
+  });
+  const data = (await res.json().catch(() => ({}))) as { error?: string; cleaned?: number; skipped?: number };
+  if (!res.ok) {
+    throw new Error(data.error || res.statusText || "Clean failed");
+  }
+  return { cleaned: data.cleaned ?? 0, skipped: data.skipped ?? 0 };
 }
 
 /* ═══ Analyze queue (worker tab): prompts as tickets, 3 at a time ═══ */

@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { AnalyzeButtonSplit } from "@/components/molecules/ControlsAndButtons/AnalyzeButtonSplit";
 import { readProjectFileOrEmpty, writeProjectFile, analyzeProjectDoc } from "@/lib/api-projects";
+import { isTauri } from "@/lib/tauri";
+import { useRunStore } from "@/store/run-store";
 import type { Project } from "@/types/project";
 import type { FrontendSetupJson } from "@/types/setup-json";
 import {
@@ -47,9 +49,11 @@ const FRONTEND_ANALYSIS_OUTPUT_PATH = ".cursor/setup/frontend-analysis.md";
 interface ProjectFrontendTabProps {
   project: Project;
   projectId: string;
+  docsRefreshKey?: number;
 }
 
-export function ProjectFrontendTab({ project, projectId }: ProjectFrontendTabProps) {
+export function ProjectFrontendTab({ project, projectId, docsRefreshKey }: ProjectFrontendTabProps) {
+  const runTempTicket = useRunStore((s) => s.runTempTicket);
   const [data, setData] = useState<FrontendSetupJson | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -86,7 +90,7 @@ export function ProjectFrontendTab({ project, projectId }: ProjectFrontendTabPro
     return () => {
       cancelledRef.current = true;
     };
-  }, [fetchData]);
+  }, [fetchData, docsRefreshKey]);
 
   const save = useCallback(async () => {
     if (!data || !project.repoPath) return;
@@ -154,7 +158,18 @@ export function ProjectFrontendTab({ project, projectId }: ProjectFrontendTabPro
             onAnalyze={async () => {
               setAnalyzing(true);
               try {
-                await analyzeProjectDoc(projectId, FRONTEND_PROMPT_PATH, FRONTEND_ANALYSIS_OUTPUT_PATH, project.repoPath ?? undefined);
+                const result = await analyzeProjectDoc(
+                  projectId,
+                  FRONTEND_PROMPT_PATH,
+                  FRONTEND_ANALYSIS_OUTPUT_PATH,
+                  project.repoPath ?? undefined,
+                  { runTempTicket: isTauri ? runTempTicket : undefined }
+                );
+                if (result?.viaWorker) {
+                  toast.success("Analyze started. See Worker tab.");
+                  return;
+                }
+                await fetchData();
                 toast.success("Frontend analysis updated.");
               } catch (e) {
                 toast.error(e instanceof Error ? e.message : "Analyze failed");
@@ -580,7 +595,7 @@ export function ProjectFrontendTab({ project, projectId }: ProjectFrontendTabPro
               <Palette className="h-4 w-4 text-violet-500" />
               <h3 className="text-sm font-semibold">Design</h3>
             </div>
-            <SetupDocBlock project={project} projectId={projectId} setupKey="design" />
+            <SetupDocBlock project={project} projectId={projectId} setupKey="design" docsRefreshKey={docsRefreshKey} />
             <ProjectDesignTab project={project} projectId={projectId} showHeader={false} />
           </SectionCard>
         </div>
