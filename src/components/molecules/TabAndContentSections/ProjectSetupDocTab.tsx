@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Loader2, FileText, TestTube2, Lightbulb } from "lucide-react";
-import { readProjectFileOrEmpty } from "@/lib/api-projects";
+import { readProjectFileOrEmpty, readCursorDocFromServer } from "@/lib/api-projects";
 import type { Project } from "@/types/project";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SectionCard } from "@/components/shared/DisplayPrimitives";
@@ -13,8 +13,6 @@ import { cn } from "@/lib/utils";
 import { getSetupDocPath } from "@/lib/cursor-paths";
 
 export type ProjectSetupDocKey = "testing" | "documentation" | "ideas";
-
-const SETUP_DIR = ".cursor/2. setup";
 
 const CONFIG: Record<
   ProjectSetupDocKey,
@@ -51,14 +49,13 @@ export function ProjectSetupDocTab({ project, projectId, setupKey, docsRefreshKe
   const cancelledRef = useRef(false);
 
   const fetchDoc = useCallback(async (getIsCancelled?: () => boolean) => {
-    if (!project.repoPath) {
-      if (!getIsCancelled?.()) setLoading(false);
-      return;
-    }
     if (!getIsCancelled?.()) setLoading(true);
     if (!getIsCancelled?.()) setError(null);
     try {
-      const text = await readProjectFileOrEmpty(projectId, path, project.repoPath);
+      let text = project.repoPath
+        ? await readProjectFileOrEmpty(projectId, path, project.repoPath)
+        : "";
+      if (!text?.trim()) text = await readCursorDocFromServer(path);
       if (getIsCancelled?.()) return;
       setContent(text && text.trim() ? text : null);
     } catch (e) {
@@ -81,17 +78,6 @@ export function ProjectSetupDocTab({ project, projectId, setupKey, docsRefreshKe
 
   const config = CONFIG[setupKey];
   const Icon = ICONS[setupKey];
-
-  if (!project.repoPath) {
-    return (
-      <div className="rounded-xl border border-border/40 bg-muted/10 p-6 text-center">
-        <p className="text-sm text-muted-foreground">
-          Set a repository path for this project to load {config.label.toLowerCase()} from{" "}
-          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{path}</code>.
-        </p>
-      </div>
-    );
-  }
 
   if (loading) {
     return (

@@ -1,13 +1,22 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SectionCard } from "@/components/shared/DisplayPrimitives";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { Flag, Loader2, FileText, Plus, Pencil, Trash2, ListTodo } from "lucide-react";
+import { Flag, Loader2, FileText, Plus, Pencil, Trash2, ListTodo, Folder } from "lucide-react";
+import { listProjectFiles, type FileEntry } from "@/lib/api-projects";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { ConvertToTicketsDialog } from "@/components/molecules/FormsAndDialogs/ConvertToTicketsDialog";
 import { toast } from "sonner";
 import type { Project } from "@/types/project";
@@ -17,6 +26,25 @@ import { Dialog as SharedDialog } from "@/components/shared/Dialog";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import { GenericInputWithLabel } from "@/components/shared/GenericInputWithLabel";
 import { GenericTextareaWithLabel } from "@/components/shared/GenericTextareaWithLabel";
+
+const MILESTONES_DIR = ".cursor/milestones";
+
+function formatSize(bytes: number): string {
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+}
+
+function formatUpdatedAt(updatedAt: string): string {
+  try {
+    const d = new Date(updatedAt);
+    return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString(undefined, { dateStyle: "short" });
+  } catch {
+    return "—";
+  }
+}
 
 const markdownClasses =
   "text-sm text-foreground [&_h1]:text-lg [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-semibold [&_h3]:text-sm [&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_pre]:bg-muted/50 [&_pre]:p-3 [&_pre]:rounded-md [&_pre]:overflow-x-auto [&_code]:bg-muted/50 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_p]:mb-2 last:[&_p]:mb-0 [&_table]:border-collapse [&_th]:border [&_td]:border [&_th]:px-2 [&_td]:px-2 [&_th]:py-1 [&_td]:py-1";
@@ -47,6 +75,27 @@ export function ProjectMilestonesTab({
   const [editSaving, setEditSaving] = useState(false);
   const [deleteSaving, setDeleteSaving] = useState(false);
   const [convertTicketsOpen, setConvertTicketsOpen] = useState(false);
+  const [milestoneFiles, setMilestoneFiles] = useState<FileEntry[]>([]);
+  const cancelledRef = useRef(false);
+
+  const loadMilestoneFiles = useCallback(async () => {
+    if (!project.repoPath) return;
+    try {
+      const list = await listProjectFiles(projectId, MILESTONES_DIR, project.repoPath);
+      if (cancelledRef.current) return;
+      setMilestoneFiles((list ?? []).filter((e) => !e.isDirectory));
+    } catch {
+      if (!cancelledRef.current) setMilestoneFiles([]);
+    }
+  }, [projectId, project.repoPath]);
+
+  useEffect(() => {
+    cancelledRef.current = false;
+    loadMilestoneFiles();
+    return () => {
+      cancelledRef.current = true;
+    };
+  }, [loadMilestoneFiles]);
 
   const loadMilestones = useCallback(async () => {
     if (!projectId) return;
@@ -214,6 +263,39 @@ export function ProjectMilestonesTab({
 
   return (
     <div className="w-full flex flex-col gap-4">
+      {project.repoPath && (
+        <SectionCard accentColor="orange">
+          <div className="flex items-center gap-2 mb-3">
+            <Folder className="h-4 w-4 text-orange-500" />
+            <h3 className="text-sm font-semibold">Milestones files</h3>
+          </div>
+          <p className="text-xs text-muted-foreground mb-3">
+            Files in <code className="rounded bg-muted px-1 py-0.5 font-mono text-[10px]">{MILESTONES_DIR}</code>.
+          </p>
+          {milestoneFiles.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No files in this folder.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs">Name</TableHead>
+                  <TableHead className="text-xs w-20">Size</TableHead>
+                  <TableHead className="text-xs w-24">Updated</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {milestoneFiles.map((e) => (
+                  <TableRow key={e.name}>
+                    <TableCell className="font-mono text-xs">{e.name}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{formatSize(e.size)}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{formatUpdatedAt(e.updatedAt)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </SectionCard>
+      )}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <h3 className="text-sm font-semibold">Milestones</h3>
         <div className="flex items-center gap-1.5">

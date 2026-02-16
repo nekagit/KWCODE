@@ -58,7 +58,7 @@ export function buildArchitectureAnalysisPromptRecord(opts: {
 Write the result to \`.cursor/architecture.md\` in the project root. Create \`.cursor\` if needed. Include: layers, patterns (e.g. clean, hexagonal, REST), dependencies, and where they appear in the code. Use clear markdown. Base everything on the actual codebase.`;
 }
 
-/** Build prompt for tickets/work analysis; writes .cursor/planner/tickets.md (checklist by feature) and .cursor/planner/features.md in one run. */
+/** Build prompt for tickets/work analysis; writes .cursor/7. planner/tickets.md (checklist by feature) and .cursor/7. planner/features.md in one run. */
 export function buildTicketsAnalysisPromptRecord(opts: {
   projectName: string;
   ticketSummaries: { title: string; status: string }[];
@@ -69,7 +69,7 @@ export function buildTicketsAnalysisPromptRecord(opts: {
 
 **You must create two files in the same run so they stay in sync:**
 
-1. **\`.cursor/planner/tickets.md\`** — Work items in **checklist format** so the AI or user can check off finished tickets. Follow the structure in \`.cursor/tickets-format.md\` if present. Requirements:
+1. **\`.cursor/7. planner/tickets.md\`** — Work items in **checklist format** so the AI or user can check off finished tickets. Follow the structure in \`.cursor/tickets-format.md\` if present. Requirements:
    - **Required sections in order:** Title (H1), Metadata block (Project, Source, Last updated), horizontal rule, \`## Summary: Done vs missing\` (Done table, Missing table), horizontal rule, \`## Prioritized work items (tickets)\`, then \`### P0 — Critical / foundation\`, \`### P1 — High / quality and maintainability\`, \`### P2 — Medium / polish and scale\`, \`### P3 — Lower / later\`. Under each priority use \`#### Feature: <name>\` and list tickets as checklist items.
    - Use GFM task lists: \`- [ ] #N Title — short description\` for open, \`- [x] #N Title — short description\` for done. Every ticket must appear under exactly one \`#### Feature:\` subsection.
    - Add \`## Next steps\` with a numbered list at the end. Base everything on the actual codebase.
@@ -97,7 +97,7 @@ export type KanbanContextData = {
  */
 export function buildKanbanContextBlock(data: KanbanContextData): string {
   const lines: string[] = [
-    "## Current scope (from Kanban — .cursor/planner/tickets.md)",
+    "## Current scope (from Kanban — .cursor/7. planner/tickets.md)",
     "",
     "Use the following features and tickets as context. They are parsed from the project's Kanban board.",
     "",
@@ -115,7 +115,7 @@ export function buildKanbanContextBlock(data: KanbanContextData): string {
       lines.push("");
     });
   } else {
-    lines.push("_No tickets parsed yet. Run Sync on the Todos tab after creating .cursor/planner/tickets.md._");
+    lines.push("_No tickets parsed yet. Run Sync on the Todos tab after creating .cursor/7. planner/tickets.md._");
   }
   lines.push("");
   return lines.join("\n");

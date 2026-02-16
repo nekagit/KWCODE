@@ -14,7 +14,7 @@ The project needed a scalable structure to support rapid setup of new projects w
 - **New folders (in both `.cursor_inti` and `.cursor`):**
   - **project/** — PROJECT-INFO.md, TECH-STACK.md, ROADMAP.md (templates; project fills in after init).
   - **milestones/** — mvp/feature/release milestone templates and optional numbered milestones (01–05) aligned with planner phases.
-  - **worker/** — queue/ (ready.md, in-progress.md, completed.md) and workflows/ticket-workflow.md (for humans/scripts; app still uses planner/tickets.md and kanban-state.json).
+  - **worker/** — queue/ (ready.md, in-progress.md, completed.md) and workflows/ticket-workflow.md (for humans/scripts; app still uses 7. planner/tickets.md and kanban-state.json).
   - **configs/** — planner-config.template.json, worker-config.template.json, tech-stacks/*.json (react-node-postgres, vue-express-mongodb, custom).
   - **scripts/** — initialize-project.sh, generate-milestones.js, create-tickets.js, setup-documentation.sh (run from project root).
   - **documentation/** — setup-guide, development-guide, architecture-overview, api-reference; code-organization, development-workflows, testing-strategy.
@@ -27,7 +27,7 @@ The project needed a scalable structure to support rapid setup of new projects w
 
 ## Consequences
 
-- **Backward compatibility:** All existing paths (planner/tickets.md, kanban-state.json, agents/*.md, prompts/worker.md, setup/frontend.json, backend.json) unchanged. New folders are additive.
+- **Backward compatibility:** All existing paths (7. planner/tickets.md, kanban-state.json, agents/*.md, prompts/worker.md, setup/frontend.json, backend.json) unchanged. New folders are additive.
 - **New projects:** Initialize copies the full template including project/, milestones/, worker/, configs/, scripts/, documentation/, and new prompt subfolders and agents. Optional: run scripts/initialize-project.sh and generate-milestones.js.
 - **Maintenance:** Template content lives in `.cursor_inti`; project-specific content in each repo’s `.cursor/`. No deletion of existing files; this ADR adds structure and content only.
 

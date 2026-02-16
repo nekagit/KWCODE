@@ -2,11 +2,11 @@
   "jobs": [
     { "id": "ideas", "promptPath": ".cursor/0. ideas/ideas.prompt.md", "outputPath": ".cursor/0. ideas/ideas.md", "status": "pending" },
     { "id": "project", "promptPath": ".cursor/1. project/project.prompt.md", "outputPath": ".cursor/1. project/PROJECT-INFO.md", "status": "pending" },
-    { "id": "design", "promptPath": ".cursor/2. setup/design.prompt.md", "outputPath": ".cursor/2. setup/design.md", "status": "pending" },
-    { "id": "architecture", "promptPath": ".cursor/2. setup/architecture.prompt.md", "outputPath": ".cursor/2. setup/architecture.md", "status": "pending" },
-    { "id": "testing", "promptPath": ".cursor/2. setup/testing.prompt.md", "outputPath": ".cursor/2. setup/testing.md", "status": "pending" },
-    { "id": "documentation", "promptPath": ".cursor/2. setup/documentation.prompt.md", "outputPath": ".cursor/2. setup/documentation.md", "status": "pending" },
-    { "id": "frontend", "promptPath": ".cursor/2. setup/frontend.prompt.md", "outputPath": ".cursor/2. setup/frontend-analysis.md", "status": "pending" },
-    { "id": "backend", "promptPath": ".cursor/2. setup/backend.prompt.md", "outputPath": ".cursor/2. setup/backend-analysis.md", "status": "pending" }
+    { "id": "design", "promptPath": ".cursor/1. project/design.prompt.md", "outputPath": ".cursor/1. project/design.md", "status": "pending" },
+    { "id": "architecture", "promptPath": ".cursor/1. project/architecture.prompt.md", "outputPath": ".cursor/1. project/architecture.md", "status": "pending" },
+    { "id": "testing", "promptPath": ".cursor/1. project/testing.prompt.md", "outputPath": ".cursor/1. project/testing.md", "status": "pending" },
+    { "id": "documentation", "promptPath": ".cursor/1. project/documentation.prompt.md", "outputPath": ".cursor/1. project/documentation.md", "status": "pending" },
+    { "id": "frontend", "promptPath": ".cursor/1. project/frontend.prompt.md", "outputPath": ".cursor/1. project/frontend-analysis.md", "status": "pending" },
+    { "id": "backend", "promptPath": ".cursor/1. project/backend.prompt.md", "outputPath": ".cursor/1. project/backend-analysis.md", "status": "pending" }
   ]
 }

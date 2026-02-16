@@ -86,7 +86,7 @@ export function ProjectControlTab({ projectId }: ProjectControlTabProps) {
       <EmptyState
         icon={<ClipboardList className="size-6 text-muted-foreground" />}
         title="No completed implementations yet"
-        description="Run Implement All for tickets from the Worker tab; finished runs will appear here."
+        description="Run Implement All for tickets; finished runs will appear here."
       />
     );
   }

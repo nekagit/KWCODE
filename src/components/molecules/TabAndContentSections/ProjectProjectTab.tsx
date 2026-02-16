@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Loader2, FileText, FolderOpen, RefreshCw, Play, Square } from "lucide-react";
+import { Loader2, FileText, FolderOpen, RefreshCw, Play, Square, FolderGit2, Bot, Folder } from "lucide-react";
 import { AnalyzeButtonSplit } from "@/components/molecules/ControlsAndButtons/AnalyzeButtonSplit";
-import { listProjectFiles, readProjectFileOrEmpty, readCursorDocFromServer, analyzeProjectDoc, type FileEntry } from "@/lib/api-projects";
+import { listProjectFiles, readProjectFileOrEmpty, readCursorDocFromServer, analyzeProjectDoc, updateProject, type FileEntry } from "@/lib/api-projects";
 import { isTauri } from "@/lib/tauri";
 import { useRunStore } from "@/store/run-store";
 import type { Project } from "@/types/project";
@@ -31,6 +31,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ProjectFilesTab } from "@/components/molecules/TabAndContentSections/ProjectFilesTab";
+import { ProjectIdeasDocTab } from "@/components/molecules/TabAndContentSections/ProjectIdeasDocTab";
+import { ProjectAgentsSection } from "@/components/molecules/TabAndContentSections/ProjectAgentsSection";
 
 const markdownClasses =
   "text-sm text-foreground [&_h1]:text-lg [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-semibold [&_h3]:text-sm [&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_pre]:bg-muted/50 [&_pre]:p-3 [&_pre]:rounded-md [&_pre]:overflow-x-auto [&_code]:bg-muted/50 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_p]:mb-2 last:[&_p]:mb-0 [&_table]:border-collapse [&_th]:border [&_td]:border [&_th]:px-2 [&_td]:px-2 [&_th]:py-1 [&_td]:py-1";
@@ -52,18 +55,32 @@ function formatUpdatedAt(updatedAt: string): string {
   }
 }
 
+/** Extract port from a localhost URL (e.g. http://localhost:3000 -> 3000). */
+function getPortFromLocalUrl(url: string): number | null {
+  const m = url.match(/:(\d+)(?:\/|$)/);
+  return m ? parseInt(m[1], 10) : null;
+}
+
+const ADR_DIR = ".cursor/adr";
+const RULES_DIR = ".cursor/rules";
+
 interface ProjectProjectTabProps {
   project: Project;
   projectId: string;
   docsRefreshKey?: number;
+  /** Called after project is updated (e.g. run port saved) so parent can refetch. */
+  onProjectUpdate?: () => void;
 }
 
-export function ProjectProjectTab({ project, projectId, docsRefreshKey }: ProjectProjectTabProps) {
+export function ProjectProjectTab({ project, projectId, docsRefreshKey, onProjectUpdate }: ProjectProjectTabProps) {
   const runTempTicket = useRunStore((s) => s.runTempTicket);
   const runNpmScript = useRunStore((s) => s.runNpmScript);
+  const runNpmScriptInExternalTerminal = useRunStore((s) => s.runNpmScriptInExternalTerminal);
   const stopRun = useRunStore((s) => s.stopRun);
   const runningRuns = useRunStore((s) => s.runningRuns);
   const [entries, setEntries] = useState<FileEntry[]>([]);
+  const [adrEntries, setAdrEntries] = useState<FileEntry[]>([]);
+  const [rulesEntries, setRulesEntries] = useState<FileEntry[]>([]);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [content, setContent] = useState<string | null>(null);
   const [loadingList, setLoadingList] = useState(true);
@@ -73,6 +90,9 @@ export function ProjectProjectTab({ project, projectId, docsRefreshKey }: Projec
   const [scripts, setScripts] = useState<Record<string, string>>({});
   const [loadingScripts, setLoadingScripts] = useState(false);
   const [lastRunId, setLastRunId] = useState<string | null>(null);
+  const [savingPort, setSavingPort] = useState(false);
+  const [folderRefreshKey, setFolderRefreshKey] = useState(0);
+  const cancelledRef = useRef(false);
 
   const loadFiles = useCallback(async () => {
     if (!project.repoPath) {
@@ -99,6 +119,33 @@ export function ProjectProjectTab({ project, projectId, docsRefreshKey }: Projec
   useEffect(() => {
     loadFiles();
   }, [loadFiles, docsRefreshKey]);
+
+  const loadAdrAndRules = useCallback(async () => {
+    if (!project.repoPath) return;
+    cancelledRef.current = false;
+    try {
+      const [adrList, rulesList] = await Promise.all([
+        listProjectFiles(projectId, ADR_DIR, project.repoPath),
+        listProjectFiles(projectId, RULES_DIR, project.repoPath),
+      ]);
+      if (cancelledRef.current) return;
+      setAdrEntries((adrList ?? []).filter((e) => !e.isDirectory));
+      setRulesEntries((rulesList ?? []).filter((e) => !e.isDirectory));
+    } catch {
+      if (!cancelledRef.current) {
+        setAdrEntries([]);
+        setRulesEntries([]);
+      }
+    }
+  }, [projectId, project.repoPath]);
+
+  useEffect(() => {
+    cancelledRef.current = false;
+    loadAdrAndRules();
+    return () => {
+      cancelledRef.current = true;
+    };
+  }, [loadAdrAndRules, docsRefreshKey, folderRefreshKey]);
 
   const loadContent = useCallback(
     async (filename: string) => {
@@ -197,6 +244,28 @@ export function ProjectProjectTab({ project, projectId, docsRefreshKey }: Projec
     <div className="space-y-6">
       <ScrollArea className="h-[calc(100vh-14rem)]">
         <div className="space-y-6 pr-4">
+          {/* Project Files — .cursor directory browser */}
+          <SectionCard accentColor="rose">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500">
+                    <FolderGit2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">Project Files</h3>
+                    <p className="text-xs text-muted-foreground">Files in .cursor directory</p>
+                  </div>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => setFolderRefreshKey((k) => k + 1)} className="gap-1.5">
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  Refresh
+                </Button>
+              </div>
+              <ProjectFilesTab project={project} projectId={projectId} />
+            </div>
+          </SectionCard>
+
           {/* Overview + file list */}
           <SectionCard accentColor="sky">
             <div className="flex items-center gap-2 mb-3">
@@ -245,7 +314,7 @@ export function ProjectProjectTab({ project, projectId, docsRefreshKey }: Projec
                       { runTempTicket: isTauri ? runTempTicket : undefined }
                     );
                     if (result?.viaWorker) {
-                      toast.success("Analyze started. See Worker tab.");
+                      toast.success("Analysis started.");
                       return;
                     }
                     await loadFiles();
@@ -332,7 +401,7 @@ export function ProjectProjectTab({ project, projectId, docsRefreshKey }: Projec
               <h3 className="text-sm font-semibold">Run</h3>
             </div>
             <p className="text-xs text-muted-foreground mb-4">
-              Run npm scripts from the project directory. Output appears below; if the process prints a localhost URL, an &quot;Open app&quot; link will appear.
+              Run npm scripts from the project directory. On macOS, each script opens in Terminal.app; on other platforms output appears below (localhost URL becomes &quot;Open app&quot;).
             </p>
             {loadingScripts ? (
               <div className="flex items-center gap-2 py-4 text-muted-foreground">
@@ -361,10 +430,20 @@ export function ProjectProjectTab({ project, projectId, docsRefreshKey }: Projec
                                 onClick={async () => {
                                   if (!canRun || !project.repoPath) return;
                                   try {
-                                    const runId = await runNpmScript(project.repoPath, name);
-                                    if (runId) {
-                                      setLastRunId(runId);
-                                      toast.success("Running. Output below.");
+                                    const opened = await runNpmScriptInExternalTerminal(project.repoPath, name);
+                                    if (opened) {
+                                      toast.success("Opened in Terminal.");
+                                      return;
+                                    }
+                                    const err = useRunStore.getState().error ?? "";
+                                    if (err.includes("only supported on macOS")) {
+                                      const runId = await runNpmScript(project.repoPath, name);
+                                      if (runId) {
+                                        setLastRunId(runId);
+                                        toast.success("Running. Output below.");
+                                      }
+                                    } else {
+                                      toast.error(err || "Failed to open terminal");
                                     }
                                   } catch (e) {
                                     toast.error(e instanceof Error ? e.message : "Failed to start");
@@ -377,7 +456,7 @@ export function ProjectProjectTab({ project, projectId, docsRefreshKey }: Projec
                             </span>
                           </TooltipTrigger>
                           <TooltipContent>
-                            {canRun ? `npm run ${name}` : "Run scripts in Tauri app"}
+                            {canRun ? `npm run ${name} (opens Terminal on Mac)` : "Run scripts in Tauri app"}
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -393,21 +472,51 @@ export function ProjectProjectTab({ project, projectId, docsRefreshKey }: Projec
                   const run = runningRuns.find((r) => r.runId === lastRunId);
                   if (!run) return null;
                   const isRunning = run.status === "running";
+                  const portFromUrl = run.localUrl ? getPortFromLocalUrl(run.localUrl) : null;
+                  const canSavePort =
+                    portFromUrl != null &&
+                    (project.runPort == null || project.runPort !== portFromUrl);
                   return (
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
                         <span className="text-xs font-medium text-muted-foreground">{run.label}</span>
-                        {isRunning && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="gap-1.5 text-xs text-destructive hover:bg-destructive/10"
-                            onClick={() => stopRun(lastRunId)}
-                          >
-                            <Square className="size-3" />
-                            Stop
-                          </Button>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {canSavePort && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1.5 text-xs"
+                              disabled={savingPort}
+                              onClick={async () => {
+                                if (portFromUrl == null) return;
+                                setSavingPort(true);
+                                try {
+                                  await updateProject(projectId, { runPort: portFromUrl });
+                                  onProjectUpdate?.();
+                                  toast.success("Run port saved. Use View Running Project in the top bar.");
+                                } catch (e) {
+                                  toast.error(e instanceof Error ? e.message : "Failed to save port");
+                                } finally {
+                                  setSavingPort(false);
+                                }
+                              }}
+                            >
+                              {savingPort ? <Loader2 className="size-3 animate-spin" /> : null}
+                              Use as project URL
+                            </Button>
+                          )}
+                          {isRunning && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1.5 text-xs text-destructive hover:bg-destructive/10"
+                              onClick={() => stopRun(lastRunId)}
+                            >
+                              <Square className="size-3" />
+                              Stop
+                            </Button>
+                          )}
+                        </div>
                       </div>
                       <TerminalSlot
                         run={{
@@ -426,6 +535,89 @@ export function ProjectProjectTab({ project, projectId, docsRefreshKey }: Projec
                   );
                 })()}
               </div>
+            )}
+          </SectionCard>
+
+          {/* Ideas */}
+          <div>
+            <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+              <span className="text-amber-500">Ideas</span>
+            </h3>
+            <ProjectIdeasDocTab project={project} projectId={projectId} docsRefreshKey={docsRefreshKey} />
+          </div>
+
+          {/* ADR — Architecture decision records */}
+          <SectionCard accentColor="violet">
+            <div className="flex items-center gap-2 mb-3">
+              <FileText className="h-4 w-4 text-violet-500" />
+              <h3 className="text-sm font-semibold">ADR</h3>
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              Architecture decision records in <code className="rounded bg-muted px-1 py-0.5 font-mono text-[10px]">{ADR_DIR}</code>.
+            </p>
+            {adrEntries.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No files in this folder.</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs">Name</TableHead>
+                    <TableHead className="text-xs w-20">Size</TableHead>
+                    <TableHead className="text-xs w-24">Updated</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {adrEntries.map((e) => (
+                    <TableRow key={e.name}>
+                      <TableCell className="font-mono text-xs">{e.name}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{formatSize(e.size)}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{formatUpdatedAt(e.updatedAt)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </SectionCard>
+
+          {/* Agents */}
+          <SectionCard accentColor="cyan">
+            <div className="flex items-center gap-2 mb-3">
+              <Bot className="h-4 w-4 text-cyan-500" />
+              <h3 className="text-sm font-semibold">Agents</h3>
+            </div>
+            <ProjectAgentsSection project={project} projectId={projectId} />
+          </SectionCard>
+
+          {/* Rules */}
+          <SectionCard accentColor="teal">
+            <div className="flex items-center gap-2 mb-3">
+              <Folder className="h-4 w-4 text-teal-500" />
+              <h3 className="text-sm font-semibold">Rules</h3>
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              Cursor rules and conventions in <code className="rounded bg-muted px-1 py-0.5 font-mono text-[10px]">{RULES_DIR}</code>.
+            </p>
+            {rulesEntries.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No files in this folder.</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs">Name</TableHead>
+                    <TableHead className="text-xs w-20">Size</TableHead>
+                    <TableHead className="text-xs w-24">Updated</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rulesEntries.map((e) => (
+                    <TableRow key={e.name}>
+                      <TableCell className="font-mono text-xs">{e.name}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{formatSize(e.size)}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{formatUpdatedAt(e.updatedAt)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             )}
           </SectionCard>
         </div>

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import { runAgentPrompt } from "@/lib/agent-runner";
 
-/** Ticket shape returned by AI for .cursor/planner/tickets.md (see .cursor/tickets-format.md). */
+/** Ticket shape returned by AI for .cursor/7. planner/tickets.md (see .cursor/tickets-format.md). */
 type GeneratedTicket = {
   title: string;
   description?: string;

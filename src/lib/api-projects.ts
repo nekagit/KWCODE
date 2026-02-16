@@ -10,6 +10,7 @@ export type CreateProjectBody = {
   name: string;
   description?: string;
   repoPath?: string;
+  runPort?: number;
   promptIds?: number[];
   ticketIds?: string[];
   ideaIds?: number[];
@@ -98,7 +99,7 @@ export async function getProjectExport(id: string, category: keyof ResolvedProje
 }
 
 /**
- * Read a file from the project repo (e.g. .cursor/planner/tickets.md).
+ * Read a file from the project repo (e.g. .cursor/7. planner/tickets.md).
  * In Tauri pass repoPath; in browser uses projectId.
  * Throws with a clear message when the file is missing or repo path is invalid (reliable read; clear errors when missing).
  */
@@ -149,7 +150,7 @@ export async function readProjectFile(
 
 /**
  * Read a file from the project repo, or return empty string if the file does not exist.
- * Use for optional files (e.g. .cursor/planner/tickets.md) so the UI can load with empty data instead of showing a file-not-found error.
+ * Use for optional files (e.g. .cursor/7. planner/tickets.md) so the UI can load with empty data instead of showing a file-not-found error.
  */
 export async function readProjectFileOrEmpty(
   projectId: string,
@@ -165,7 +166,7 @@ export async function readProjectFileOrEmpty(
 
 /**
  * Read a file from the app's .cursor folder (server process.cwd()/.cursor/). Use as fallback when project repo read returns empty.
- * @param pathUnderCursor - Path under .cursor (e.g. "0. ideas/ideas.md", "2. setup/design.md"). Can also pass full path like ".cursor/0. ideas/ideas.md" (leading .cursor/ is stripped).
+ * @param pathUnderCursor - Path under .cursor (e.g. "0. ideas/ideas.md", "1. project/design.md"). Can also pass full path like ".cursor/0. ideas/ideas.md" (leading .cursor/ is stripped).
  */
 export async function readCursorDocFromServer(pathUnderCursor: string): Promise<string> {
   const trimmed = pathUnderCursor.trim().replace(/^\.cursor\/?/, "");
@@ -298,7 +299,7 @@ function getApiBase(): string {
   return window.location.origin;
 }
 
-/** Options for analyzeProjectDoc. When in Tauri, pass runTempTicket so the agent runs in the Worker tab (same env as terminal) instead of on the server. */
+/** Options for analyzeProjectDoc. When in Tauri, pass runTempTicket so the agent runs in the same env as terminal instead of on the server. */
 export type AnalyzeProjectDocOptions = {
   runTempTicket?: (
     projectPath: string,
@@ -343,7 +344,7 @@ export async function getAnalyzePromptOnly(
 }
 
 /**
- * Run analyze: in Tauri with runTempTicket, uses the Worker tab agent (same terminal env, no .env). In browser, uses POST /api/analyze-project-doc (server runs agent).
+ * Run analyze: in Tauri with runTempTicket, uses agent in same terminal env (no .env). In browser, uses POST /api/analyze-project-doc (server runs agent).
  */
 export async function analyzeProjectDoc(
   projectId: string,
@@ -355,7 +356,7 @@ export async function analyzeProjectDoc(
   const path = repoPath?.trim();
   if (isTauri && path && options?.runTempTicket) {
     // Overwrite the file immediately so it is always replaced (no stale content); run will overwrite again with result.
-    const analyzingPlaceholder = `<!-- Analyzing -->\n\n*Analysis in progress. See Worker tab.*`;
+    const analyzingPlaceholder = `<!-- Analyzing -->\n\n*Analysis in progress.*`;
     await writeProjectFile(projectId, outputPath, analyzingPlaceholder, path);
     const prompt = await getAnalyzePromptOnly(projectId, promptPath, outputPath, path);
     const label = `Analyze: ${outputPath.replace(/^\.cursor\//, "").replace(/\.md$/i, "")}`;

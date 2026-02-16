@@ -14,7 +14,7 @@ import {
   Building2,
 } from "lucide-react";
 import { AnalyzeButtonSplit } from "@/components/molecules/ControlsAndButtons/AnalyzeButtonSplit";
-import { readProjectFileOrEmpty, writeProjectFile, analyzeProjectDoc } from "@/lib/api-projects";
+import { readProjectFileOrEmpty, readCursorDocFromServer, writeProjectFile, analyzeProjectDoc } from "@/lib/api-projects";
 import { isTauri } from "@/lib/tauri";
 import { useRunStore } from "@/store/run-store";
 import type { Project } from "@/types/project";
@@ -67,15 +67,13 @@ export function ProjectBackendTab({ project, projectId, docsRefreshKey }: Projec
   const cancelledRef = useRef(false);
 
   const fetchData = useCallback(async (getIsCancelled?: () => boolean) => {
-    if (!project.repoPath) {
-      if (!getIsCancelled?.()) setData(getDefaultBackendSetup());
-      if (!getIsCancelled?.()) setLoading(false);
-      return;
-    }
     if (!getIsCancelled?.()) setLoading(true);
     if (!getIsCancelled?.()) setError(null);
     try {
-      const raw = await readProjectFileOrEmpty(projectId, SETUP_PATH, project.repoPath);
+      let raw = project.repoPath
+        ? await readProjectFileOrEmpty(projectId, SETUP_PATH, project.repoPath)
+        : "";
+      if (!raw?.trim()) raw = await readCursorDocFromServer(SETUP_PATH);
       if (getIsCancelled?.()) return;
       setData(parseBackendSetupJson(raw));
     } catch (e) {
@@ -170,7 +168,7 @@ export function ProjectBackendTab({ project, projectId, docsRefreshKey }: Projec
                   { runTempTicket: isTauri ? runTempTicket : undefined }
                 );
                 if (result?.viaWorker) {
-                  toast.success("Analyze started. See Worker tab.");
+                  toast.success("Analysis started.");
                   return;
                 }
                 await fetchData();

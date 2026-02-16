@@ -765,7 +765,7 @@ fn write_spec_file(project_path: String, relative_path: String, content: String)
     Ok(())
 }
 
-/// Archive .cursor/planner/tickets.md or .cursor/planner/features.md to .cursor/legacy/{file}-YYYY-MM-DD.md and create a new empty file.
+/// Archive .cursor/7. planner/tickets.md or .cursor/7. planner/features.md to .cursor/legacy/{file}-YYYY-MM-DD.md and create a new empty file.
 /// file_kind must be "tickets" or "features".
 #[tauri::command]
 fn archive_cursor_file(project_path: String, file_kind: String) -> Result<(), String> {
@@ -775,7 +775,7 @@ fn archive_cursor_file(project_path: String, file_kind: String) -> Result<(), St
     }
     let (cursor_file, legacy_prefix, minimal_content) = match file_kind.trim() {
         "tickets" => (
-            ".cursor/planner/tickets.md",
+            ".cursor/7. planner/tickets.md",
             "tickets",
             "# Work items (tickets) — (project name)\n\n**Project:** (set)\n**Source:** Archived and reset\n**Last updated:** (date)\n\n---\n\n## Summary: Done vs missing\n\n### Done\n\n| Area | What's implemented |\n\n### Missing or incomplete\n\n| Area | Gap |\n\n---\n\n## Prioritized work items (tickets)\n\n### P0 — Critical / foundation\n
 #### Feature: (add feature name)\n
@@ -787,9 +787,9 @@ fn archive_cursor_file(project_path: String, file_kind: String) -> Result<(), St
 1. Add tickets under features.\n",
         ),
         "features" => (
-            ".cursor/planner/features.md",
+            ".cursor/7. planner/features.md",
             "features",
-            "# Features roadmap\n\nFeatures below are derived from .cursor/planner/tickets.md. Add features as checklist items with ticket refs, e.g. `- [ ] Feature name — #1, #2`.\n\n## Major features\n\n- [ ] (add feature)\n",
+            "# Features roadmap\n\nFeatures below are derived from .cursor/7. planner/tickets.md. Add features as checklist items with ticket refs, e.g. `- [ ] Feature name — #1, #2`.\n\n## Major features\n\n- [ ] (add feature)\n",
         ),
         _ => return Err("file_kind must be 'tickets' or 'features'".to_string()),
     };
@@ -938,6 +938,8 @@ pub struct Project {
     pub description: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub repo_path: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub run_port: Option<u16>,
     #[serde(default)]
     pub prompt_ids: Vec<i64>,
     #[serde(default)]
@@ -1014,6 +1016,7 @@ fn update_project(id: String, project: serde_json::Value) -> Result<Project, Str
             name: if updated.name.is_empty() { base.name } else { updated.name },
             description: updated.description.or(base.description),
             repo_path: updated.repo_path.or(base.repo_path),
+            run_port: updated.run_port.or(base.run_port),
             prompt_ids: if updated.prompt_ids.is_empty() { base.prompt_ids } else { updated.prompt_ids },
             ticket_ids: if updated.ticket_ids.is_empty() { base.ticket_ids } else { updated.ticket_ids },
             feature_ids: if updated.feature_ids.is_empty() { base.feature_ids } else { updated.feature_ids },
@@ -1117,6 +1120,7 @@ fn get_project_resolved(id: String) -> Result<serde_json::Value, String> {
         "name": project.name,
         "description": project.description,
         "repoPath": project.repo_path,
+        "runPort": project.run_port,
         "promptIds": project.prompt_ids,
         "ticketIds": project.ticket_ids,
         "featureIds": project.feature_ids,
@@ -2036,6 +2040,46 @@ async fn open_implement_all_in_system_terminal(project_path: String) -> Result<(
     }
 }
 
+/// Opens Terminal.app (macOS) and runs `npm run <script_name>` in the project directory.
+#[tauri::command]
+async fn run_npm_script_in_external_terminal(project_path: String, script_name: String) -> Result<(), String> {
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = (project_path, script_name);
+        return Err("External terminal is only supported on macOS.".to_string());
+    }
+    #[cfg(target_os = "macos")]
+    {
+        if script_name.is_empty()
+            || !script_name
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+        {
+            return Err("Invalid script name: only letters, numbers, hyphen and underscore allowed".to_string());
+        }
+        let dir = Path::new(&project_path)
+            .canonicalize()
+            .map_err(|e| format!("Project path invalid: {}", e))?;
+        if !dir.is_dir() {
+            return Err("Project path is not a directory".to_string());
+        }
+        let path_str = dir.to_string_lossy();
+        let path_escaped = path_str.replace('\'', "'\\''");
+        let shell_cmd = format!("cd '{}' && npm run {}", path_escaped, script_name);
+        let as_escaped = shell_cmd.replace('\\', "\\\\").replace('"', "\\\"");
+        let script = format!(
+            "tell application \"Terminal\" to do script \"{}\"",
+            as_escaped
+        );
+        Command::new("osascript")
+            .arg("-e")
+            .arg(&script)
+            .spawn()
+            .map_err(|e| format!("Failed to open Terminal: {}", e))?;
+        Ok(())
+    }
+}
+
 #[tauri::command]
 async fn run_implement_all(
     app: AppHandle,
@@ -2370,6 +2414,7 @@ pub fn run() {
             run_script,
             run_analysis_script,
             run_npm_script,
+            run_npm_script_in_external_terminal,
             run_implement_all,
             open_implement_all_in_system_terminal,
             list_running_runs,

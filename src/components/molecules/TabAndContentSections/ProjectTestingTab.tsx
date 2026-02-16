@@ -5,7 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Loader2, FileText, TestTube2, RefreshCw } from "lucide-react";
 import { AnalyzeButtonSplit } from "@/components/molecules/ControlsAndButtons/AnalyzeButtonSplit";
-import { listProjectFiles, readProjectFileOrEmpty, analyzeProjectDoc, type FileEntry } from "@/lib/api-projects";
+import { listProjectFiles, readProjectFileOrEmpty, readCursorDocFromServer, analyzeProjectDoc, type FileEntry } from "@/lib/api-projects";
 import { isTauri } from "@/lib/tauri";
 import { useRunStore } from "@/store/run-store";
 import type { Project } from "@/types/project";
@@ -24,6 +24,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
+  PROJECT_ROOT,
   SETUP_TESTING_DOC_PATH,
   SETUP_TESTING_PROMPT_PATH,
   SETUP_TESTING_PROMPTS_DIR,
@@ -79,7 +80,7 @@ export function ProjectTestingTab({ project, projectId, docsRefreshKey }: Projec
     setError(null);
     const result: TestingItem[] = [];
     try {
-      const setupList = await listProjectFiles(projectId, ".cursor/2. setup", project.repoPath);
+      const setupList = await listProjectFiles(projectId, PROJECT_ROOT, project.repoPath);
       const testingMd = setupList.find((e) => !e.isDirectory && e.name === "testing.md");
       if (testingMd) {
         result.push({
@@ -103,7 +104,7 @@ export function ProjectTestingTab({ project, projectId, docsRefreshKey }: Projec
           });
         }
       } catch {
-        // .cursor/2. setup/testing may not exist
+        // .cursor/1. project/testing may not exist
       }
       setItems(result);
       if (result.length > 0 && !selectedPath) {
@@ -123,11 +124,13 @@ export function ProjectTestingTab({ project, projectId, docsRefreshKey }: Projec
 
   const loadContent = useCallback(
     async (path: string) => {
-      if (!project.repoPath) return;
       setLoadingContent(true);
       setError(null);
       try {
-        const text = await readProjectFileOrEmpty(projectId, path, project.repoPath);
+        let text = project.repoPath
+          ? await readProjectFileOrEmpty(projectId, path, project.repoPath)
+          : "";
+        if (!text?.trim()) text = await readCursorDocFromServer(path);
         setContent(text && text.trim() ? text : null);
       } catch (e) {
         setError(e instanceof Error ? e.message : String(e));
@@ -231,7 +234,7 @@ export function ProjectTestingTab({ project, projectId, docsRefreshKey }: Projec
                       { runTempTicket: isTauri ? runTempTicket : undefined }
                     );
                     if (result?.viaWorker) {
-                      toast.success("Analyze started. See Worker tab.");
+                      toast.success("Analysis started.");
                       return;
                     }
                     await loadList();

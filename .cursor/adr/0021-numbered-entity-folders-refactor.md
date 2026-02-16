@@ -21,7 +21,7 @@ Accepted
 
 - Clear ownership: each entity’s prompt and output live in one folder. New projects get the same layout from the template.
 - The app and analyze queue reference paths from one module, reducing drift and typos.
-- Planner and worker remain under `.cursor/planner/` and `.cursor/worker/` (optional follow-up: 3. planner, 4. worker).
+- Planner and worker: migrated to `.cursor/7. planner/` and `.cursor/8. worker/` (see ADR 0028).
 
 ## References
 

@@ -1,6 +1,6 @@
 /**
  * Structured setup data for Frontend/Backend tabs.
- * Stored as .cursor/2. setup/frontend.json and backend.json; editable via cards/inputs/tables.
+ * Stored as .cursor/1. project/frontend.json and backend.json; editable via cards/inputs/tables.
  */
 
 export interface SetupKpi {

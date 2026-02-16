@@ -4,7 +4,7 @@ import fs from "fs";
 
 /**
  * GET: Read a file from process.cwd()/.cursor/ (app root .cursor folder).
- * Query param: path = relative path under .cursor (e.g. "0. ideas/ideas.md", "2. setup/design.md").
+ * Query param: path = relative path under .cursor (e.g. "0. ideas/ideas.md", "1. project/design.md").
  * Used as fallback when project repo read returns empty so tabs show content when project is the app repo.
  */
 export async function GET(request: NextRequest) {

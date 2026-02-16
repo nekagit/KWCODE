@@ -24,6 +24,8 @@ export interface Project {
   description?: string;
   /** Optional repo path for run context */
   repoPath?: string;
+  /** Optional dev server port for "View Running Project" (e.g. 3000 → http://localhost:3000) */
+  runPort?: number;
   promptIds: number[];
   ticketIds: string[];
 
@@ -36,7 +38,7 @@ export interface Project {
   entityCategories?: ProjectEntityCategories;
   /** Files in the project spec: from .cursor (path only) or exported from Design/Architecture/Features (path + content). */
   specFiles?: { name: string; path: string; content?: string }[];
-  /** Spec .md file paths linked to the Tickets card (e.g. .cursor/planner/tickets.md). Shown in Tickets card; drag from Project Spec to add. */
+  /** Spec .md file paths linked to the Tickets card (e.g. .cursor/7. planner/tickets.md). Shown in Tickets card; drag from Project Spec to add. */
   specFilesTickets?: string[];
 
   created_at?: string;

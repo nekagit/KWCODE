@@ -77,6 +77,8 @@ export interface RunActions {
   ) => Promise<string | null>;
   /** Run an npm script in the project directory (e.g. npm run dev). Tauri only. */
   runNpmScript: (projectPath: string, scriptName: string) => Promise<string | null>;
+  /** Run an npm script in the system Terminal (macOS only). Returns true if opened. */
+  runNpmScriptInExternalTerminal: (projectPath: string, scriptName: string) => Promise<boolean>;
   setFloatingTerminalRunId: (id: string | null) => void;
   setFloatingTerminalMinimized: (minimized: boolean) => void;
   clearFloatingTerminal: () => void;
@@ -538,6 +540,23 @@ export const useRunStore = create<RunStore>()((set, get) => ({
     } catch (e) {
       set({ error: e instanceof Error ? e.message : String(e) });
       return null;
+    }
+  },
+
+  runNpmScriptInExternalTerminal: async (projectPath, scriptName) => {
+    const path = projectPath?.trim();
+    const name = scriptName?.trim();
+    if (!path || !name) return false;
+    set({ error: null });
+    try {
+      await invoke("run_npm_script_in_external_terminal", {
+        projectPath: path,
+        scriptName: name,
+      });
+      return true;
+    } catch (e) {
+      set({ error: e instanceof Error ? e.message : String(e) });
+      return false;
     }
   },
 

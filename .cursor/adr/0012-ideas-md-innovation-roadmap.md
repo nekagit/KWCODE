@@ -25,4 +25,4 @@ The project needs a single, living document that captures product vision, near- 
 
 - Roadmap source: `.cursor/setup/ideas.md`
 - Prompt used to generate/refresh: PROMPT 03 (GENERATE IDEAS.MD)
-- Related: `.cursor/project/ROADMAP.md` (high-level phases); `.cursor/planner/tickets.md` (implementation work)
+- Related: `.cursor/project/ROADMAP.md` (high-level phases); `.cursor/7. planner/tickets.md` (implementation work)

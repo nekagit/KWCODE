@@ -196,6 +196,7 @@ export async function PUT(
       ...(typeof body.name === "string" && { name: body.name.trim() }),
       ...(body.description !== undefined && { description: typeof body.description === "string" ? body.description.trim() : undefined }),
       ...(body.repoPath !== undefined && { repoPath: typeof body.repoPath === "string" ? body.repoPath.trim() || undefined : undefined }),
+      ...(body.runPort !== undefined && { runPort: typeof body.runPort === "number" && body.runPort > 0 && body.runPort < 65536 ? body.runPort : undefined }),
       ...(Array.isArray(body.promptIds) && { promptIds: body.promptIds.filter((n: unknown) => typeof n === "number") }),
       ...(Array.isArray(body.ticketIds) && { ticketIds: body.ticketIds.filter((s: unknown) => typeof s === "string") }),
 

@@ -206,7 +206,7 @@ export function ProjectIdeasDocTab({ project, projectId, docsRefreshKey }: Proje
         { runTempTicket: isTauri ? runTempTicket : undefined }
       );
       if (result?.viaWorker) {
-        toast.success("Analyze started. See Worker tab.");
+        toast.success("Analysis started.");
         return;
       }
       await fetchDoc();
@@ -339,31 +339,47 @@ export function ProjectIdeasDocTab({ project, projectId, docsRefreshKey }: Proje
                               key={idea.id}
                               className="rounded-lg border border-border/50 bg-card/50 overflow-hidden"
                             >
-                              <button
-                                type="button"
-                                className="flex w-full items-center gap-2 p-3 text-left hover:bg-muted/30 transition-colors"
-                                onClick={() =>
-                                  setExpandedIdeas((prev) => {
-                                    const next = new Set(prev);
-                                    if (next.has(idea.id)) next.delete(idea.id);
-                                    else next.add(idea.id);
-                                    return next;
-                                  })
-                                }
-                              >
-                                <span className="text-xs font-medium text-amber-600/90 shrink-0">Idea</span>
-                                <span className="text-sm font-medium truncate flex-1">{idea.title}</span>
-                                {(fields.impact || fields.effort) && (
-                                  <span className="text-[10px] text-muted-foreground shrink-0">
-                                    {[fields.effort, fields.impact].filter(Boolean).join(" · ")}
-                                  </span>
-                                )}
-                                {ideaExpanded ? (
-                                  <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
-                                ) : (
-                                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-                                )}
-                              </button>
+                              <div className="flex w-full items-center gap-2 p-3 text-left">
+                                <button
+                                  type="button"
+                                  className="flex flex-1 min-w-0 items-center gap-2 hover:bg-muted/30 transition-colors rounded -m-1 p-1"
+                                  onClick={() =>
+                                    setExpandedIdeas((prev) => {
+                                      const next = new Set(prev);
+                                      if (next.has(idea.id)) next.delete(idea.id);
+                                      else next.add(idea.id);
+                                      return next;
+                                    })
+                                  }
+                                >
+                                  <span className="text-xs font-medium text-amber-600/90 shrink-0">Idea</span>
+                                  <span className="text-sm font-medium truncate">{idea.title}</span>
+                                  {(fields.impact || fields.effort) && (
+                                    <span className="text-[10px] text-muted-foreground shrink-0 hidden sm:inline">
+                                      {[fields.effort, fields.impact].filter(Boolean).join(" · ")}
+                                    </span>
+                                  )}
+                                  {ideaExpanded ? (
+                                    <ChevronUp className="h-3.5 w-3.5 text-muted-foreground ml-auto" />
+                                  ) : (
+                                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground ml-auto" />
+                                  )}
+                                </button>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="gap-1.5 shrink-0"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setConvertMilestonesDefaultName(idea.title);
+                                    setConvertMilestonesOpen(true);
+                                  }}
+                                >
+                                  <Flag className="h-3.5 w-3.5" />
+                                  Convert to milestones
+                                </Button>
+                              </div>
                               {ideaExpanded && (
                                 <div className="px-3 pb-3 pt-0 space-y-3 border-t border-border/40">
                                   {fields.problem && (

@@ -9,8 +9,6 @@ import {
   AlertCircle,
   FolderGit2,
   ListTodo,
-  Settings,
-  Play,
   Trash2,
   FolderOpen,
   Calendar,
@@ -22,44 +20,51 @@ import {
   Flag,
   TestTube2,
   FileText,
-  Lightbulb,
   ClipboardList,
+  Sparkles,
+  ScanSearch,
+  Pencil,
+  Lightbulb,
+  Activity,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Project } from "@/types/project";
-import { getProjectResolved, deleteProject, listProjects } from "@/lib/api-projects";
-import { ProjectIdeasDocTab } from "@/components/molecules/TabAndContentSections/ProjectIdeasDocTab";
+import { getProjectResolved, deleteProject, listProjects, updateProject } from "@/lib/api-projects";
 import { ProjectTicketsTab } from "@/components/molecules/TabAndContentSections/ProjectTicketsTab";
+import { PlannerFilesSection } from "@/components/molecules/TabAndContentSections/PlannerFilesSection";
 import { ProjectGitTab } from "@/components/molecules/TabAndContentSections/ProjectGitTab";
-import { ProjectRunTab } from "@/components/molecules/TabAndContentSections/ProjectRunTab";
 import { ProjectMilestonesTab } from "@/components/molecules/TabAndContentSections/ProjectMilestonesTab";
 import { ProjectFrontendTab } from "@/components/molecules/TabAndContentSections/ProjectFrontendTab";
 import { ProjectBackendTab } from "@/components/molecules/TabAndContentSections/ProjectBackendTab";
-import { ProjectSetupTab } from "@/components/molecules/TabAndContentSections/ProjectSetupTab";
-import { ProjectSetupDocTab } from "@/components/molecules/TabAndContentSections/ProjectSetupDocTab";
-import { ProjectDocumentationHubTab } from "@/components/molecules/TabAndContentSections/ProjectDocumentationHubTab";
 import { ProjectProjectTab } from "@/components/molecules/TabAndContentSections/ProjectProjectTab";
 import { ProjectTestingTab } from "@/components/molecules/TabAndContentSections/ProjectTestingTab";
 import { ProjectControlTab } from "@/components/molecules/TabAndContentSections/ProjectControlTab";
+import { ProjectIdeasDocTab } from "@/components/molecules/TabAndContentSections/ProjectIdeasDocTab";
+import { ProjectRunTab } from "@/components/molecules/TabAndContentSections/ProjectRunTab";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { cn } from "@/lib/utils";
 import { SectionCard, MetadataBadge, CountBadge } from "@/components/shared/DisplayPrimitives";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import {
   initializeProjectRepo,
   writeAnalyzeQueue,
   readAnalyzeQueue,
   runAnalyzeQueueProcessing,
   writeProjectFile,
-  cleanAnalysisDocs,
   ANALYZE_QUEUE_PATH,
 } from "@/lib/api-projects";
 import { ANALYZE_JOB_IDS, getPromptPath, getOutputPath } from "@/lib/cursor-paths";
 import { toast } from "sonner";
-import { Sparkles, ScanSearch } from "lucide-react";
 
 /**
  * Each tab’s dedicated .md in .cursor, updated by agent -p using current project data.
- * Numbered folders: 0. ideas, 1. project, 2. setup.
+ * Entity folders: 0. ideas, 1. project (includes former setup docs).
  * "Analyze" (per tab or all) runs agent with: project name + repo layout + tech stack + package.json + current doc content + prompt instructions → writes output path.
  */
 const ANALYZE_ALL_CONFIG: { promptPath: string; outputPath: string }[] = ANALYZE_JOB_IDS.map((id) => ({
@@ -68,19 +73,16 @@ const ANALYZE_ALL_CONFIG: { promptPath: string; outputPath: string }[] = ANALYZE
 }));
 
 const TAB_ROW_1 = [
-  { value: "ideas", label: "Ideas", icon: Lightbulb, color: "text-amber-400", activeGlow: "shadow-amber-500/10" },
   { value: "project", label: "Project", icon: FolderOpen, color: "text-sky-400", activeGlow: "shadow-sky-500/10" },
-  { value: "setup", label: "Setup", icon: Settings, color: "text-violet-400", activeGlow: "shadow-violet-500/10" },
   { value: "frontend", label: "Frontend", icon: Monitor, color: "text-cyan-400", activeGlow: "shadow-cyan-500/10" },
   { value: "backend", label: "Backend", icon: Server, color: "text-orange-400", activeGlow: "shadow-orange-500/10" },
   { value: "testing", label: "Testing", icon: TestTube2, color: "text-emerald-400", activeGlow: "shadow-emerald-500/10" },
-  { value: "documentation", label: "Documentation", icon: FileText, color: "text-teal-400", activeGlow: "shadow-teal-500/10" },
 ] as const;
 
 const TAB_ROW_2 = [
+  { value: "ideas", label: "Ideas", icon: Lightbulb, color: "text-amber-500", activeGlow: "shadow-amber-500/10" },
   { value: "milestones", label: "Milestones", icon: Flag, color: "text-fuchsia-400", activeGlow: "shadow-fuchsia-500/10" },
   { value: "todo", label: "Planner", icon: ListTodo, color: "text-blue-400", activeGlow: "shadow-blue-500/10" },
-  { value: "run", label: "Worker", icon: Play, color: "text-emerald-400", activeGlow: "shadow-emerald-500/10" },
   { value: "control", label: "Control", icon: ClipboardList, color: "text-slate-400", activeGlow: "shadow-slate-500/10" },
   { value: "git", label: "Versioning", icon: FolderGit2, color: "text-amber-400", activeGlow: "shadow-amber-500/10" },
 ] as const;
@@ -95,7 +97,10 @@ export function ProjectDetailsPageContent() {
   const [initializing, setInitializing] = useState(false);
   const [analyzingAll, setAnalyzingAll] = useState(false);
   const [analyzingStep, setAnalyzingStep] = useState(0);
-  const [cleaningDocs, setCleaningDocs] = useState(false);
+  const [viewRunningOpen, setViewRunningOpen] = useState(false);
+  const [portEdit, setPortEdit] = useState(false);
+  const [portInput, setPortInput] = useState("");
+  const [savingPort, setSavingPort] = useState(false);
   const [plannerRefreshKey, setPlannerRefreshKey] = useState(0);
   const [docsRefreshKey, setDocsRefreshKey] = useState(0);
   const [projectIds, setProjectIds] = useState<string[]>([]);
@@ -345,7 +350,7 @@ export function ProjectDetailsPageContent() {
                     variant="outline"
                     size="sm"
                     className="h-7 px-2.5 text-[10px] font-semibold uppercase tracking-wider gap-1.5 border-primary/20 hover:bg-primary/5 hover:border-primary/40 transition-all duration-300 shadow-sm"
-                    title={`Enqueue ${ANALYZE_ALL_CONFIG.length} analyze jobs and run 3 at a time (see Worker tab)`}
+                    title={`Enqueue ${ANALYZE_ALL_CONFIG.length} analyze jobs and run 3 at a time`}
                     onClick={async () => {
                       if (analyzingAll) return;
                       setAnalyzingAll(true);
@@ -367,7 +372,7 @@ export function ProjectDetailsPageContent() {
                           toast.success(`All ${total} docs updated.`);
                         } else {
                           toast.warning(`${completed} done, ${failed} failed.`, {
-                            description: "See Worker tab for queue.",
+                            description: "Check queue or run output.",
                             duration: 8000,
                           });
                         }
@@ -390,35 +395,134 @@ export function ProjectDetailsPageContent() {
                       : "Analyze all"}
                   </Button>
                 )}
-                {/* Clean cursor/terminal output from all analysis .md files */}
+                {/* Run port: display or set localhost port for View Running Project */}
+                {project.repoPath && (
+                  <>
+                    {project.runPort != null ? (
+                      portEdit ? (
+                        <div className="flex items-center gap-1.5">
+                          <Input
+                            type="number"
+                            min={1}
+                            max={65535}
+                            placeholder="Port"
+                            value={portInput}
+                            onChange={(e) => setPortInput(e.target.value)}
+                            className="h-7 w-20 text-xs font-mono"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2 text-[10px]"
+                            disabled={savingPort}
+                            onClick={async () => {
+                              const num = parseInt(portInput, 10);
+                              if (Number.isNaN(num) || num < 1 || num > 65535) {
+                                toast.error("Enter a port between 1 and 65535");
+                                return;
+                              }
+                              setSavingPort(true);
+                              try {
+                                await updateProject(projectId, { runPort: num });
+                                await fetchProject();
+                                setPortEdit(false);
+                                setPortInput("");
+                                toast.success("Run port updated.");
+                              } catch (err) {
+                                toast.error(err instanceof Error ? err.message : "Failed to save port");
+                              } finally {
+                                setSavingPort(false);
+                              }
+                            }}
+                          >
+                            {savingPort ? <Loader2 className="size-3 animate-spin" /> : "Save"}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-1.5"
+                            onClick={() => {
+                              setPortEdit(false);
+                              setPortInput("");
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      ) : (
+                        <MetadataBadge
+                          icon={<Monitor className="size-3" />}
+                          color="bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                        >
+                          <span className="normal-case font-mono">
+                            localhost:{project.runPort}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPortInput(String(project.runPort ?? ""));
+                              setPortEdit(true);
+                            }}
+                            className="ml-1 rounded p-0.5 hover:bg-emerald-500/20"
+                            aria-label="Change port"
+                          >
+                            <Pencil className="size-2.5" />
+                          </button>
+                        </MetadataBadge>
+                      )
+                    ) : (
+                      <div className="flex items-center gap-1.5">
+                        <Input
+                          type="number"
+                          min={1}
+                          max={65535}
+                          placeholder="Port"
+                          value={portInput}
+                          onChange={(e) => setPortInput(e.target.value)}
+                          className="h-7 w-20 text-xs font-mono"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 px-2 text-[10px] font-semibold uppercase tracking-wider gap-1"
+                          disabled={savingPort}
+                          onClick={async () => {
+                            const num = parseInt(portInput, 10);
+                            if (Number.isNaN(num) || num < 1 || num > 65535) {
+                              toast.error("Enter a port between 1 and 65535");
+                              return;
+                            }
+                            setSavingPort(true);
+                            try {
+                              await updateProject(projectId, { runPort: num });
+                              await fetchProject();
+                              setPortInput("");
+                              toast.success("Run port saved.");
+                            } catch (err) {
+                              toast.error(err instanceof Error ? err.message : "Failed to save port");
+                            } finally {
+                              setSavingPort(false);
+                            }
+                          }}
+                        >
+                          {savingPort ? <Loader2 className="size-3 animate-spin" /> : "Set port"}
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                )}
+                {/* View Running Project: opens modal with iframe */}
                 {project.repoPath && (
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-7 px-2.5 text-[10px] font-semibold uppercase tracking-wider gap-1.5 border-amber-500/30 hover:bg-amber-500/5 hover:border-amber-500/50 transition-all duration-300 shadow-sm"
-                    title="Remove cursor/terminal log lines from ideas.md, design.md, and other analysis docs"
-                    onClick={async () => {
-                      if (cleaningDocs) return;
-                      setCleaningDocs(true);
-                      try {
-                        const { cleaned } = await cleanAnalysisDocs(projectId, project.repoPath ?? "");
-                        setDocsRefreshKey((k) => k + 1);
-                        await fetchProject();
-                        toast.success(`Cleaned ${cleaned} doc(s). Cursor output removed.`);
-                      } catch (err) {
-                        toast.error(err instanceof Error ? err.message : "Clean failed");
-                      } finally {
-                        setCleaningDocs(false);
-                      }
-                    }}
-                    disabled={cleaningDocs}
+                    className="h-7 px-2.5 text-[10px] font-semibold uppercase tracking-wider gap-1.5 border-emerald-500/30 hover:bg-emerald-500/5 hover:border-emerald-500/50 transition-all duration-300 shadow-sm"
+                    title={project.runPort == null ? "Set run port above first" : "Open running app in modal"}
+                    onClick={() => setViewRunningOpen(true)}
+                    disabled={project.runPort == null}
                   >
-                    {cleaningDocs ? (
-                      <Loader2 className="size-3 animate-spin" />
-                    ) : (
-                      <FileText className="size-3 text-amber-500" />
-                    )}
-                    {cleaningDocs ? "Cleaning…" : "Clean cursor output"}
+                    <Monitor className="size-3 text-emerald-500" />
+                    View Running Project
                   </Button>
                 )}
                 {project.created_at && (
@@ -531,20 +635,22 @@ export function ProjectDetailsPageContent() {
             </TabsList>
           </div>
 
-          {/* ── Setup Tab ── */}
-          <TabsContent
-            value="setup"
-            className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
-          >
-            <ProjectSetupTab project={project} projectId={projectId} docsRefreshKey={docsRefreshKey} />
-          </TabsContent>
-
           {/* ── Project Tab ── */}
           <TabsContent
             value="project"
             className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
           >
-            <ProjectProjectTab project={project} projectId={projectId} docsRefreshKey={docsRefreshKey} />
+            <ProjectProjectTab project={project} projectId={projectId} docsRefreshKey={docsRefreshKey} onProjectUpdate={fetchProject} />
+          </TabsContent>
+
+          {/* ── Ideas Tab ── */}
+          <TabsContent
+            value="ideas"
+            className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
+          >
+            <div className="rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-4 md:p-6">
+              <ProjectIdeasDocTab project={project} projectId={projectId} docsRefreshKey={docsRefreshKey} />
+            </div>
           </TabsContent>
 
           {/* ── Frontend Tab ── */}
@@ -571,27 +677,14 @@ export function ProjectDetailsPageContent() {
             <ProjectTestingTab project={project} projectId={projectId} docsRefreshKey={docsRefreshKey} />
           </TabsContent>
 
-          {/* ── Documentation Tab ── */}
-          <TabsContent
-            value="documentation"
-            className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
-          >
-            <ProjectDocumentationHubTab project={project} projectId={projectId} docsRefreshKey={docsRefreshKey} />
-          </TabsContent>
-
-          {/* ── Ideas Tab ── */}
-          <TabsContent
-            value="ideas"
-            className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
-          >
-            <ProjectIdeasDocTab project={project} projectId={projectId} docsRefreshKey={docsRefreshKey} />
-          </TabsContent>
-
           {/* ── Planner Tab ── */}
           <TabsContent
             value="todo"
             className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
           >
+            {project?.repoPath && (
+              <PlannerFilesSection project={project} projectId={projectId} />
+            )}
             <div key={plannerRefreshKey} className="rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-4 md:p-6">
               <ProjectTicketsTab
                 project={project}
@@ -613,14 +706,6 @@ export function ProjectDetailsPageContent() {
                 onTicketAdded={() => setPlannerRefreshKey((k) => k + 1)}
               />
             </div>
-          </TabsContent>
-
-          {/* ── Worker Tab ── */}
-          <TabsContent
-            value="run"
-            className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
-          >
-            <ProjectRunTab project={project} projectId={projectId} />
           </TabsContent>
 
           {/* ── Control Tab (implementation log) ── */}

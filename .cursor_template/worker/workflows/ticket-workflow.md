@@ -2,15 +2,15 @@
 
 ## States
 
-1. **Backlog** — In `.cursor/planner/tickets.md`, not done, not in "In progress".
+1. **Backlog** — In `.cursor/7. planner/tickets.md`, not done, not in "In progress".
 2. **Ready** — In `.cursor/worker/queue/ready.md`; ready to be picked.
-3. **In progress** — In `.cursor/worker/queue/in-progress.md`; someone is working on it. Kanban state (`.cursor/planner/kanban-state.json`) may mark ticket ids as in progress for the app's Run tab.
+3. **In progress** — In `.cursor/worker/queue/in-progress.md`; someone is working on it. Kanban state (`.cursor/7. planner/kanban-state.json`) may mark ticket ids as in progress for the app's Run tab.
 4. **Review** — (Optional) In review before done.
 5. **Done** — Checked off in `tickets.md` or listed in `.cursor/worker/queue/completed.md`.
 
 ## Relation to app
 
-- **Kanban / Run tab:** The app reads `.cursor/planner/tickets.md` and `.cursor/planner/kanban-state.json`. "In progress" in the UI is driven by `inProgressIds` in `kanban-state.json`.
+- **Kanban / Run tab:** The app reads `.cursor/7. planner/tickets.md` and `.cursor/7. planner/kanban-state.json`. "In progress" in the UI is driven by `inProgressIds` in `kanban-state.json`.
 - **Worker queue files:** `ready.md`, `in-progress.md`, `completed.md` are for humans and scripts. You can keep them in sync with the planner or use them as a separate view; the app does not read them yet.
 
 ## Suggested flow

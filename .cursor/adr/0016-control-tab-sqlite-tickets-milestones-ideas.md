@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-- Tickets were sourced from `.cursor/planner/tickets.md`; milestones from `.cursor/milestones/*.md`; ideas from `data/ideas.json`.
+- Tickets were sourced from `.cursor/7. planner/tickets.md`; milestones from `.cursor/milestones/*.md`; ideas from `data/ideas.json`.
 - There was no structured record of “this ticket run finished” or which files changed.
 - The plan required: (1) a single source of truth for tickets, milestones, ideas, and implementation log; (2) every ticket tied to a milestone and an idea; (3) when a ticket Implement All run exits, record the run in an implementation log with file changes and summary; (4) a Control tab to view that log.
 

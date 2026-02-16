@@ -5,7 +5,7 @@ import {
 } from "@/lib/todos-kanban";
 
 const CURSOR_PATH = ".cursor";
-const PLANNER_PATH = `${CURSOR_PATH}/planner`;
+const PLANNER_PATH = `${CURSOR_PATH}/7. planner`;
 
 const TICKETS_MD_PATH = `${PLANNER_PATH}/tickets.md`;
 const PROMPTS_JSON_PATH = `${CURSOR_PATH}/prompt-records.json`; // Assuming prompts are stored in a JSON file

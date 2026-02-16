@@ -3,7 +3,7 @@
  * Previously duplicated across ProjectTicketsTab.tsx and ProjectRunTab.tsx.
  */
 
-/** Check whether a run is shown in the Worker tab (Implement All, Ticket, or Analyze doc runs). */
+/** Check whether a run is an Implement All, Ticket, or Analyze doc run. */
 export const isImplementAllRun = (r: { label: string }) =>
     r.label === "Implement All" ||
     r.label.startsWith("Implement All (") ||

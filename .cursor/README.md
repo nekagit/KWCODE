@@ -18,13 +18,13 @@ This folder is the **project-specific** `.cursor/` for KWCode. It was created fr
 
 ### Manage milestones and tickets
 
-- **Milestones:** Edit `.cursor/milestones/*.milestone.md`; link to ticket ranges in `.cursor/planner/tickets.md` (e.g. #1–#12).
-- **Tickets:** Edit `.cursor/planner/tickets.md` or use the app's Todos/Kanban; run **Sync** to persist. Use `.cursor/planner/ticket-templates/` to draft new tickets; optionally use `node .cursor/scripts/create-tickets.js "Title" --priority P1` to append a ticket.
-- **AI suggestions:** Put suggested tickets in `.cursor/planner/ai-suggestions/generated-tickets.md`, then copy accepted ones into `tickets.md`.
+- **Milestones:** Edit `.cursor/milestones/*.milestone.md`; link to ticket ranges in `.cursor/7. planner/tickets.md` (e.g. #1–#12).
+- **Tickets:** Edit `.cursor/7. planner/tickets.md` or use the app's Todos/Kanban; run **Sync** to persist. Use `.cursor/7. planner/ticket-templates/` to draft new tickets; optionally use `node .cursor/scripts/create-tickets.js "Title" --priority P1` to append a ticket.
+- **AI suggestions:** Put suggested tickets in `.cursor/7. planner/ai-suggestions/generated-tickets.md`, then copy accepted ones into `tickets.md`.
 
 ### Worker queue
 
-- **Queue files:** `.cursor/worker/queue/ready.md`, `in-progress.md`, `completed.md` — for humans/scripts. The app does not read them; it uses `.cursor/planner/tickets.md` and `kanban-state.json`.
+- **Queue files:** `.cursor/worker/queue/ready.md`, `in-progress.md`, `completed.md` — for humans/scripts. The app does not read them; it uses `.cursor/7. planner/tickets.md` and `kanban-state.json`.
 - **Workflow:** See `.cursor/worker/workflows/ticket-workflow.md` for Backlog → Ready → In progress → Done.
 
 ### Update documentation
@@ -47,21 +47,21 @@ Numbered entity folders (prompts use `.prompt.md` suffix; outputs use the same f
 | **2. setup/** | design, architecture, testing, documentation, frontend, backend — each has `{name}.prompt.md` and output(s); subfolders testing/, documentation/, setup/, development/ for nested prompts |
 | **agents/** | backend-dev, frontend-dev, solution-architect, tester, documentation-writer |
 | **adr/** | Architecture decision records |
-| **planner/** | tickets.md, features.md, kanban-state.json; ticket-templates/, ai-suggestions/ |
+| **7. planner/** | tickets.md, features.md, kanban-state.json; ticket-templates/, ai-suggestions/ |
 | **milestones/** | mvp/feature/release templates; 01–05 numbered milestones |
 | **worker/** | queue/ (ready, in-progress, completed, analyze-jobs.json), workflows/ticket-workflow.md; worker.md for Run tab base prompt |
 | **documentation/** | setup-guide, development-guide, architecture-overview, api-reference, best practices |
 
-Planner, worker, agents, adr, technologies are unchanged (not under numbered folders).
+Planner (7. planner), worker, agents, adr, technologies.
 
 ## Paths the app expects (do not remove)
 
 - `.cursor/0. ideas/ideas.md` — Ideas doc output
 - `.cursor/1. project/PROJECT-INFO.md` — Project info
 - `.cursor/2. setup/*` — Design, architecture, testing, documentation, frontend.json, backend.json, frontend-analysis.md, backend-analysis.md
-- `.cursor/planner/tickets.md` — work items (checklist format)
-- `.cursor/planner/kanban-state.json` — in-progress ticket ids
-- `.cursor/planner/features.md` — feature roadmap
+- `.cursor/7. planner/tickets.md` — work items (checklist format)
+- `.cursor/7. planner/kanban-state.json` — in-progress ticket ids
+- `.cursor/7. planner/features.md` — feature roadmap
 - `.cursor/agents/*.md` — agent list
 - `.cursor/worker/queue/analyze-jobs.json` — analyze queue; `.cursor/worker/` for Run tab
 - `.cursor/2. setup/frontend.json`, `.cursor/2. setup/backend.json` — Frontend/Backend tabs

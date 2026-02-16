@@ -114,8 +114,6 @@ export function SetupDocBlock({
     setShowPromptDialog(true);
   };
 
-  if (!project.repoPath) return null;
-
   if (loading) {
     return (
       <div

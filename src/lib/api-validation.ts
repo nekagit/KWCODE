@@ -96,6 +96,7 @@ export const createProjectSchema = z.object({
   name: z.string().min(1, "name is required").max(500),
   description: z.string().optional(),
   repoPath: z.string().optional(),
+  runPort: z.number().int().min(1).max(65535).optional(),
   promptIds: z.array(z.number()).optional().default([]),
   ticketIds: z.array(z.string()).optional().default([]),
   ideaIds: z.array(z.number()).optional().default([]),

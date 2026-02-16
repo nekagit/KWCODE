@@ -26,7 +26,7 @@ function readProjects(): Project[] {
   }
 }
 
-/** GET: read a file from the project's repo (e.g. .cursor/planner/tickets.md). Only allows paths under project repo when repo is under cwd. */
+/** GET: read a file from the project's repo (e.g. .cursor/7. planner/tickets.md). Only allows paths under project repo when repo is under cwd. */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

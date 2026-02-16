@@ -39,7 +39,7 @@ You are a Principal Software Architect with 20+ years of experience. You transla
 - **Icons**: Lucide React
 
 ## Workflow
-1. Read ticket/feature specs in \`.cursor/planner/\`.
+1. Read ticket/feature specs in \`.cursor/7. planner/\`.
 2. Check existing components in \`src/components/\`.
 3. Create a High-Level Design (HLD) covering Component Tree, Data Model, and Integration Points.
 4. Add the design to the planner and hand off to Frontend/Backend Dev.
@@ -183,12 +183,12 @@ This document defines the documentation strategy for this project. We believe th
 
 ## Documentation Types
 
-### 1. Technical Specs (\`.cursor/2. setup/\`)
+### 1. Technical Specs (\`.cursor/1. project/\`)
 - \`architecture.md\`: System design and boundaries.
 - \`design.md\`: Visual and interaction system.
 - \`testing.md\`: QA strategy and protocols.
 
-### 2. Project Planning (\`.cursor/planner/\`)
+### 2. Project Planning (\`.cursor/7. planner/\`)
 - \`tickets.md\`: Granular work items.
 - \`features.md\`: High-level feature roadmap.
 
@@ -265,7 +265,7 @@ export const INITIAL_TICKETS_TEMPLATE = `# Work items (tickets) — [PROJECT_NAM
 
 export const INITIAL_FEATURES_TEMPLATE = `# Features roadmap
 
-Features below are derived from \`.cursor/planner/tickets.md\`.
+Features below are derived from \`.cursor/7. planner/tickets.md\`.
 
 ## Major features
 

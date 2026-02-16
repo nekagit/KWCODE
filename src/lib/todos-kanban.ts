@@ -1,5 +1,5 @@
 /**
- * Parsed ticket from .cursor/planner/tickets.md (checklist item).
+ * Parsed ticket from .cursor/7. planner/tickets.md (checklist item).
  */
 export type ParsedTicket = {
   id: string;
@@ -42,7 +42,7 @@ const PRIORITY_HEADER_RE = /^###\s+(P[0-3])\s+/m;
 const TICKET_ITEM_RE = /^-\s*\[([ x])\]\s+#(\d+)\s+(.+?)(?:\s*—\s*(.+))?$/gm;
 
 /**
- * Parse .cursor/planner/tickets.md into a list of tickets (checklist items by priority).
+ * Parse .cursor/7. planner/tickets.md into a list of tickets (checklist items by priority).
  */
 export function parseTicketsMd(content: string): ParsedTicket[] {
   if (!content?.trim()) return [];
@@ -95,9 +95,9 @@ export function parseTicketsMd(content: string): ParsedTicket[] {
 }
 
 /**
- * Build Kanban data from .cursor/planner/tickets.md.
+ * Build Kanban data from .cursor/7. planner/tickets.md.
  * Column mapping: ticket.done → done; !ticket.done → backlog or in_progress when id is in inProgressIds.
- * @param inProgressIds optional list of ticket ids to place in "In progress" column (persisted in .cursor/planner/kanban-state.json).
+ * @param inProgressIds optional list of ticket ids to place in "In progress" column (persisted in .cursor/7. planner/kanban-state.json).
  */
 export function buildKanbanFromMd(
   ticketsMd: string,
@@ -190,7 +190,7 @@ export function parseTodosToKanban(ticketIds: string[] | undefined): TodosKanban
 const PRIORITY_ORDER: Array<"P0" | "P1" | "P2" | "P3"> = ["P0", "P1", "P2", "P3"];
 
 /**
- * Serialize parsed tickets to full .cursor/planner/tickets.md content (H1, metadata, Summary placeholders, Prioritized work items).
+ * Serialize parsed tickets to full .cursor/7. planner/tickets.md content (H1, metadata, Summary placeholders, Prioritized work items).
  */
 export function serializeTicketsToMd(
   tickets: ParsedTicket[],
@@ -264,7 +264,7 @@ export function serializeTicketsToMd(
 }
 
 /**
- * Mark given ticket numbers as done in .cursor/planner/tickets.md content.
+ * Mark given ticket numbers as done in .cursor/7. planner/tickets.md content.
  * Replaces `- [ ] #N` with `- [x] #N` for each N in ticketNumbers.
  */
 export function markTicketsDone(tickets: ParsedTicket[], ticketIds: string[]): ParsedTicket[] {
