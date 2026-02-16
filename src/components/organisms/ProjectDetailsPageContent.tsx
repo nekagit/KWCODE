@@ -83,6 +83,7 @@ const TAB_ROW_2 = [
   { value: "ideas", label: "Ideas", icon: Lightbulb, color: "text-amber-500", activeGlow: "shadow-amber-500/10" },
   { value: "milestones", label: "Milestones", icon: Flag, color: "text-fuchsia-400", activeGlow: "shadow-fuchsia-500/10" },
   { value: "todo", label: "Planner", icon: ListTodo, color: "text-blue-400", activeGlow: "shadow-blue-500/10" },
+  { value: "worker", label: "Worker", icon: Activity, color: "text-emerald-500", activeGlow: "shadow-emerald-500/10" },
   { value: "control", label: "Control", icon: ClipboardList, color: "text-slate-400", activeGlow: "shadow-slate-500/10" },
   { value: "git", label: "Versioning", icon: FolderGit2, color: "text-amber-400", activeGlow: "shadow-amber-500/10" },
 ] as const;
@@ -716,6 +717,16 @@ export function ProjectDetailsPageContent() {
             <div className="rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-4 md:p-6">
               <ProjectControlTab projectId={projectId} />
             </div>
+          </TabsContent>
+
+          {/* ── Worker Tab ── */}
+          <TabsContent
+            value="worker"
+            className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
+          >
+            {project && (
+              <ProjectRunTab project={project} projectId={projectId} />
+            )}
           </TabsContent>
 
           {/* ── Versioning Tab ── */}
