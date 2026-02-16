@@ -42,9 +42,14 @@ import { cn } from "@/lib/utils";
 import { SetupDocBlock } from "@/components/molecules/TabAndContentSections/SetupDocBlock";
 import { ProjectDesignTab } from "@/components/molecules/TabAndContentSections/ProjectDesignTab";
 
-const SETUP_PATH = ".cursor/setup/frontend.json";
-const FRONTEND_PROMPT_PATH = ".cursor/prompts/frontend.md";
-const FRONTEND_ANALYSIS_OUTPUT_PATH = ".cursor/setup/frontend-analysis.md";
+import {
+  SETUP_FRONTEND_JSON_PATH,
+  SETUP_FRONTEND_PROMPT_PATH,
+  SETUP_FRONTEND_ANALYSIS_PATH,
+} from "@/lib/cursor-paths";
+const SETUP_PATH = SETUP_FRONTEND_JSON_PATH;
+const FRONTEND_PROMPT_PATH = SETUP_FRONTEND_PROMPT_PATH;
+const FRONTEND_ANALYSIS_OUTPUT_PATH = SETUP_FRONTEND_ANALYSIS_PATH;
 
 interface ProjectFrontendTabProps {
   project: Project;

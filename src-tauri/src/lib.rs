@@ -2069,6 +2069,137 @@ async fn run_analysis_script(
     Ok(RunIdResponse { run_id })
 }
 
+fn run_npm_script_inner(
+    app: AppHandle,
+    state: State<'_, RunningState>,
+    run_id: String,
+    run_label: String,
+    project_path: String,
+    script_name: String,
+) -> Result<(), String> {
+    // Allow only safe script names (alphanumeric, hyphen, underscore)
+    if script_name.is_empty()
+        || !script_name
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+    {
+        return Err("Invalid script name: only letters, numbers, hyphen and underscore allowed".to_string());
+    }
+    let dir = Path::new(&project_path)
+        .canonicalize()
+        .map_err(|e| format!("Project path invalid: {}", e))?;
+    if !dir.is_dir() {
+        return Err("Project path is not a directory".to_string());
+    }
+
+    let run_label_clone = run_label.clone();
+    let mut cmd = Command::new("npm");
+    cmd.arg("run")
+        .arg(script_name.as_str())
+        .current_dir(&dir)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    #[cfg(unix)]
+    cmd.process_group(0);
+
+    let mut child = cmd.spawn().map_err(|e| e.to_string())?;
+    let stdout = child.stdout.take().ok_or("no stdout")?;
+    let stderr = child.stderr.take().ok_or("no stderr")?;
+
+    {
+        let mut guard = state.runs.lock().map_err(|e| e.to_string())?;
+        guard.insert(
+            run_id.clone(),
+            RunEntry {
+                child,
+                label: run_label.clone(),
+            },
+        );
+    }
+
+    let app_stdout = app.clone();
+    let app_stderr = app.clone();
+    let app_exited = app.clone();
+    let runs_handle = Arc::clone(&state.runs);
+    let run_id_stdout = run_id.clone();
+    let run_id_stderr = run_id.clone();
+    let run_id_exited = run_id.clone();
+    thread::spawn(move || {
+        let reader = BufReader::new(stdout);
+        for line in reader.lines() {
+            if let Ok(line) = line {
+                let _ = app_stdout.emit(
+                    "script-log",
+                    ScriptLogPayload {
+                        run_id: run_id_stdout.clone(),
+                        line,
+                    },
+                );
+            }
+        }
+    });
+    thread::spawn(move || {
+        let reader = BufReader::new(stderr);
+        for line in reader.lines() {
+            if let Ok(line) = line {
+                let _ = app_stderr.emit(
+                    "script-log",
+                    ScriptLogPayload {
+                        run_id: run_id_stderr.clone(),
+                        line: format!("[stderr] {}", line),
+                    },
+                );
+            }
+        }
+    });
+    thread::spawn(move || {
+        loop {
+            let exited = {
+                let mut guard = match runs_handle.lock() {
+                    Ok(g) => g,
+                    Err(_) => break,
+                };
+                if let Some(entry) = guard.get_mut(&run_id_exited) {
+                    if entry.child.try_wait().ok().flatten().is_some() {
+                        guard.remove(&run_id_exited);
+                        true
+                    } else {
+                        false
+                    }
+                } else {
+                    break;
+                }
+            };
+            if exited {
+                let _ = app_exited.emit(
+                    "script-exited",
+                    ScriptExitedPayload {
+                        run_id: run_id_exited,
+                        label: run_label_clone.clone(),
+                    },
+                );
+                break;
+            }
+            thread::sleep(std::time::Duration::from_millis(500));
+        }
+    });
+
+    Ok(())
+}
+
+#[tauri::command]
+async fn run_npm_script(
+    app: AppHandle,
+    state: State<'_, RunningState>,
+    project_path: String,
+    script_name: String,
+) -> Result<RunIdResponse, String> {
+    let run_id = gen_run_id();
+    let label = format!("npm run {}", script_name);
+    run_npm_script_inner(app, state, run_id.clone(), label, project_path, script_name)?;
+    Ok(RunIdResponse { run_id })
+}
+
 #[tauri::command]
 async fn run_script(
     app: AppHandle,
@@ -2238,6 +2369,7 @@ pub fn run() {
             save_features,
             run_script,
             run_analysis_script,
+            run_npm_script,
             run_implement_all,
             open_implement_all_in_system_terminal,
             list_running_runs,

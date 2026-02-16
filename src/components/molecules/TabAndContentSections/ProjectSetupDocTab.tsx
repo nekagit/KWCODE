@@ -10,10 +10,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { SectionCard } from "@/components/shared/DisplayPrimitives";
 import type { AccentColor } from "@/components/shared/DisplayPrimitives";
 import { cn } from "@/lib/utils";
+import { getSetupDocPath } from "@/lib/cursor-paths";
 
 export type ProjectSetupDocKey = "testing" | "documentation" | "ideas";
 
-const SETUP_DIR = ".cursor/setup";
+const SETUP_DIR = ".cursor/2. setup";
 
 const CONFIG: Record<
   ProjectSetupDocKey,
@@ -42,7 +43,7 @@ interface ProjectSetupDocTabProps {
 }
 
 export function ProjectSetupDocTab({ project, projectId, setupKey, docsRefreshKey }: ProjectSetupDocTabProps) {
-  const path = `${SETUP_DIR}/${setupKey}.md`;
+  const path = getSetupDocPath(setupKey);
   const [content, setContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

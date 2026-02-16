@@ -46,7 +46,7 @@ export async function GET(
   }
 }
 
-/** POST: create ticket. Body: number?, title, description?, priority?, feature_name?, milestone_id, idea_id, agents? */
+/** POST: create ticket. Body: number?, title, description?, priority?, feature_name?, milestone_id, idea_id?, agents? */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -73,9 +73,9 @@ export async function POST(
         : typeof body.ideaId === "number"
           ? body.ideaId
           : null;
-    if (milestoneId == null || ideaId == null) {
+    if (milestoneId == null) {
       return NextResponse.json(
-        { error: "milestone_id and idea_id are required" },
+        { error: "milestone_id is required" },
         { status: 400 }
       );
     }

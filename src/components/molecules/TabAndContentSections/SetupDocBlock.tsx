@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Loader2, FileText, BookOpen, Play } from "lucide-react";
-import { readProjectFileOrEmpty } from "@/lib/api-projects";
+import { readProjectFileOrEmpty, readCursorDocFromServer } from "@/lib/api-projects";
 import type { Project } from "@/types/project";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -13,9 +13,7 @@ import { cn } from "@/lib/utils";
 import { isTauri } from "@/lib/tauri";
 import { useRunStore } from "@/store/run-store";
 import { toast } from "sonner";
-
-const SETUP_DIR = ".cursor/setup";
-const PROMPTS_DIR = ".cursor/prompts";
+import { getSetupDocPath, getSetupPromptPath } from "@/lib/cursor-paths";
 
 export type SetupDocKey = "design" | "ideas" | "architecture" | "testing" | "documentation";
 
@@ -56,8 +54,8 @@ export function SetupDocBlock({
   const [showSetupDialog, setShowSetupDialog] = useState(false);
   const [showPromptDialog, setShowPromptDialog] = useState(false);
 
-  const setupPath = `${SETUP_DIR}/${setupKey}.md`;
-  const promptPath = `${PROMPTS_DIR}/${setupKey}.md`;
+  const setupPath = getSetupDocPath(setupKey);
+  const promptPath = getSetupPromptPath(setupKey);
   const label = SETUP_LABELS[setupKey];
   const [runPromptLoading, setRunPromptLoading] = useState(false);
   const runSetupPrompt = useRunStore((s) => s.runSetupPrompt);
@@ -69,14 +67,13 @@ export function SetupDocBlock({
   const isFloatingRunning = floatingRun?.status === "running";
 
   const fetchDoc = useCallback(async (getIsCancelled?: () => boolean) => {
-    if (!project.repoPath) {
-      if (!getIsCancelled?.()) setLoading(false);
-      return;
-    }
     if (!getIsCancelled?.()) setLoading(true);
     if (!getIsCancelled?.()) setError(null);
     try {
-      const text = await readProjectFileOrEmpty(projectId, setupPath, project.repoPath);
+      let text = project.repoPath
+        ? await readProjectFileOrEmpty(projectId, setupPath, project.repoPath)
+        : "";
+      if (!text?.trim()) text = await readCursorDocFromServer(setupPath);
       if (getIsCancelled?.()) return;
       setContent(text && text.trim() ? text : null);
     } catch (e) {
@@ -90,10 +87,12 @@ export function SetupDocBlock({
   }, [projectId, setupPath, project.repoPath]);
 
   const fetchPrompt = useCallback(async () => {
-    if (!project.repoPath) return;
     setPromptLoading(true);
     try {
-      const text = await readProjectFileOrEmpty(projectId, promptPath, project.repoPath);
+      let text = project.repoPath
+        ? await readProjectFileOrEmpty(projectId, promptPath, project.repoPath)
+        : "";
+      if (!text?.trim()) text = await readCursorDocFromServer(promptPath);
       setPromptContent(text && text.trim() ? text : null);
     } finally {
       setPromptLoading(false);

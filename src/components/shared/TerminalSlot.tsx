@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Loader2, CheckCircle2, Circle, Terminal } from "lucide-react";
+import { Loader2, CheckCircle2, Circle, Terminal, ExternalLink } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { formatElapsed } from "@/lib/run-helpers";
@@ -17,6 +17,8 @@ export interface TerminalRunData {
     status: "running" | "done";
     startedAt?: number;
     doneAt?: number;
+    /** First localhost URL detected from output (e.g. http://localhost:3000) for "Open app" link. */
+    localUrl?: string;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -128,19 +130,32 @@ export function TerminalSlot({
                     </span>
                 </div>
 
-                {/* Status badge */}
-                <div
-                    className={cn(
-                        "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium tabular-nums",
-                        statusColor === "emerald" && "bg-emerald-500/15 text-emerald-400",
-                        statusColor === "sky" && "bg-sky-500/15 text-sky-400",
-                        statusColor === "muted" && "bg-muted/40 text-muted-foreground"
+                <div className="flex items-center gap-2">
+                    {run?.localUrl && (
+                        <a
+                            href={run.localUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium bg-primary/15 text-primary hover:bg-primary/25 transition-colors"
+                        >
+                            <ExternalLink className="size-3" />
+                            Open app
+                        </a>
                     )}
-                >
-                    {running && <Loader2 className="size-2.5 animate-spin" />}
-                    {done && <CheckCircle2 className="size-2.5" />}
-                    {!run && <Circle className="size-2.5" />}
-                    <span>{statusLabel}</span>
+                    {/* Status badge */}
+                    <div
+                        className={cn(
+                            "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium tabular-nums",
+                            statusColor === "emerald" && "bg-emerald-500/15 text-emerald-400",
+                            statusColor === "sky" && "bg-sky-500/15 text-sky-400",
+                            statusColor === "muted" && "bg-muted/40 text-muted-foreground"
+                        )}
+                    >
+                        {running && <Loader2 className="size-2.5 animate-spin" />}
+                        {done && <CheckCircle2 className="size-2.5" />}
+                        {!run && <Circle className="size-2.5" />}
+                        <span>{statusLabel}</span>
+                    </div>
                 </div>
             </div>
 

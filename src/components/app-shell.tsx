@@ -8,6 +8,7 @@ import { SidebarToggle } from "@/components/molecules/ControlsAndButtons/Sidebar
 import { useRunState } from "@/context/run-state";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { FloatingTerminalDialog } from "@/components/shared/FloatingTerminalDialog";
+import { TerminalRunDock } from "@/components/shared/TerminalRunDock";
 
 const SIDEBAR_STORAGE_KEY = "kwcode-sidebar-width";
 const SIDEBAR_MIN = 160;
@@ -148,7 +149,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </Suspense>
       </main>
 
-      {/* Floating terminal dialog for setup-prompt runs */}
+      {/* Run circles dock (bottom-right): one circle per run; click opens floating terminal */}
+      <TerminalRunDock />
+      {/* Floating terminal dialog: shows output for the selected run */}
       <FloatingTerminalDialog />
     </div>
   );

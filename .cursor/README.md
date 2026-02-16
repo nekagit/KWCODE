@@ -14,7 +14,7 @@ This folder is the **project-specific** `.cursor/` for KWCode. It was created fr
 ### Use agents
 
 - **Assign to tickets:** When generating or editing a ticket, the app lists all `.cursor/agents/*.md` (backend-dev, frontend-dev, solution-architect, tester, documentation-writer). Assign one or more; they are used when running Implement All.
-- **Run tab:** Load `.cursor/prompts/worker.md` as the base prompt; per-ticket agents are loaded from `.cursor/agents/`. Move tickets to "In progress" in the Kanban, then click **Implement All**.
+- **Run tab:** Load `.cursor/worker/` base prompt (worker.md); per-ticket agents are loaded from `.cursor/agents/`. Move tickets to "In progress" in the Kanban, then click **Implement All**.
 
 ### Manage milestones and tickets
 
@@ -38,25 +38,30 @@ This folder is the **project-specific** `.cursor/` for KWCode. It was created fr
 
 ## Structure (quick reference)
 
+Numbered entity folders (prompts use `.prompt.md` suffix; outputs use the same folder):
+
 | Path | Purpose |
 |------|--------|
-| **project/** | PROJECT-INFO.md, TECH-STACK.md, ROADMAP.md |
+| **0. ideas/** | ideas.prompt.md (prompt), ideas.md (output) |
+| **1. project/** | project.prompt.md (prompt), PROJECT-INFO.md (output) |
+| **2. setup/** | design, architecture, testing, documentation, frontend, backend — each has `{name}.prompt.md` and output(s); subfolders testing/, documentation/, setup/, development/ for nested prompts |
 | **agents/** | backend-dev, frontend-dev, solution-architect, tester, documentation-writer |
-| **adr/** | Architecture decision records (0001–0004) |
-| **prompts/** | worker, tickets, features, …; subfolders setup/, development/, documentation/, testing/ |
-| **setup/** | frontend.json, backend.json, architecture, design, testing, … |
-| **planner/** | tickets.md, features.md, kanban-state.json, project-plan.md; ticket-templates/, ai-suggestions/ |
+| **adr/** | Architecture decision records |
+| **planner/** | tickets.md, features.md, kanban-state.json; ticket-templates/, ai-suggestions/ |
 | **milestones/** | mvp/feature/release templates; 01–05 numbered milestones |
-| **worker/** | queue/ (ready, in-progress, completed), workflows/ticket-workflow.md |
-| **configs/** | planner/worker config templates; tech-stacks/*.json |
-| **scripts/** | initialize-project.sh, generate-milestones.js, create-tickets.js, setup-documentation.sh |
+| **worker/** | queue/ (ready, in-progress, completed, analyze-jobs.json), workflows/ticket-workflow.md; worker.md for Run tab base prompt |
 | **documentation/** | setup-guide, development-guide, architecture-overview, api-reference, best practices |
+
+Planner, worker, agents, adr, technologies are unchanged (not under numbered folders).
 
 ## Paths the app expects (do not remove)
 
+- `.cursor/0. ideas/ideas.md` — Ideas doc output
+- `.cursor/1. project/PROJECT-INFO.md` — Project info
+- `.cursor/2. setup/*` — Design, architecture, testing, documentation, frontend.json, backend.json, frontend-analysis.md, backend-analysis.md
 - `.cursor/planner/tickets.md` — work items (checklist format)
 - `.cursor/planner/kanban-state.json` — in-progress ticket ids
 - `.cursor/planner/features.md` — feature roadmap
 - `.cursor/agents/*.md` — agent list
-- `.cursor/prompts/worker.md` — Run tab (Implement All)
-- `.cursor/setup/frontend.json`, `.cursor/setup/backend.json` — Frontend/Backend tabs
+- `.cursor/worker/queue/analyze-jobs.json` — analyze queue; `.cursor/worker/` for Run tab
+- `.cursor/2. setup/frontend.json`, `.cursor/2. setup/backend.json` — Frontend/Backend tabs

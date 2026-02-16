@@ -41,9 +41,14 @@ import { toast } from "sonner";
 import { SetupDocBlock } from "@/components/molecules/TabAndContentSections/SetupDocBlock";
 import { ProjectArchitectureTab } from "@/components/molecules/TabAndContentSections/ProjectArchitectureTab";
 
-const SETUP_PATH = ".cursor/setup/backend.json";
-const BACKEND_PROMPT_PATH = ".cursor/prompts/backend.md";
-const BACKEND_ANALYSIS_OUTPUT_PATH = ".cursor/setup/backend-analysis.md";
+import {
+  SETUP_BACKEND_JSON_PATH,
+  SETUP_BACKEND_PROMPT_PATH,
+  SETUP_BACKEND_ANALYSIS_PATH,
+} from "@/lib/cursor-paths";
+const SETUP_PATH = SETUP_BACKEND_JSON_PATH;
+const BACKEND_PROMPT_PATH = SETUP_BACKEND_PROMPT_PATH;
+const BACKEND_ANALYSIS_OUTPUT_PATH = SETUP_BACKEND_ANALYSIS_PATH;
 
 interface ProjectBackendTabProps {
   project: Project;

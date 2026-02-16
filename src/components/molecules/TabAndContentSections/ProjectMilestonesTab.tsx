@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SectionCard } from "@/components/shared/DisplayPrimitives";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { Flag, Loader2, FileText, Plus, Pencil, Trash2 } from "lucide-react";
+import { Flag, Loader2, FileText, Plus, Pencil, Trash2, ListTodo } from "lucide-react";
+import { ConvertToTicketsDialog } from "@/components/molecules/FormsAndDialogs/ConvertToTicketsDialog";
 import { toast } from "sonner";
 import type { Project } from "@/types/project";
 import type { MilestoneRecord } from "@/types/milestone";
@@ -29,6 +30,7 @@ interface ProjectMilestonesTabProps {
 export function ProjectMilestonesTab({
   project,
   projectId,
+  onTicketAdded,
 }: ProjectMilestonesTabProps) {
   const [milestones, setMilestones] = useState<MilestoneRecord[]>([]);
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<number | null>(null);
@@ -44,6 +46,7 @@ export function ProjectMilestonesTab({
   const [editContent, setEditContent] = useState("");
   const [editSaving, setEditSaving] = useState(false);
   const [deleteSaving, setDeleteSaving] = useState(false);
+  const [convertTicketsOpen, setConvertTicketsOpen] = useState(false);
 
   const loadMilestones = useCallback(async () => {
     if (!projectId) return;
@@ -100,17 +103,6 @@ export function ProjectMilestonesTab({
       setSaving(false);
     }
   }, [projectId, addName, addSlug, addContent]);
-
-  const selectedMilestone = milestones.find((m) => m.id === selectedMilestoneId);
-
-  if (loading) {
-    return (
-      <div className="flex items-center gap-2 py-8">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-        <span className="text-sm text-muted-foreground">Loading milestones…</span>
-      </div>
-    );
-  }
 
   const openEdit = useCallback((m: MilestoneRecord) => {
     setSelectedMilestoneId(m.id);
@@ -173,6 +165,17 @@ export function ProjectMilestonesTab({
     }
   }, [projectId, selectedMilestoneId, milestones, loadMilestones]);
 
+  const selectedMilestone = milestones.find((m) => m.id === selectedMilestoneId);
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 py-8">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        <span className="text-sm text-muted-foreground">Loading milestones…</span>
+      </div>
+    );
+  }
+
   if (milestones.length === 0) {
     return (
       <div className="w-full flex flex-col gap-4">
@@ -216,6 +219,15 @@ export function ProjectMilestonesTab({
         <div className="flex items-center gap-1.5">
           {selectedMilestoneId != null && (
             <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setConvertTicketsOpen(true)}
+                className="gap-1"
+              >
+                <ListTodo className="size-3" />
+                Convert to tickets
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -326,6 +338,16 @@ export function ProjectMilestonesTab({
         <GenericInputWithLabel id="edit-milestone-slug" label="Slug (optional)" value={editSlug} onChange={(e) => setEditSlug(e.target.value)} placeholder="e.g. v1-0" />
         <GenericTextareaWithLabel id="edit-milestone-content" label="Content (optional)" value={editContent} onChange={(e) => setEditContent(e.target.value)} placeholder="Markdown content" />
       </SharedDialog>
+
+      {selectedMilestoneId != null && (
+        <ConvertToTicketsDialog
+          isOpen={convertTicketsOpen}
+          onClose={() => setConvertTicketsOpen(false)}
+          projectId={projectId}
+          milestoneId={selectedMilestoneId}
+          onSuccess={onTicketAdded}
+        />
+      )}
     </div>
   );
 }

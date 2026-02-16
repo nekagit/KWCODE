@@ -1,5 +1,5 @@
 /**
- * Parse and serialize .cursor/setup/ideas.md for the project Ideas tab.
+ * Parse and serialize .cursor/0. ideas/ideas.md for the project Ideas tab.
  * Supports: (1) #### N. Title + body blocks separated by ---, (2) simple - [ ] or - lines.
  */
 

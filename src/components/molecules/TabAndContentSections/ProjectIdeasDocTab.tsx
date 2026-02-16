@@ -11,9 +11,11 @@ import {
   Sparkles,
   ChevronDown,
   ChevronUp,
+  Flag,
 } from "lucide-react";
+import { ConvertToMilestonesDialog } from "@/components/molecules/FormsAndDialogs/ConvertToMilestonesDialog";
 import { AnalyzeButtonSplit } from "@/components/molecules/ControlsAndButtons/AnalyzeButtonSplit";
-import { readProjectFileOrEmpty, writeProjectFile, analyzeProjectDoc } from "@/lib/api-projects";
+import { readProjectFileOrEmpty, readCursorDocFromServer, writeProjectFile, analyzeProjectDoc } from "@/lib/api-projects";
 import { isTauri } from "@/lib/tauri";
 import { useRunStore, registerRunCompleteHandler } from "@/store/run-store";
 import {
@@ -38,8 +40,8 @@ import { Dialog as SharedDialog } from "@/components/shared/Dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-const IDEAS_SETUP_PATH = ".cursor/setup/ideas.md";
-const IDEAS_PROMPT_PATH = ".cursor/prompts/ideas.md";
+import { IDEAS_DOC_PATH, IDEAS_PROMPT_PATH } from "@/lib/cursor-paths";
+const IDEAS_SETUP_PATH = IDEAS_DOC_PATH;
 const markdownClasses =
   "text-sm text-foreground [&_h1]:text-lg [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-semibold [&_h3]:text-sm [&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:mb-2 last:[&_p]:mb-0 [&_code]:bg-muted/50 [&_code]:px-1.5 [&_code]:rounded";
 
@@ -63,16 +65,21 @@ export function ProjectIdeasDocTab({ project, projectId, docsRefreshKey }: Proje
   const [newIdeaRaw, setNewIdeaRaw] = useState("");
   const [improving, setImproving] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [convertMilestonesOpen, setConvertMilestonesOpen] = useState(false);
+  const [convertMilestonesDefaultName, setConvertMilestonesDefaultName] = useState("");
 
   const fetchDoc = useCallback(async () => {
-    if (!project.repoPath) {
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     setError(null);
     try {
-      const text = await readProjectFileOrEmpty(projectId, IDEAS_SETUP_PATH, project.repoPath);
+      let text = "";
+      if (project.repoPath) {
+        text = await readProjectFileOrEmpty(projectId, IDEAS_SETUP_PATH, project.repoPath);
+      }
+      // Fallback: if project repo read is empty, try app .cursor folder so content shows when project is this repo
+      if (!text?.trim()) {
+        text = await readCursorDocFromServer(IDEAS_SETUP_PATH);
+      }
       setContent(text && text.trim() ? text : null);
       const parsedDoc = text && text.trim() ? parseIdeasMd(text) : { intro: "", ideas: [], format: "bullets" };
       setParsed(parsedDoc);
@@ -381,6 +388,22 @@ export function ProjectIdeasDocTab({ project, projectId, docsRefreshKey }: Proje
                                   <div className={cn("text-xs", markdownClasses)}>
                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{idea.body}</ReactMarkdown>
                                   </div>
+                                  <div className="pt-2 border-t border-border/40">
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="gap-1.5"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setConvertMilestonesDefaultName(idea.title);
+                                        setConvertMilestonesOpen(true);
+                                      }}
+                                    >
+                                      <Flag className="h-3.5 w-3.5" />
+                                      Convert to milestones
+                                    </Button>
+                                  </div>
                                 </div>
                               )}
                             </div>
@@ -470,6 +493,13 @@ export function ProjectIdeasDocTab({ project, projectId, docsRefreshKey }: Proje
           <p className="text-sm text-muted-foreground">No content.</p>
         )}
       </SharedDialog>
+
+      <ConvertToMilestonesDialog
+        isOpen={convertMilestonesOpen}
+        onClose={() => setConvertMilestonesOpen(false)}
+        projectId={projectId}
+        defaultName={convertMilestonesDefaultName}
+      />
     </div>
   );
 }

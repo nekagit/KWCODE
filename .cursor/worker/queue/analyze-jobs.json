@@ -1,52 +1,12 @@
 {
   "jobs": [
-    {
-      "id": "ideas",
-      "promptPath": ".cursor/prompts/ideas.md",
-      "outputPath": ".cursor/setup/ideas.md",
-      "status": "done"
-    },
-    {
-      "id": "project",
-      "promptPath": ".cursor/prompts/project.md",
-      "outputPath": ".cursor/project/PROJECT-INFO.md",
-      "status": "done"
-    },
-    {
-      "id": "design",
-      "promptPath": ".cursor/prompts/design.md",
-      "outputPath": ".cursor/setup/design.md",
-      "status": "done"
-    },
-    {
-      "id": "architecture",
-      "promptPath": ".cursor/prompts/architecture.md",
-      "outputPath": ".cursor/setup/architecture.md",
-      "status": "done"
-    },
-    {
-      "id": "testing",
-      "promptPath": ".cursor/prompts/testing.md",
-      "outputPath": ".cursor/setup/testing.md",
-      "status": "done"
-    },
-    {
-      "id": "documentation",
-      "promptPath": ".cursor/prompts/documentation.md",
-      "outputPath": ".cursor/setup/documentation.md",
-      "status": "done"
-    },
-    {
-      "id": "frontend",
-      "promptPath": ".cursor/prompts/frontend.md",
-      "outputPath": ".cursor/setup/frontend-analysis.md",
-      "status": "done"
-    },
-    {
-      "id": "backend",
-      "promptPath": ".cursor/prompts/backend.md",
-      "outputPath": ".cursor/setup/backend-analysis.md",
-      "status": "done"
-    }
+    { "id": "ideas", "promptPath": ".cursor/0. ideas/ideas.prompt.md", "outputPath": ".cursor/0. ideas/ideas.md", "status": "done" },
+    { "id": "project", "promptPath": ".cursor/1. project/project.prompt.md", "outputPath": ".cursor/1. project/PROJECT-INFO.md", "status": "done" },
+    { "id": "design", "promptPath": ".cursor/2. setup/design.prompt.md", "outputPath": ".cursor/2. setup/design.md", "status": "done" },
+    { "id": "architecture", "promptPath": ".cursor/2. setup/architecture.prompt.md", "outputPath": ".cursor/2. setup/architecture.md", "status": "done" },
+    { "id": "testing", "promptPath": ".cursor/2. setup/testing.prompt.md", "outputPath": ".cursor/2. setup/testing.md", "status": "done" },
+    { "id": "documentation", "promptPath": ".cursor/2. setup/documentation.prompt.md", "outputPath": ".cursor/2. setup/documentation.md", "status": "done" },
+    { "id": "frontend", "promptPath": ".cursor/2. setup/frontend.prompt.md", "outputPath": ".cursor/2. setup/frontend-analysis.md", "status": "done" },
+    { "id": "backend", "promptPath": ".cursor/2. setup/backend.prompt.md", "outputPath": ".cursor/2. setup/backend-analysis.md", "status": "done" }
   ]
 }

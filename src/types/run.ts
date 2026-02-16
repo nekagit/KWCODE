@@ -52,6 +52,8 @@ export interface Run {
   doneAt?: number;
   /** Optional metadata for post-run actions (temp tickets). */
   meta?: RunMeta;
+  /** First localhost URL detected from script output (e.g. http://localhost:3000) for "Open app" link. */
+  localUrl?: string;
 }
 
 /** Alias for Run used by run store and UI. */

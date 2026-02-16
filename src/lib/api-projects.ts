@@ -4,6 +4,7 @@
  */
 import { invoke, isTauri } from "@/lib/tauri";
 import type { Project } from "@/types/project";
+import { ANALYZE_JOB_IDS, getPromptPath, getOutputPath } from "@/lib/cursor-paths";
 
 export type CreateProjectBody = {
   name: string;
@@ -157,6 +158,24 @@ export async function readProjectFileOrEmpty(
 ): Promise<string> {
   try {
     return await readProjectFile(projectId, relativePath, repoPath);
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Read a file from the app's .cursor folder (server process.cwd()/.cursor/). Use as fallback when project repo read returns empty.
+ * @param pathUnderCursor - Path under .cursor (e.g. "0. ideas/ideas.md", "2. setup/design.md"). Can also pass full path like ".cursor/0. ideas/ideas.md" (leading .cursor/ is stripped).
+ */
+export async function readCursorDocFromServer(pathUnderCursor: string): Promise<string> {
+  const trimmed = pathUnderCursor.trim().replace(/^\.cursor\/?/, "");
+  if (!trimmed) return "";
+  try {
+    const base = getApiBase();
+    const res = await fetch(`${base}/api/data/cursor-doc?path=${encodeURIComponent(trimmed)}`);
+    if (!res.ok) return "";
+    const data = (await res.json().catch(() => ({}))) as { content?: string | null };
+    return typeof data.content === "string" ? data.content : "";
   } catch {
     return "";
   }
@@ -413,16 +432,11 @@ export type AnalyzeJob = {
 export type AnalyzeQueueData = { jobs: AnalyzeJob[] };
 
 /** Default 8 analyze jobs (same order as ANALYZE_ALL_CONFIG). */
-export const DEFAULT_ANALYZE_JOBS: Omit<AnalyzeJob, "status">[] = [
-  { id: "ideas", promptPath: ".cursor/prompts/ideas.md", outputPath: ".cursor/setup/ideas.md" },
-  { id: "project", promptPath: ".cursor/prompts/project.md", outputPath: ".cursor/project/PROJECT-INFO.md" },
-  { id: "design", promptPath: ".cursor/prompts/design.md", outputPath: ".cursor/setup/design.md" },
-  { id: "architecture", promptPath: ".cursor/prompts/architecture.md", outputPath: ".cursor/setup/architecture.md" },
-  { id: "testing", promptPath: ".cursor/prompts/testing.md", outputPath: ".cursor/setup/testing.md" },
-  { id: "documentation", promptPath: ".cursor/prompts/documentation.md", outputPath: ".cursor/setup/documentation.md" },
-  { id: "frontend", promptPath: ".cursor/prompts/frontend.md", outputPath: ".cursor/setup/frontend-analysis.md" },
-  { id: "backend", promptPath: ".cursor/prompts/backend.md", outputPath: ".cursor/setup/backend-analysis.md" },
-];
+export const DEFAULT_ANALYZE_JOBS: Omit<AnalyzeJob, "status">[] = ANALYZE_JOB_IDS.map((id) => ({
+  id,
+  promptPath: getPromptPath(id),
+  outputPath: getOutputPath(id),
+}));
 
 /** Write the analyze queue to the project repo (all jobs pending). */
 export async function writeAnalyzeQueue(

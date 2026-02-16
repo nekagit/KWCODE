@@ -27,11 +27,11 @@ const DEFAULT_HEIGHT = 420;
 
 export function FloatingTerminalDialog() {
     const floatingRunId = useRunStore((s) => s.floatingTerminalRunId);
+    const minimized = useRunStore((s) => s.floatingTerminalMinimized);
+    const setFloatingTerminalMinimized = useRunStore((s) => s.setFloatingTerminalMinimized);
     const clearFloatingTerminal = useRunStore((s) => s.clearFloatingTerminal);
     const stopRun = useRunStore((s) => s.stopRun);
     const runningRuns = useRunStore((s) => s.runningRuns);
-
-    const [minimized, setMinimized] = useState(false);
     const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
     const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
     const dialogRef = useRef<HTMLDivElement>(null);
@@ -50,6 +50,7 @@ export function FloatingTerminalDialog() {
             status: run.status as "running" | "done",
             startedAt: run.startedAt,
             doneAt: run.doneAt,
+            localUrl: run.localUrl,
         }
         : null;
 
@@ -62,10 +63,10 @@ export function FloatingTerminalDialog() {
         }
     }, [floatingRunId, position]);
 
-    // Reset minimized state on new run
+    // Reset minimized state when switching to a different run
     useEffect(() => {
-        if (floatingRunId) setMinimized(false);
-    }, [floatingRunId]);
+        if (floatingRunId) setFloatingTerminalMinimized(false);
+    }, [floatingRunId, setFloatingTerminalMinimized]);
 
     /* ─── Drag handling ─── */
     const handleMouseDown = useCallback(
@@ -133,7 +134,7 @@ export function FloatingTerminalDialog() {
                 className="select-none"
             >
                 <button
-                    onClick={() => setMinimized(false)}
+                    onClick={() => setFloatingTerminalMinimized(false)}
                     onMouseDown={handleMouseDown}
                     className={cn(
                         "flex items-center gap-2 rounded-full px-4 py-2 text-xs font-medium shadow-xl border backdrop-blur-lg transition-all duration-300 cursor-grab active:cursor-grabbing",
@@ -208,7 +209,7 @@ export function FloatingTerminalDialog() {
                     <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => setMinimized(true)}
+                        onClick={() => setFloatingTerminalMinimized(true)}
                         className="size-6 text-muted-foreground hover:text-foreground hover:bg-muted/40"
                         title="Minimize"
                     >

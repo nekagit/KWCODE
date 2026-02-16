@@ -15,6 +15,7 @@ import {
   FolderOpen,
   Calendar,
   ArrowLeft,
+  ArrowRight,
   Hash,
   Monitor,
   Server,
@@ -26,7 +27,7 @@ import {
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Project } from "@/types/project";
-import { getProjectResolved, deleteProject } from "@/lib/api-projects";
+import { getProjectResolved, deleteProject, listProjects } from "@/lib/api-projects";
 import { ProjectIdeasDocTab } from "@/components/molecules/TabAndContentSections/ProjectIdeasDocTab";
 import { ProjectTicketsTab } from "@/components/molecules/TabAndContentSections/ProjectTicketsTab";
 import { ProjectGitTab } from "@/components/molecules/TabAndContentSections/ProjectGitTab";
@@ -52,24 +53,19 @@ import {
   cleanAnalysisDocs,
   ANALYZE_QUEUE_PATH,
 } from "@/lib/api-projects";
+import { ANALYZE_JOB_IDS, getPromptPath, getOutputPath } from "@/lib/cursor-paths";
 import { toast } from "sonner";
 import { Sparkles, ScanSearch } from "lucide-react";
 
 /**
  * Each tab’s dedicated .md in .cursor, updated by agent -p using current project data.
- * Prompt = .cursor/prompts/<name>.md, output = the .md file for that tab.
+ * Numbered folders: 0. ideas, 1. project, 2. setup.
  * "Analyze" (per tab or all) runs agent with: project name + repo layout + tech stack + package.json + current doc content + prompt instructions → writes output path.
  */
-const ANALYZE_ALL_CONFIG: { promptPath: string; outputPath: string }[] = [
-  { promptPath: ".cursor/prompts/ideas.md", outputPath: ".cursor/setup/ideas.md" },
-  { promptPath: ".cursor/prompts/project.md", outputPath: ".cursor/project/PROJECT-INFO.md" },
-  { promptPath: ".cursor/prompts/design.md", outputPath: ".cursor/setup/design.md" },
-  { promptPath: ".cursor/prompts/architecture.md", outputPath: ".cursor/setup/architecture.md" },
-  { promptPath: ".cursor/prompts/testing.md", outputPath: ".cursor/setup/testing.md" },
-  { promptPath: ".cursor/prompts/documentation.md", outputPath: ".cursor/setup/documentation.md" },
-  { promptPath: ".cursor/prompts/frontend.md", outputPath: ".cursor/setup/frontend-analysis.md" },
-  { promptPath: ".cursor/prompts/backend.md", outputPath: ".cursor/setup/backend-analysis.md" },
-];
+const ANALYZE_ALL_CONFIG: { promptPath: string; outputPath: string }[] = ANALYZE_JOB_IDS.map((id) => ({
+  promptPath: getPromptPath(id),
+  outputPath: getOutputPath(id),
+}));
 
 const TAB_ROW_1 = [
   { value: "ideas", label: "Ideas", icon: Lightbulb, color: "text-amber-400", activeGlow: "shadow-amber-500/10" },
@@ -95,13 +91,14 @@ export function ProjectDetailsPageContent() {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("setup");
+  const [activeTab, setActiveTab] = useState("todo");
   const [initializing, setInitializing] = useState(false);
   const [analyzingAll, setAnalyzingAll] = useState(false);
   const [analyzingStep, setAnalyzingStep] = useState(0);
   const [cleaningDocs, setCleaningDocs] = useState(false);
   const [plannerRefreshKey, setPlannerRefreshKey] = useState(0);
   const [docsRefreshKey, setDocsRefreshKey] = useState(0);
+  const [projectIds, setProjectIds] = useState<string[]>([]);
 
   const mountedRef = useRef(true);
   useEffect(() => {
@@ -140,6 +137,21 @@ export function ProjectDetailsPageContent() {
   useEffect(() => {
     fetchProject();
   }, [fetchProject]);
+
+  // Load project IDs for prev/next navigation
+  useEffect(() => {
+    let cancelled = false;
+    listProjects()
+      .then((projects) => {
+        if (!cancelled) setProjectIds(projects.map((p) => p.id));
+      })
+      .catch(() => {
+        if (!cancelled) setProjectIds([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   /* ─── Loading State ─── */
   if (loading) {
@@ -192,6 +204,10 @@ export function ProjectDetailsPageContent() {
     );
   }
 
+  const currentIndex = projectIds.indexOf(projectId);
+  const prevId = currentIndex > 0 ? projectIds[currentIndex - 1] : undefined;
+  const nextId = currentIndex >= 0 && currentIndex < projectIds.length - 1 ? projectIds[currentIndex + 1] : undefined;
+
   const ticketCount = project.ticketIds?.length ?? 0;
 
   const designCount = project.designIds?.length ?? 0;
@@ -243,9 +259,37 @@ export function ProjectDetailsPageContent() {
 
             {/* Project Title & Description */}
             <div className="space-y-2.5">
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground leading-tight">
-                {project.name}
-              </h1>
+              <div className="flex items-center gap-2">
+                {prevId ? (
+                  <Link
+                    href={`/projects/${prevId}`}
+                    className="shrink-0 rounded-lg p-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                    aria-label="Previous project"
+                  >
+                    <ArrowLeft className="size-5" />
+                  </Link>
+                ) : (
+                  <span className="shrink-0 rounded-lg p-2 text-muted-foreground/40 cursor-not-allowed" aria-hidden>
+                    <ArrowLeft className="size-5" />
+                  </span>
+                )}
+                <h1 className="flex-1 min-w-0 text-2xl md:text-3xl font-bold tracking-tight text-foreground leading-tight">
+                  {project.name}
+                </h1>
+                {nextId ? (
+                  <Link
+                    href={`/projects/${nextId}`}
+                    className="shrink-0 rounded-lg p-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                    aria-label="Next project"
+                  >
+                    <ArrowRight className="size-5" />
+                  </Link>
+                ) : (
+                  <span className="shrink-0 rounded-lg p-2 text-muted-foreground/40 cursor-not-allowed" aria-hidden>
+                    <ArrowRight className="size-5" />
+                  </span>
+                )}
+              </div>
               {project.description && (
                 <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed normal-case">
                   {project.description}

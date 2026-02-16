@@ -39,13 +39,20 @@ import {
 import { ProjectAgentsSection } from "@/components/molecules/TabAndContentSections/ProjectAgentsSection";
 import { ProjectFilesTab } from "@/components/molecules/TabAndContentSections/ProjectFilesTab";
 import { toast } from "sonner";
+import {
+  IDEAS_ROOT,
+  PROJECT_ROOT,
+  SETUP_ROOT,
+  getPromptPath,
+  getOutputPath,
+} from "@/lib/cursor-paths";
 
 const SETUP_ANALYZE_CONFIG: { key: string; label: string; promptPath: string; outputPath: string }[] = [
-  { key: "design", label: "Design", promptPath: ".cursor/prompts/design.md", outputPath: ".cursor/setup/design.md" },
-  { key: "architecture", label: "Architecture", promptPath: ".cursor/prompts/architecture.md", outputPath: ".cursor/setup/architecture.md" },
-  { key: "testing", label: "Testing", promptPath: ".cursor/prompts/testing.md", outputPath: ".cursor/setup/testing.md" },
-  { key: "documentation", label: "Documentation", promptPath: ".cursor/prompts/documentation.md", outputPath: ".cursor/setup/documentation.md" },
-  { key: "ideas", label: "Ideas", promptPath: ".cursor/prompts/ideas.md", outputPath: ".cursor/setup/ideas.md" },
+  { key: "design", label: "Design", promptPath: getPromptPath("design"), outputPath: getOutputPath("design") },
+  { key: "architecture", label: "Architecture", promptPath: getPromptPath("architecture"), outputPath: getOutputPath("architecture") },
+  { key: "testing", label: "Testing", promptPath: getPromptPath("testing"), outputPath: getOutputPath("testing") },
+  { key: "documentation", label: "Documentation", promptPath: getPromptPath("documentation"), outputPath: getOutputPath("documentation") },
+  { key: "ideas", label: "Ideas", promptPath: getPromptPath("ideas"), outputPath: getOutputPath("ideas") },
 ];
 
 const SETUP_FOLDERS: {
@@ -56,13 +63,13 @@ const SETUP_FOLDERS: {
   icon: LucideIcon;
   accent: AccentColor;
 }[] = [
-  { id: "setup", label: "Setup", path: ".cursor/setup", description: "Setup files in .cursor/setup", icon: Settings, accent: "emerald" },
-  { id: "project", label: "Project", path: ".cursor/project", description: "Project info, tech stack, roadmap", icon: FolderOpen, accent: "sky" },
+  { id: "setup", label: "Setup", path: SETUP_ROOT, description: "Setup files in .cursor/2. setup", icon: Settings, accent: "emerald" },
+  { id: "project", label: "Project", path: PROJECT_ROOT, description: "Project info, tech stack, roadmap", icon: FolderOpen, accent: "sky" },
+  { id: "ideas", label: "Ideas", path: IDEAS_ROOT, description: "Ideas prompt and output", icon: MessageSquare, accent: "amber" },
   { id: "adr", label: "ADR", path: ".cursor/adr", description: "Architecture decision records", icon: FileText, accent: "violet" },
   { id: "agents", label: "Agents", path: ".cursor/agents", description: "Agent definitions and roles", icon: Bot, accent: "cyan" },
   { id: "planner", label: "Planner", path: ".cursor/planner", description: "Tickets, project plan, Kanban state", icon: ListTodo, accent: "blue" },
   { id: "milestones", label: "Milestones", path: ".cursor/milestones", description: "Milestone definitions and templates", icon: Flag, accent: "orange" },
-  { id: "prompts", label: "Prompts", path: ".cursor/prompts", description: "Prompt templates per phase", icon: MessageSquare, accent: "amber" },
   { id: "worker", label: "Worker", path: ".cursor/worker", description: "Worker queue and ticket workflow", icon: Workflow, accent: "rose" },
   { id: "documentation", label: "Documentation", path: ".cursor/documentation", description: "Setup guide, architecture, best practices", icon: BookOpen, accent: "teal" },
   { id: "rules", label: "Rules", path: ".cursor/rules", description: "Cursor rules and conventions", icon: Folder, accent: "teal" },

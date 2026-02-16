@@ -23,10 +23,14 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-
-const SETUP_TESTING_PATH = ".cursor/setup/testing.md";
-const TESTING_PROMPT_PATH = ".cursor/prompts/testing.md";
-const PROMPTS_TESTING_DIR = ".cursor/prompts/testing";
+import {
+  SETUP_TESTING_DOC_PATH,
+  SETUP_TESTING_PROMPT_PATH,
+  SETUP_TESTING_PROMPTS_DIR,
+} from "@/lib/cursor-paths";
+const SETUP_TESTING_PATH = SETUP_TESTING_DOC_PATH;
+const TESTING_PROMPT_PATH = SETUP_TESTING_PROMPT_PATH;
+const PROMPTS_TESTING_DIR = SETUP_TESTING_PROMPTS_DIR;
 
 const markdownClasses =
   "text-sm text-foreground [&_h1]:text-lg [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-semibold [&_h3]:text-sm [&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_pre]:bg-muted/50 [&_pre]:p-3 [&_pre]:rounded-md [&_pre]:overflow-x-auto [&_code]:bg-muted/50 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_p]:mb-2 last:[&_p]:mb-0 [&_table]:border-collapse [&_th]:border [&_td]:border [&_th]:px-2 [&_td]:px-2 [&_th]:py-1 [&_td]:py-1";
@@ -75,7 +79,7 @@ export function ProjectTestingTab({ project, projectId, docsRefreshKey }: Projec
     setError(null);
     const result: TestingItem[] = [];
     try {
-      const setupList = await listProjectFiles(projectId, ".cursor/setup", project.repoPath);
+      const setupList = await listProjectFiles(projectId, ".cursor/2. setup", project.repoPath);
       const testingMd = setupList.find((e) => !e.isDirectory && e.name === "testing.md");
       if (testingMd) {
         result.push({
@@ -99,7 +103,7 @@ export function ProjectTestingTab({ project, projectId, docsRefreshKey }: Projec
           });
         }
       } catch {
-        // .cursor/prompts/testing may not exist
+        // .cursor/2. setup/testing may not exist
       }
       setItems(result);
       if (result.length > 0 && !selectedPath) {

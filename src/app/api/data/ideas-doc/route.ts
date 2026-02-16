@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
+import { IDEAS_DOC_PATH } from "@/lib/cursor-paths";
 
-const IDEAS_MD_RELATIVE = ".cursor/setup/ideas.md";
+const IDEAS_MD_RELATIVE = IDEAS_DOC_PATH;
 
 /**
  * GET: Read ideas.md from the workspace root (process.cwd()).

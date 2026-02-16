@@ -23,7 +23,8 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-const IDEAS_MD_PATH = ".cursor/setup/ideas.md";
+import { IDEAS_DOC_PATH } from "@/lib/cursor-paths";
+const IDEAS_MD_PATH = IDEAS_DOC_PATH;
 const markdownClasses =
   "text-sm text-foreground [&_h1]:text-lg [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-semibold [&_h3]:text-sm [&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:mb-2 last:[&_p]:mb-0 [&_code]:bg-muted/50 [&_code]:px-1.5 [&_code]:rounded";
 

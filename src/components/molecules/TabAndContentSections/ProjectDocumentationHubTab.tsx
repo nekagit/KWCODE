@@ -24,9 +24,13 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
+import {
+  SETUP_DOCUMENTATION_DOC_PATH,
+  SETUP_DOCUMENTATION_PROMPT_PATH,
+} from "@/lib/cursor-paths";
 const DOCS_DIR = ".cursor/documentation";
-const FALLBACK_PATH = ".cursor/setup/documentation.md";
-const DOCUMENTATION_PROMPT_PATH = ".cursor/prompts/documentation.md";
+const FALLBACK_PATH = SETUP_DOCUMENTATION_DOC_PATH;
+const DOCUMENTATION_PROMPT_PATH = SETUP_DOCUMENTATION_PROMPT_PATH;
 
 const markdownClasses =
   "text-sm text-foreground [&_h1]:text-lg [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-semibold [&_h3]:text-sm [&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_pre]:bg-muted/50 [&_pre]:p-3 [&_pre]:rounded-md [&_pre]:overflow-x-auto [&_code]:bg-muted/50 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_p]:mb-2 last:[&_p]:mb-0 [&_table]:border-collapse [&_th]:border [&_td]:border [&_th]:px-2 [&_td]:px-2 [&_th]:py-1 [&_td]:py-1";

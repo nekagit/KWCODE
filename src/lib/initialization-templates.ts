@@ -183,7 +183,7 @@ This document defines the documentation strategy for this project. We believe th
 
 ## Documentation Types
 
-### 1. Technical Specs (\`.cursor/setup/\`)
+### 1. Technical Specs (\`.cursor/2. setup/\`)
 - \`architecture.md\`: System design and boundaries.
 - \`design.md\`: Visual and interaction system.
 - \`testing.md\`: QA strategy and protocols.

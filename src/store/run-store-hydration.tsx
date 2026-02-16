@@ -6,6 +6,9 @@ import { writeProjectFile } from "@/lib/api-projects";
 import { stripTerminalArtifacts, MIN_DOCUMENT_LENGTH } from "@/lib/strip-terminal-artifacts";
 import { useRunStore, takeRunCompleteHandler } from "./run-store";
 
+/** Match first localhost/127.0.0.1 URL in a line (e.g. from Next.js, Vite dev server output). */
+const LOCALHOST_URL_RE = /https?:\/\/(?:localhost|127\.0\.0\.1)(?::(\d+))?(?:\/[^\s]*)?/i;
+
 /**
  * Runs side effects that hydrate the run store: Tauri env detection,
  * initial data load, and Tauri event listeners. Mount once in layout.
@@ -16,6 +19,7 @@ export function RunStoreHydration() {
   const setIsTauriEnv = useRunStore((s) => s.setIsTauriEnv);
   const setLoading = useRunStore((s) => s.setLoading);
   const setRunInfos = useRunStore((s) => s.setRunInfos);
+  const setLocalUrl = useRunStore((s) => s.setLocalUrl);
   const unlistenLogRef = useRef<(() => void) | null>(null);
   const unlistenExitedRef = useRef<(() => void) | null>(null);
 
@@ -51,15 +55,22 @@ export function RunStoreHydration() {
           r.runId === run_id ? { ...r, logLines: [...r.logLines, line] } : r
         )
       );
+      const match = line.match(LOCALHOST_URL_RE);
+      if (match) {
+        const url = match[0];
+        const store = useRunStore.getState();
+        const run = store.runningRuns.find((r) => r.runId === run_id);
+        if (run && !run.localUrl) setLocalUrl(run_id, url);
+      }
     }).then((fn) => {
       if (!cancelled) unlistenLogRef.current = fn;
     });
     return () => {
       cancelled = true;
       unlistenLogRef.current?.();
-      unlistenLogRef.current = null;
+        unlistenLogRef.current = null;
     };
-  }, [isTauriEnv]);
+  }, [isTauriEnv, setRunInfos, setLocalUrl]);
 
   useEffect(() => {
     if (isTauriEnv !== true) return;

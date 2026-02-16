@@ -32,6 +32,8 @@ export interface RunState {
   archivedImplementAllLogs: Array<{ id: string; timestamp: string; logLines: string[] }>;
   /** Run ID currently shown in the floating terminal dialog (Setup prompt runs). */
   floatingTerminalRunId: string | null;
+  /** Whether the floating terminal is minimized (pill); false = expanded. */
+  floatingTerminalMinimized: boolean;
 }
 
 export interface RunActions {
@@ -42,6 +44,8 @@ export interface RunActions {
   setSelectedPromptRecordIds: (ids: number[] | ((prev: number[]) => number[])) => void;
   setTiming: React.Dispatch<React.SetStateAction<Timing>>;
   setRunInfos: React.Dispatch<React.SetStateAction<RunInfo[]>>;
+  /** Set localUrl on a run (first detected localhost URL from script output). */
+  setLocalUrl: (runId: string, localUrl: string) => void;
   setSelectedRunId: (id: string | null) => void;
   refreshData: () => Promise<void>;
   runScript: () => Promise<void>;
@@ -71,7 +75,10 @@ export interface RunActions {
     label: string,
     meta?: RunMeta
   ) => Promise<string | null>;
+  /** Run an npm script in the project directory (e.g. npm run dev). Tauri only. */
+  runNpmScript: (projectPath: string, scriptName: string) => Promise<string | null>;
   setFloatingTerminalRunId: (id: string | null) => void;
+  setFloatingTerminalMinimized: (minimized: boolean) => void;
   clearFloatingTerminal: () => void;
   stopAllImplementAll: () => Promise<void>;
   clearImplementAllLogs: () => void;
@@ -116,6 +123,7 @@ const initialState: RunState = {
 
   archivedImplementAllLogs: [],
   floatingTerminalRunId: null,
+  floatingTerminalMinimized: false,
 };
 
 export const useRunStore = create<RunStore>()((set, get) => ({
@@ -485,7 +493,57 @@ export const useRunStore = create<RunStore>()((set, get) => ({
     }
   },
 
+  setLocalUrl: (runId, localUrl) => {
+    set((s) => ({
+      runningRuns: s.runningRuns.map((r) =>
+        r.runId === runId && !r.localUrl ? { ...r, localUrl } : r
+      ),
+    }));
+  },
+
+  runNpmScript: async (projectPath, scriptName) => {
+    const path = projectPath?.trim();
+    if (!path) {
+      set({ error: "Project path is required" });
+      return null;
+    }
+    const name = scriptName?.trim();
+    if (!name) {
+      set({ error: "Script name is required" });
+      return null;
+    }
+    set({ error: null });
+    try {
+      const { run_id } = await invoke<{ run_id: string }>("run_npm_script", {
+        projectPath: path,
+        scriptName: name,
+      });
+      const label = `npm run ${name}`;
+      set((s) => ({
+        runningRuns: [
+          ...s.runningRuns,
+          {
+            runId: run_id,
+            label,
+            logLines: [],
+            status: "running" as const,
+            startedAt: Date.now(),
+          },
+        ],
+        selectedRunId: run_id,
+        floatingTerminalRunId: run_id,
+        floatingTerminalMinimized: false,
+      }));
+      return run_id;
+    } catch (e) {
+      set({ error: e instanceof Error ? e.message : String(e) });
+      return null;
+    }
+  },
+
   setFloatingTerminalRunId: (id) => set({ floatingTerminalRunId: id }),
+
+  setFloatingTerminalMinimized: (minimized) => set({ floatingTerminalMinimized: minimized }),
 
   clearFloatingTerminal: () => set({ floatingTerminalRunId: null }),
 
@@ -609,8 +667,12 @@ export function useRunState() {
       getTimingForRun: s.getTimingForRun,
       runSetupPrompt: s.runSetupPrompt,
       runTempTicket: s.runTempTicket,
+      runNpmScript: s.runNpmScript,
+      setLocalUrl: s.setLocalUrl,
       floatingTerminalRunId: s.floatingTerminalRunId,
       setFloatingTerminalRunId: s.setFloatingTerminalRunId,
+      floatingTerminalMinimized: s.floatingTerminalMinimized,
+      setFloatingTerminalMinimized: s.setFloatingTerminalMinimized,
       clearFloatingTerminal: s.clearFloatingTerminal,
     }))
   );
