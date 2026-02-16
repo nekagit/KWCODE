@@ -321,7 +321,16 @@ export function ProjectProjectTab({ project, projectId, docsRefreshKey, onProjec
                     setSelectedFile("PROJECT-INFO.md");
                     toast.success("Project info updated from prompt.");
                   } catch (e) {
-                    toast.error(e instanceof Error ? e.message : "Analyze failed");
+                    const err = e instanceof Error ? e : new Error(String(e));
+                    const isPromptNotFound = (err as Error & { code?: string }).code === "PROMPT_NOT_FOUND";
+                    if (isPromptNotFound) {
+                      toast.error("Prompt file missing", {
+                        description: "Click Initialize (above) to copy .cursor prompts from the template, then try Analyze again.",
+                        duration: 10000,
+                      });
+                    } else {
+                      toast.error(err.message || "Analyze failed");
+                    }
                   } finally {
                     setAnalyzing(false);
                   }

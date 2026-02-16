@@ -379,7 +379,18 @@ export function ProjectDetailsPageContent() {
                         }
                       } catch (err) {
                         setAnalyzingStep(0);
-                        toast.error(err instanceof Error ? err.message : "Analyze all failed", { duration: 8000 });
+                        const msg = err instanceof Error ? err.message : "Analyze all failed";
+                        const isPromptNotFound =
+                          (err instanceof Error && (err as Error & { code?: string }).code === "PROMPT_NOT_FOUND") ||
+                          String(msg).toLowerCase().includes("prompt not found");
+                        if (isPromptNotFound) {
+                          toast.error("Prompt file(s) missing", {
+                            description: "Click Initialize (above) to copy .cursor prompts from the template, then try again.",
+                            duration: 10000,
+                          });
+                        } else {
+                          toast.error(msg, { duration: 8000 });
+                        }
                       } finally {
                         setAnalyzingAll(false);
                       }
@@ -424,7 +435,10 @@ export function ProjectDetailsPageContent() {
                               }
                               setSavingPort(true);
                               try {
-                                await updateProject(projectId, { runPort: num });
+                                const updated = await updateProject(projectId, { runPort: num });
+                                if (mountedRef.current && updated?.runPort != null) {
+                                  setProject((p) => (p ? { ...p, runPort: updated.runPort } : p));
+                                }
                                 await fetchProject();
                                 setPortEdit(false);
                                 setPortInput("");
@@ -495,7 +509,10 @@ export function ProjectDetailsPageContent() {
                             }
                             setSavingPort(true);
                             try {
-                              await updateProject(projectId, { runPort: num });
+                              const updated = await updateProject(projectId, { runPort: num });
+                              if (mountedRef.current && updated?.runPort != null) {
+                                setProject((p) => (p ? { ...p, runPort: updated.runPort } : p));
+                              }
                               await fetchProject();
                               setPortInput("");
                               toast.success("Run port saved.");

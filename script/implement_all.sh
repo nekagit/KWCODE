@@ -57,8 +57,8 @@ if [ -n "$PROMPT_FILE" ] && [ -f "$PROMPT_FILE" ]; then
   PROMPT_CONTENT=$(cat "$PROMPT_FILE")
   rm -f "$PROMPT_FILE"
   ESCAPED=$(printf '%s' "$PROMPT_CONTENT" | sed 's/\\/\\\\/g; s/"/\\"/g')
-  echo "Running: agent -p \"<prompt>\" (print mode)"
-  agent -p "$ESCAPED"
+  echo "Running: agent -F -p \"<prompt>\" (print mode, -F = trust workspace)"
+  agent -F -p "$ESCAPED"
 else
   echo "Running: agent"
   agent

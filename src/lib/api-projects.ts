@@ -331,11 +331,13 @@ export async function getAnalyzePromptOnly(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  const data = (await res.json().catch(() => ({}))) as { error?: string; hint?: string; prompt?: string };
+  const data = (await res.json().catch(() => ({}))) as { code?: string; error?: string; hint?: string; prompt?: string };
   if (!res.ok) {
     const msg = data.error || res.statusText || "Failed to get prompt";
     const hint = data.hint ? ` ${data.hint}` : "";
-    throw new Error(msg + hint);
+    const err = new Error(msg + hint) as Error & { code?: string };
+    if (data.code === "PROMPT_NOT_FOUND") err.code = "PROMPT_NOT_FOUND";
+    throw err;
   }
   if (typeof data.prompt !== "string" || !data.prompt.trim()) {
     throw new Error("API did not return a prompt");
@@ -382,6 +384,7 @@ export async function analyzeProjectDoc(
     body: JSON.stringify(body),
   });
   const data = (await res.json().catch(() => ({}))) as {
+    code?: string;
     error?: string;
     hint?: string;
     ok?: boolean;
@@ -391,7 +394,9 @@ export async function analyzeProjectDoc(
   if (!res.ok) {
     const msg = data.error || res.statusText || "Analyze failed";
     const hint = data.hint ? ` ${data.hint}` : "";
-    throw new Error(msg + hint);
+    const err = new Error(msg + hint) as Error & { code?: string };
+    if (data.code === "PROMPT_NOT_FOUND") err.code = "PROMPT_NOT_FOUND";
+    throw err;
   }
   if (data.placeholder && data.message) {
     return { placeholder: true, message: data.message };

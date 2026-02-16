@@ -179,6 +179,7 @@ export async function POST(request: NextRequest) {
   if (!promptContent || !promptContent.trim()) {
     return NextResponse.json(
       {
+        code: "PROMPT_NOT_FOUND",
         error: `Prompt not found at ${promptPath}`,
         hint: "Run Initialize on this project to copy .cursor prompts from the template, or add the prompt file manually.",
       },

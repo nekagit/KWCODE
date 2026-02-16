@@ -50,6 +50,7 @@ import {
   Workflow,
   FileText,
   ScanSearch,
+  Bug,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isImplementAllRun, parseTicketNumberFromRunLabel } from "@/lib/run-helpers";
@@ -57,6 +58,39 @@ import { StatusPill } from "@/components/shared/DisplayPrimitives";
 import { TerminalSlot } from "@/components/shared/TerminalSlot";
 import { KanbanTicketCard } from "@/components/molecules/Kanban/KanbanTicketCard";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Textarea } from "@/components/ui/textarea";
+
+/** System prompt for the debugging terminal agent. User pastes error logs below; this is prepended so the agent gets instructions + logs. */
+const DEBUG_ASSISTANT_PROMPT = `You are an expert debugging assistant with deep knowledge across all tech stacks, frameworks, and languages.
+
+CONTEXT ANALYSIS:
+1. Carefully read ALL provided logs, error messages, and stack traces
+2. Identify the root cause, not just symptoms
+3. Consider version conflicts, dependency issues, configuration problems, and code logic errors
+
+DEBUGGING APPROACH:
+- Analyze error messages line by line
+- Trace the execution flow from the error backwards
+- Check for common pitfalls: missing dependencies, incorrect paths, permission issues, environment variables, API changes
+- Consider the full context: OS, runtime version, framework version, recent changes
+
+SOLUTION REQUIREMENTS:
+1. Explain the root cause clearly and concisely
+2. Provide the exact fix with file paths and line numbers
+3. Show before/after code changes when applicable
+4. Include any commands needed (install, configure, restart)
+5. Suggest preventive measures to avoid similar issues
+
+OUTPUT FORMAT:
+**Root Cause:** [Clear explanation]
+**Fix:** [Step-by-step solution]
+**Why This Works:** [Brief technical explanation]
+**Prevention:** [How to avoid this in future]
+
+Be direct, accurate, and actionable. No generic advice - provide specific solutions based on the actual error.
+
+ERROR/LOG INFORMATION:
+`;
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Main Component
@@ -266,6 +300,9 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
         repoPath={project.repoPath ?? ""}
         kanbanData={kanbanData}
       />
+
+      {/* ═══ Debugging — paste error logs, run terminal agent to fix ═══ */}
+      <WorkerDebuggingSection projectPath={project.repoPath.trim()} />
 
       {/* ═══ Terminals + ticket per slot (each ticket directly below its terminal) ═══ */}
       <WorkerTerminalsSection
@@ -848,6 +885,80 @@ function WorkerCommandCenter({
             Archive
           </Button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Debugging — paste error logs, run terminal agent to fix
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function WorkerDebuggingSection({ projectPath }: { projectPath: string }) {
+  const runTempTicket = useRunStore((s) => s.runTempTicket);
+  const [errorLogs, setErrorLogs] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleRunDebugAgent = async () => {
+    const logs = errorLogs.trim();
+    if (!logs) {
+      toast.error("Paste error logs above, then run the agent.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const fullPrompt = DEBUG_ASSISTANT_PROMPT + logs;
+      const runId = await runTempTicket(projectPath, fullPrompt, "Debug: fix errors");
+      if (runId) {
+        toast.success("Debug agent started on slot 1. Check the terminal below.");
+      } else {
+        toast.error("Failed to start debug agent.");
+      }
+    } catch {
+      toast.error("Failed to start debug agent.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm overflow-hidden">
+      <div className="flex items-center gap-2.5 px-5 pt-5 pb-4">
+        <div className="flex items-center justify-center size-7 rounded-lg bg-amber-500/10">
+          <Bug className="size-3.5 text-amber-400" />
+        </div>
+        <div>
+          <h3 className="text-xs font-semibold text-foreground tracking-tight">
+            Debugging
+          </h3>
+          <p className="text-[10px] text-muted-foreground normal-case">
+            Paste error logs below; run the terminal agent to diagnose and fix
+          </p>
+        </div>
+      </div>
+      <div className="px-5 pb-5 space-y-3">
+        <Textarea
+          placeholder="Paste error messages, stack traces, or build/runtime logs here…"
+          value={errorLogs}
+          onChange={(e) => setErrorLogs(e.target.value)}
+          className="min-h-[120px] resize-y font-mono text-xs bg-muted/30 border-border/60"
+          rows={5}
+        />
+        <Button
+          variant="default"
+          size="sm"
+          onClick={handleRunDebugAgent}
+          disabled={loading}
+          className="gap-1.5 bg-amber-500 hover:bg-amber-600 text-amber-950 shadow-sm text-xs h-8 rounded-lg"
+          title="Runs the debugging prompt + your logs in the terminal agent (slot 1)"
+        >
+          {loading ? (
+            <Loader2 className="size-3.5 animate-spin" />
+          ) : (
+            <Play className="size-3.5" />
+          )}
+          Run terminal agent to fix
+        </Button>
       </div>
     </div>
   );

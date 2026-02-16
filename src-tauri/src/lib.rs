@@ -2053,9 +2053,9 @@ async fn run_npm_script_in_external_terminal(project_path: String, script_name: 
         if script_name.is_empty()
             || !script_name
                 .chars()
-                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_' || c == ':')
         {
-            return Err("Invalid script name: only letters, numbers, hyphen and underscore allowed".to_string());
+            return Err("Invalid script name: only letters, numbers, hyphen, underscore and colon allowed".to_string());
         }
         let dir = Path::new(&project_path)
             .canonicalize()
@@ -2121,13 +2121,13 @@ fn run_npm_script_inner(
     project_path: String,
     script_name: String,
 ) -> Result<(), String> {
-    // Allow only safe script names (alphanumeric, hyphen, underscore)
+    // Allow only safe script names (alphanumeric, hyphen, underscore, colon for e.g. dev:full)
     if script_name.is_empty()
         || !script_name
             .chars()
-            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_' || c == ':')
     {
-        return Err("Invalid script name: only letters, numbers, hyphen and underscore allowed".to_string());
+        return Err("Invalid script name: only letters, numbers, hyphen, underscore and colon allowed".to_string());
     }
     let dir = Path::new(&project_path)
         .canonicalize()

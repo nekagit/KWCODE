@@ -191,12 +191,21 @@ export async function PUT(
       ? (body.specFilesTickets as unknown[]).filter((s): s is string => typeof s === "string")
       : undefined;
 
+    // Normalize runPort: accept number or string (e.g. from form) and validate 1–65535
+    let runPortValue: number | undefined;
+    if (body.runPort !== undefined && body.runPort !== null) {
+      const raw = body.runPort;
+      const num = typeof raw === "number" ? raw : typeof raw === "string" ? parseInt(raw, 10) : NaN;
+      if (!Number.isNaN(num) && num > 0 && num < 65536) runPortValue = num;
+      else runPortValue = undefined;
+    }
+
     const updated: Project = {
       ...projects[idx],
       ...(typeof body.name === "string" && { name: body.name.trim() }),
       ...(body.description !== undefined && { description: typeof body.description === "string" ? body.description.trim() : undefined }),
       ...(body.repoPath !== undefined && { repoPath: typeof body.repoPath === "string" ? body.repoPath.trim() || undefined : undefined }),
-      ...(body.runPort !== undefined && { runPort: typeof body.runPort === "number" && body.runPort > 0 && body.runPort < 65536 ? body.runPort : undefined }),
+      ...(body.runPort !== undefined && { runPort: runPortValue }),
       ...(Array.isArray(body.promptIds) && { promptIds: body.promptIds.filter((n: unknown) => typeof n === "number") }),
       ...(Array.isArray(body.ticketIds) && { ticketIds: body.ticketIds.filter((s: unknown) => typeof s === "string") }),
 

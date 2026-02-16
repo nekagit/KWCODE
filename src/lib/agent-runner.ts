@@ -37,7 +37,7 @@ export function runAgentPrompt(projectPath: string, promptText: string): Promise
   const env = { ...process.env, TMPFILE: tmpPath, AGENT_CLI: agentCli };
   const result = spawnSync(
     "bash",
-    ["-c", '"$AGENT_CLI" -p "$(cat "$TMPFILE")"'],
+    ["-c", '"$AGENT_CLI" --trust -p "$(cat "$TMPFILE")"'],
     {
       cwd: resolvedProject,
       env,
