@@ -1,4 +1,10 @@
-export const isTauri = process.env.NEXT_PUBLIC_IS_TAURI === 'true';
+/** Detect Tauri at runtime (WebView has __TAURI_INTERNALS__ or __TAURI__) or via env (when dev server is started with NEXT_PUBLIC_IS_TAURI=true). */
+function detectTauri(): boolean {
+  if (typeof window === "undefined") return process.env.NEXT_PUBLIC_IS_TAURI === "true";
+  const w = window as unknown as { __TAURI_INTERNALS__?: unknown; __TAURI__?: unknown };
+  return !!(w.__TAURI_INTERNALS__ ?? w.__TAURI__) || process.env.NEXT_PUBLIC_IS_TAURI === "true";
+}
+export const isTauri = typeof window === "undefined" ? process.env.NEXT_PUBLIC_IS_TAURI === "true" : detectTauri();
 
 type InvokeFn = (cmd: string, args?: Record<string, unknown>) => Promise<unknown>;
 type ListenFn = <T>(event: string, handler: (event: { payload: T }) => void) => Promise<() => void>;

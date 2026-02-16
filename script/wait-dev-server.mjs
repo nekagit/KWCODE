@@ -20,7 +20,7 @@ const readyDelayMs = 2000;
 const chunkReadyMaxMs = 90_000;
 const chunkPollMs = 1000;
 // First request can trigger compilation; use longer timeout so we don't abort too early
-const fetchTimeoutMs = 30_000;
+const fetchTimeoutMs = 45_000;
 
 function check(urlToCheck) {
   return fetch(urlToCheck, { method: "GET", signal: AbortSignal.timeout(3000) })
@@ -157,10 +157,10 @@ await new Promise((r) => setTimeout(r, readyDelayMs));
 console.log("Checking that app chunks are served…");
 const chunkReady = await waitForChunk();
 if (!chunkReady) {
-  console.error("Chunks not ready in time. Tauri would open with 404s. Run 'npm run dev', wait for compile, then run 'tauri dev' again.");
-  process.exit(1);
+  console.warn("Chunks not ready in time. Tauri will open anyway. If you see a loading screen, run 'npm run dev' in another terminal, wait for Ready, then run 'tauri dev' again.");
+} else {
+  console.log("Chunks OK, warming app/layout chunk so Tauri does not hit timeout…");
+  await warmAppLayoutChunk();
 }
-console.log("Chunks OK, warming app/layout chunk so Tauri does not hit timeout…");
-await warmAppLayoutChunk();
 console.log("Tauri can open.");
 process.exit(0);
