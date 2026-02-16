@@ -14,34 +14,57 @@ let tauriInvoke: InvokeFn | undefined;
 let tauriListen: ListenFn | undefined;
 let tauriOpen: OpenFn | undefined;
 
-if (isTauri) {
-  // Dynamically import only when running in Tauri context
-  import("@tauri-apps/api/core").then(module => tauriInvoke = module.invoke);
-  import("@tauri-apps/api/event").then(module => tauriListen = module.listen);
-  import("@tauri-apps/plugin-dialog").then((m: { open: OpenFn }) => { tauriOpen = m.open; });
-} else {
-  // Fallback to no-op functions for non-Tauri builds
-  import("@/lib/noop-tauri-api").then(module => {
+const invokeReadyPromise: Promise<void> | null = isTauri
+  ? import("@tauri-apps/api/core").then((module) => {
+      tauriInvoke = module.invoke;
+    })
+  : null;
+const listenReadyPromise: Promise<void> | null = isTauri
+  ? import("@tauri-apps/api/event").then((module) => {
+      tauriListen = module.listen;
+    })
+  : null;
+const openReadyPromise: Promise<void> | null = isTauri
+  ? import("@tauri-apps/plugin-dialog").then((m: { open: OpenFn }) => {
+      tauriOpen = m.open;
+    })
+  : null;
+
+if (!isTauri) {
+  import("@/lib/noop-tauri-api").then((module) => {
     tauriInvoke = module.invoke;
     tauriListen = module.listen;
     tauriOpen = module.open;
   });
 }
 
+const TAURI_API_WAIT_MS = 5000;
+
 export const invoke = async <T>(cmd: string, args?: Record<string, unknown>): Promise<T> => {
-  if (!tauriInvoke) {
-    await new Promise(resolve => setTimeout(resolve, 50)); // Wait for dynamic import
+  if (isTauri && invokeReadyPromise) {
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Tauri invoke API load timeout")), TAURI_API_WAIT_MS)
+    );
+    await Promise.race([invokeReadyPromise, timeout]);
+  } else if (!tauriInvoke) {
+    await new Promise((resolve) => setTimeout(resolve, 50));
   }
   if (!tauriInvoke) {
-    console.warn(`Tauri 'invoke' API not available yet. Command: ${cmd}`);
-    return Promise.reject(new Error(`Tauri 'invoke' API not available yet. Command: ${cmd}`));
+    const msg = `Tauri 'invoke' API not available yet. Command: ${cmd}`;
+    console.warn(msg);
+    return Promise.reject(new Error(msg));
   }
   return tauriInvoke(cmd, args) as Promise<T>;
 };
 
 export const listen = async <T>(event: string, handler: (event: { payload: T }) => void): Promise<() => void> => {
-  if (!tauriListen) {
-    await new Promise(resolve => setTimeout(resolve, 50)); // Wait for dynamic import
+  if (isTauri && listenReadyPromise) {
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Tauri listen API load timeout")), TAURI_API_WAIT_MS)
+    );
+    await Promise.race([listenReadyPromise, timeout]);
+  } else if (!tauriListen) {
+    await new Promise((resolve) => setTimeout(resolve, 50));
   }
   if (!tauriListen) {
     console.warn(`Tauri 'listen' API not available yet. Event: ${event}`);
@@ -51,8 +74,13 @@ export const listen = async <T>(event: string, handler: (event: { payload: T }) 
 };
 
 export const showOpenDirectoryDialog = async (): Promise<string | undefined> => {
-  if (!tauriOpen) {
-    await new Promise(resolve => setTimeout(resolve, 50)); // Wait for dynamic import
+  if (isTauri && openReadyPromise) {
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Tauri dialog API load timeout")), TAURI_API_WAIT_MS)
+    );
+    await Promise.race([openReadyPromise, timeout]);
+  } else if (!tauriOpen) {
+    await new Promise((resolve) => setTimeout(resolve, 50));
   }
   if (!tauriOpen) {
     console.warn("Tauri 'dialog.open' API not available yet.");

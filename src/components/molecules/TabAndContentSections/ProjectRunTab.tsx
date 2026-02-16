@@ -57,6 +57,7 @@ import { isImplementAllRun, parseTicketNumberFromRunLabel } from "@/lib/run-help
 import { StatusPill } from "@/components/shared/DisplayPrimitives";
 import { TerminalSlot } from "@/components/shared/TerminalSlot";
 import { KanbanTicketCard } from "@/components/molecules/Kanban/KanbanTicketCard";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Main Component
@@ -380,72 +381,78 @@ function WorkerQueueSection({ projectId, repoPath }: { projectId: string; repoPa
   }
 
   return (
-    <div className="rounded-2xl border border-border/40 bg-card/50 overflow-hidden backdrop-blur-sm">
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-border/40">
-        <Workflow className="size-4 text-rose-500" />
-        <span className="text-xs font-semibold">Queue & workflow</span>
-      </div>
-      <div className="flex flex-col sm:flex-row gap-0 divide-y sm:divide-y-0 sm:divide-x divide-border/40">
-        <div className="flex-1 p-4 min-w-0">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <p className="text-[10px] font-medium text-muted-foreground mb-1.5">.cursor/worker/queue/</p>
-              <ul className="space-y-1">
-                {queueFiles.map((name) => (
-                  <li key={name}>
-                    <button
-                      type="button"
-                      onClick={() => setPreviewPath(`.cursor/worker/queue/${name}`)}
-                      className={cn(
-                        "text-xs font-mono hover:underline text-left",
-                        previewPath === `.cursor/worker/queue/${name}` ? "text-rose-500 font-medium" : "text-foreground/80"
-                      )}
-                    >
-                      {name}
-                    </button>
-                  </li>
-                ))}
-              </ul>
+    <Accordion type="single" collapsible className="rounded-2xl border border-border/40 bg-card/50 overflow-hidden backdrop-blur-sm">
+      <AccordionItem value="queue" className="border-none">
+        <AccordionTrigger className="px-4 py-3 hover:no-underline [&[data-state=open]]:border-b [&[data-state=open]]:border-border/40">
+          <div className="flex items-center gap-2">
+            <Workflow className="size-4 text-rose-500" />
+            <span className="text-xs font-semibold">Queue & workflow</span>
+          </div>
+        </AccordionTrigger>
+        <AccordionContent className="pb-0 pt-0">
+          <div className="flex flex-col sm:flex-row gap-0 divide-y sm:divide-y-0 sm:divide-x divide-border/40">
+            <div className="flex-1 p-4 min-w-0">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-[10px] font-medium text-muted-foreground mb-1.5">.cursor/worker/queue/</p>
+                  <ul className="space-y-1">
+                    {queueFiles.map((name) => (
+                      <li key={name}>
+                        <button
+                          type="button"
+                          onClick={() => setPreviewPath(`.cursor/worker/queue/${name}`)}
+                          className={cn(
+                            "text-xs font-mono hover:underline text-left",
+                            previewPath === `.cursor/worker/queue/${name}` ? "text-rose-500 font-medium" : "text-foreground/80"
+                          )}
+                        >
+                          {name}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <p className="text-[10px] font-medium text-muted-foreground mb-1.5">.cursor/worker/workflows/</p>
+                  <ul className="space-y-1">
+                    {workflowFiles.map((name) => (
+                      <li key={name}>
+                        <button
+                          type="button"
+                          onClick={() => setPreviewPath(`.cursor/worker/workflows/${name}`)}
+                          className={cn(
+                            "text-xs font-mono hover:underline text-left",
+                            previewPath === `.cursor/worker/workflows/${name}` ? "text-rose-500 font-medium" : "text-foreground/80"
+                          )}
+                        >
+                          {name}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-[10px] font-medium text-muted-foreground mb-1.5">.cursor/worker/workflows/</p>
-              <ul className="space-y-1">
-                {workflowFiles.map((name) => (
-                  <li key={name}>
-                    <button
-                      type="button"
-                      onClick={() => setPreviewPath(`.cursor/worker/workflows/${name}`)}
-                      className={cn(
-                        "text-xs font-mono hover:underline text-left",
-                        previewPath === `.cursor/worker/workflows/${name}` ? "text-rose-500 font-medium" : "text-foreground/80"
-                      )}
-                    >
-                      {name}
-                    </button>
-                  </li>
-                ))}
-              </ul>
+            <div className="flex-1 min-w-0 max-h-[200px] sm:max-h-[160px] overflow-hidden flex flex-col">
+              {loadingPreview ? (
+                <div className="flex items-center justify-center flex-1 p-4">
+                  <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                </div>
+              ) : previewContent ? (
+                <ScrollArea className="flex-1 p-3">
+                  <pre className="text-[11px] text-muted-foreground whitespace-pre-wrap font-sans">{previewContent}</pre>
+                </ScrollArea>
+              ) : (
+                <div className="flex items-center justify-center flex-1 p-4 text-xs text-muted-foreground">
+                  <FileText className="size-4 mr-1.5" />
+                  Click a file to preview
+                </div>
+              )}
             </div>
           </div>
-        </div>
-        <div className="flex-1 min-w-0 max-h-[200px] sm:max-h-[160px] overflow-hidden flex flex-col">
-          {loadingPreview ? (
-            <div className="flex items-center justify-center flex-1 p-4">
-              <Loader2 className="size-4 animate-spin text-muted-foreground" />
-            </div>
-          ) : previewContent ? (
-            <ScrollArea className="flex-1 p-3">
-              <pre className="text-[11px] text-muted-foreground whitespace-pre-wrap font-sans">{previewContent}</pre>
-            </ScrollArea>
-          ) : (
-            <div className="flex items-center justify-center flex-1 p-4 text-xs text-muted-foreground">
-              <FileText className="size-4 mr-1.5" />
-              Click a file to preview
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
   );
 }
 
@@ -485,90 +492,96 @@ function WorkerAnalyzeQueueSection({ projectId, repoPath }: { projectId: string;
   if (!repoPath) return null;
 
   return (
-    <div className="rounded-2xl border border-border/40 bg-card/50 overflow-hidden backdrop-blur-sm">
-      <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border/40">
-        <div className="flex items-center gap-2">
-          <ScanSearch className="size-4 text-primary" />
-          <span className="text-xs font-semibold">Analyze queue</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 text-[10px]"
-            disabled={loading || processing}
-            onClick={async () => {
-              await writeAnalyzeQueue(projectId, repoPath);
-              await loadQueue();
-              toast.success("8 jobs enqueued.");
-            }}
-          >
-            Enqueue (8 jobs)
-          </Button>
-          <Button
-            variant="default"
-            size="sm"
-            className="h-7 text-[10px]"
-            disabled={!hasPending || processing}
-            onClick={async () => {
-              setProcessing(true);
-              try {
-                const { completed, failed } = await runAnalyzeQueueProcessing(projectId, repoPath, {
-                  getQueue: () => readAnalyzeQueue(projectId, repoPath),
-                  setQueue: (d) =>
-                    writeProjectFile(projectId, ANALYZE_QUEUE_PATH, JSON.stringify(d, null, 2), repoPath),
-                });
-                await loadQueue();
-                if (failed === 0) toast.success(`All ${completed} done.`);
-                else toast.warning(`${completed} done, ${failed} failed.`);
-              } finally {
-                setProcessing(false);
-              }
-            }}
-          >
-            {processing ? (
-              <>
-                <Loader2 className="size-3.5 animate-spin mr-1" />
-                Process…
-              </>
-            ) : (
-              "Process (3 at a time)"
-            )}
-          </Button>
-        </div>
-      </div>
-      <div className="p-4 min-h-[80px]">
-        {loading ? (
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" />
-            <span className="text-xs">Loading queue…</span>
+    <Accordion type="single" collapsible className="rounded-2xl border border-border/40 bg-card/50 overflow-hidden backdrop-blur-sm">
+      <AccordionItem value="analyze" className="border-none">
+        <AccordionTrigger className="px-4 py-3 hover:no-underline [&[data-state=open]]:border-b [&[data-state=open]]:border-border/40">
+          <div className="flex items-center justify-between gap-2 w-full pr-2">
+            <div className="flex items-center gap-2">
+              <ScanSearch className="size-4 text-primary" />
+              <span className="text-xs font-semibold">Analyze queue</span>
+            </div>
+            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-[10px]"
+                disabled={loading || processing}
+                onClick={async () => {
+                  await writeAnalyzeQueue(projectId, repoPath);
+                  await loadQueue();
+                  toast.success("8 jobs enqueued.");
+                }}
+              >
+                Enqueue (8 jobs)
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                className="h-7 text-[10px]"
+                disabled={!hasPending || processing}
+                onClick={async () => {
+                  setProcessing(true);
+                  try {
+                    const { completed, failed } = await runAnalyzeQueueProcessing(projectId, repoPath, {
+                      getQueue: () => readAnalyzeQueue(projectId, repoPath),
+                      setQueue: (d) =>
+                        writeProjectFile(projectId, ANALYZE_QUEUE_PATH, JSON.stringify(d, null, 2), repoPath),
+                    });
+                    await loadQueue();
+                    if (failed === 0) toast.success(`All ${completed} done.`);
+                    else toast.warning(`${completed} done, ${failed} failed.`);
+                  } finally {
+                    setProcessing(false);
+                  }
+                }}
+              >
+                {processing ? (
+                  <>
+                    <Loader2 className="size-3.5 animate-spin mr-1" />
+                    Process…
+                  </>
+                ) : (
+                  "Process (3 at a time)"
+                )}
+              </Button>
+            </div>
           </div>
-        ) : !data?.jobs?.length ? (
-          <p className="text-xs text-muted-foreground">
-            No analyze queue. Click &quot;Enqueue (8 jobs)&quot; to add ideas, project, design, architecture, testing, documentation, frontend, backend.
-          </p>
-        ) : (
-          <ul className="space-y-1.5">
-            {data.jobs.map((job: AnalyzeJob) => (
-              <li key={job.id} className="flex items-center gap-2 text-xs">
-                <span className="font-mono text-foreground/90">{job.id}</span>
-                <span
-                  className={cn(
-                    "rounded border px-1.5 py-0.5 text-[10px] font-medium capitalize",
-                    job.status === "done" && "bg-emerald-500/10 border-emerald-500/25 text-emerald-400",
-                    job.status === "failed" && "bg-rose-500/10 border-rose-500/25 text-rose-400",
-                    job.status === "running" && "bg-amber-500/10 border-amber-500/25 text-amber-400",
-                    job.status === "pending" && "bg-muted/30 border-border/50 text-muted-foreground"
-                  )}
-                >
-                  {job.status}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </div>
+        </AccordionTrigger>
+        <AccordionContent className="pb-0 pt-0">
+          <div className="p-4 min-h-[80px]">
+            {loading ? (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="size-4 animate-spin" />
+                <span className="text-xs">Loading queue…</span>
+              </div>
+            ) : !data?.jobs?.length ? (
+              <p className="text-xs text-muted-foreground">
+                No analyze queue. Click &quot;Enqueue (8 jobs)&quot; to add ideas, project, design, architecture, testing, documentation, frontend, backend.
+              </p>
+            ) : (
+              <ul className="space-y-1.5">
+                {data.jobs.map((job: AnalyzeJob) => (
+                  <li key={job.id} className="flex items-center gap-2 text-xs">
+                    <span className="font-mono text-foreground/90">{job.id}</span>
+                    <span
+                      className={cn(
+                        "rounded border px-1.5 py-0.5 text-[10px] font-medium capitalize",
+                        job.status === "done" && "bg-emerald-500/10 border-emerald-500/25 text-emerald-400",
+                        job.status === "failed" && "bg-rose-500/10 border-rose-500/25 text-rose-400",
+                        job.status === "running" && "bg-amber-500/10 border-amber-500/25 text-amber-400",
+                        job.status === "pending" && "bg-muted/30 border-border/50 text-muted-foreground"
+                      )}
+                    >
+                      {job.status}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
   );
 }
 
