@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 import type { Project, EntityCategory, ProjectEntityCategories } from "@/types/project";
+import { getDb } from "@/lib/db";
 
 function findDataDir(): string {
   const cwd = process.cwd();
@@ -77,7 +78,16 @@ export async function GET(
     const promptsList = Array.isArray(promptsRaw) ? promptsRaw : [];
     const ticketsList = readJson<{ id: string; title: string; status: string; description?: string }[]>("tickets.json") ?? [];
 
-    const ideasList = readJson<{ id: number; title: string; description: string; category: string }[]>("ideas.json") ?? [];
+    const ideaIdsForResolve = Array.isArray(project.ideaIds) ? project.ideaIds : [];
+    const ideasList: { id: number; title: string; description: string; category: string }[] =
+      ideaIdsForResolve.length === 0
+        ? []
+        : getDb()
+            .prepare(
+              `SELECT id, title, description, category FROM ideas WHERE id IN (${ideaIdsForResolve.map(() => "?").join(",")})`
+            )
+            .all(...ideaIdsForResolve) as { id: number; title: string; description: string; category: string }[];
+
     const designsRaw = readJson<{ id: string; name: string }[]>("designs.json");
     const designsList = Array.isArray(designsRaw) ? designsRaw : [];
     const architecturesRaw = readJson<{ id: string; name: string }[]>("architectures.json");

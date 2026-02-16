@@ -27,6 +27,18 @@ export interface RunMeta {
   onComplete?: string;
   /** Extra payload for onComplete handlers (e.g. repoPath for writeProjectFile). */
   payload?: Record<string, unknown>;
+  /** For ticket Implement All runs: repo path for git diff. */
+  repoPath?: string;
+  /** Ticket number (for implementation_log). */
+  ticketNumber?: number;
+  /** Ticket title (for implementation_log). */
+  ticketTitle?: string;
+  /** Milestone id (for implementation_log). */
+  milestoneId?: number;
+  /** Idea id (for implementation_log). */
+  ideaId?: number;
+  /** Git ref (e.g. HEAD) at run start for diff when run exits. */
+  gitRefAtStart?: string;
 }
 
 export interface Run {

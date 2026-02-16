@@ -25,6 +25,7 @@ interface PromptRecordTableProps {
   setFormId: (id: number | undefined) => void;
   setFormTitle: (title: string) => void;
   setFormContent: (content: string) => void;
+  onViewPrompt?: (prompt: PromptRecordRecord) => void;
 }
 
 export function PromptRecordTable({
@@ -36,6 +37,7 @@ export function PromptRecordTable({
   setFormId,
   setFormTitle,
   setFormContent,
+  onViewPrompt,
 }: PromptRecordTableProps) {
   return (
     <Table>
@@ -49,7 +51,7 @@ export function PromptRecordTable({
             { key: "created_at", label: "Created", className: "hidden lg:table-cell" },
             { key: "updated_at", label: "Updated", className: "hidden lg:table-cell" },
             { key: "content", label: "Content", className: "max-w-[200px]" },
-            { key: "actions", label: "Actions", className: "w-24 text-right" },
+            { key: "actions", label: "Actions", className: "w-36 text-right" },
           ].map((header) => (
             <TableHead key={header.key} className={header.className}>
               {header.label}
@@ -76,6 +78,7 @@ export function PromptRecordTable({
               setFormId={setFormId}
               setFormTitle={setFormTitle}
               setFormContent={setFormContent}
+              onViewPrompt={onViewPrompt}
             />
           ))
         )}

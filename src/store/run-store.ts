@@ -60,7 +60,7 @@ export interface RunActions {
   /** Run one Implement All run per slot (1–3) with distinct prompt and label; used when tickets are in queue. */
   runImplementAllForTickets: (
     projectPath: string,
-    slots: Array<{ slot: 1 | 2 | 3; promptContent: string; label: string }>
+    slots: Array<{ slot: 1 | 2 | 3; promptContent: string; label: string; meta?: RunMeta }>
   ) => Promise<string | null>;
   /** Run a single setup prompt (design/ideas/etc.) and open it in the floating terminal. */
   runSetupPrompt: (projectPath: string, promptContent: string, label: string) => Promise<string | null>;
@@ -376,7 +376,7 @@ export const useRunStore = create<RunStore>()((set, get) => ({
     let firstRunId: string | null = null;
     try {
       for (let i = 0; i < slots.length; i++) {
-        const { slot, promptContent, label } = slots[i];
+        const { slot, promptContent, label, meta } = slots[i];
         const { run_id } = await invoke<{ run_id: string }>("run_implement_all", {
           projectPath: path,
           slot,
@@ -392,6 +392,7 @@ export const useRunStore = create<RunStore>()((set, get) => ({
               logLines: [],
               status: "running" as const,
               startedAt: Date.now(),
+              ...(meta && { meta }),
             },
           ],
           selectedRunId: run_id,

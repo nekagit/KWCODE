@@ -1,20 +1,26 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRunState } from "@/context/run-state";
 import { isTauri } from "@/lib/tauri";
 import { useRunStore, registerRunCompleteHandler } from "@/store/run-store";
+import type { Project } from "@/types/project";
 import { PromptRecordActionButtons } from "@/components/molecules/ControlsAndButtons/PromptRecordActionButtons";
 import { PromptRecordTable } from "@/components/molecules/ListsAndTables/PromptRecordTable";
 import { PromptRecordFormDialog } from "@/components/molecules/FormsAndDialogs/PromptRecordFormDialog";
 import { GeneratePromptRecordDialog } from "@/components/molecules/FormsAndDialogs/GeneratePromptRecordDialog";
+import { PromptContentViewDialog } from "@/components/molecules/FormsAndDialogs/PromptContentViewDialog";
 import { toast } from "sonner"; // Added import for toast, if not already imported elsewhere
 import { getOrganismClasses } from "./organism-classes";
 
 const c = getOrganismClasses("PromptRecordsPageContent.tsx");
+
+const GENERAL_TAB = "general";
 
 type PromptRecordRecord = {
   id: number;
@@ -49,8 +55,12 @@ export function PromptRecordsPageContent() {
   const [saveLoading, setSaveLoading] = useState(false);
 
   const [fullPromptRecords, setFullPromptRecords] = useState<PromptRecordRecord[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [tableLoading, setTableLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<string>(GENERAL_TAB);
+  const [viewingPrompt, setViewingPrompt] = useState<PromptRecordRecord | null>(null);
   const cancelledRef = useRef(false);
+  const searchParams = useSearchParams();
 
   const fetchFullPromptRecords = useCallback(async () => {
     setTableLoading(true);
@@ -68,13 +78,42 @@ export function PromptRecordsPageContent() {
     }
   }, []);
 
+  const fetchProjects = useCallback(async () => {
+    try {
+      const res = await fetch("/api/data/projects");
+      if (cancelledRef.current) return;
+      if (res.ok) {
+        const list: Project[] = await res.json();
+        if (!cancelledRef.current) setProjects(Array.isArray(list) ? list : []);
+      }
+    } catch {
+      if (!cancelledRef.current) setProjects([]);
+    }
+  }, []);
+
   useEffect(() => {
     cancelledRef.current = false;
     fetchFullPromptRecords();
+    fetchProjects();
     return () => {
       cancelledRef.current = true;
     };
-  }, [fetchFullPromptRecords]);
+  }, [fetchFullPromptRecords, fetchProjects]);
+
+  // Pre-select project tab when opening from project page (e.g. /prompts?projectId=...)
+  useEffect(() => {
+    const projectId = searchParams.get("projectId");
+    if (projectId && projects.some((p) => p.id === projectId && (p.promptIds?.length ?? 0) > 0)) {
+      setActiveTab(projectId);
+    }
+  }, [searchParams, projects]);
+
+  const { generalPrompts, projectsWithPrompts } = useMemo(() => {
+    const allPromptIdsInProjects = new Set(projects.flatMap((p) => p.promptIds ?? []));
+    const general = fullPromptRecords.filter((p) => !allPromptIdsInProjects.has(p.id));
+    const withPrompts = projects.filter((p) => (p.promptIds?.length ?? 0) > 0);
+    return { generalPrompts: general, projectsWithPrompts: withPrompts };
+  }, [fullPromptRecords, projects]);
 
   const openCreate = useCallback(() => {
     setFormId(undefined);
@@ -308,9 +347,9 @@ export function PromptRecordsPageContent() {
         <CardHeader>
           <div className={c["1"]}>
             <div>
-              <CardTitle className={c["2"]}>All prompts data</CardTitle>
+              <CardTitle className={c["2"]}>Prompts</CardTitle>
               <CardDescription className={c["3"]}>
-                Full list of prompts with id, title, category, tags, dates, and content preview.
+                <strong>General</strong> shows prompts you add here (not linked to a project). Each project tab shows prompts linked to that project.
                 Select in the table for run (script <code className={c["4"]}>-p ID ...</code>).
                 Edit or delete from the table. Configure timing on the{" "}
                 <Link href="/configuration" className={c["6"]}>
@@ -331,16 +370,44 @@ export function PromptRecordsPageContent() {
           {tableLoading ? (
             <p className={c["7"]}>Loading prompts…</p>
           ) : (
-            <PromptRecordTable
-              fullPromptRecords={fullPromptRecords}
-              selectedPromptRecordIds={selectedPromptRecordIds}
-              setSelectedPromptRecordIds={setSelectedPromptRecordIds}
-              handleDelete={handleDelete}
-              setEditOpen={setEditOpen}
-              setFormId={setFormId}
-              setFormTitle={setFormTitle}
-              setFormContent={setFormContent}
-            />
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="flex w-full flex-wrap gap-1 bg-muted/50">
+                <TabsTrigger value={GENERAL_TAB}>General</TabsTrigger>
+                {projectsWithPrompts.map((p) => (
+                  <TabsTrigger key={p.id} value={p.id}>
+                    {p.name}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              <TabsContent value={GENERAL_TAB} className="mt-4 focus-visible:outline-none">
+                <PromptRecordTable
+                  fullPromptRecords={generalPrompts}
+                  selectedPromptRecordIds={selectedPromptRecordIds}
+                  setSelectedPromptRecordIds={setSelectedPromptRecordIds}
+                  handleDelete={handleDelete}
+                  setEditOpen={setEditOpen}
+                  setFormId={setFormId}
+                  setFormTitle={setFormTitle}
+                  setFormContent={setFormContent}
+                  onViewPrompt={setViewingPrompt}
+                />
+              </TabsContent>
+              {projectsWithPrompts.map((p) => (
+                <TabsContent key={p.id} value={p.id} className="mt-4 focus-visible:outline-none">
+                  <PromptRecordTable
+                    fullPromptRecords={fullPromptRecords.filter((r) => (p.promptIds ?? []).includes(r.id))}
+                    selectedPromptRecordIds={selectedPromptRecordIds}
+                    setSelectedPromptRecordIds={setSelectedPromptRecordIds}
+                    handleDelete={handleDelete}
+                    setEditOpen={setEditOpen}
+                    setFormId={setFormId}
+                    setFormTitle={setFormTitle}
+                    setFormContent={setFormContent}
+                    onViewPrompt={setViewingPrompt}
+                  />
+                </TabsContent>
+              ))}
+            </Tabs>
           )}
         </CardContent>
       </Card>
@@ -383,6 +450,12 @@ export function PromptRecordsPageContent() {
         useGeneratedAndCreate={useGeneratedAndCreate}
         saveGeneratedAsNew={saveGeneratedAsNew}
         saveLoading={saveLoading}
+      />
+
+      <PromptContentViewDialog
+        open={!!viewingPrompt}
+        onOpenChange={(open) => !open && setViewingPrompt(null)}
+        prompt={viewingPrompt}
       />
     </div>
   );

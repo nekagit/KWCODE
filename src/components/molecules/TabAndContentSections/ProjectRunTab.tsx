@@ -14,13 +14,12 @@ import {
   type AnalyzeJob,
   type AnalyzeQueueData,
 } from "@/lib/api-projects";
-import { isTauri } from "@/lib/tauri";
+import { invoke, isTauri } from "@/lib/tauri";
 import {
-  buildKanbanFromMd,
-  markTicketsDone,
-  markTicketsNotDone,
-  serializeTicketsToMd,
+  buildKanbanFromTickets,
+  applyInProgressState,
   type TodosKanbanData,
+  type ParsedTicket,
 } from "@/lib/todos-kanban";
 import {
   buildKanbanContextBlock,
@@ -85,123 +84,128 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
     return set;
   }, [runningRuns]);
 
-  const KANBAN_STATE_PATH = ".cursor/planner/kanban-state.json";
-
-  const loadKanbanFromMd = useCallback(async () => {
-    const repoPath = project.repoPath?.trim();
-    if (!repoPath) {
-      setKanbanData(null);
-      setKanbanError(null);
-      return;
-    }
+  const loadTicketsAndKanban = useCallback(async () => {
+    if (!projectId) return;
     setKanbanLoading(true);
     setKanbanError(null);
     try {
-      const [ticketsMd, stateRaw] = await Promise.all([
-        readProjectFile(projectId, ".cursor/planner/tickets.md", repoPath),
-        readProjectFileOrEmpty(projectId, KANBAN_STATE_PATH, repoPath),
+      const [ticketsRes, stateRes] = await Promise.all([
+        fetch(`/api/data/projects/${projectId}/tickets`),
+        fetch(`/api/data/projects/${projectId}/kanban-state`),
       ]);
-      let inProgressIds: string[] = [];
-      if (stateRaw?.trim()) {
-        try {
-          const state = JSON.parse(stateRaw) as { inProgressIds?: string[] };
-          inProgressIds = Array.isArray(state?.inProgressIds) ? state.inProgressIds : [];
-        } catch {
-          /* ignore invalid JSON */
-        }
+      if (!ticketsRes.ok || !stateRes.ok) {
+        throw new Error("Failed to load tickets");
       }
-      const data = buildKanbanFromMd(ticketsMd, inProgressIds);
+      const apiTickets = (await ticketsRes.json()) as {
+        id: string;
+        number: number;
+        title: string;
+        description?: string;
+        priority: string;
+        feature_name: string;
+        done: boolean;
+        status: string;
+        agents?: string[];
+        milestone_id?: number;
+        idea_id?: number;
+      }[];
+      const { inProgressIds } = (await stateRes.json()) as { inProgressIds: string[] };
+      const tickets: ParsedTicket[] = apiTickets.map((t) => ({
+        id: t.id,
+        number: t.number,
+        title: t.title,
+        description: t.description,
+        priority: (t.priority as ParsedTicket["priority"]) || "P1",
+        featureName: t.feature_name || "General",
+        done: t.done,
+        status: (t.status as ParsedTicket["status"]) || "Todo",
+        agents: t.agents,
+        milestoneId: t.milestone_id,
+        ideaId: t.idea_id,
+      }));
+      const data = buildKanbanFromTickets(tickets, inProgressIds ?? []);
       setKanbanData(data);
     } catch (e) {
       setKanbanError(e instanceof Error ? e.message : String(e));
     } finally {
       setKanbanLoading(false);
     }
-  }, [project, projectId]);
+  }, [projectId]);
 
   useEffect(() => {
-    loadKanbanFromMd();
-  }, [loadKanbanFromMd]);
+    loadTicketsAndKanban();
+  }, [loadTicketsAndKanban]);
 
   /* ═══ Handlers (Duplicated from tickets tab for interactivity) ═══ */
 
   const handleMarkDone = useCallback(
     async (ticketId: string) => {
-      if (!project.repoPath || !kanbanData) return;
+      if (!kanbanData) return;
       try {
-        const updatedTickets = markTicketsDone(kanbanData.tickets, [ticketId]);
-        const ticketsMd = serializeTicketsToMd(updatedTickets, {
-          projectName: project.name,
+        const res = await fetch(`/api/data/projects/${projectId}/tickets/${ticketId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ done: true, status: "Done" }),
         });
-        await writeProjectFile(
-          projectId,
-          ".cursor/planner/tickets.md",
-          ticketsMd,
-          project.repoPath
-        );
+        if (!res.ok) throw new Error((await res.json()).error || "Failed to update");
         const inProgressIds = kanbanData.columns.in_progress?.items.map((t) => t.id) ?? [];
-        setKanbanData(buildKanbanFromMd(ticketsMd, inProgressIds));
+        const updatedTickets = kanbanData.tickets.map((t) =>
+          t.id === ticketId ? { ...t, done: true, status: "Done" as const } : t
+        );
+        setKanbanData(applyInProgressState({ ...kanbanData, tickets: updatedTickets }, inProgressIds));
         toast.success("Ticket marked as done.");
       } catch (e) {
         toast.error(e instanceof Error ? e.message : String(e));
       }
     },
-    [project, projectId, kanbanData]
+    [projectId, kanbanData]
   );
 
   const handleRedo = useCallback(
     async (ticketId: string) => {
-      if (!project.repoPath || !kanbanData) return;
+      if (!kanbanData) return;
       try {
-        const updatedTickets = markTicketsNotDone(kanbanData.tickets, [
-          ticketId,
-        ]);
-        const ticketsMd = serializeTicketsToMd(updatedTickets, {
-          projectName: project.name,
+        const res = await fetch(`/api/data/projects/${projectId}/tickets/${ticketId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ done: false, status: "Todo" }),
         });
-        await writeProjectFile(
-          projectId,
-          ".cursor/planner/tickets.md",
-          ticketsMd,
-          project.repoPath
-        );
+        if (!res.ok) throw new Error((await res.json()).error || "Failed to update");
         const inProgressIds = kanbanData.columns.in_progress?.items.map((t) => t.id) ?? [];
-        setKanbanData(buildKanbanFromMd(ticketsMd, inProgressIds));
+        const updatedTickets = kanbanData.tickets.map((t) =>
+          t.id === ticketId ? { ...t, done: false, status: "Todo" as const } : t
+        );
+        setKanbanData(applyInProgressState({ ...kanbanData, tickets: updatedTickets }, inProgressIds));
         toast.success("Ticket moved back to todo.");
       } catch (e) {
         toast.error(e instanceof Error ? e.message : String(e));
       }
     },
-    [project, projectId, kanbanData]
+    [projectId, kanbanData]
   );
 
   const handleArchive = useCallback(
     async (ticketId: string) => {
-      if (!project.repoPath || !kanbanData) return;
+      if (!kanbanData) return;
       const ticket = kanbanData.tickets.find((t) => t.id === ticketId);
       if (!ticket) return;
       try {
-        const updatedTickets = kanbanData.tickets.filter(
-          (t) => t.id !== ticketId
-        );
-        const ticketsMd = serializeTicketsToMd(updatedTickets, {
-          projectName: project.name,
-        });
-        await writeProjectFile(
-          projectId,
-          ".cursor/planner/tickets.md",
-          ticketsMd,
-          project.repoPath
-        );
+        const res = await fetch(`/api/data/projects/${projectId}/tickets/${ticketId}`, { method: "DELETE" });
+        if (!res.ok) throw new Error((await res.json()).error || "Failed to delete");
         const inProgressIds = (kanbanData.columns.in_progress?.items.map((t) => t.id) ?? []).filter((id) => id !== ticketId);
-        setKanbanData(buildKanbanFromMd(ticketsMd, inProgressIds));
-        await writeProjectFile(projectId, KANBAN_STATE_PATH, JSON.stringify({ inProgressIds }, null, 2), project.repoPath);
+        await fetch(`/api/data/projects/${projectId}/kanban-state`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ inProgressIds }),
+        });
+        const updatedTickets = kanbanData.tickets.filter((t) => t.id !== ticketId);
+        setKanbanData(applyInProgressState({ ...kanbanData, tickets: updatedTickets }, inProgressIds));
         toast.success(`Ticket #${ticket.number} archived.`);
       } catch (e) {
         toast.error(e instanceof Error ? e.message : String(e));
       }
     },
-    [project, projectId, kanbanData]
+    [projectId, kanbanData]
   );
 
   if (!project.repoPath?.trim()) {
@@ -701,7 +705,15 @@ function WorkerCommandCenter({
       const userPrompt = workerMd;
 
       if (tickets.length > 0) {
-        const slots: Array<{ slot: 1 | 2 | 3; promptContent: string; label: string }> = [];
+        let gitRefAtStart = "";
+        if (isTauri) {
+          try {
+            gitRefAtStart = (await invoke<string>("get_git_head", { projectPath })) ?? "";
+          } catch {
+            /* ignore */
+          }
+        }
+        const slots: Array<{ slot: 1 | 2 | 3; promptContent: string; label: string; meta?: { projectId: string; repoPath: string; ticketNumber: number; ticketTitle: string; milestoneId?: number; ideaId?: number; gitRefAtStart?: string } }> = [];
         const ticketsToRun = tickets.slice(0, 3);
         for (let i = 0; i < ticketsToRun.length; i++) {
           const ticket = ticketsToRun[i];
@@ -725,6 +737,15 @@ function WorkerCommandCenter({
             slot,
             promptContent: promptContent || ticketBlock.trim(),
             label: `Ticket #${ticket.number}: ${ticket.title}`,
+            meta: {
+              projectId,
+              repoPath,
+              ticketNumber: ticket.number,
+              ticketTitle: ticket.title,
+              milestoneId: ticket.milestoneId,
+              ideaId: ticket.ideaId,
+              gitRefAtStart: gitRefAtStart || undefined,
+            },
           });
         }
         await runImplementAllForTickets(projectPath, slots);

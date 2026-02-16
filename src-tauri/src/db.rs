@@ -66,6 +66,61 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS plan_tickets (
+            id TEXT PRIMARY KEY,
+            project_id TEXT NOT NULL,
+            number INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            description TEXT,
+            priority TEXT NOT NULL DEFAULT 'P1',
+            feature_name TEXT NOT NULL DEFAULT 'General',
+            done INTEGER NOT NULL DEFAULT 0,
+            status TEXT NOT NULL DEFAULT 'Todo',
+            milestone_id INTEGER,
+            idea_id INTEGER,
+            agents TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            UNIQUE(project_id, number)
+        );
+        CREATE TABLE IF NOT EXISTS plan_kanban_state (
+            project_id TEXT PRIMARY KEY,
+            in_progress_ids TEXT NOT NULL DEFAULT '[]',
+            updated_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS milestones (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            project_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            slug TEXT NOT NULL,
+            content TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS ideas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            project_id TEXT,
+            title TEXT NOT NULL,
+            description TEXT NOT NULL,
+            category TEXT NOT NULL DEFAULT 'other',
+            body TEXT,
+            source TEXT NOT NULL DEFAULT 'manual',
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS implementation_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            project_id TEXT NOT NULL,
+            run_id TEXT NOT NULL,
+            ticket_number INTEGER NOT NULL,
+            ticket_title TEXT NOT NULL,
+            milestone_id INTEGER,
+            idea_id INTEGER,
+            completed_at TEXT NOT NULL,
+            files_changed TEXT NOT NULL DEFAULT '[]',
+            summary TEXT NOT NULL DEFAULT '',
+            created_at TEXT NOT NULL
+        );
         ",
     )
     .map_err(|e| e.to_string())?;

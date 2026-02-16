@@ -1,101 +1,11 @@
 [
   {
     "id": 1,
-    "title": "Implement all prompt",
-    "content": "Impelent following ticket to you best knowledge of best practices, according to the architecture and design of the app, follwo the documentation in .cursor folder",
+    "title": "Refactor UI into Atomic Design",
+    "content": "# Refactoring Task: Implement Atomic Design Architecture\n\n## Context\nRefactor the components in `@src/components` following atomic design principles.\n\n## Component Hierarchy Rules\n\n### 1. **UI Layer (Atoms - Base Level)**\n- **Location**: `@src/components/ui/`\n- **Contents**: shadcn components ONLY\n- **Rule**: ⚠️ DO NOT modify or change these components\n- **Examples**: `<Button>`, `<Input>`, `<Label>`, `<Select>`, `<Card>`, etc.\n\n### 2. **Atoms (Combined UI Components)**\n- **Location**: `@src/components/atoms/`\n- **Definition**: Combine multiple UI components + HTML into single, reusable units\n- **Examples**:\n  - `<FormTextInput>` = `<Label>` + `<Input>` + error handling\n  - `<FormSelectButton>` = `<Label>` + `<Select>` + styling wrapper\n  - `<IconButton>` = `<Button>` + `<Icon>`\n  - `<AvatarWithBadge>` = `<Avatar>` + `<Badge>`\n\n### 3. **Molecules (Combined Atoms)**\n- **Location**: `@src/components/molecules/`\n- **Definition**: Combine multiple atoms into functional component groups\n- **Examples**:\n  - `<ProductCard>` = `<Card>` + image atom + text atoms + `<Button>` atom\n  - `<UserProfile>` = `<AvatarWithBadge>` + `<FormTextInput>` fields\n  - `<SearchBar>` = `<FormTextInput>` + `<IconButton>`\n\n### 4. **Organisms (Combined Molecules)**\n- **Location**: `@src/components/organisms/`\n- **Definition**: Complex, feature-complete sections combining molecules\n- **Examples**:\n  - `<ProductGrid>` = multiple `<ProductCard>` + filtering + sorting + pagination\n  - `<CheckoutForm>` = multiple form molecules + validation + submission\n  - `<NavigationBar>` = logo + search molecule + user profile molecule\n\n### 5. **Pages (Combined Organisms)**\n- **Location**: `@src/pages/` or `@src/app/`\n- **Definition**: Full page layouts combining multiple organisms\n- **Examples**:\n  - `<MarketplacePage>` = `<NavigationBar>` + `<ProductGrid>` + `<Footer>`\n  - `<ProfilePage>` = `<NavigationBar>` + `<UserProfile>` + `<ActivityFeed>`\n\n## Implementation Requirements\n\n1. **Maintain shadcn UI integrity** - Never modify `@src/components/ui/`\n2. **Ensure reusability** - Every component should be usable in multiple contexts\n3. **Follow single responsibility** - Each component has one clear purpose\n4. **Implement proper TypeScript types** - All props should be typed\n5. **Apply this pattern to ALL pages** in the application\n\n## Deliverables\n- Complete refactoring of all components following this structure\n- Consistent folder organization across the entire app\n- Documentation of new component structure\n\nBegin refactoring starting with the most frequently used components first.",
     "category": null,
     "tags": null,
-    "created_at": "2026-02-11T19:24:33.925Z",
-    "updated_at": "2026-02-11T19:24:33.925Z"
-  },
-  {
-    "id": 2,
-    "title": "Sprint planning",
-    "content": "Follow the project's established patterns. Read .cursor/* and FEATURES.md first. Break work into small steps. Commit after each logical unit. Run tests and build before pushing.",
-    "category": "template",
-    "tags": null,
-    "created_at": "2026-02-12T10:53:42.643Z",
-    "updated_at": "2026-02-12T10:53:42.643Z"
-  },
-  {
-    "id": 3,
-    "title": "Code review checklist",
-    "content": "Follow the project's established patterns. Read .cursor/* and FEATURES.md first. Break work into small steps. Commit after each logical unit. Run tests and build before pushing.",
-    "category": "template",
-    "tags": null,
-    "created_at": "2026-02-12T10:53:42.643Z",
-    "updated_at": "2026-02-12T10:53:42.643Z"
-  },
-  {
-    "id": 4,
-    "title": "Bug triage",
-    "content": "Follow the project's established patterns. Read .cursor/* and FEATURES.md first. Break work into small steps. Commit after each logical unit. Run tests and build before pushing.",
-    "category": "template",
-    "tags": null,
-    "created_at": "2026-02-12T10:53:42.643Z",
-    "updated_at": "2026-02-12T10:53:42.643Z"
-  },
-  {
-    "id": 5,
-    "title": "Refactor module",
-    "content": "Follow the project's established patterns. Read .cursor/* and FEATURES.md first. Break work into small steps. Commit after each logical unit. Run tests and build before pushing.",
-    "category": "template",
-    "tags": null,
-    "created_at": "2026-02-12T10:53:42.643Z",
-    "updated_at": "2026-02-12T10:53:42.643Z"
-  },
-  {
-    "id": 6,
-    "title": "Add tests",
-    "content": "Follow the project's established patterns. Read .cursor/* and FEATURES.md first. Break work into small steps. Commit after each logical unit. Run tests and build before pushing.",
-    "category": "template",
-    "tags": null,
-    "created_at": "2026-02-12T10:53:42.643Z",
-    "updated_at": "2026-02-12T10:53:42.643Z"
-  },
-  {
-    "id": 7,
-    "title": "Update docs",
-    "content": "Follow the project's established patterns. Read .cursor/* and FEATURES.md first. Break work into small steps. Commit after each logical unit. Run tests and build before pushing.",
-    "category": "template",
-    "tags": null,
-    "created_at": "2026-02-12T10:53:42.643Z",
-    "updated_at": "2026-02-12T10:53:42.643Z"
-  },
-  {
-    "id": 8,
-    "title": "Deploy staging",
-    "content": "Follow the project's established patterns. Read .cursor/* and FEATURES.md first. Break work into small steps. Commit after each logical unit. Run tests and build before pushing.",
-    "category": "template",
-    "tags": null,
-    "created_at": "2026-02-12T10:53:42.643Z",
-    "updated_at": "2026-02-12T10:53:42.643Z"
-  },
-  {
-    "id": 9,
-    "title": "Security scan",
-    "content": "Follow the project's established patterns. Read .cursor/* and FEATURES.md first. Break work into small steps. Commit after each logical unit. Run tests and build before pushing.",
-    "category": "template",
-    "tags": null,
-    "created_at": "2026-02-12T10:53:42.643Z",
-    "updated_at": "2026-02-12T10:53:42.643Z"
-  },
-  {
-    "id": 10,
-    "title": "Performance audit",
-    "content": "Follow the project's established patterns. Read .cursor/* and FEATURES.md first. Break work into small steps. Commit after each logical unit. Run tests and build before pushing.",
-    "category": "template",
-    "tags": null,
-    "created_at": "2026-02-12T10:53:42.643Z",
-    "updated_at": "2026-02-12T10:53:42.643Z"
-  },
-  {
-    "id": 11,
-    "title": "User feedback review",
-    "content": "Follow the project's established patterns. Read .cursor/* and FEATURES.md first. Break work into small steps. Commit after each logical unit. Run tests and build before pushing.",
-    "category": "template",
-    "tags": null,
-    "created_at": "2026-02-12T10:53:42.643Z",
-    "updated_at": "2026-02-12T10:53:42.643Z"
+    "created_at": "2026-02-16T11:33:48.703Z",
+    "updated_at": "2026-02-16T11:33:48.703Z"
   }
 ]

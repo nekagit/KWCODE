@@ -1,0 +1,167 @@
+"use client";
+
+import { useState, useCallback, useEffect } from "react";
+import { ClipboardList, Loader2, FileText, Flag, Lightbulb } from "lucide-react";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
+
+type LogEntry = {
+  id: number;
+  project_id: string;
+  run_id: string;
+  ticket_number: number;
+  ticket_title: string;
+  milestone_id?: number;
+  idea_id?: number;
+  completed_at: string;
+  files_changed: { path: string; status: string }[];
+  summary: string;
+  created_at: string;
+};
+
+interface ProjectControlTabProps {
+  projectId: string;
+}
+
+export function ProjectControlTab({ projectId }: ProjectControlTabProps) {
+  const [entries, setEntries] = useState<LogEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [milestones, setMilestones] = useState<Record<number, string>>({});
+  const [ideas, setIdeas] = useState<Record<number, string>>({});
+
+  const load = useCallback(async () => {
+    if (!projectId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const [logRes, milRes, ideasRes] = await Promise.all([
+        fetch(`/api/data/projects/${projectId}/implementation-log`),
+        fetch(`/api/data/projects/${projectId}/milestones`),
+        fetch(`/api/data/ideas`),
+      ]);
+      if (!logRes.ok) throw new Error("Failed to load implementation log");
+      const list = (await logRes.json()) as LogEntry[];
+      setEntries(list);
+
+      const milList = milRes.ok ? ((await milRes.json()) as { id: number; name: string }[]) : [];
+      const ideaList = ideasRes.ok ? ((await ideasRes.json()) as { id: number; title: string }[]) : [];
+      const milMap: Record<number, string> = {};
+      milList.forEach((m) => { milMap[m.id] = m.name; });
+      const ideaMap: Record<number, string> = {};
+      ideaList.forEach((i) => { ideaMap[i.id] = i.title; });
+      setMilestones(milMap);
+      setIdeas(ideaMap);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+      setEntries([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6 text-sm text-destructive">
+        {error}
+      </div>
+    );
+  }
+
+  if (entries.length === 0) {
+    return (
+      <EmptyState
+        icon={<ClipboardList className="size-6 text-muted-foreground" />}
+        title="No completed implementations yet"
+        description="Run Implement All for tickets from the Worker tab; finished runs will appear here."
+      />
+    );
+  }
+
+  return (
+    <div className="w-full flex flex-col gap-4">
+      <p className="text-sm text-muted-foreground">
+        Completed ticket runs (newest first). Intention = Milestone + Idea assigned to the ticket.
+      </p>
+      <ScrollArea className="flex-1 min-h-[400px] rounded-xl border border-border/40 bg-card/50">
+        <div className="p-4 space-y-4">
+          {entries.map((entry) => (
+            <div
+              key={entry.id}
+              className="rounded-lg border border-border/60 bg-card/80 p-4 space-y-3"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-semibold text-foreground">
+                  Ticket #{entry.ticket_number}: {entry.ticket_title}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {new Date(entry.completed_at).toLocaleString()}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2 text-xs">
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  <Flag className="size-3" />
+                  {entry.milestone_id != null && milestones[entry.milestone_id] != null
+                    ? milestones[entry.milestone_id]
+                    : entry.milestone_id != null
+                      ? `Milestone ${entry.milestone_id}`
+                      : "—"}
+                </span>
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  <Lightbulb className="size-3" />
+                  {entry.idea_id != null && ideas[entry.idea_id] != null
+                    ? ideas[entry.idea_id]
+                    : entry.idea_id != null
+                      ? `Idea ${entry.idea_id}`
+                      : "—"}
+                </span>
+              </div>
+              {entry.files_changed.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {entry.files_changed.slice(0, 20).map((f, i) => (
+                    <span
+                      key={i}
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-mono",
+                        f.status === "A" && "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20",
+                        f.status === "M" && "bg-amber-500/10 text-amber-600 border border-amber-500/20",
+                        f.status === "D" && "bg-red-500/10 text-red-600 border border-red-500/20",
+                        !["A", "M", "D"].includes(f.status) && "bg-muted/50 text-muted-foreground"
+                      )}
+                    >
+                      {f.status === "A" ? "Added" : f.status === "M" ? "Modified" : f.status === "D" ? "Deleted" : f.status} {f.path}
+                    </span>
+                  ))}
+                  {entry.files_changed.length > 20 && (
+                    <span className="text-xs text-muted-foreground">
+                      +{entry.files_changed.length - 20} more
+                    </span>
+                  )}
+                </div>
+              )}
+              {entry.summary && (
+                <div className="flex gap-2 text-sm text-muted-foreground">
+                  <FileText className="size-4 shrink-0 mt-0.5" />
+                  <p className="line-clamp-3">{entry.summary}</p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </ScrollArea>
+    </div>
+  );
+}

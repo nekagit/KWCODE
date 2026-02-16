@@ -5,8 +5,9 @@ import { Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 import { IdeaTemplateCard } from "@/components/molecules/CardsAndDisplay/IdeaTemplateCard";
 import { MyIdeasCard } from "@/components/molecules/CardsAndDisplay/MyIdeasCard";
-import { IdeaFormDialog } from "@/components/molecules/FormsAndDialogs/IdeaFormDialog";
 import { AiGeneratedIdeasCard } from "@/components/molecules/CardsAndDisplay/AiGeneratedIdeasCard";
+import { IdeasDocAccordion } from "@/components/molecules/CardsAndDisplay/IdeasDocAccordion";
+import { IdeaFormDialog } from "@/components/molecules/FormsAndDialogs/IdeaFormDialog";
 import { ThreeTabResourcePageContent } from "@/components/organisms/ThreeTabResourcePageContent";
 import { getOrganismClasses } from "./organism-classes";
 import { IdeaCategory, IdeaRecord } from "@/types/idea";
@@ -236,6 +237,7 @@ export function IdeasPageContent() {
     <ThreeTabResourcePageContent
       config={config}
       resource={resource}
+      renderAboveTabs={() => <IdeasDocAccordion onConvert={loadIdeas} />}
       renderTemplatesTab={(r) => (
         <IdeaTemplateCard
           TEMPLATE_IDEAS={r.TEMPLATE_IDEAS}

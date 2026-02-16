@@ -22,6 +22,7 @@ import {
   TestTube2,
   FileText,
   Lightbulb,
+  ClipboardList,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Project } from "@/types/project";
@@ -38,6 +39,7 @@ import { ProjectSetupDocTab } from "@/components/molecules/TabAndContentSections
 import { ProjectDocumentationHubTab } from "@/components/molecules/TabAndContentSections/ProjectDocumentationHubTab";
 import { ProjectProjectTab } from "@/components/molecules/TabAndContentSections/ProjectProjectTab";
 import { ProjectTestingTab } from "@/components/molecules/TabAndContentSections/ProjectTestingTab";
+import { ProjectControlTab } from "@/components/molecules/TabAndContentSections/ProjectControlTab";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { cn } from "@/lib/utils";
 import { SectionCard, MetadataBadge, CountBadge } from "@/components/shared/DisplayPrimitives";
@@ -83,6 +85,7 @@ const TAB_ROW_2 = [
   { value: "milestones", label: "Milestones", icon: Flag, color: "text-fuchsia-400", activeGlow: "shadow-fuchsia-500/10" },
   { value: "todo", label: "Planner", icon: ListTodo, color: "text-blue-400", activeGlow: "shadow-blue-500/10" },
   { value: "run", label: "Worker", icon: Play, color: "text-emerald-400", activeGlow: "shadow-emerald-500/10" },
+  { value: "control", label: "Control", icon: ClipboardList, color: "text-slate-400", activeGlow: "shadow-slate-500/10" },
   { value: "git", label: "Versioning", icon: FolderGit2, color: "text-amber-400", activeGlow: "shadow-amber-500/10" },
 ] as const;
 
@@ -574,6 +577,16 @@ export function ProjectDetailsPageContent() {
             className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
           >
             <ProjectRunTab project={project} projectId={projectId} />
+          </TabsContent>
+
+          {/* ── Control Tab (implementation log) ── */}
+          <TabsContent
+            value="control"
+            className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
+          >
+            <div className="rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-4 md:p-6">
+              <ProjectControlTab projectId={projectId} />
+            </div>
           </TabsContent>
 
           {/* ── Versioning Tab ── */}

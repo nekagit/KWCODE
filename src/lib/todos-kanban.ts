@@ -13,6 +13,10 @@ export type ParsedTicket = {
   status: "Todo" | "Done";
   /** Agents from .cursor/agents (filenames without .md), e.g. ["frontend-dev", "backend-dev"]. */
   agents?: string[];
+  /** Assigned milestone (DB id). */
+  milestoneId?: number;
+  /** Assigned idea (DB id). */
+  ideaId?: number;
 };
 
 /** Kanban column for UI (e.g. backlog, in_progress, done, testing). */
@@ -150,6 +154,19 @@ export function applyInProgressState(
     ...data,
     columns,
   };
+}
+
+/**
+ * Build Kanban data from API tickets (e.g. from GET /api/data/projects/[id]/tickets) and inProgressIds.
+ */
+export function buildKanbanFromTickets(
+  tickets: ParsedTicket[],
+  inProgressIds: string[] = []
+): TodosKanbanData {
+  return applyInProgressState(
+    { tickets, parsedAt: new Date().toISOString(), columns: {} as Record<string, KanbanColumn> },
+    inProgressIds
+  );
 }
 
 /**

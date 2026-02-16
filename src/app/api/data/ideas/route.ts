@@ -1,18 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import path from "path";
-import fs from "fs";
-
-function findDataDir(): string {
-  const cwd = process.cwd();
-  const inCwd = path.join(cwd, "data");
-  if (fs.existsSync(inCwd) && fs.statSync(inCwd).isDirectory()) return inCwd;
-  const inParent = path.join(cwd, "..", "data");
-  if (fs.existsSync(inParent) && fs.statSync(inParent).isDirectory()) return inParent;
-  return cwd;
-}
-
-const DATA_DIR = findDataDir();
-const IDEAS_FILE = path.join(DATA_DIR, "ideas.json");
+import { getDb, type IdeaRow } from "@/lib/db";
 
 export type IdeaCategory =
   | "saas"
@@ -33,26 +20,50 @@ export interface IdeaRecord {
   updated_at?: string;
 }
 
-function readIdeas(): IdeaRecord[] {
-  try {
-    if (!fs.existsSync(IDEAS_FILE)) return [];
-    const raw = fs.readFileSync(IDEAS_FILE, "utf-8");
-    const arr = JSON.parse(raw);
-    return Array.isArray(arr) ? arr : [];
-  } catch {
-    return [];
-  }
+function rowToRecord(r: IdeaRow): IdeaRecord {
+  return {
+    id: r.id,
+    title: r.title,
+    description: r.description,
+    category: r.category as IdeaCategory,
+    source: r.source as "template" | "ai" | "manual",
+    created_at: r.created_at,
+    updated_at: r.updated_at,
+  };
 }
 
-function writeIdeas(ideas: IdeaRecord[]): void {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  fs.writeFileSync(IDEAS_FILE, JSON.stringify(ideas, null, 2), "utf-8");
-}
+const GENERAL_DEVELOPMENT_TITLE = "General Development";
 
-export async function GET() {
+/** GET: list ideas. Ensures "General Development" idea exists globally. */
+export async function GET(request: NextRequest) {
   try {
-    const ideas = readIdeas();
-    return NextResponse.json(ideas);
+    const { searchParams } = new URL(request.url);
+    const projectId = searchParams.get("project_id");
+    const db = getDb();
+    let rows: IdeaRow[];
+    if (projectId) {
+      rows = db
+        .prepare("SELECT * FROM ideas WHERE project_id = ? OR project_id IS NULL ORDER BY id ASC")
+        .all(projectId) as IdeaRow[];
+    } else {
+      rows = db.prepare("SELECT * FROM ideas ORDER BY id ASC").all() as IdeaRow[];
+    }
+    const hasGeneralDev = rows.some((r) => r.title === GENERAL_DEVELOPMENT_TITLE);
+    if (!hasGeneralDev) {
+      const now = new Date().toISOString();
+      db.prepare(
+        `INSERT INTO ideas (project_id, title, description, category, body, source, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      ).run(null, GENERAL_DEVELOPMENT_TITLE, "", "other", null, "manual", now, now);
+      if (projectId) {
+        rows = db
+          .prepare("SELECT * FROM ideas WHERE project_id = ? OR project_id IS NULL ORDER BY id ASC")
+          .all(projectId) as IdeaRow[];
+      } else {
+        rows = db.prepare("SELECT * FROM ideas ORDER BY id ASC").all() as IdeaRow[];
+      }
+    }
+    return NextResponse.json(rows.map(rowToRecord));
   } catch (e) {
     console.error("Ideas GET error:", e);
     return NextResponse.json(
@@ -67,7 +78,7 @@ const CATEGORIES = new Set<string>([
 ]);
 const SOURCES = new Set<string>(["template", "ai", "manual"]);
 
-/** POST: create or update. Body: { id?: number, title, description, category, source } */
+/** POST: create or update. Body: { id?: number, title, description, category, source, project_id? } */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -77,45 +88,36 @@ export async function POST(request: NextRequest) {
     const source = body.source !== undefined && SOURCES.has(String(body.source))
       ? body.source
       : undefined;
+    const projectId = typeof body.project_id === "string" ? body.project_id : null;
 
     if (!title) {
       return NextResponse.json({ error: "title is required" }, { status: 400 });
     }
 
-    const ideas = readIdeas();
-    const existingId = typeof body.id === "number" ? body.id : undefined;
+    const db = getDb();
     const now = new Date().toISOString();
+    const existingId = typeof body.id === "number" ? body.id : undefined;
 
     if (existingId !== undefined) {
-      const idx = ideas.findIndex((i) => Number(i.id) === existingId);
-      if (idx >= 0) {
-        ideas[idx] = {
-          ...ideas[idx],
-          title,
-          description,
-          category,
-          ...(source !== undefined && { source }),
-          updated_at: now,
-        };
-        writeIdeas(ideas);
-        return NextResponse.json(ideas[idx]);
+      const existing = db.prepare("SELECT * FROM ideas WHERE id = ?").get(existingId) as IdeaRow | undefined;
+      if (existing) {
+        db.prepare(
+          "UPDATE ideas SET title = ?, description = ?, category = ?, source = ?, updated_at = ? WHERE id = ?"
+        ).run(title, description, category, source ?? existing.source, now, existingId);
+        const row = db.prepare("SELECT * FROM ideas WHERE id = ?").get(existingId) as IdeaRow;
+        return NextResponse.json(rowToRecord(row));
       }
     }
 
-    const nextId =
-      ideas.length === 0 ? 1 : Math.max(...ideas.map((i) => Number(i.id)), 0) + 1;
-    const newIdea: IdeaRecord = {
-      id: nextId,
-      title,
-      description,
-      category,
-      source: source ?? "manual",
-      created_at: now,
-      updated_at: now,
-    };
-    ideas.push(newIdea);
-    writeIdeas(ideas);
-    return NextResponse.json(newIdea);
+    const r = db
+      .prepare(
+        `INSERT INTO ideas (project_id, title, description, category, body, source, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(projectId, title, description, category, null, source ?? "manual", now, now);
+    const id = r.lastInsertRowid as number;
+    const row = db.prepare("SELECT * FROM ideas WHERE id = ?").get(id) as IdeaRow;
+    return NextResponse.json(rowToRecord(row));
   } catch (e) {
     console.error("Ideas POST error:", e);
     return NextResponse.json(

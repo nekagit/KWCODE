@@ -1,10 +1,10 @@
-import React from 'react';
-import Link from "next/link";
+import React, { useCallback, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Copy, Check, Eye } from "lucide-react";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
+import { toast } from "sonner";
 
 type PromptRecord = {
   id: number;
@@ -25,6 +25,7 @@ interface PromptTableRowProps {
   setFormId: (id: number | undefined) => void;
   setFormTitle: (title: string) => void;
   setFormContent: (content: string) => void;
+  onViewPrompt?: (prompt: PromptRecord) => void;
 }
 
 export const PromptTableRow: React.FC<PromptTableRowProps> = ({
@@ -36,10 +37,39 @@ export const PromptTableRow: React.FC<PromptTableRowProps> = ({
   setFormId,
   setFormTitle,
   setFormContent,
+  onViewPrompt,
 }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      const text = p.content ?? "";
+      navigator.clipboard.writeText(text).then(() => {
+        setCopied(true);
+        toast.success("Prompt copied to clipboard");
+        setTimeout(() => setCopied(false), 2000);
+      });
+    },
+    [p.content]
+  );
+
+  const handleRowClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (onViewPrompt && !(e.target as HTMLElement).closest("button, [role='checkbox']")) {
+        onViewPrompt(p);
+      }
+    },
+    [onViewPrompt, p]
+  );
+
   return (
-    <TableRow key={p.id}>
-      <TableCell>
+    <TableRow
+      key={p.id}
+      className={onViewPrompt ? "cursor-pointer hover:bg-muted/50" : undefined}
+      onClick={handleRowClick}
+    >
+      <TableCell onClick={(e) => e.stopPropagation()}>
         <Checkbox
           checked={selectedPromptIds.includes(p.id)}
           onCheckedChange={(checked) => {
@@ -69,8 +99,28 @@ export const PromptTableRow: React.FC<PromptTableRowProps> = ({
         {(p.content ?? "").replace(/\s+/g, " ").slice(0, 60)}
         {(p.content ?? "").length > 60 ? "…" : ""}
       </TableCell>
-      <TableCell className="text-right">
+      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
         <ButtonGroup alignment="right">
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-8 w-8 p-0"
+            title="Copy prompt"
+            onClick={handleCopy}
+          >
+            {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-8 w-8 p-0"
+            title="View content"
+            onClick={() => onViewPrompt?.(p)}
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
           <Button
             type="button"
             size="sm"

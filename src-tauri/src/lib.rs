@@ -306,6 +306,89 @@ fn get_git_info(project_path: String) -> Result<GitInfo, String> {
     Ok(info)
 }
 
+#[tauri::command]
+fn get_git_head(project_path: String) -> Result<String, String> {
+    let path_buf = PathBuf::from(project_path.trim());
+    if path_buf.as_os_str().is_empty() || !path_buf.exists() || !path_buf.is_dir() {
+        return Ok(String::new());
+    }
+    let git_dir = path_buf.join(".git");
+    if !git_dir.exists() {
+        return Ok(String::new());
+    }
+    Ok(run_git(&path_buf, &["rev-parse", "HEAD"]).unwrap_or_default())
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GitDiffNameStatusEntry {
+    pub path: String,
+    pub status: String,
+}
+
+#[tauri::command]
+fn get_git_diff_name_status(project_path: String, from_ref: String) -> Result<Vec<GitDiffNameStatusEntry>, String> {
+    let path_buf = PathBuf::from(project_path.trim());
+    if !path_buf.exists() || !path_buf.is_dir() {
+        return Err("Project path does not exist".to_string());
+    }
+    if !path_buf.join(".git").exists() {
+        return Ok(Vec::new());
+    }
+    let ref_arg = if from_ref.trim().is_empty() { "HEAD" } else { from_ref.trim() };
+    let out = run_git(&path_buf, &["diff", "--name-status", ref_arg, "--", "."]);
+    let stdout = match out {
+        Ok(s) => s,
+        Err(_) => return Ok(Vec::new()),
+    };
+    let mut entries = Vec::new();
+    for line in stdout.lines() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        let mut it = line.splitn(2, '\t');
+        let status = it.next().unwrap_or("").to_string();
+        let path = it.next().unwrap_or("").to_string();
+        if !path.is_empty() {
+            entries.push(GitDiffNameStatusEntry { path, status });
+        }
+    }
+    Ok(entries)
+}
+
+#[tauri::command]
+fn append_implementation_log_entry(
+    project_id: String,
+    run_id: String,
+    ticket_number: i64,
+    ticket_title: String,
+    milestone_id: Option<i64>,
+    idea_id: Option<i64>,
+    completed_at: String,
+    files_changed: String,
+    summary: String,
+) -> Result<(), String> {
+    with_db(|conn| {
+        conn.execute(
+            "INSERT INTO implementation_log (project_id, run_id, ticket_number, ticket_title, milestone_id, idea_id, completed_at, files_changed, summary, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+            rusqlite::params![
+                project_id.trim(),
+                run_id.trim(),
+                ticket_number,
+                ticket_title.trim(),
+                milestone_id,
+                idea_id,
+                completed_at.trim(),
+                if files_changed.trim().is_empty() { "[]" } else { files_changed.trim() },
+                summary.trim(),
+                now_iso(),
+            ],
+        )
+        .map_err(|e| e.to_string())?;
+        Ok(())
+    })
+}
+
 /// Return git diff and full file content for a changed file. Used when clicking a file in the Git tab.
 #[derive(serde::Serialize)]
 pub struct GitFileView {
@@ -2122,6 +2205,9 @@ pub fn run() {
             write_spec_file,
             archive_cursor_file,
             get_git_info,
+            get_git_head,
+            get_git_diff_name_status,
+            append_implementation_log_entry,
             get_git_file_view,
             git_fetch,
             git_pull,

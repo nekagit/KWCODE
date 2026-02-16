@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { listen, isTauri } from "@/lib/tauri";
+import { listen, invoke, isTauri } from "@/lib/tauri";
 import { writeProjectFile } from "@/lib/api-projects";
 import { stripTerminalArtifacts, MIN_DOCUMENT_LENGTH } from "@/lib/strip-terminal-artifacts";
 import { useRunStore, takeRunCompleteHandler } from "./run-store";
@@ -80,6 +80,55 @@ export function RunStoreHydration() {
 
       if (run?.meta) {
         const stdout = run.logLines.join("\n");
+        // Ticket Implement All finished: record implementation_log entry (diff + summary).
+        if (
+          typeof run.meta.ticketNumber === "number" &&
+          run.meta.projectId &&
+          run.meta.repoPath
+        ) {
+          (async () => {
+            let filesChanged: { path: string; status: string }[] = [];
+            if (isTauri) {
+              try {
+                const fromRef = run.meta!.gitRefAtStart ?? "";
+                filesChanged = (await invoke<{ path: string; status: string }[]>("get_git_diff_name_status", {
+                  projectPath: run.meta!.repoPath!,
+                  fromRef: fromRef,
+                })) ?? [];
+              } catch {
+                /* ignore */
+              }
+            }
+            const summaryParts: string[] = [];
+            if (filesChanged.length > 0) {
+              const added = filesChanged.filter((f) => f.status === "A").length;
+              const deleted = filesChanged.filter((f) => f.status === "D").length;
+              const modified = filesChanged.filter((f) => f.status === "M").length;
+              summaryParts.push(`${filesChanged.length} files changed${added ? `, ${added} added` : ""}${modified ? `, ${modified} modified` : ""}${deleted ? `, ${deleted} deleted` : ""}.`);
+            }
+            const logPreview = stdout.trim().slice(0, 400);
+            if (logPreview) summaryParts.push(logPreview);
+            const summary = summaryParts.join(" ");
+            try {
+              await fetch(`/api/data/projects/${run.meta!.projectId}/implementation-log`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  run_id: run_id,
+                  ticket_number: run.meta!.ticketNumber,
+                  ticket_title: run.meta!.ticketTitle ?? "",
+                  milestone_id: run.meta!.milestoneId ?? null,
+                  idea_id: run.meta!.ideaId ?? null,
+                  completed_at: new Date().toISOString(),
+                  files_changed: filesChanged,
+                  summary,
+                }),
+              });
+            } catch (err) {
+              console.error("[run-exited] implementation-log POST failed:", err);
+            }
+          })();
+        }
         // When Analyze runs via Worker (analyze-doc): strip terminal artifacts and write to outputPath.
         if (
           run.meta.onComplete === "analyze-doc" &&

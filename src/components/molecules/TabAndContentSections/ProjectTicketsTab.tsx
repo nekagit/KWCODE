@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,15 +46,12 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Project } from "@/types/project";
-import { readProjectFile, readProjectFileOrEmpty, writeProjectFile, listProjectFiles } from "@/lib/api-projects";
+import { listProjectFiles } from "@/lib/api-projects";
 import { invoke, isTauri } from "@/lib/tauri";
 import { useRunStore, registerRunCompleteHandler } from "@/store/run-store";
 import {
-  buildKanbanFromMd,
+  buildKanbanFromTickets,
   applyInProgressState,
-  markTicketsDone,
-  markTicketsNotDone,
-  serializeTicketsToMd,
   type TodosKanbanData,
   type ParsedTicket,
 } from "@/lib/todos-kanban";
@@ -312,7 +309,11 @@ export function ProjectTicketsTab({
     "P0" | "P1" | "P2" | "P3"
   >("P1");
   const [addTicketFeature, setAddTicketFeature] = useState("");
+  const [addTicketMilestoneId, setAddTicketMilestoneId] = useState<number | null>(null);
+  const [addTicketIdeaId, setAddTicketIdeaId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
+  const [milestones, setMilestones] = useState<{ id: number; name: string; slug: string }[]>([]);
+  const [ideas, setIdeas] = useState<{ id: number; title: string }[]>([]);
   /* Planner Manager: AI-generated ticket from prompt */
   // Removed plannerManagerMode, always default to ticket
   const [plannerPromptInput, setPlannerPromptInput] = useState("");
@@ -326,43 +327,82 @@ export function ProjectTicketsTab({
   /** When a ticket is generated, we assign all agents from .cursor/agents; stored here for display and for newTicket.agents. */
   const [assignedAgentsForGenerated, setAssignedAgentsForGenerated] = useState<string[]>([]);
   const [generatingTicket, setGeneratingTicket] = useState(false);
+  const [generatedTicketMilestoneId, setGeneratedTicketMilestoneId] = useState<number | null>(null);
+  const [generatedTicketIdeaId, setGeneratedTicketIdeaId] = useState<number | null>(null);
 
   /* ── Data loading ── */
 
-  const KANBAN_STATE_PATH = ".cursor/planner/kanban-state.json";
-
-  const loadKanbanFromMd = useCallback(async () => {
-    if (!project) return;
-    const repoPath = project.repoPath?.trim();
-    if (!repoPath) {
-      setKanbanData(null);
-      setKanbanError(null);
-      return;
-    }
+  const loadTicketsAndKanban = useCallback(async () => {
+    if (!projectId) return;
     setKanbanLoading(true);
     setKanbanError(null);
     try {
-      const [ticketsMd, stateRaw] = await Promise.all([
-        readProjectFileOrEmpty(projectId, ".cursor/planner/tickets.md", repoPath),
-        readProjectFileOrEmpty(projectId, KANBAN_STATE_PATH, repoPath),
+      const [ticketsRes, stateRes] = await Promise.all([
+        fetch(`/api/data/projects/${projectId}/tickets`),
+        fetch(`/api/data/projects/${projectId}/kanban-state`),
       ]);
-      let inProgressIds: string[] = [];
-      if (stateRaw?.trim()) {
-        try {
-          const state = JSON.parse(stateRaw) as { inProgressIds?: string[] };
-          inProgressIds = Array.isArray(state?.inProgressIds) ? state.inProgressIds : [];
-        } catch {
-          /* ignore invalid JSON */
-        }
+      if (!ticketsRes.ok || !stateRes.ok) {
+        const err = await ticketsRes.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to load tickets");
       }
-      const data = buildKanbanFromMd(ticketsMd, inProgressIds);
+      const apiTickets = (await ticketsRes.json()) as {
+        id: string;
+        number: number;
+        title: string;
+        description?: string;
+        priority: string;
+        feature_name: string;
+        done: boolean;
+        status: string;
+        agents?: string[];
+        milestone_id?: number;
+        idea_id?: number;
+      }[];
+      const { inProgressIds } = (await stateRes.json()) as { inProgressIds: string[] };
+      const tickets: ParsedTicket[] = apiTickets.map((t) => ({
+        id: t.id,
+        number: t.number,
+        title: t.title,
+        description: t.description,
+        priority: (t.priority as ParsedTicket["priority"]) || "P1",
+        featureName: t.feature_name || "General",
+        done: t.done,
+        status: (t.status as ParsedTicket["status"]) || "Todo",
+        agents: t.agents,
+        milestoneId: t.milestone_id,
+        ideaId: t.idea_id,
+      }));
+      const data = buildKanbanFromTickets(tickets, inProgressIds ?? []);
       setKanbanData(data);
     } catch (e) {
       setKanbanError(e instanceof Error ? e.message : String(e));
     } finally {
       setKanbanLoading(false);
     }
-  }, [project, projectId]);
+  }, [projectId]);
+
+  const loadMilestonesAndIdeas = useCallback(async () => {
+    if (!projectId) return;
+    try {
+      const [milRes, ideasRes] = await Promise.all([
+        fetch(`/api/data/projects/${projectId}/milestones`),
+        fetch(`/api/data/ideas`),
+      ]);
+      const milestonesList = milRes.ok ? ((await milRes.json()) as { id: number; name: string; slug: string }[]) : [];
+      const allIdeas = ideasRes.ok ? ((await ideasRes.json()) as { id: number; title: string }[]) : [];
+      const ideaIds = Array.isArray(project?.ideaIds) ? project.ideaIds : [];
+      let ideasList = ideaIds.length > 0 ? allIdeas.filter((i) => ideaIds.includes(i.id)) : allIdeas;
+      const generalDevIdea = allIdeas.find((i) => i.title === "General Development");
+      if (generalDevIdea && !ideasList.some((i) => i.id === generalDevIdea.id)) {
+        ideasList = [...ideasList, generalDevIdea];
+      }
+      setMilestones(milestonesList);
+      setIdeas(ideasList);
+    } catch {
+      setMilestones([]);
+      setIdeas([]);
+    }
+  }, [projectId, project?.ideaIds]);
 
   const generateKanbanPrompt = useCallback(async () => {
     if (!project || !kanbanData) return;
@@ -382,160 +422,163 @@ export function ProjectTicketsTab({
 
   const handleMarkDone = useCallback(
     async (ticketId: string) => {
-      if (!project?.repoPath || !kanbanData) return;
+      if (!kanbanData) return;
       try {
-        const updatedTickets = markTicketsDone(kanbanData.tickets, [ticketId]);
-        const ticketsMd = serializeTicketsToMd(updatedTickets, {
-          projectName: project.name,
+        const res = await fetch(`/api/data/projects/${projectId}/tickets/${ticketId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ done: true, status: "Done" }),
         });
-        await writeProjectFile(
-          projectId,
-          ".cursor/planner/tickets.md",
-          ticketsMd,
-          project.repoPath
-        );
+        if (!res.ok) throw new Error((await res.json()).error || "Failed to update");
         const inProgressIds = kanbanData.columns.in_progress?.items.map((t) => t.id) ?? [];
-        setKanbanData(buildKanbanFromMd(ticketsMd, inProgressIds));
+        const updatedTickets = kanbanData.tickets.map((t) =>
+          t.id === ticketId ? { ...t, done: true, status: "Done" as const } : t
+        );
+        setKanbanData(applyInProgressState({ ...kanbanData, tickets: updatedTickets }, inProgressIds));
         toast.success("Ticket marked as done.");
       } catch (e) {
         toast.error(e instanceof Error ? e.message : String(e));
       }
     },
-    [project, projectId, kanbanData]
+    [projectId, kanbanData]
   );
 
   const handleRedo = useCallback(
     async (ticketId: string) => {
-      if (!project?.repoPath || !kanbanData) return;
+      if (!kanbanData) return;
       try {
-        const updatedTickets = markTicketsNotDone(kanbanData.tickets, [
-          ticketId,
-        ]);
-        const ticketsMd = serializeTicketsToMd(updatedTickets, {
-          projectName: project.name,
+        const res = await fetch(`/api/data/projects/${projectId}/tickets/${ticketId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ done: false, status: "Todo" }),
         });
-        await writeProjectFile(
-          projectId,
-          ".cursor/planner/tickets.md",
-          ticketsMd,
-          project.repoPath
-        );
+        if (!res.ok) throw new Error((await res.json()).error || "Failed to update");
         const inProgressIds = kanbanData.columns.in_progress?.items.map((t) => t.id) ?? [];
-        setKanbanData(buildKanbanFromMd(ticketsMd, inProgressIds));
+        const updatedTickets = kanbanData.tickets.map((t) =>
+          t.id === ticketId ? { ...t, done: false, status: "Todo" as const } : t
+        );
+        setKanbanData(applyInProgressState({ ...kanbanData, tickets: updatedTickets }, inProgressIds));
         toast.success("Ticket moved back to todo.");
       } catch (e) {
         toast.error(e instanceof Error ? e.message : String(e));
       }
     },
-    [project, projectId, kanbanData]
+    [projectId, kanbanData]
   );
 
   const handleArchive = useCallback(
     async (ticketId: string) => {
-      if (!project?.repoPath || !kanbanData) return;
+      if (!kanbanData) return;
       const ticket = kanbanData.tickets.find((t) => t.id === ticketId);
       if (!ticket) return;
       try {
-        const updatedTickets = kanbanData.tickets.filter(
-          (t) => t.id !== ticketId
-        );
-        const ticketsMd = serializeTicketsToMd(updatedTickets, {
-          projectName: project.name,
-        });
-        await writeProjectFile(
-          projectId,
-          ".cursor/planner/tickets.md",
-          ticketsMd,
-          project.repoPath
-        );
+        const res = await fetch(`/api/data/projects/${projectId}/tickets/${ticketId}`, { method: "DELETE" });
+        if (!res.ok) throw new Error((await res.json()).error || "Failed to delete");
         const inProgressIds = (kanbanData.columns.in_progress?.items.map((t) => t.id) ?? []).filter((id) => id !== ticketId);
-        setKanbanData(buildKanbanFromMd(ticketsMd, inProgressIds));
-        await writeProjectFile(projectId, KANBAN_STATE_PATH, JSON.stringify({ inProgressIds }, null, 2), project.repoPath);
+        await fetch(`/api/data/projects/${projectId}/kanban-state`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ inProgressIds }),
+        });
+        const updatedTickets = kanbanData.tickets.filter((t) => t.id !== ticketId);
+        setKanbanData(applyInProgressState({ ...kanbanData, tickets: updatedTickets }, inProgressIds));
         toast.success(`Ticket #${ticket.number} archived.`);
       } catch (e) {
         toast.error(e instanceof Error ? e.message : String(e));
       }
     },
-    [project, projectId, kanbanData]
+    [projectId, kanbanData]
   );
 
   const handleMoveToInProgress = useCallback(
     async (ticketId: string) => {
-      if (!project?.repoPath || !kanbanData) return;
+      if (!kanbanData) return;
       const inProgressColumn = kanbanData.columns.in_progress;
       const currentIds = inProgressColumn ? inProgressColumn.items.map((t) => t.id) : [];
       if (currentIds.includes(ticketId)) return;
       const newIds = [...currentIds, ticketId];
       try {
-        await writeProjectFile(
-          projectId,
-          KANBAN_STATE_PATH,
-          JSON.stringify({ inProgressIds: newIds }, null, 2),
-          project.repoPath
-        );
+        const res = await fetch(`/api/data/projects/${projectId}/kanban-state`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ inProgressIds: newIds }),
+        });
+        if (!res.ok) throw new Error((await res.json()).error || "Failed to update");
         setKanbanData(applyInProgressState(kanbanData, newIds));
         toast.success("Ticket moved to In progress.");
       } catch (e) {
         toast.error(e instanceof Error ? e.message : String(e));
       }
     },
-    [project, projectId, kanbanData]
+    [projectId, kanbanData]
   );
 
   const handleAddTicket = useCallback(async () => {
-    if (!project?.repoPath || !kanbanData || !addTicketTitle.trim()) return;
-    const featureName = addTicketFeature.trim() || "Uncategorized";
-    const nextNumber =
-      kanbanData.tickets.length === 0
-        ? 1
-        : Math.max(...kanbanData.tickets.map((t) => t.number)) + 1;
-    const newTicket: ParsedTicket = {
-      id: `ticket-${nextNumber}`,
-      number: nextNumber,
-      title: addTicketTitle.trim(),
-      description: addTicketDesc.trim() || undefined,
-      priority: addTicketPriority,
-      featureName,
-      done: false,
-      status: "Todo",
-    };
-    const updatedTickets = [...kanbanData.tickets, newTicket];
-
+    if (!addTicketTitle.trim()) return;
+    if (addTicketMilestoneId == null || addTicketIdeaId == null) {
+      toast.error("Please select a Milestone and an Idea.");
+      return;
+    }
     setSaving(true);
     try {
-      const ticketsMd = serializeTicketsToMd(updatedTickets, {
-        projectName: project.name,
+      const res = await fetch(`/api/data/projects/${projectId}/tickets`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: addTicketTitle.trim(),
+          description: addTicketDesc.trim() || undefined,
+          priority: addTicketPriority,
+          feature_name: addTicketFeature.trim() || "General",
+          milestone_id: addTicketMilestoneId,
+          idea_id: addTicketIdeaId,
+        }),
       });
-      await writeProjectFile(
-        projectId,
-        ".cursor/planner/tickets.md",
-        ticketsMd,
-        project.repoPath
-      );
-      const inProgressIds = kanbanData.columns.in_progress?.items.map((t) => t.id) ?? [];
-      setKanbanData(buildKanbanFromMd(ticketsMd, inProgressIds));
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to create ticket");
+      }
+      const newTicket = (await res.json()) as { id: string; number: number; title: string; description?: string; priority: string; feature_name: string; done: number; status: string; milestone_id: number; idea_id: number; agents?: string[] };
+      const parsed: ParsedTicket = {
+        id: newTicket.id,
+        number: newTicket.number,
+        title: newTicket.title,
+        description: newTicket.description,
+        priority: (newTicket.priority as ParsedTicket["priority"]) || "P1",
+        featureName: newTicket.feature_name || "General",
+        done: newTicket.done === 1,
+        status: (newTicket.status as ParsedTicket["status"]) || "Todo",
+        agents: newTicket.agents,
+        milestoneId: newTicket.milestone_id,
+        ideaId: newTicket.idea_id,
+      };
+      const inProgressIds = kanbanData?.columns.in_progress?.items.map((t) => t.id) ?? [];
+      const updatedTickets = [...(kanbanData?.tickets ?? []), parsed];
+      setKanbanData(buildKanbanFromTickets(updatedTickets, inProgressIds));
       setAddTicketOpen(false);
       setAddTicketTitle("");
       setAddTicketDesc("");
       setAddTicketFeature("");
-      toast.success(`Ticket #${nextNumber} added.`);
+      setAddTicketMilestoneId(null);
+      setAddTicketIdeaId(null);
+      toast.success(`Ticket #${newTicket.number} added.`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
     } finally {
       setSaving(false);
     }
   }, [
-    project,
     projectId,
     kanbanData,
     addTicketTitle,
     addTicketDesc,
     addTicketPriority,
     addTicketFeature,
+    addTicketMilestoneId,
+    addTicketIdeaId,
   ]);
 
   const handleRemoveAllTickets = useCallback(async () => {
-    if (!project?.repoPath || !kanbanData) return;
+    if (!kanbanData) return;
     if (
       !confirm(
         "Are you sure you want to remove ALL tickets? This cannot be undone."
@@ -545,25 +588,24 @@ export function ProjectTicketsTab({
 
     setSaving(true);
     try {
-      const ticketsMd = serializeTicketsToMd([], {
-        projectName: project.name,
-      });
-      await writeProjectFile(
-        projectId,
-        ".cursor/planner/tickets.md",
-        ticketsMd,
-        project.repoPath
+      await Promise.all(
+        kanbanData.tickets.map((t) =>
+          fetch(`/api/data/projects/${projectId}/tickets/${t.id}`, { method: "DELETE" })
+        )
       );
-      const inProgressIds: string[] = [];
-      setKanbanData(buildKanbanFromMd(ticketsMd, inProgressIds));
-      await writeProjectFile(projectId, KANBAN_STATE_PATH, JSON.stringify({ inProgressIds }, null, 2), project.repoPath);
+      await fetch(`/api/data/projects/${projectId}/kanban-state`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ inProgressIds: [] }),
+      });
+      setKanbanData(buildKanbanFromTickets([], []));
       toast.success("All tickets removed.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
     } finally {
       setSaving(false);
     }
-  }, [project, projectId, kanbanData]);
+  }, [projectId, kanbanData]);
 
   const runTempTicket = useRunStore((s) => s.runTempTicket);
 
@@ -646,42 +688,60 @@ export function ProjectTicketsTab({
   }, [plannerPromptInput, plannerPromptTextarea, project, projectId, runTempTicket]);
 
   const confirmAddGeneratedTicketToBacklog = useCallback(async () => {
-    if (!project?.repoPath || !kanbanData || !generatedTicket) return;
-    const featureName = generatedTicket.featureName.trim() || "Uncategorized";
-    const nextNumber =
-      kanbanData.tickets.length === 0
-        ? 1
-        : Math.max(...kanbanData.tickets.map((t) => t.number)) + 1;
-    const newTicket: ParsedTicket = {
-      id: `ticket-${nextNumber}`,
-      number: nextNumber,
-      title: generatedTicket.title,
-      description: generatedTicket.description,
-      priority: generatedTicket.priority,
-      featureName,
-      done: false,
-      status: "Todo",
-      ...(assignedAgentsForGenerated.length > 0 && { agents: assignedAgentsForGenerated }),
-    };
-    const updatedTickets = [newTicket, ...kanbanData.tickets];
-
+    if (!generatedTicket) return;
+    if (generatedTicketMilestoneId == null || generatedTicketIdeaId == null) {
+      toast.error("Please select a Milestone and an Idea for this ticket.");
+      return;
+    }
     setSaving(true);
     try {
-      const ticketsMd = serializeTicketsToMd(updatedTickets, { projectName: project.name });
-      await writeProjectFile(projectId, ".cursor/planner/tickets.md", ticketsMd, project.repoPath);
-      const inProgressIds = kanbanData.columns.in_progress?.items.map((t) => t.id) ?? [];
-      setKanbanData(buildKanbanFromMd(ticketsMd, inProgressIds));
+      const res = await fetch(`/api/data/projects/${projectId}/tickets`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: generatedTicket.title,
+          description: generatedTicket.description,
+          priority: generatedTicket.priority,
+          feature_name: generatedTicket.featureName.trim() || "General",
+          milestone_id: generatedTicketMilestoneId,
+          idea_id: generatedTicketIdeaId,
+          agents: assignedAgentsForGenerated.length > 0 ? assignedAgentsForGenerated : undefined,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to create ticket");
+      }
+      const newTicket = (await res.json()) as { id: string; number: number; title: string; description?: string; priority: string; feature_name: string; done: number; status: string; milestone_id: number; idea_id: number; agents?: string[] };
+      const parsed: ParsedTicket = {
+        id: newTicket.id,
+        number: newTicket.number,
+        title: newTicket.title,
+        description: newTicket.description,
+        priority: (newTicket.priority as ParsedTicket["priority"]) || "P1",
+        featureName: newTicket.feature_name || "General",
+        done: false,
+        status: "Todo",
+        agents: newTicket.agents,
+        milestoneId: newTicket.milestone_id,
+        ideaId: newTicket.idea_id,
+      };
+      const inProgressIds = kanbanData?.columns.in_progress?.items.map((t) => t.id) ?? [];
+      const updatedTickets = [parsed, ...(kanbanData?.tickets ?? [])];
+      setKanbanData(buildKanbanFromTickets(updatedTickets, inProgressIds));
       setGeneratedTicket(null);
       setAssignedAgentsForGenerated([]);
+      setGeneratedTicketMilestoneId(null);
+      setGeneratedTicketIdeaId(null);
       setPlannerPromptInput("");
       setPlannerPromptTextarea("");
-      toast.success(`Ticket #${nextNumber} added to backlog.`);
+      toast.success(`Ticket #${newTicket.number} added to backlog.`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));
     } finally {
       setSaving(false);
     }
-  }, [project, projectId, kanbanData, generatedTicket, assignedAgentsForGenerated]);
+  }, [projectId, kanbanData, generatedTicket, assignedAgentsForGenerated, generatedTicketMilestoneId, generatedTicketIdeaId]);
 
   /** When a ticket is generated, assign all agents from .cursor/agents (.md files). */
   useEffect(() => {
@@ -707,11 +767,34 @@ export function ProjectTicketsTab({
     return () => { cancelled = true; };
   }, [generatedTicket, project?.repoPath, projectId]);
 
+  /** Default generated-ticket milestone/idea to "General Development" when lists load. */
   useEffect(() => {
-    if (project) {
-      loadKanbanFromMd();
+    if (!generatedTicket) return;
+    const gdMilestoneId = milestones.find((m) => m.name === "General Development")?.id ?? null;
+    const gdIdeaId = ideas.find((i) => i.title === "General Development")?.id ?? null;
+    setGeneratedTicketMilestoneId((prev) => (prev == null ? gdMilestoneId : prev));
+    setGeneratedTicketIdeaId((prev) => (prev == null ? gdIdeaId : prev));
+  }, [generatedTicket, milestones, ideas]);
+
+  const addTicketOpenPrevRef = useRef(false);
+  /** When Add ticket dialog opens, default milestone/idea to "General Development" if null. */
+  useEffect(() => {
+    if (addTicketOpen && !addTicketOpenPrevRef.current) {
+      addTicketOpenPrevRef.current = true;
+      const gdMilestoneId = milestones.find((m) => m.name === "General Development")?.id ?? null;
+      const gdIdeaId = ideas.find((i) => i.title === "General Development")?.id ?? null;
+      setAddTicketMilestoneId((prev) => prev ?? gdMilestoneId);
+      setAddTicketIdeaId((prev) => prev ?? gdIdeaId);
     }
-  }, [project, loadKanbanFromMd]);
+    if (!addTicketOpen) addTicketOpenPrevRef.current = false;
+  }, [addTicketOpen, milestones, ideas]);
+
+  useEffect(() => {
+    if (projectId) {
+      loadTicketsAndKanban();
+      loadMilestonesAndIdeas();
+    }
+  }, [projectId, loadTicketsAndKanban, loadMilestonesAndIdeas]);
 
   /* ═══════════════ RENDER ═══════════════ */
 
@@ -722,14 +805,8 @@ export function ProjectTicketsTab({
 
   return (
     <div className="w-full flex flex-col gap-6">
-      {/* ── No repo path ── */}
-      {!project.repoPath?.trim() ? (
-        <EmptyState
-          icon={<TicketIcon className="size-6 text-muted-foreground" />}
-          title="No repo path"
-          description="Set a repo path for this project to load tickets from .cursor/planner/tickets.md."
-        />
-      ) : kanbanLoading ? (
+      {/* ── Loading / error ── */}
+      {kanbanLoading ? (
         <div className="flex items-center justify-center py-16">
           <LoadingState />
         </div>
@@ -737,8 +814,169 @@ export function ProjectTicketsTab({
         <ErrorDisplay message={kanbanError} />
       ) : !kanbanData ? null : (
         <>
-          {/* ═══════ Summary & Actions ═══════ */}
-          <Accordion type="single" collapsible defaultValue="planner-stats" className="w-full">
+          {/* ═══════ Planner Manager (top, expanded by default) ═══════ */}
+          <Accordion type="single" collapsible defaultValue="planner-manager" className="w-full">
+            <AccordionItem value="planner-manager" className="border-none">
+              <AccordionTrigger className="hover:no-underline py-0">
+                <div className="flex flex-col items-start text-left gap-1">
+                  <h2 className="text-xl font-bold tracking-tight">Planner Manager</h2>
+                  <p className="text-sm text-muted-foreground font-normal">
+                    Describe what you want; AI generates a ticket. Confirm to add to backlog.
+                  </p>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pt-6">
+                <div className="w-full flex flex-col gap-4">
+
+                  {/* Same input + textarea + magic stick for Ticket */}
+                  <div className="grid gap-2">
+                    <label htmlFor="planner-prompt-input" className="text-sm font-medium text-muted-foreground">
+                      What do you want?
+                    </label>
+                    <input
+                      id="planner-prompt-input"
+                      type="text"
+                      placeholder="e.g. A new page with settings"
+                      value={plannerPromptInput}
+                      onChange={(e) => setPlannerPromptInput(e.target.value)}
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      tabIndex={0}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <label htmlFor="planner-prompt-textarea" className="text-sm font-medium text-muted-foreground">
+                      Details (optional)
+                    </label>
+                    <textarea
+                      id="planner-prompt-textarea"
+                      placeholder="e.g. I want a new page with settings for theme and notifications."
+                      value={plannerPromptTextarea}
+                      onChange={(e) => setPlannerPromptTextarea(e.target.value)}
+                      rows={3}
+                      className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                      tabIndex={0}
+                    />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Button
+                      type="button"
+                      onClick={generateTicketFromPrompt}
+                      disabled={generatingTicket || !kanbanData}
+                      className="gap-2"
+                      tabIndex={0}
+                    >
+                      {generatingTicket ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Wand2 className="size-4" />
+                      )}
+                      Generate ticket
+                    </Button>
+                  </div>
+
+                  {/* Ticket: confirm generated ticket → select milestone + idea → add to backlog at top */}
+                  {generatedTicket && (
+                    <div className="rounded-xl border border-border/40 bg-card/50 p-4 space-y-3">
+                      <p className="text-sm font-medium text-muted-foreground">Generated ticket — select Milestone & Idea, then add to top of backlog</p>
+                      <div className="text-sm space-y-1">
+                        <p><span className="font-medium">Title:</span> {generatedTicket.title}</p>
+                        {generatedTicket.description && (
+                          <p><span className="font-medium">Description:</span> {generatedTicket.description}</p>
+                        )}
+                        <p><span className="font-medium">Priority:</span> {generatedTicket.priority} · <span className="font-medium">Feature:</span> {generatedTicket.featureName}</p>
+                        {assignedAgentsForGenerated.length > 0 ? (
+                          <p><span className="font-medium">Assigned agents:</span>{" "}
+                            {assignedAgentsForGenerated.map((id) => (
+                              <span key={id} className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-violet-500/10 text-violet-600 border border-violet-500/20 mr-1 mb-1">{humanizeAgentId(id)}</span>
+                            ))}
+                          </p>
+                        ) : (
+                          <p className="text-muted-foreground text-xs">No agents (add .md files to .cursor/agents to assign)</p>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <FormField label="Milestone (required)" htmlFor="gen-ticket-milestone">
+                          <Select
+                            value={generatedTicketMilestoneId != null ? String(generatedTicketMilestoneId) : ""}
+                            onValueChange={(v) => setGeneratedTicketMilestoneId(v ? Number(v) : null)}
+                          >
+                            <SelectTrigger id="gen-ticket-milestone">
+                              <SelectValue placeholder="Select milestone" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {milestones.map((m) => (
+                                <SelectItem key={m.id} value={String(m.id)}>{m.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormField>
+                        <FormField label="Idea (required)" htmlFor="gen-ticket-idea">
+                          <Select
+                            value={generatedTicketIdeaId != null ? String(generatedTicketIdeaId) : ""}
+                            onValueChange={(v) => setGeneratedTicketIdeaId(v ? Number(v) : null)}
+                          >
+                            <SelectTrigger id="gen-ticket-idea">
+                              <SelectValue placeholder="Select idea" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {ideas.map((i) => (
+                                <SelectItem key={i.id} value={String(i.id)}>{i.title}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormField>
+                      </div>
+                      <ButtonGroup alignment="left">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setGeneratedTicket(null)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={confirmAddGeneratedTicketToBacklog}
+                          disabled={saving || generatedTicketMilestoneId == null || generatedTicketIdeaId == null}
+                        >
+                          {saving ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
+                          Confirm & add to backlog
+                        </Button>
+                      </ButtonGroup>
+                    </div>
+                  )}
+
+                  {/* Bulk actions */}
+                  <div className="flex justify-end pt-2 border-t border-border/40">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash className="size-4" />
+                          <span className="hidden sm:inline">Bulk Actions</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={handleRemoveAllTickets}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash className="size-4 mr-2" />
+                          Remove all tickets
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+
+          {/* ═══════ Project Planner (stats + Kanban) ═══════ */}
+          <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="planner-stats" className="border-none">
               <AccordionTrigger className="hover:no-underline py-0">
                 <div className="flex flex-col items-start text-left gap-1">
@@ -807,7 +1045,7 @@ export function ProjectTicketsTab({
                     </div>
                   )}
 
-                  {/* Kanban Board (inside Project Planner accordion) */}
+                  {/* Kanban Board */}
                   <div data-testid="kanban-columns-grid">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {(() => {
@@ -834,135 +1072,6 @@ export function ProjectTicketsTab({
                         });
                       })()}
                     </div>
-                  </div>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-
-          {/* ═══════ Planner Manager (accordion: badges, prompt input, AI generate, confirm, bulk actions) ═══════ */}
-          <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="planner-manager" className="border-none">
-              <AccordionTrigger className="hover:no-underline py-0">
-                <div className="flex flex-col items-start text-left gap-1">
-                  <h2 className="text-xl font-bold tracking-tight">Planner Manager</h2>
-                  <p className="text-sm text-muted-foreground font-normal">
-                    Describe what you want; AI generates a ticket. Confirm to add to backlog.
-                  </p>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pt-6">
-                <div className="w-full flex flex-col gap-4">
-
-                  {/* Same input + textarea + magic stick for Ticket */}
-                  <div className="grid gap-2">
-                    <label htmlFor="planner-prompt-input" className="text-sm font-medium text-muted-foreground">
-                      What do you want?
-                    </label>
-                    <input
-                      id="planner-prompt-input"
-                      type="text"
-                      placeholder="e.g. A new page with settings"
-                      value={plannerPromptInput}
-                      onChange={(e) => setPlannerPromptInput(e.target.value)}
-                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      tabIndex={0}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <label htmlFor="planner-prompt-textarea" className="text-sm font-medium text-muted-foreground">
-                      Details (optional)
-                    </label>
-                    <textarea
-                      id="planner-prompt-textarea"
-                      placeholder="e.g. I want a new page with settings for theme and notifications."
-                      value={plannerPromptTextarea}
-                      onChange={(e) => setPlannerPromptTextarea(e.target.value)}
-                      rows={3}
-                      className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                      tabIndex={0}
-                    />
-                  </div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <Button
-                      type="button"
-                      onClick={generateTicketFromPrompt}
-                      disabled={generatingTicket || !kanbanData}
-                      className="gap-2"
-                      tabIndex={0}
-                    >
-                      {generatingTicket ? (
-                        <Loader2 className="size-4 animate-spin" />
-                      ) : (
-                        <Wand2 className="size-4" />
-                      )}
-                      Generate ticket
-                    </Button>
-                  </div>
-
-                  {/* Ticket: confirm generated ticket → add to backlog at top */}
-                  {generatedTicket && (
-                    <div className="rounded-xl border border-border/40 bg-card/50 p-4 space-y-3">
-                      <p className="text-sm font-medium text-muted-foreground">Generated ticket — confirm to add to top of backlog</p>
-                      <div className="text-sm space-y-1">
-                        <p><span className="font-medium">Title:</span> {generatedTicket.title}</p>
-                        {generatedTicket.description && (
-                          <p><span className="font-medium">Description:</span> {generatedTicket.description}</p>
-                        )}
-                        <p><span className="font-medium">Priority:</span> {generatedTicket.priority} · <span className="font-medium">Feature:</span> {generatedTicket.featureName}</p>
-                        {assignedAgentsForGenerated.length > 0 ? (
-                          <p><span className="font-medium">Assigned agents:</span>{" "}
-                            {assignedAgentsForGenerated.map((id) => (
-                              <span key={id} className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-violet-500/10 text-violet-600 border border-violet-500/20 mr-1 mb-1">{humanizeAgentId(id)}</span>
-                            ))}
-                          </p>
-                        ) : (
-                          <p className="text-muted-foreground text-xs">No agents (add .md files to .cursor/agents to assign)</p>
-                        )}
-                      </div>
-                      <ButtonGroup alignment="left">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setGeneratedTicket(null)}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={confirmAddGeneratedTicketToBacklog}
-                          disabled={saving}
-                        >
-                          {saving ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
-                          Confirm & add to backlog
-                        </Button>
-                      </ButtonGroup>
-                    </div>
-                  )}
-
-                  {/* Bulk actions */}
-                  <div className="flex justify-end pt-2 border-t border-border/40">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash className="size-4" />
-                          <span className="hidden sm:inline">Bulk Actions</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={handleRemoveAllTickets}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash className="size-4 mr-2" />
-                          Remove all tickets
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
                   </div>
                 </div>
               </AccordionContent>
@@ -996,7 +1105,7 @@ export function ProjectTicketsTab({
             </Button>
             <Button
               onClick={handleAddTicket}
-              disabled={saving || !addTicketTitle.trim()}
+              disabled={saving || !addTicketTitle.trim() || addTicketMilestoneId == null || addTicketIdeaId == null}
             >
               {saving ? (
                 <Loader2 className="size-4 animate-spin mr-2" />
@@ -1006,7 +1115,7 @@ export function ProjectTicketsTab({
           </ButtonGroup>
         }
       >
-        <Form
+          <Form
           onSubmit={(e) => {
             e.preventDefault();
             handleAddTicket();
@@ -1026,6 +1135,40 @@ export function ProjectTicketsTab({
             onChange={(e) => setAddTicketDesc(e.target.value)}
             placeholder="Short description"
           />
+          <FormField htmlFor="ticket-milestone" label="Milestone (required)">
+            <Select
+              value={addTicketMilestoneId != null ? String(addTicketMilestoneId) : ""}
+              onValueChange={(v) => setAddTicketMilestoneId(v ? Number(v) : null)}
+            >
+              <SelectTrigger id="ticket-milestone">
+                <SelectValue placeholder="Select milestone" />
+              </SelectTrigger>
+              <SelectContent>
+                {milestones.map((m) => (
+                  <SelectItem key={m.id} value={String(m.id)}>
+                    {m.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormField>
+          <FormField htmlFor="ticket-idea" label="Idea (required)">
+            <Select
+              value={addTicketIdeaId != null ? String(addTicketIdeaId) : ""}
+              onValueChange={(v) => setAddTicketIdeaId(v ? Number(v) : null)}
+            >
+              <SelectTrigger id="ticket-idea">
+                <SelectValue placeholder="Select idea" />
+              </SelectTrigger>
+              <SelectContent>
+                {ideas.map((i) => (
+                  <SelectItem key={i.id} value={String(i.id)}>
+                    {i.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormField>
           <FormField htmlFor="ticket-priority" label="Priority">
             <Select
               value={addTicketPriority}
@@ -1054,6 +1197,15 @@ export function ProjectTicketsTab({
               placeholder="e.g. Testing & quality"
             />
           </div>
+          {(milestones.length === 0 || ideas.length === 0) && (
+            <p className="text-sm text-amber-600">
+              {milestones.length === 0 && ideas.length === 0
+                ? "Create at least one Milestone and one Idea (Milestones tab / Ideas) to add tickets."
+                : milestones.length === 0
+                  ? "Create at least one Milestone (Milestones tab) to add tickets."
+                  : "Link at least one Idea to this project (Ideas) to add tickets."}
+            </p>
+          )}
         </Form>
       </SharedDialog>
     </div>

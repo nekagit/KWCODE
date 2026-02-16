@@ -21,6 +21,8 @@ export interface ThreeTabResourcePageContentProps<TResource> {
   renderTemplatesTab: (resource: TResource) => React.ReactNode;
   renderAiTab: (resource: TResource) => React.ReactNode;
   renderMineTab: (resource: TResource) => React.ReactNode;
+  /** Optional content rendered between header and tabs (e.g. ideas.md accordion). */
+  renderAboveTabs?: (resource: TResource) => React.ReactNode;
   renderDialogs?: (resource: TResource) => React.ReactNode;
 }
 
@@ -30,6 +32,7 @@ export function ThreeTabResourcePageContent<TResource>({
   renderTemplatesTab,
   renderAiTab,
   renderMineTab,
+  renderAboveTabs,
   renderDialogs,
 }: ThreeTabResourcePageContentProps<TResource>) {
   return (
@@ -39,6 +42,7 @@ export function ThreeTabResourcePageContent<TResource>({
         description={config.description}
         icon={config.icon}
       />
+      {renderAboveTabs?.(resource)}
       <ThreeTabLayout
         tabLabels={config.tabLabels}
         tabListClassName={config.tabListClassName}

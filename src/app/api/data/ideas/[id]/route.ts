@@ -1,34 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import path from "path";
-import fs from "fs";
+import { getDb, type IdeaRow } from "@/lib/db";
 import type { IdeaRecord } from "../route";
 
-function findDataDir(): string {
-  const cwd = process.cwd();
-  const inCwd = path.join(cwd, "data");
-  if (fs.existsSync(inCwd) && fs.statSync(inCwd).isDirectory()) return inCwd;
-  const inParent = path.join(cwd, "..", "data");
-  if (fs.existsSync(inParent) && fs.statSync(inParent).isDirectory()) return inParent;
-  return cwd;
-}
-
-const DATA_DIR = findDataDir();
-const IDEAS_FILE = path.join(DATA_DIR, "ideas.json");
-
-function readIdeas(): IdeaRecord[] {
-  try {
-    if (!fs.existsSync(IDEAS_FILE)) return [];
-    const raw = fs.readFileSync(IDEAS_FILE, "utf-8");
-    const arr = JSON.parse(raw);
-    return Array.isArray(arr) ? arr : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeIdeas(ideas: IdeaRecord[]): void {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  fs.writeFileSync(IDEAS_FILE, JSON.stringify(ideas, null, 2), "utf-8");
+function rowToRecord(r: IdeaRow): IdeaRecord {
+  return {
+    id: r.id,
+    title: r.title,
+    description: r.description,
+    category: r.category as IdeaRecord["category"],
+    source: r.source as IdeaRecord["source"],
+    created_at: r.created_at,
+    updated_at: r.updated_at,
+  };
 }
 
 /** GET: single idea by id (numeric, passed as URL segment) */
@@ -42,12 +25,12 @@ export async function GET(
     if (!Number.isInteger(numId)) {
       return NextResponse.json({ error: "Invalid idea id" }, { status: 400 });
     }
-    const ideas = readIdeas();
-    const record = ideas.find((i) => Number(i.id) === numId);
-    if (!record) {
+    const db = getDb();
+    const row = db.prepare("SELECT * FROM ideas WHERE id = ?").get(numId) as IdeaRow | undefined;
+    if (!row) {
       return NextResponse.json({ error: "Idea not found" }, { status: 404 });
     }
-    return NextResponse.json(record);
+    return NextResponse.json(rowToRecord(row));
   } catch (e) {
     console.error("Idea GET error:", e);
     return NextResponse.json(
@@ -68,12 +51,11 @@ export async function DELETE(
     if (!Number.isInteger(numId)) {
       return NextResponse.json({ error: "Invalid idea id" }, { status: 400 });
     }
-    const ideas = readIdeas();
-    const filtered = ideas.filter((i) => Number(i.id) !== numId);
-    if (filtered.length === ideas.length) {
+    const db = getDb();
+    const r = db.prepare("DELETE FROM ideas WHERE id = ?").run(numId);
+    if (r.changes === 0) {
       return NextResponse.json({ error: "Idea not found" }, { status: 404 });
     }
-    writeIdeas(filtered);
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("Idea DELETE error:", e);
