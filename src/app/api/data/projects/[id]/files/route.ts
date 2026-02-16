@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 import type { Project } from "@/types/project";
+import { repoAllowed } from "@/lib/repo-allowed";
 
 function findDataDir(): string {
     const cwd = process.cwd();
@@ -56,20 +57,7 @@ export async function GET(
         const cwd = process.cwd();
         const resolvedRepo = path.resolve(repoPath);
 
-        // Security check: ensure repo path is within allowed bounds if necessary
-        // For now we allow reading if repoPath is set, but usually valid repos are external.
-        // However, the existing file route checks if it starts with cwd. 
-        // If the user's project is in Documents (outside app), that check might fail if strict.
-        // But the existing `file/route.ts` does:
-        // if (!resolvedRepo.startsWith(cwd)) -> 403.
-        // I will copy that logic to be consistent/safe, assuming the user's projects are inside the app or allowed.
-        // If the user is running locally with full access, they might want to relax this.
-        // Use the exact same logic as file/route.ts
-
-        if (!resolvedRepo.startsWith(cwd)) {
-            // logic from file/route.ts
-            // If this is too strict for external projects, we might need to adjust both. 
-            // But I will stick to the pattern.
+        if (!repoAllowed(resolvedRepo, cwd)) {
             return NextResponse.json(
                 { error: "Project repo is outside app directory; file access not allowed" },
                 { status: 403 }

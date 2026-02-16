@@ -81,7 +81,7 @@ export function ProjectIdeasDocTab({ project, projectId, docsRefreshKey }: Proje
         text = await readCursorDocFromServer(IDEAS_SETUP_PATH);
       }
       setContent(text && text.trim() ? text : null);
-      const parsedDoc = text && text.trim() ? parseIdeasMd(text) : { intro: "", ideas: [], format: "bullets" };
+      const parsedDoc = text && text.trim() ? parseIdeasMd(text) : { intro: "", ideas: [], format: "bullets" as const };
       setParsed(parsedDoc);
       const structuredDoc = text && text.trim() ? parseIdeasMdStructured(text) : { sections: [], isStructured: false };
       setStructured(structuredDoc);

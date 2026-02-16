@@ -166,7 +166,7 @@ export function ProjectFilesTab({ project, projectId }: ProjectFilesTabProps) {
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6 shrink-0"
-                    onClick={fetchFiles}
+                    onClick={() => void fetchFiles()}
                     disabled={loading}
                     title="Refresh"
                 >
@@ -183,7 +183,7 @@ export function ProjectFilesTab({ project, projectId }: ProjectFilesTabProps) {
                 ) : error ? (
                     <div className="flex flex-col items-center justify-center h-full p-4 text-center">
                         <p className="text-sm text-destructive mb-2">{error}</p>
-                        <Button variant="outline" size="sm" onClick={fetchFiles}>Retry</Button>
+                        <Button variant="outline" size="sm" onClick={() => void fetchFiles()}>Retry</Button>
                     </div>
                 ) : files.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-muted-foreground">

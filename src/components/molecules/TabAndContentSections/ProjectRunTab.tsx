@@ -51,43 +51,30 @@ import {
   FileText,
   ScanSearch,
   Bug,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isImplementAllRun, parseTicketNumberFromRunLabel } from "@/lib/run-helpers";
 import { StatusPill } from "@/components/shared/DisplayPrimitives";
 import { TerminalSlot } from "@/components/shared/TerminalSlot";
 import { KanbanTicketCard } from "@/components/molecules/Kanban/KanbanTicketCard";
+import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Textarea } from "@/components/ui/textarea";
 
 /** System prompt for the debugging terminal agent. User pastes error logs below; this is prepended so the agent gets instructions + logs. */
-const DEBUG_ASSISTANT_PROMPT = `You are an expert debugging assistant with deep knowledge across all tech stacks, frameworks, and languages.
+const DEBUG_ASSISTANT_PROMPT = `You are an expert debugging assistant. You are running in the current workspace—the user has pasted error/log output below.
 
-CONTEXT ANALYSIS:
-1. Carefully read ALL provided logs, error messages, and stack traces
-2. Identify the root cause, not just symptoms
-3. Consider version conflicts, dependency issues, configuration problems, and code logic errors
+TASK:
+1. Read ALL logs/errors below and identify the root cause.
+2. APPLY THE FIX: Edit the relevant files in this workspace to fix the issue. Do not only suggest—make the code or config changes yourself.
+3. If you need to run commands (install, build, restart), run them.
+4. Briefly state what you fixed and why.
 
-DEBUGGING APPROACH:
-- Analyze error messages line by line
-- Trace the execution flow from the error backwards
-- Check for common pitfalls: missing dependencies, incorrect paths, permission issues, environment variables, API changes
-- Consider the full context: OS, runtime version, framework version, recent changes
-
-SOLUTION REQUIREMENTS:
-1. Explain the root cause clearly and concisely
-2. Provide the exact fix with file paths and line numbers
-3. Show before/after code changes when applicable
-4. Include any commands needed (install, configure, restart)
-5. Suggest preventive measures to avoid similar issues
-
-OUTPUT FORMAT:
-**Root Cause:** [Clear explanation]
-**Fix:** [Step-by-step solution]
-**Why This Works:** [Brief technical explanation]
-**Prevention:** [How to avoid this in future]
-
-Be direct, accurate, and actionable. No generic advice - provide specific solutions based on the actual error.
+RULES:
+- Work in the current workspace only. Use real file paths and real edits.
+- Be specific: exact files, exact changes. No generic advice.
+- If the logs refer to a service or path not in this repo, say so and suggest what the user should do (e.g. open the correct project).
 
 ERROR/LOG INFORMATION:
 `;
@@ -535,59 +522,60 @@ function WorkerAnalyzeQueueSection({ projectId, repoPath }: { projectId: string;
   return (
     <Accordion type="single" collapsible className="rounded-2xl border border-border/40 bg-card/50 overflow-hidden backdrop-blur-sm">
       <AccordionItem value="analyze" className="border-none">
-        <AccordionTrigger className="px-4 py-3 hover:no-underline [&[data-state=open]]:border-b [&[data-state=open]]:border-border/40">
-          <div className="flex items-center justify-between gap-2 w-full pr-2">
+        <AccordionPrimitive.Header className="flex flex-1 items-center px-4 py-3 [&[data-state=open]]:border-b [&[data-state=open]]:border-border/40">
+          <AccordionPrimitive.Trigger className="flex flex-1 items-center justify-between gap-2 text-left hover:no-underline [&[data-state=open]>svg]:rotate-180">
             <div className="flex items-center gap-2">
               <ScanSearch className="size-4 text-primary" />
               <span className="text-xs font-semibold">Analyze queue</span>
             </div>
-            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 text-[10px]"
-                disabled={loading || processing}
-                onClick={async () => {
-                  await writeAnalyzeQueue(projectId, repoPath);
+            <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
+          </AccordionPrimitive.Trigger>
+          <div className="flex items-center gap-2 pl-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-[10px]"
+              disabled={loading || processing}
+              onClick={async () => {
+                await writeAnalyzeQueue(projectId, repoPath);
+                await loadQueue();
+                toast.success("8 jobs enqueued.");
+              }}
+            >
+              Enqueue (8 jobs)
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              className="h-7 text-[10px]"
+              disabled={!hasPending || processing}
+              onClick={async () => {
+                setProcessing(true);
+                try {
+                  const { completed, failed } = await runAnalyzeQueueProcessing(projectId, repoPath, {
+                    getQueue: () => readAnalyzeQueue(projectId, repoPath),
+                    setQueue: (d) =>
+                      writeProjectFile(projectId, ANALYZE_QUEUE_PATH, JSON.stringify(d, null, 2), repoPath),
+                  });
                   await loadQueue();
-                  toast.success("8 jobs enqueued.");
-                }}
-              >
-                Enqueue (8 jobs)
-              </Button>
-              <Button
-                variant="default"
-                size="sm"
-                className="h-7 text-[10px]"
-                disabled={!hasPending || processing}
-                onClick={async () => {
-                  setProcessing(true);
-                  try {
-                    const { completed, failed } = await runAnalyzeQueueProcessing(projectId, repoPath, {
-                      getQueue: () => readAnalyzeQueue(projectId, repoPath),
-                      setQueue: (d) =>
-                        writeProjectFile(projectId, ANALYZE_QUEUE_PATH, JSON.stringify(d, null, 2), repoPath),
-                    });
-                    await loadQueue();
-                    if (failed === 0) toast.success(`All ${completed} done.`);
-                    else toast.warning(`${completed} done, ${failed} failed.`);
-                  } finally {
-                    setProcessing(false);
-                  }
-                }}
-              >
-                {processing ? (
-                  <>
-                    <Loader2 className="size-3.5 animate-spin mr-1" />
-                    Process…
-                  </>
-                ) : (
-                  "Process (3 at a time)"
-                )}
-              </Button>
-            </div>
+                  if (failed === 0) toast.success(`All ${completed} done.`);
+                  else toast.warning(`${completed} done, ${failed} failed.`);
+                } finally {
+                  setProcessing(false);
+                }
+              }}
+            >
+              {processing ? (
+                <>
+                  <Loader2 className="size-3.5 animate-spin mr-1" />
+                  Process…
+                </>
+              ) : (
+                "Process (3 at a time)"
+              )}
+            </Button>
           </div>
-        </AccordionTrigger>
+        </AccordionPrimitive.Header>
         <AccordionContent className="pb-0 pt-0">
           <div className="p-4 min-h-[80px]">
             {loading ? (
@@ -905,12 +893,16 @@ function WorkerDebuggingSection({ projectPath }: { projectPath: string }) {
       toast.error("Paste error logs above, then run the agent.");
       return;
     }
+    if (!projectPath?.trim()) {
+      toast.error("Project path is missing. Set the project repo path in project details.");
+      return;
+    }
     setLoading(true);
     try {
       const fullPrompt = DEBUG_ASSISTANT_PROMPT + logs;
-      const runId = await runTempTicket(projectPath, fullPrompt, "Debug: fix errors");
+      const runId = await runTempTicket(projectPath.trim(), fullPrompt, "Debug: fix errors");
       if (runId) {
-        toast.success("Debug agent started on slot 1. Check the terminal below.");
+        toast.success("Debug agent started. Check the terminal below.");
       } else {
         toast.error("Failed to start debug agent.");
       }
@@ -932,7 +924,7 @@ function WorkerDebuggingSection({ projectPath }: { projectPath: string }) {
             Debugging
           </h3>
           <p className="text-[10px] text-muted-foreground normal-case">
-            Paste error logs below; run the terminal agent to diagnose and fix
+            Paste error logs below; run the terminal agent to diagnose and fix (runs in this project)
           </p>
         </div>
       </div>

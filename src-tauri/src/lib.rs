@@ -507,6 +507,10 @@ fn implement_all_script_path(ws: &PathBuf) -> PathBuf {
     ws.join("script").join("implement_all.sh")
 }
 
+fn run_terminal_agent_script_path(ws: &PathBuf) -> PathBuf {
+    ws.join("script").join("run_terminal_agent.sh")
+}
+
 /// Resolve project root (contains script/ and data/). Tries current working directory first,
 /// then walks up from the executable path so the app finds data when launched from any cwd.
 fn project_root() -> Result<PathBuf, String> {
@@ -933,6 +937,8 @@ pub struct Project {
     /// Optional on create; generated if missing or empty.
     #[serde(default)]
     pub id: String,
+    /// Default so partial updates (e.g. { runPort }) deserialize without sending name.
+    #[serde(default)]
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
@@ -2009,6 +2015,118 @@ fn run_implement_all_script_inner(
     Ok(())
 }
 
+/// Single-prompt terminal agent run (debug "Run terminal agent to fix", Setup prompt, temp ticket, etc.).
+/// Uses script/run_terminal_agent.sh. Not used for Implement All.
+fn run_run_terminal_agent_script_inner(
+    app: AppHandle,
+    state: State<'_, RunningState>,
+    ws: PathBuf,
+    run_id: String,
+    run_label: String,
+    project_path: String,
+    prompt_content: String,
+) -> Result<(), String> {
+    let run_label_clone = run_label.clone();
+    let script = run_terminal_agent_script_path(&ws);
+    if !script.exists() {
+        return Err(format!(
+            "Run terminal agent script not found: {}",
+            script.to_string_lossy()
+        ));
+    }
+    let p = std::env::temp_dir().join(format!("kw_run_terminal_agent_prompt_{}.txt", run_id));
+    std::fs::write(&p, &prompt_content).map_err(|e| e.to_string())?;
+    let mut cmd = Command::new("bash");
+    cmd.arg(script.as_os_str())
+        .arg("-P")
+        .arg(project_path.as_str())
+        .arg("-F")
+        .arg(p.as_os_str())
+        .current_dir(&ws)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    #[cfg(unix)]
+    cmd.process_group(0);
+
+    let mut child = cmd.spawn().map_err(|e| e.to_string())?;
+    let stdout = child.stdout.take().ok_or("no stdout")?;
+    let stderr = child.stderr.take().ok_or("no stderr")?;
+
+    {
+        let mut guard = state.runs.lock().map_err(|e| e.to_string())?;
+        guard.insert(
+            run_id.clone(),
+            RunEntry {
+                child,
+                label: run_label.clone(),
+            },
+        );
+    }
+
+    let app_stdout = app.clone();
+    let app_stderr = app.clone();
+    let app_exited = app.clone();
+    let runs_handle = Arc::clone(&state.runs);
+    let run_id_stdout = run_id.clone();
+    let run_id_stderr = run_id.clone();
+    let run_id_exited = run_id.clone();
+    thread::spawn(move || {
+        let reader = BufReader::new(stdout);
+        for line in reader.lines() {
+            if let Ok(line) = line {
+                let _ = app_stdout.emit(
+                    "script-log",
+                    ScriptLogPayload {
+                        run_id: run_id_stdout.clone(),
+                        line,
+                    },
+                );
+            }
+        }
+    });
+    thread::spawn(move || {
+        let reader = BufReader::new(stderr);
+        for line in reader.lines() {
+            if let Ok(line) = line {
+                let _ = app_stderr.emit(
+                    "script-log",
+                    ScriptLogPayload {
+                        run_id: run_id_stderr.clone(),
+                        line: format!("[stderr] {}", line),
+                    },
+                );
+            }
+        }
+    });
+    thread::spawn(move || {
+        loop {
+            let exited = {
+                let mut guard = match runs_handle.lock() {
+                    Ok(g) => g,
+                    Err(_) => break,
+                };
+                if let Some(entry) = guard.get_mut(&run_id_exited) {
+                    if entry.child.try_wait().ok().flatten().is_some() {
+                        guard.remove(&run_id_exited);
+                        true
+                    } else {
+                        false
+                    }
+                } else {
+                    break;
+                }
+            };
+            if exited {
+                let _ = app_exited.emit("script-exited", ScriptExitedPayload { run_id: run_id_exited, label: run_label_clone.clone() });
+                break;
+            }
+            thread::sleep(std::time::Duration::from_millis(500));
+        }
+    });
+
+    Ok(())
+}
+
 /// Opens 3 Terminal.app windows (macOS only), each running `cd project_path && agent`.
 /// Gives you a real TTY so Cursor CLI runs in interactive mode instead of "print mode".
 #[tauri::command]
@@ -2097,6 +2215,25 @@ async fn run_implement_all(
         _ => "Implement All".to_string(),
     };
     run_implement_all_script_inner(app, state, ws, run_id.clone(), label, project_path, slot, prompt_content)?;
+    Ok(RunIdResponse { run_id })
+}
+
+#[tauri::command]
+async fn run_run_terminal_agent(
+    app: AppHandle,
+    state: State<'_, RunningState>,
+    project_path: String,
+    prompt_content: String,
+    label: String,
+) -> Result<RunIdResponse, String> {
+    let ws = project_root()?;
+    let run_id = gen_run_id();
+    let run_label = if label.trim().is_empty() {
+        "Terminal agent".to_string()
+    } else {
+        label.trim().to_string()
+    };
+    run_run_terminal_agent_script_inner(app, state, ws, run_id.clone(), run_label, project_path, prompt_content)?;
     Ok(RunIdResponse { run_id })
 }
 
@@ -2416,6 +2553,7 @@ pub fn run() {
             run_npm_script,
             run_npm_script_in_external_terminal,
             run_implement_all,
+            run_run_terminal_agent,
             open_implement_all_in_system_terminal,
             list_running_runs,
             stop_run,

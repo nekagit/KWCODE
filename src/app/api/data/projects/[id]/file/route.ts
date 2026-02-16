@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 import type { Project } from "@/types/project";
+import { repoAllowed } from "@/lib/repo-allowed";
 
 function findDataDir(): string {
   const cwd = process.cwd();
@@ -56,7 +57,7 @@ export async function GET(
     }
     const cwd = process.cwd();
     const resolvedRepo = path.resolve(repoPath);
-    if (!resolvedRepo.startsWith(cwd)) {
+    if (!repoAllowed(resolvedRepo, cwd)) {
       return NextResponse.json(
         { error: "Project repo is outside app directory; file read not allowed" },
         { status: 403 }
@@ -113,7 +114,7 @@ export async function POST(
     }
     const cwd = process.cwd();
     const resolvedRepo = path.resolve(repoPath);
-    if (!resolvedRepo.startsWith(cwd)) {
+    if (!repoAllowed(resolvedRepo, cwd)) {
       return NextResponse.json(
         { error: "Project repo is outside app directory; file write not allowed" },
         { status: 403 }

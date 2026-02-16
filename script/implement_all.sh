@@ -57,15 +57,20 @@ if [ -n "$PROMPT_FILE" ] && [ -f "$PROMPT_FILE" ]; then
   PROMPT_CONTENT=$(cat "$PROMPT_FILE")
   rm -f "$PROMPT_FILE"
   ESCAPED=$(printf '%s' "$PROMPT_CONTENT" | sed 's/\\/\\\\/g; s/"/\\"/g')
-  echo "Running: agent -F -p \"<prompt>\" (print mode, -F = trust workspace)"
+  echo "Running: agent -F -p \"<from file>\" (print mode, -F = trust workspace)"
+  echo "(Output may appear when the agent finishes.)"
   agent -F -p "$ESCAPED"
 else
   echo "Running: agent"
+  echo "(Output may appear when the agent finishes.)"
   agent
 fi
 AGENT_EXIT=$?
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "Done. Agent exited with code $AGENT_EXIT."
+if [ "$AGENT_EXIT" -ne 0 ]; then
+  echo "Agent failed (non-zero exit). Scroll up for agent output or look for [stderr] lines."
+fi
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 exit "$AGENT_EXIT"

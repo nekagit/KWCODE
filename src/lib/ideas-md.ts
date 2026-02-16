@@ -218,7 +218,7 @@ export function parseIdeasMdStructured(content: string): IdeasStructuredDoc {
     const ideaBlocks = ideasPart ? ideasPart.split(/(?=####\s+)/).filter((s) => s.trim()) : [];
     const ideas: IdeaBlock[] = [];
     for (const block of ideaBlocks) {
-      const ideaMatch = block.match(/^####\s+(?:\d+\.|[^\n]+\.)\s*(.+?)(?=\n|$)/s);
+      const ideaMatch = block.match(/^####\s+(?:\d+\.|[^\n]+\.)\s*([\s\S]+?)(?=\n|$)/);
       if (ideaMatch) {
         const ideaTitle = ideaMatch[1].trim();
         const bodyStart = block.indexOf("\n");

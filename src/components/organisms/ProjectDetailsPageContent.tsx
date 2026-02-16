@@ -26,6 +26,7 @@ import {
   Pencil,
   Lightbulb,
   Activity,
+  ExternalLink,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Project } from "@/types/project";
@@ -407,10 +408,9 @@ export function ProjectDetailsPageContent() {
                       : "Analyze all"}
                   </Button>
                 )}
-                {/* Run port: display or set localhost port for View Running Project */}
-                {project.repoPath && (
-                  <>
-                    {project.runPort != null ? (
+                {/* Run port: display or set localhost port for View Running Project (always show so port can be set even without repo path) */}
+                <>
+                  {project.runPort != null ? (
                       portEdit ? (
                         <div className="flex items-center gap-1.5">
                           <Input
@@ -527,22 +527,19 @@ export function ProjectDetailsPageContent() {
                         </Button>
                       </div>
                     )}
-                  </>
-                )}
-                {/* View Running Project: opens modal with iframe */}
-                {project.repoPath && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-7 px-2.5 text-[10px] font-semibold uppercase tracking-wider gap-1.5 border-emerald-500/30 hover:bg-emerald-500/5 hover:border-emerald-500/50 transition-all duration-300 shadow-sm"
-                    title={project.runPort == null ? "Set run port above first" : "Open running app in modal"}
-                    onClick={() => setViewRunningOpen(true)}
-                    disabled={project.runPort == null}
-                  >
-                    <Monitor className="size-3 text-emerald-500" />
-                    View Running Project
-                  </Button>
-                )}
+                </>
+                {/* View Running Project: opens modal with iframe (always visible; disabled until port is set) */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2.5 text-[10px] font-semibold uppercase tracking-wider gap-1.5 border-emerald-500/30 hover:bg-emerald-500/5 hover:border-emerald-500/50 transition-all duration-300 shadow-sm"
+                  title={project.runPort == null ? "Set run port above first" : "Open running app in modal"}
+                  onClick={() => setViewRunningOpen(true)}
+                  disabled={project.runPort == null}
+                >
+                  <Monitor className="size-3 text-emerald-500" />
+                  View Running Project
+                </Button>
                 {project.created_at && (
                   <MetadataBadge
                     icon={<Calendar className="size-3" />}
@@ -755,6 +752,35 @@ export function ProjectDetailsPageContent() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* View Running Project modal: iframe + open in new tab */}
+      <Dialog open={viewRunningOpen} onOpenChange={setViewRunningOpen}>
+        <DialogContent className="max-w-[95vw] w-full h-[90vh] flex flex-col gap-3 p-0">
+          <DialogHeader className="px-4 pt-4 pb-0">
+            <DialogTitle className="text-sm font-medium">Running project</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 flex flex-col gap-2 px-4 pb-4">
+            {project?.runPort != null && (
+              <>
+                <a
+                  href={`http://localhost:${project.runPort}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                >
+                  <ExternalLink className="size-3" />
+                  Open in new tab
+                </a>
+                <iframe
+                  title="Running project"
+                  src={`http://localhost:${project.runPort}`}
+                  className="w-full flex-1 min-h-[400px] rounded-md border border-border bg-muted/30"
+                />
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </ErrorBoundary>
   );
 }

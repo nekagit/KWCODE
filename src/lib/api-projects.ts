@@ -4,6 +4,7 @@
  */
 import { invoke, isTauri } from "@/lib/tauri";
 import type { Project } from "@/types/project";
+import type { RunMeta } from "@/types/run";
 import { ANALYZE_JOB_IDS, getPromptPath, getOutputPath } from "@/lib/cursor-paths";
 
 export type CreateProjectBody = {
@@ -305,8 +306,8 @@ export type AnalyzeProjectDocOptions = {
     projectPath: string,
     promptContent: string,
     label: string,
-    meta?: { projectId?: string; outputPath?: string; onComplete?: string; payload?: Record<string, unknown> }
-  ) => string | null;
+    meta?: RunMeta
+  ) => Promise<string | null>;
 };
 
 /**
@@ -362,7 +363,7 @@ export async function analyzeProjectDoc(
     await writeProjectFile(projectId, outputPath, analyzingPlaceholder, path);
     const prompt = await getAnalyzePromptOnly(projectId, promptPath, outputPath, path);
     const label = `Analyze: ${outputPath.replace(/^\.cursor\//, "").replace(/\.md$/i, "")}`;
-    options.runTempTicket(path, prompt, label, {
+    await options.runTempTicket(path, prompt, label, {
       projectId,
       outputPath,
       onComplete: "analyze-doc",

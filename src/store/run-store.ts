@@ -430,10 +430,10 @@ export const useRunStore = create<RunStore>()((set, get) => ({
     }
     set({ error: null });
     try {
-      const { run_id } = await invoke<{ run_id: string }>("run_implement_all", {
+      const { run_id } = await invoke<{ run_id: string }>("run_run_terminal_agent", {
         projectPath: path,
-        slot: 1,
         promptContent: promptContent.trim(),
+        label: `Setup Prompt: ${label}`,
       });
       const runLabel = `Setup Prompt: ${label}`;
       set((s) => ({
@@ -469,10 +469,10 @@ export const useRunStore = create<RunStore>()((set, get) => ({
     }
     set({ error: null });
     try {
-      const { run_id } = await invoke<{ run_id: string }>("run_implement_all", {
+      const { run_id } = await invoke<{ run_id: string }>("run_run_terminal_agent", {
         projectPath: path,
-        slot: 1,
         promptContent: promptContent.trim(),
+        label,
       });
       set((s) => ({
         runningRuns: [

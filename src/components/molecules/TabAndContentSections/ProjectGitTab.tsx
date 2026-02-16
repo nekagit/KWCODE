@@ -211,7 +211,7 @@ export function ProjectGitTab({ project, projectId }: ProjectGitTabProps) {
             <FolderGit2 className={classes[2]} />
             Git
           </div>
-          <Button variant="outline" size="sm" onClick={fetchGitInfo} disabled={loading}>
+          <Button variant="outline" size="sm" onClick={() => void fetchGitInfo()} disabled={loading}>
             <RefreshCw className={classes[17]} />
             Refresh
           </Button>
@@ -313,7 +313,7 @@ export function ProjectGitTab({ project, projectId }: ProjectGitTabProps) {
             )}
             <span className={classes[26]}>Push</span>
           </Button>
-          <Button variant="outline" size="sm" onClick={fetchGitInfo} disabled={busy}>
+          <Button variant="outline" size="sm" onClick={() => void fetchGitInfo()} disabled={busy}>
             {loading ? (
               <Loader2 className={classes[33]} />
             ) : (

@@ -73,6 +73,39 @@ const PRIORITIES: Array<"P0" | "P1" | "P2" | "P3"> = ["P0", "P1", "P2", "P3"];
 /** Agent ids to never auto-assign to generated tickets (e.g. devops, requirements). */
 const EXCLUDED_AGENT_IDS = ["devops", "requirements"];
 
+/** Extract a ticket-shaped JSON object from agent stdout (handles markdown code blocks and extra text). */
+function extractTicketJsonFromStdout(
+  stdout: string
+): { title?: string; description?: string; priority?: string; featureName?: string } | null {
+  let toParse = stdout.trim();
+  const codeBlock = toParse.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (codeBlock) toParse = codeBlock[1].trim();
+  const firstBrace = toParse.indexOf("{");
+  if (firstBrace === -1) return null;
+  const fromBrace = toParse.slice(firstBrace);
+  for (let depth = 0, end = 0; end < fromBrace.length; end++) {
+    if (fromBrace[end] === "{") depth++;
+    else if (fromBrace[end] === "}") {
+      depth--;
+      if (depth === 0) {
+        try {
+          const parsed = JSON.parse(fromBrace.slice(0, end + 1)) as Record<string, unknown>;
+          if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed as { title?: string; description?: string; priority?: string; featureName?: string };
+        } catch {
+          /* try next closing brace */
+        }
+      }
+    }
+  }
+  try {
+    const fallback = JSON.parse(fromBrace) as Record<string, unknown>;
+    if (fallback && typeof fallback === "object" && !Array.isArray(fallback)) return fallback as { title?: string; description?: string; priority?: string; featureName?: string };
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
 /* isImplementAllRun is now imported from @/lib/run-helpers */
 
 /** Grid of 3 terminal slots (last 3 Implement All runs). */
@@ -641,10 +674,8 @@ export function ProjectTicketsTab({
           return;
         }
         registerRunCompleteHandler(`parse_ticket:${projectId}`, (stdout: string) => {
-          const jsonMatch = stdout.match(/\{[\s\S]*\}/);
-          const jsonStr = jsonMatch ? jsonMatch[0] : stdout;
-          try {
-            const parsed = JSON.parse(jsonStr) as { title?: string; description?: string; priority?: string; featureName?: string };
+          const parsed = extractTicketJsonFromStdout(stdout);
+          if (parsed) {
             const priority = ["P0", "P1", "P2", "P3"].includes(parsed.priority ?? "") ? parsed.priority! : "P1";
             setGeneratedTicket({
               title: String(parsed.title ?? prompt.slice(0, 80)).trim().slice(0, 200),
@@ -652,8 +683,8 @@ export function ProjectTicketsTab({
               priority: priority as "P0" | "P1" | "P2" | "P3",
               featureName: String(parsed.featureName ?? "Uncategorized").trim().slice(0, 100),
             });
-          } catch {
-            toast.error("Could not parse agent output");
+          } else {
+            toast.error("Could not parse agent output. Expected a single JSON object with title, description, priority, featureName.");
           }
           setGeneratingTicket(false);
         });

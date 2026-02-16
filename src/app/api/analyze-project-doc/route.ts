@@ -4,6 +4,7 @@ import fs from "fs";
 import { runAgentPrompt } from "@/lib/agent-runner";
 import { stripTerminalArtifacts, MIN_DOCUMENT_LENGTH } from "@/lib/strip-terminal-artifacts";
 import type { Project } from "@/types/project";
+import { repoAllowed } from "@/lib/repo-allowed";
 
 function findDataDir(): string {
   const cwd = process.cwd();
@@ -26,14 +27,6 @@ function readProjects(): Project[] {
   } catch {
     return [];
   }
-}
-
-function repoAllowed(resolvedRepo: string, cwd: string): boolean {
-  const cwdResolved = path.resolve(cwd);
-  return (
-    resolvedRepo.startsWith(cwdResolved) ||
-    path.dirname(resolvedRepo) === path.dirname(cwdResolved)
-  );
 }
 
 function readFileInRepo(repoPath: string, relativePath: string, cwd: string): string | null {
