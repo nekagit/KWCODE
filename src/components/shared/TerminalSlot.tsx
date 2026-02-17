@@ -17,6 +17,8 @@ export interface TerminalRunData {
     status: "running" | "done";
     startedAt?: number;
     doneAt?: number;
+    /** Script exit code when done (0 = success, non-zero = failure). */
+    exitCode?: number;
     /** First localhost URL detected from output (e.g. http://localhost:3000) for "Open app" link. */
     localUrl?: string;
 }
@@ -76,12 +78,18 @@ export function TerminalSlot({
         run?.doneAt != null && run?.startedAt != null
             ? (run.doneAt - run.startedAt) / 1000
             : null;
+    const durationPart =
+        doneDurationSeconds != null
+            ? ` in ${doneDurationSeconds < 1 ? "<1s" : formatElapsed(doneDurationSeconds)}`
+            : "";
+    const exitPart =
+        run && done && run.exitCode !== undefined && run.exitCode !== 0
+            ? ` (exit ${run.exitCode})`
+            : "";
     const statusLabel = run
         ? running
             ? `Running — ${formatElapsed(elapsedSeconds)}`
-            : doneDurationSeconds != null
-                ? `Done in ${doneDurationSeconds < 1 ? "<1s" : formatElapsed(doneDurationSeconds)}`
-                : "Done"
+            : `Done${durationPart}${exitPart}`
         : "Idle";
 
     const borderColor = {

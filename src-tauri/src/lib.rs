@@ -48,6 +48,9 @@ pub struct ScriptLogPayload {
 pub struct ScriptExitedPayload {
     pub run_id: String,
     pub label: String,
+    /// Exit code of the script process when available (e.g. 0 = success, non-zero = failure).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub exit_code: Option<i32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -1855,24 +1858,32 @@ fn run_script_inner(
     });
     thread::spawn(move || {
         loop {
-            let exited = {
+            let exit_code_to_emit: Option<Option<i32>> = {
                 let mut guard = match runs_handle.lock() {
                     Ok(g) => g,
                     Err(_) => break,
                 };
                 if let Some(entry) = guard.get_mut(&run_id_exited) {
-                    if entry.child.try_wait().ok().flatten().is_some() {
+                    if let Some(status) = entry.child.try_wait().ok().flatten() {
+                        let code = status.code();
                         guard.remove(&run_id_exited);
-                        true
+                        Some(code)
                     } else {
-                        false
+                        None
                     }
                 } else {
                     break;
                 }
             };
-            if exited {
-                let _ = app_exited.emit("script-exited", ScriptExitedPayload { run_id: run_id_exited, label: run_label_clone.clone() });
+            if let Some(exit_code) = exit_code_to_emit {
+                let _ = app_exited.emit(
+                    "script-exited",
+                    ScriptExitedPayload {
+                        run_id: run_id_exited,
+                        label: run_label_clone.clone(),
+                        exit_code,
+                    },
+                );
                 break;
             }
             thread::sleep(std::time::Duration::from_millis(500));
@@ -1960,24 +1971,32 @@ fn run_analysis_script_inner(
     });
     thread::spawn(move || {
         loop {
-            let exited = {
+            let exit_code_to_emit: Option<Option<i32>> = {
                 let mut guard = match runs_handle.lock() {
                     Ok(g) => g,
                     Err(_) => break,
                 };
                 if let Some(entry) = guard.get_mut(&run_id_exited) {
-                    if entry.child.try_wait().ok().flatten().is_some() {
+                    if let Some(status) = entry.child.try_wait().ok().flatten() {
+                        let code = status.code();
                         guard.remove(&run_id_exited);
-                        true
+                        Some(code)
                     } else {
-                        false
+                        None
                     }
                 } else {
                     break;
                 }
             };
-            if exited {
-                let _ = app_exited.emit("script-exited", ScriptExitedPayload { run_id: run_id_exited, label: run_label_clone.clone() });
+            if let Some(exit_code) = exit_code_to_emit {
+                let _ = app_exited.emit(
+                    "script-exited",
+                    ScriptExitedPayload {
+                        run_id: run_id_exited,
+                        label: run_label_clone.clone(),
+                        exit_code,
+                    },
+                );
                 break;
             }
             thread::sleep(std::time::Duration::from_millis(500));
@@ -2083,24 +2102,32 @@ fn run_implement_all_script_inner(
     });
     thread::spawn(move || {
         loop {
-            let exited = {
+            let exit_code_to_emit: Option<Option<i32>> = {
                 let mut guard = match runs_handle.lock() {
                     Ok(g) => g,
                     Err(_) => break,
                 };
                 if let Some(entry) = guard.get_mut(&run_id_exited) {
-                    if entry.child.try_wait().ok().flatten().is_some() {
+                    if let Some(status) = entry.child.try_wait().ok().flatten() {
+                        let code = status.code();
                         guard.remove(&run_id_exited);
-                        true
+                        Some(code)
                     } else {
-                        false
+                        None
                     }
                 } else {
                     break;
                 }
             };
-            if exited {
-                let _ = app_exited.emit("script-exited", ScriptExitedPayload { run_id: run_id_exited, label: run_label_clone.clone() });
+            if let Some(exit_code) = exit_code_to_emit {
+                let _ = app_exited.emit(
+                    "script-exited",
+                    ScriptExitedPayload {
+                        run_id: run_id_exited,
+                        label: run_label_clone.clone(),
+                        exit_code,
+                    },
+                );
                 break;
             }
             thread::sleep(std::time::Duration::from_millis(500));
@@ -2195,24 +2222,32 @@ fn run_run_terminal_agent_script_inner(
     });
     thread::spawn(move || {
         loop {
-            let exited = {
+            let exit_code_to_emit: Option<Option<i32>> = {
                 let mut guard = match runs_handle.lock() {
                     Ok(g) => g,
                     Err(_) => break,
                 };
                 if let Some(entry) = guard.get_mut(&run_id_exited) {
-                    if entry.child.try_wait().ok().flatten().is_some() {
+                    if let Some(status) = entry.child.try_wait().ok().flatten() {
+                        let code = status.code();
                         guard.remove(&run_id_exited);
-                        true
+                        Some(code)
                     } else {
-                        false
+                        None
                     }
                 } else {
                     break;
                 }
             };
-            if exited {
-                let _ = app_exited.emit("script-exited", ScriptExitedPayload { run_id: run_id_exited, label: run_label_clone.clone() });
+            if let Some(exit_code) = exit_code_to_emit {
+                let _ = app_exited.emit(
+                    "script-exited",
+                    ScriptExitedPayload {
+                        run_id: run_id_exited,
+                        label: run_label_clone.clone(),
+                        exit_code,
+                    },
+                );
                 break;
             }
             thread::sleep(std::time::Duration::from_millis(500));
@@ -2430,28 +2465,30 @@ fn run_npm_script_inner(
     });
     thread::spawn(move || {
         loop {
-            let exited = {
+            let exit_code_to_emit: Option<Option<i32>> = {
                 let mut guard = match runs_handle.lock() {
                     Ok(g) => g,
                     Err(_) => break,
                 };
                 if let Some(entry) = guard.get_mut(&run_id_exited) {
-                    if entry.child.try_wait().ok().flatten().is_some() {
+                    if let Some(status) = entry.child.try_wait().ok().flatten() {
+                        let code = status.code();
                         guard.remove(&run_id_exited);
-                        true
+                        Some(code)
                     } else {
-                        false
+                        None
                     }
                 } else {
                     break;
                 }
             };
-            if exited {
+            if let Some(exit_code) = exit_code_to_emit {
                 let _ = app_exited.emit(
                     "script-exited",
                     ScriptExitedPayload {
                         run_id: run_id_exited,
                         label: run_label_clone.clone(),
+                        exit_code,
                     },
                 );
                 break;

@@ -52,6 +52,8 @@ export interface Run {
   startedAt?: number;
   /** When the run finished (ms since epoch). Set on script-exited for duration. */
   doneAt?: number;
+  /** Script exit code when run has finished (0 = success, non-zero = failure). Set from script-exited payload. */
+  exitCode?: number;
   /** Optional metadata for post-run actions (temp tickets). */
   meta?: RunMeta;
   /** First localhost URL detected from script output (e.g. http://localhost:3000) for "Open app" link. */

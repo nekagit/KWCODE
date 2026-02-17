@@ -75,15 +75,15 @@ export function RunStoreHydration() {
   useEffect(() => {
     if (isTauriEnv !== true) return;
     let cancelled = false;
-    listen<{ run_id: string }>("script-exited", (event) => {
-      const { run_id } = event.payload;
+    listen<{ run_id: string; exit_code?: number }>("script-exited", (event) => {
+      const { run_id, exit_code } = event.payload;
       const store = useRunStore.getState();
       const run = store.runningRuns.find((r) => r.runId === run_id);
       const now = Date.now();
       store.setRunInfos((prev) =>
         prev.map((r) =>
           r.runId === run_id
-            ? { ...r, status: "done" as const, doneAt: now }
+            ? { ...r, status: "done" as const, doneAt: now, ...(exit_code !== undefined && { exitCode: exit_code }) }
             : r
         )
       );
