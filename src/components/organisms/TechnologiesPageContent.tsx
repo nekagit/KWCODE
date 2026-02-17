@@ -162,7 +162,7 @@ export function TechnologiesPageContent() {
   return (
     <SingleContentPage
       title="Technologies"
-      description="Preferred tech stack, libraries, and open source sources for future projects. Stored in .cursor/technologies/ and .cursor_template/technologies/."
+      description="Preferred tech stack, libraries, and open source sources for future projects. Shown from .cursor/technologies/, .cursor_template/technologies/, or project_template (folder or project_template.zip)."
       icon={<Cpu className={c["0"] ?? "size-5 text-primary/90"} />}
       layout="card"
       error={error}
@@ -203,8 +203,7 @@ export function TechnologiesPageContent() {
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                No tech-stack.json found. Add one in .cursor/technologies/ or
-                .cursor_template/technologies/.
+                No tech-stack.json found. Add one in .cursor/technologies/, .cursor_template/technologies/, or use the project template (project_template.zip or project_template/.cursor/technologies/).
               </p>
             )}
           </div>

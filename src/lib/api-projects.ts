@@ -266,29 +266,23 @@ export async function listProjectFiles(
 }
 
 /**
- * Initializes a project's .cursor folder by copying exactly the contents of .cursor_template (same structure, renamed to .cursor).
- * Nothing more: no inline templates, no extra files. Template is read from API (browser) or Tauri command (desktop).
+ * Initializes a project: in Tauri (desktop), unzips project_template.zip into the project root
+ * so you get the full Next.js starter. In browser, copies .cursor_template into .cursor as before.
  */
 export async function initializeProjectRepo(projectId: string, repoPath: string): Promise<void> {
-  let files: Record<string, string>;
   if (isTauri) {
-    try {
-      files = await invoke<Record<string, string>>("get_cursor_init_template", {});
-    } catch (e) {
-      throw new Error(
-        "Failed to load .cursor_template template. In Tauri, ensure .cursor_template exists next to the app."
-      );
-    }
-  } else {
-    const base = typeof window !== "undefined" ? window.location.origin : "";
-    const res = await fetch(`${base}/api/data/cursor-init-template`);
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: res.statusText }));
-      throw new Error((err as { error?: string }).error || "Failed to load .cursor_template template");
-    }
-    const json = (await res.json()) as { files?: Record<string, string> };
-    files = json.files ?? {};
+    await invoke("unzip_project_template", { targetPath: repoPath });
+    return;
   }
+  let files: Record<string, string>;
+  const base = typeof window !== "undefined" ? window.location.origin : "";
+  const res = await fetch(`${base}/api/data/cursor-init-template`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error((err as { error?: string }).error || "Failed to load .cursor_template template");
+  }
+  const json = (await res.json()) as { files?: Record<string, string> };
+  files = json.files ?? {};
   if (Object.keys(files).length === 0) {
     throw new Error(".cursor_template folder is empty or not found");
   }

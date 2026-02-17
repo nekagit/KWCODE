@@ -93,6 +93,21 @@ const TAB_ROW_2 = [
 export function ProjectDetailsPageContent() {
   const params = useParams();
   const projectId = (params?.id as string) ?? "";
+  // #region agent log
+  React.useEffect(() => {
+    fetch("http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "ProjectDetailsPageContent.tsx:mount",
+        message: "project details page mounted",
+        data: { projectId, hasId: !!projectId },
+        timestamp: Date.now(),
+        hypothesisId: "H3",
+      }),
+    }).catch(() => {});
+  }, [projectId]);
+  // #endregion
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -148,9 +163,35 @@ export function ProjectDetailsPageContent() {
     try {
       const data = await getProjectResolved(projectId);
       if (mountedRef.current) setProject(data);
+      // #region agent log
+      fetch("http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          location: "ProjectDetailsPageContent.tsx:fetchProject:ok",
+          message: "getProjectResolved succeeded",
+          data: { projectId, hasProject: !!data },
+          timestamp: Date.now(),
+          hypothesisId: "H4",
+        }),
+      }).catch(() => {});
+      // #endregion
     } catch (e) {
       if (mountedRef.current)
         setError(e instanceof Error ? e.message : String(e));
+      // #region agent log
+      fetch("http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          location: "ProjectDetailsPageContent.tsx:fetchProject:err",
+          message: "getProjectResolved failed",
+          data: { projectId, error: e instanceof Error ? e.message : String(e) },
+          timestamp: Date.now(),
+          hypothesisId: "H4",
+        }),
+      }).catch(() => {});
+      // #endregion
     } finally {
       if (mountedRef.current) setLoading(false);
     }
@@ -219,6 +260,19 @@ export function ProjectDetailsPageContent() {
 
   /* ─── Not Found ─── */
   if (!project) {
+    // #region agent log
+    fetch("http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "ProjectDetailsPageContent.tsx:notFound",
+        message: "rendering project not found",
+        data: { projectId },
+        timestamp: Date.now(),
+        hypothesisId: "H4",
+      }),
+    }).catch(() => {});
+    // #endregion
     return (
       <div className="flex items-center justify-center py-24">
         <p className="text-sm text-muted-foreground">Project not found.</p>
@@ -343,7 +397,7 @@ export function ProjectDetailsPageContent() {
                       setInitializing(true);
                       try {
                         await initializeProjectRepo(projectId, project.repoPath!);
-                        toast.success("Project initialized with tech stack!");
+                        toast.success("Project initialized with Next.js starter!");
                         fetchProject(); // Refresh to show new files
                       } catch (err) {
                         toast.error(err instanceof Error ? err.message : "Failed to initialize");
@@ -401,7 +455,7 @@ export function ProjectDetailsPageContent() {
                           String(msg).toLowerCase().includes("prompt not found");
                         if (isPromptNotFound) {
                           toast.error("Prompt file(s) missing", {
-                            description: "Click Initialize (above) to copy .cursor prompts from the template, then try again.",
+                            description: "Click Initialize (above) to unzip the Next.js starter into this project, then try again.",
                             duration: 10000,
                           });
                         } else {

@@ -20,6 +20,10 @@ interface IdeaCategoryLabels {
   other: string;
 }
 
+const VALID_CATEGORIES = new Set<string>([
+  "saas", "iaas", "paas", "website", "webapp", "webshop", "other",
+]);
+
 interface IdeaFormFieldsProps {
   formTitle: string;
   setFormTitle: (title: string) => void;
@@ -62,7 +66,10 @@ export const IdeaFormFields: React.FC<IdeaFormFieldsProps> = ({
       </div>
       <div className="grid gap-2">
         <Label>Category</Label>
-        <Select value={formCategory} onValueChange={(v) => setFormCategory(v as keyof IdeaCategoryLabels)}>
+        <Select
+          value={VALID_CATEGORIES.has(formCategory) ? formCategory : "other"}
+          onValueChange={(v) => setFormCategory(v as keyof IdeaCategoryLabels)}
+        >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>

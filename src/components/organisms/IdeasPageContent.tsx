@@ -91,7 +91,8 @@ export function IdeasPageContent() {
     setFormId(idea.id);
     setFormTitle(idea.title);
     setFormDescription(idea.description);
-    setFormCategory(idea.category);
+    const validCategories: IdeaCategory[] = ["saas", "iaas", "paas", "website", "webapp", "webshop", "other"];
+    setFormCategory(validCategories.includes(idea.category) ? idea.category : "other");
     setEditOpen(true);
   }, []);
 

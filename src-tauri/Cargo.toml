@@ -22,6 +22,7 @@ tokio = { version = "1", features = ["full"] }
 libc = "0.2"
 uuid = { version = "1", features = ["v4"] }
 url = "2"
+zip = "2"
 
 [features]
 default = ["custom-protocol"]

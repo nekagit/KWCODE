@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 import type { Project, EntityCategory, ProjectEntityCategories } from "@/types/project";
+import type { DesignRecord } from "@/types/design";
+import type { ArchitectureRecord } from "@/types/architecture";
 import { getDb } from "@/lib/db";
 
 export const dynamic = "force-static";
@@ -56,8 +58,8 @@ type ResolvedProject = Project & {
   tickets: ({ id: string; title: string; status: string; description?: string } & ResolvedEntityCategory)[];
 
   ideas: ({ id: number; title: string; description: string; category: string } & ResolvedEntityCategory)[];
-  designs: ({ id: string; name: string } & ResolvedEntityCategory)[];
-  architectures: ({ id: string; name: string } & ResolvedEntityCategory)[];
+  designs: (DesignRecord & ResolvedEntityCategory)[];
+  architectures: ({ id: string; name: string; description?: string; category?: string } & ResolvedEntityCategory)[];
 };
 
 function getCategory(ec: ProjectEntityCategories | undefined, kind: keyof ProjectEntityCategories, entityId: string | number): EntityCategory | undefined {
@@ -94,9 +96,9 @@ export async function GET(
             )
             .all(...ideaIdsForResolve) as { id: number; title: string; description: string; category: string }[];
 
-    const designsRaw = readJson<{ id: string; name: string }[]>("designs.json");
+    const designsRaw = readJson<DesignRecord[]>("designs.json");
     const designsList = Array.isArray(designsRaw) ? designsRaw : [];
-    const architecturesRaw = readJson<{ id: string; name: string }[]>("architectures.json");
+    const architecturesRaw = readJson<ArchitectureRecord[]>("architectures.json");
     const architecturesList = Array.isArray(architecturesRaw) ? architecturesRaw : [];
 
     const promptIds = Array.isArray(project.promptIds) ? project.promptIds : [];

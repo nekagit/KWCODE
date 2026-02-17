@@ -31,6 +31,7 @@ import { ProjectFilesTab } from "@/components/molecules/TabAndContentSections/Pr
 import { SetupDocBlock } from "@/components/molecules/TabAndContentSections/SetupDocBlock";
 import { ProjectDesignTab } from "@/components/molecules/TabAndContentSections/ProjectDesignTab";
 import { ProjectArchitectureTab } from "@/components/molecules/TabAndContentSections/ProjectArchitectureTab";
+import { ArchitectureVisualization, type ResolvedArchitecture } from "@/components/molecules/TabAndContentSections/ArchitectureVisualization";
 import { ProjectAgentsSection } from "@/components/molecules/TabAndContentSections/ProjectAgentsSection";
 import {
   Accordion,
@@ -354,6 +355,13 @@ export function ProjectProjectTab({ project, projectId, docsRefreshKey, onProjec
               </AccordionTrigger>
               <AccordionContent className="px-5 pb-5 pt-2">
             <SetupDocBlock project={project} projectId={projectId} setupKey="architecture" docsRefreshKey={docsRefreshKey} />
+            <ArchitectureVisualization
+              architectures={
+                Array.isArray((project as { architectures?: unknown[] }).architectures)
+                  ? ((project as { architectures: ResolvedArchitecture[] }).architectures)
+                  : []
+              }
+            />
             <ProjectArchitectureTab project={project} projectId={projectId} showHeader={false} />
               </AccordionContent>
             </AccordionItem>

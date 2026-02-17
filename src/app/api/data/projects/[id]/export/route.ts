@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs";
 import type { Project } from "@/types/project";
 import type { ArchitectureRecord } from "@/types/architecture";
-import type { DesignConfig } from "@/types/design";
+import type { DesignRecord as ExportDesignRecord } from "@/types/design";
 
 export const dynamic = "force-static";
 
@@ -45,14 +45,6 @@ function readProjects(): Project[] {
   }
 }
 
-/** Full design record as stored (id, name, config, timestamps) */
-interface DesignRecord {
-  id: string;
-  name: string;
-  config: DesignConfig;
-  created_at: string;
-  updated_at: string;
-}
 
 /** Export payload: project plus all linked entities as full records */
 export interface ProjectExport {
@@ -61,7 +53,7 @@ export interface ProjectExport {
   prompts: { id: number; title: string; content?: string; category?: string | null; tags?: string[] | null; created_at?: string | null; updated_at?: string | null }[];
   tickets: { id: string; title: string; description?: string; status: string; priority?: number; created_at?: string; updated_at?: string }[];
   ideas: { id: number; title: string; description: string; category: string; source?: string; created_at?: string; updated_at?: string }[];
-  designs: DesignRecord[];
+  designs: ExportDesignRecord[];
   architectures: ArchitectureRecord[];
 }
 
@@ -82,7 +74,7 @@ export async function GET(
     const promptsList = Array.isArray(promptsRaw) ? promptsRaw : [];
     const ticketsList = readJson<{ id: string; title: string; description?: string; status: string; priority?: number; created_at?: string; updated_at?: string }[]>("tickets.json") ?? [];
     const ideasList = readJson<{ id: number; title: string; description: string; category: string; source?: string; created_at?: string; updated_at?: string }[]>("ideas.json") ?? [];
-    const designsRaw = readJson<DesignRecord[]>("designs.json");
+    const designsRaw = readJson<ExportDesignRecord[]>("designs.json");
     const designsList = Array.isArray(designsRaw) ? designsRaw : [];
     const architecturesRaw = readJson<ArchitectureRecord[]>("architectures.json");
     const architecturesList = Array.isArray(architecturesRaw) ? architecturesRaw : [];
@@ -104,7 +96,7 @@ export async function GET(
       .filter(Boolean) as ProjectExport["ideas"];
     const designs = designIds
       .map((did) => designsList.find((d) => d.id === did))
-      .filter(Boolean) as DesignRecord[];
+      .filter(Boolean) as ExportDesignRecord[];
     const architectures = architectureIds
       .map((aid) => architecturesList.find((a) => a.id === aid))
       .filter(Boolean) as ArchitectureRecord[];

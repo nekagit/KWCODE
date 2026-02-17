@@ -1,5 +1,8 @@
+"use client";
+
 import React from "react";
 import { Card } from "@/components/shared/Card";
+import { DesignVisualization } from "@/components/molecules/DesignVisualization";
 import type { DesignRecord } from "@/types/design";
 
 interface ProjectDesignListItemProps {
@@ -17,7 +20,12 @@ export const ProjectDesignListItem: React.FC<ProjectDesignListItemProps> = ({
         subtitle={design.description}
         className="flex flex-col bg-muted/30"
       >
-        <div />
+        <DesignVisualization
+          config={design.config ?? null}
+          designName={design.name}
+          showSamplePreview={true}
+          samplePreviewHeight={260}
+        />
       </Card>
     </li>
   );

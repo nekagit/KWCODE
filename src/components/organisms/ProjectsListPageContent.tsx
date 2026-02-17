@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Project } from "@/types/project";
 import { listProjects, deleteProject } from "@/lib/api-projects";
-import { isTauri } from "@/lib/tauri";
 import { ProjectsHeader } from "@/components/molecules/LayoutAndNavigation/ProjectsHeader";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { NoProjectsFoundCard } from "@/components/molecules/CardsAndDisplay/NoProjectsFoundCard";
@@ -110,14 +109,36 @@ export function ProjectsListPageContent() {
                   <Link
                     href={`/projects/${project.id}`}
                     className={c["5"]}
-                    onClick={
-                      isTauri
-                        ? (e: React.MouseEvent) => {
-                            e.preventDefault();
-                            router.push(`/projects/${project.id}`);
-                          }
-                        : undefined
-                    }
+                    onClick={(e: React.MouseEvent) => {
+                      // #region agent log
+                      fetch("http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          location: "ProjectsListPageContent.tsx:onClick",
+                          message: "project link click",
+                          data: { projectId: project.id, hasId: !!project.id },
+                          timestamp: Date.now(),
+                          hypothesisId: "H1",
+                        }),
+                      }).catch(() => {});
+                      // #endregion
+                      e.preventDefault();
+                      router.push(`/projects/${project.id}`);
+                      // #region agent log
+                      fetch("http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          location: "ProjectsListPageContent.tsx:afterPush",
+                          message: "router.push called",
+                          data: { projectId: project.id },
+                          timestamp: Date.now(),
+                          hypothesisId: "H2",
+                        }),
+                      }).catch(() => {});
+                      // #endregion
+                    }}
                   >
                     {project.name}
                   </Link>

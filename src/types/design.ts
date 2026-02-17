@@ -88,4 +88,6 @@ export interface DesignRecord {
   image_url?: string;
   created_at?: string;
   updated_at?: string;
+  /** Full design spec (colors, typography, layout, sections). Present when design was generated or created with config. */
+  config?: DesignConfig;
 }
