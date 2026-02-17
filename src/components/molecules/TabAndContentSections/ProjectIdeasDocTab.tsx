@@ -289,6 +289,39 @@ export function ProjectIdeasDocTab({ project, projectId, docsRefreshKey }: Proje
         </div>
       </div>
 
+      {/* Add idea section at top */}
+      <SectionCard accentColor="amber">
+        <div className="flex items-center gap-2 mb-3">
+          <Plus className="h-4 w-4 text-amber-500" />
+          <h3 className="text-sm font-semibold">Add idea (AI-improved)</h3>
+        </div>
+        <p className="text-xs text-muted-foreground mb-2">
+          Type a short idea; we&apos;ll polish it with AI and append it to ideas.md.
+        </p>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+          <Textarea
+            className="min-h-[72px] flex-1 text-sm"
+            placeholder="e.g. Command palette (⌘K) for quick project search"
+            value={newIdeaRaw}
+            onChange={(e) => setNewIdeaRaw(e.target.value)}
+            disabled={improving}
+          />
+          <Button
+            size="sm"
+            className="gap-1.5 shrink-0"
+            onClick={addImprovedIdea}
+            disabled={!newIdeaRaw.trim() || improving}
+          >
+            {improving ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="h-3.5 w-3.5" />
+            )}
+            Improve & add
+          </Button>
+        </div>
+      </SectionCard>
+
       <ScrollArea className="h-[calc(100vh-14rem)]">
         <div className="space-y-6 pr-4">
           {structured?.isStructured && structured.sections.length > 0 ? (
@@ -458,39 +491,6 @@ export function ProjectIdeasDocTab({ project, projectId, docsRefreshKey }: Proje
               )}
             </>
           )}
-
-          {/* Add new idea */}
-          <SectionCard accentColor="amber">
-            <div className="flex items-center gap-2 mb-3">
-              <Plus className="h-4 w-4 text-amber-500" />
-              <h3 className="text-sm font-semibold">Add idea (AI-improved)</h3>
-            </div>
-            <p className="text-xs text-muted-foreground mb-2">
-              Type a short idea; we&apos;ll polish it with AI and append it to ideas.md.
-            </p>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-              <Textarea
-                className="min-h-[72px] flex-1 text-sm"
-                placeholder="e.g. Command palette (⌘K) for quick project search"
-                value={newIdeaRaw}
-                onChange={(e) => setNewIdeaRaw(e.target.value)}
-                disabled={improving}
-              />
-              <Button
-                size="sm"
-                className="gap-1.5 shrink-0"
-                onClick={addImprovedIdea}
-                disabled={!newIdeaRaw.trim() || improving}
-              >
-                {improving ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Sparkles className="h-3.5 w-3.5" />
-                )}
-                Improve & add
-              </Button>
-            </div>
-          </SectionCard>
         </div>
       </ScrollArea>
 

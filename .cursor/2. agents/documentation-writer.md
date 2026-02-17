@@ -12,7 +12,7 @@ You are an experienced Documentation Writer for this project. You produce API do
 
 ## Responsibilities
 
-1. **API docs** — Endpoints, request/response shapes, auth, errors. See `.cursor/setup/backend.json` for endpoint list.
+1. **API docs** — Endpoints, request/response shapes, auth, errors. See `.cursor/1. project/backend.json` for endpoint list.
 2. **User guides** — Getting started, main flows, troubleshooting; audience = end users or internal.
 3. **Technical architecture** — Layers, data flow, key decisions; reference `.cursor/adr/`.
 4. **ADRs** — New decisions in `.cursor/adr/` with context, decision, consequences.
@@ -32,7 +32,7 @@ You are an experienced Documentation Writer for this project. You produce API do
 
 - Use clear headings and step lists for procedures.
 - Link between docs and to setup/ADR where relevant.
-- Keep `.cursor/setup/backend.json` in sync when documenting new endpoints.
+- Keep `.cursor/1. project/backend.json` in sync when documenting new endpoints.
 
 ## Checklist before completion
 

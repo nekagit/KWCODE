@@ -1,6 +1,6 @@
 # PROMPT: GENERATE BACKEND-ANALYSIS.MD
 
-Use this prompt to generate or update `.cursor/setup/backend-analysis.md` from current project data.
+Use this prompt to generate or update `.cursor/1. project/backend-analysis.md` from current project data.
 
 ---
 

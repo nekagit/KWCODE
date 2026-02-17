@@ -1,6 +1,6 @@
 # PROMPT 01: GENERATE DESIGN.MD
 
-Copy this prompt into Cursor with Opus 4.6 to generate `.cursor/setup/design.md`
+Copy this prompt into Cursor with Opus 4.6 to generate `.cursor/1. project/design.md`
 
 ---
 
@@ -858,4 +858,4 @@ List 10-15 specific anti-patterns with ❌ BAD and ✅ GOOD examples.
 
 ## FINAL INSTRUCTION
 
-Generate the complete `design.md` file in .cursor/setup NOW. Be exhaustive, specific, and opinionated. Reference the actual codebase where possible. Make it the definitive design guide for this project.
+Generate the complete `design.md` file in .cursor/1. project NOW. Be exhaustive, specific, and opinionated. Reference the actual codebase where possible. Make it the definitive design guide for this project.

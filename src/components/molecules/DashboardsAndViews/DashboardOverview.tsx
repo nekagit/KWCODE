@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { invoke, isTauri } from "@/lib/tauri";
 import { listProjects } from "@/lib/api-projects";
 import type { Project } from "@/types/project";
@@ -36,12 +37,24 @@ const entityLinks = [
 ];
 
 function ProjectCard({ project }: { project: Project }) {
+  const router = useRouter();
   const tickets = project.ticketIds?.length ?? 0;
   const prompts = project.promptIds?.length ?? 0;
   const ideas = (project.ideaIds?.length ?? 0) + (project.designIds?.length ?? 0);
   const total = tickets + prompts + ideas;
   return (
-    <Link href={`/projects/${project.id}`} className="block group">
+    <Link
+      href={`/projects/${project.id}`}
+      className="block group"
+      onClick={
+        isTauri
+          ? (e: React.MouseEvent) => {
+              e.preventDefault();
+              router.push(`/projects/${project.id}`);
+            }
+          : undefined
+      }
+    >
       <Card className="h-full transition-all duration-200 hover:shadow-md hover:border-primary/20 hover:bg-muted/20">
         <CardHeader className="p-4 pb-1">
           <div className="flex items-start justify-between gap-2">

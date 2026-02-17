@@ -1,6 +1,6 @@
 # PROMPT 02: GENERATE ARCHITECTURE.MD
 
-Copy this prompt into Cursor with Opus 4.6 to generate `.cursor/setup/architecture.md`
+Copy this prompt into Cursor with Opus 4.6 to generate `.cursor/1. project/architecture.md`
 
 ---
 
@@ -1353,4 +1353,4 @@ Provide a summary table of key decisions:
 
 ## FINAL INSTRUCTION
 
-Generate the complete `architecture.md` in .cursor/setup file NOW. Be exhaustive, specific, and opinionated. Reference the actual codebase where possible. Make it the definitive architectural reference for this project.
+Generate the complete `architecture.md` in .cursor/1. project NOW. Be exhaustive, specific, and opinionated. Reference the actual codebase where possible. Make it the definitive architectural reference for this project.

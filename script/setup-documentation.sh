@@ -59,7 +59,7 @@ title: Configuration
 
 # Configuration
 
-Environment variables and app config. See \`$CURSOR/project/TECH-STACK.md\` and \`$CURSOR/setup/\`.
+Environment variables and app config. See \`$CURSOR/1. project/TECH-STACK.md\` and \`$CURSOR/1. project/\`.
 "
 
 write_doc "architecture/overview.md" "Architecture overview" "---
@@ -68,7 +68,7 @@ title: Architecture overview
 
 # Architecture overview
 
-See \`$CURSOR_DOCS/architecture-overview.md\` and \`$CURSOR/setup/architecture.md\`.
+See \`$CURSOR_DOCS/architecture-overview.md\` and \`$CURSOR/1. project/architecture.md\`.
 "
 
 write_doc "development/setup.md" "Development setup" "---
@@ -113,7 +113,7 @@ title: API reference
 
 # API reference
 
-See \`$CURSOR_DOCS/api-reference.md\` and \`$CURSOR/setup/backend.json\` for endpoints.
+See \`$CURSOR_DOCS/api-reference.md\` and \`$CURSOR/1. project/backend.json\` for endpoints.
 "
 
 write_doc "guides/creating-features.md" "Creating features" "---
@@ -131,7 +131,7 @@ title: Testing
 
 # Testing
 
-See \`$CURSOR_DOCS/testing-strategy.md\` and \`$CURSOR/setup/testing.md\`.
+See \`$CURSOR_DOCS/testing-strategy.md\` and \`$CURSOR/1. project/testing.md\`.
 "
 
 write_doc "guides/deployment.md" "Deployment" "---

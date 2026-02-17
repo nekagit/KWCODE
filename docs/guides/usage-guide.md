@@ -34,5 +34,5 @@ How to start a project, use agents, manage milestones and tickets, use the worke
 
 ## Customize templates
 
-- To change what **new** projects get when they Initialize, edit the **`.cursor_template`** folder in the KWCode repo. Do not remove or rename paths the app expects (e.g. `.cursor/7. planner/tickets.md`, `.cursor/2. agents/*.md`, `.cursor/8. worker/implement-all.md`, `.cursor/setup/frontend.json`, `.cursor/setup/backend.json`).
+- To change what **new** projects get when they Initialize, edit the **`.cursor_template`** folder in the KWCode repo. Do not remove or rename paths the app expects (e.g. `.cursor/7. planner/tickets.md`, `.cursor/2. agents/*.md`, `.cursor/8. worker/implement-all.md`, `.cursor/1. project/frontend.json`, `.cursor/1. project/backend.json`).
 - Tech stack variants: add JSON under `.cursor_template/configs/tech-stacks/` and reference them in scripts or docs.

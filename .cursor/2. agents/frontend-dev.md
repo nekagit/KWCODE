@@ -230,7 +230,7 @@ async function fetchData() {
 
 **Check for design specs:**
 ```bash
-ls .cursor/setup/design.md
+ls .cursor/1. project/design.md
 ls .cursor/prompts/design.md
 ```
 

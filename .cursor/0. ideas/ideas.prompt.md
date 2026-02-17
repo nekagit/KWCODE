@@ -1,6 +1,6 @@
 # PROMPT 03: GENERATE IDEAS.MD
 
-Copy this prompt into Cursor with Opus 4.6 to generate `.cursor/setup/ideas.md`
+Copy this prompt into Cursor with Opus 4.6 to generate `.cursor/0. ideas/ideas.md`
 
 ---
 
@@ -597,4 +597,4 @@ Use this template when proposing new ideas:
 
 ## FINAL INSTRUCTION
 
-Generate the complete `ideas.md` file in .cursor/setup NOW. Be ambitious, inspiring, and actionable. Reference the actual project context where possible. Make it a roadmap that excites users and guides development for the next 12-18 months.
+Generate the complete `ideas.md` file in .cursor/0. ideas NOW. Be ambitious, inspiring, and actionable. Reference the actual project context where possible. Make it a roadmap that excites users and guides development for the next 12-18 months.

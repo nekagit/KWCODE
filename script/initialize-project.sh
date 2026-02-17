@@ -27,8 +27,8 @@ $desc
 ## Tech stack summary
 
 - **Stack:** $stack
-- **Frontend:** (see $CURSOR/setup/frontend.json)
-- **Backend:** (see $CURSOR/setup/backend.json)
+- **Frontend:** (see $CURSOR/1. project/frontend.json)
+- **Backend:** (see $CURSOR/1. project/backend.json)
 - **Documentation:** $CURSOR/documentation/ and docs/
 
 ## Links
@@ -40,7 +40,7 @@ EOF
 cat > "$PROJECT_DIR/TECH-STACK.md" << EOF
 # Tech stack — $name
 
-Specific versions and choices. See also $CURSOR/setup/frontend.json and backend.json.
+Specific versions and choices. See also $CURSOR/1. project/frontend.json and backend.json.
 
 ## Frontend
 

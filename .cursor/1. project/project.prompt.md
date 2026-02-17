@@ -27,7 +27,7 @@ Include at least:
 
 1. **Name** – Project name (from package.json or idea).
 2. **Description** – One short paragraph: what this project does and for whom.
-3. **Tech stack summary** – Bullet list or short table (frontend, backend, tooling). Reference .cursor/setup/frontend.json and backend.json if relevant.
+3. **Tech stack summary** – Bullet list or short table (frontend, backend, tooling). Reference .cursor/1. project/frontend.json and backend.json if relevant.
 4. **Links** – Repo URL, docs URL (placeholder if unknown).
 
 Keep the document short (one page). Output only the markdown file content—no preamble, no code fence.

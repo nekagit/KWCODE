@@ -1,6 +1,6 @@
 # Cursor Setup Prompts — KWCode
 
-> **Purpose**: Copy-paste each prompt below into a new Cursor chat (with Opus 4.6) to generate the corresponding `.cursor/setup/*.md` file.
+> **Purpose**: Copy-paste each prompt below into a new Cursor chat (with Opus 4.6) to generate the corresponding `.cursor/1. project/*.md` file.
 > Each prompt is self-contained and references the project context it needs.
 >
 > **Project**: KWCode — AI-powered development workflow & prompt orchestration app
@@ -20,10 +20,10 @@
 
 ## Prompt 1 — `design.md`
 
-> **Output file**: `.cursor/setup/design.md`
+> **Output file**: `.cursor/1. project/design.md`
 
 ```markdown
-You are a world-class UI/UX Design Systems Architect. Your task is to produce the definitive `design.md` file that will live inside `.cursor/setup/design.md` and serve as the single source of truth for every visual and interaction decision in this project.
+You are a world-class UI/UX Design Systems Architect. Your task is to produce the definitive `design.md` file that will live inside `.cursor/1. project/design.md` and serve as the single source of truth for every visual and interaction decision in this project.
 
 ## Project Context
 
@@ -123,10 +123,10 @@ For each of these component categories, define the visual spec (use Tailwind cla
 
 ## Prompt 2 — `architecture.md`
 
-> **Output file**: `.cursor/setup/architecture.md`
+> **Output file**: `.cursor/1. project/architecture.md`
 
 ```markdown
-You are a principal-level software architect specializing in modern full-stack TypeScript applications. Your task is to produce the definitive `architecture.md` file for `.cursor/setup/architecture.md` — the single source of truth for every structural, data-flow, and integration decision in this project.
+You are a principal-level software architect specializing in modern full-stack TypeScript applications. Your task is to produce the definitive `architecture.md` file for `.cursor/1. project/architecture.md` — the single source of truth for every structural, data-flow, and integration decision in this project.
 
 ## Project Context
 
@@ -239,10 +239,10 @@ Produce a comprehensive, opinionated architecture document following best practi
 
 ## Prompt 3 — `ideas.md`
 
-> **Output file**: `.cursor/setup/ideas.md`
+> **Output file**: `.cursor/0. ideas/ideas.md`
 
 ```markdown
-You are a visionary AI product strategist and senior developer who specializes in developer tools, AI-augmented workflows, and cutting-edge UX. Your task is to produce the `ideas.md` file for `.cursor/setup/ideas.md` — a living document of prioritized ideas, innovations, and R&D explorations for this project.
+You are a visionary AI product strategist and senior developer who specializes in developer tools, AI-augmented workflows, and cutting-edge UX. Your task is to produce the `ideas.md` file for `.cursor/0. ideas/ideas.md` — a living document of prioritized ideas, innovations, and R&D explorations for this project.
 
 ## Project Context
 
@@ -346,10 +346,10 @@ Columns: Feature, KWCode (current), KWCode (planned), Cursor, Copilot Workspace,
 
 ## Prompt 4 — `documentation.md`
 
-> **Output file**: `.cursor/setup/documentation.md`
+> **Output file**: `.cursor/1. project/documentation.md`
 
 ```markdown
-You are a senior technical documentation architect who has led documentation strategy at developer-tools companies (Stripe, Vercel, Supabase). Your task is to produce the `documentation.md` file for `.cursor/setup/documentation.md` — the definitive guide on HOW to write, structure, and maintain documentation for this project.
+You are a senior technical documentation architect who has led documentation strategy at developer-tools companies (Stripe, Vercel, Supabase). Your task is to produce the `documentation.md` file for `.cursor/1. project/documentation.md` — the definitive guide on HOW to write, structure, and maintain documentation for this project.
 
 ## Project Context
 
@@ -383,7 +383,7 @@ Define each documentation type, when to use it, and where it lives:
 | Type | Purpose | Location | Format |
 |------|---------|----------|--------|
 | **README** | Project overview, getting started | Root `/README.md` | Markdown |
-| **Setup Docs** | AI agent context files | `.cursor/setup/*.md` | Markdown |
+| **Setup Docs** | AI agent context files | `.cursor/1. project/*.md` | Markdown |
 | **Agent Docs** | Role-specific agent instructions | `.cursor/2. agents/*.md` | Markdown + YAML front matter |
 | **ADRs** | Architectural Decision Records | `.cursor/adr/*.md` | Markdown (MADR format) |
 | **API Docs** | Endpoint reference | `docs/api/*.md` or inline JSDoc | Markdown / JSDoc |
@@ -490,7 +490,7 @@ Follow the MADR format:
 ```
 
 ### 7. Documentation for AI Agents
-Special rules for `.cursor/setup/` and `.cursor/2. agents/` files:
+Special rules for `.cursor/1. project/` and `.cursor/2. agents/` files:
 - Be extremely explicit — AI agents have no implicit context
 - Use structured data (tables, lists) over prose
 - Include concrete file paths and command examples
@@ -531,10 +531,10 @@ Define key project-specific terms that should be used consistently across all do
 
 ## Prompt 5 — `testing.md`
 
-> **Output file**: `.cursor/setup/testing.md`
+> **Output file**: `.cursor/1. project/testing.md`
 
 ```markdown
-You are a senior QA architect and test engineering lead who has designed testing strategies for complex desktop + web hybrid applications. Your task is to produce the `testing.md` file for `.cursor/setup/testing.md` — the definitive testing strategy, standards, and playbook for this project.
+You are a senior QA architect and test engineering lead who has designed testing strategies for complex desktop + web hybrid applications. Your task is to produce the `testing.md` file for `.cursor/1. project/testing.md` — the definitive testing strategy, standards, and playbook for this project.
 
 ## Project Context
 
@@ -704,7 +704,7 @@ Provide a complete Page Object and test example for the Projects page.
 2. **Start a new chat** with Opus 4.6 selected
 3. **Copy-paste** one prompt at a time (from the code blocks above)
 4. **Review** the generated output
-5. **Save** the output to the corresponding `.cursor/setup/*.md` file
+5. **Save** the output to the corresponding `.cursor/1. project/*.md` file
 6. **Repeat** for each of the 5 prompts
 
 ### Tips for Best Results

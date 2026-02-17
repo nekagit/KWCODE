@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { Project } from "@/types/project";
 import { listProjects, deleteProject } from "@/lib/api-projects";
+import { isTauri } from "@/lib/tauri";
 import { ProjectsHeader } from "@/components/molecules/LayoutAndNavigation/ProjectsHeader";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { NoProjectsFoundCard } from "@/components/molecules/CardsAndDisplay/NoProjectsFoundCard";
@@ -14,6 +16,7 @@ import { getOrganismClasses } from "./organism-classes";
 const c = getOrganismClasses("ProjectsListPageContent.tsx");
 
 export function ProjectsListPageContent() {
+  const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -104,7 +107,18 @@ export function ProjectsListPageContent() {
             <ul className={c["3"]}>
               {projects.map((project) => (
                 <li key={project.id} className={c["4"]}>
-                  <Link href={`/projects/${project.id}`} className={c["5"]}>
+                  <Link
+                    href={`/projects/${project.id}`}
+                    className={c["5"]}
+                    onClick={
+                      isTauri
+                        ? (e: React.MouseEvent) => {
+                            e.preventDefault();
+                            router.push(`/projects/${project.id}`);
+                          }
+                        : undefined
+                    }
+                  >
                     {project.name}
                   </Link>
                   <button

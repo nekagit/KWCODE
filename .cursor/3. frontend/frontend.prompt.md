@@ -1,6 +1,6 @@
 # PROMPT: GENERATE FRONTEND-ANALYSIS.MD
 
-Use this prompt to generate or update `.cursor/setup/frontend-analysis.md` from current project data.
+Use this prompt to generate or update `.cursor/1. project/frontend-analysis.md` from current project data.
 
 ---
 
