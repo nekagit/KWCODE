@@ -1,0 +1,28 @@
+{
+  "name": "Template stack",
+  "description": "Technologies for the admin-dashboard-starter template. Testing and auth are optional add-ons.",
+  "frontend": {
+    "framework": "Next.js 15",
+    "styling": "Tailwind CSS",
+    "state": "Zustand",
+    "components": "shadcn/ui",
+    "routing": "Next.js App Router",
+    "testing": "Vitest + Testing Library (optional)",
+    "build": "Turbopack / Vite"
+  },
+  "backend": {
+    "runtime": "Node.js",
+    "framework": "Next.js API Routes",
+    "database": "SQLite",
+    "orm": "Prisma",
+    "auth": "Clerk (optional)",
+    "testing": "Vitest + Supertest (optional)",
+    "validation": "Zod"
+  },
+  "tooling": {
+    "lint": "ESLint",
+    "format": "Prettier",
+    "e2e": "Playwright (optional)",
+    "packageManager": "pnpm or npm"
+  }
+}
