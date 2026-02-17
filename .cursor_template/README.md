@@ -32,6 +32,6 @@ All path references inside these files point to `.cursor/...` so that after you 
 - `.cursor/7. planner/tickets.md` — work items (checklist format)
 - `.cursor/7. planner/kanban-state.json` — in-progress ticket ids
 - `.cursor/7. planner/features.md` — feature roadmap
-- `.cursor/agents/*.md` — agent list
-- `.cursor/prompts/worker.md` — Run tab (Implement All)
+- `.cursor/2. agents/*.md` — agent list (or `.cursor_template/agents/` in template)
+- `.cursor/8. worker/implement-all.md` — Run tab (Implement All) base prompt
 - `.cursor/setup/frontend.json`, `.cursor/setup/backend.json` — Frontend/Backend tabs

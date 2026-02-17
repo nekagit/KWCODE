@@ -75,7 +75,7 @@ Define who reads these docs and what they need:
 | Audience | Needs | Primary Docs |
 |----------|-------|--------------|
 | **New Developer** | How to set up, where to start, first contribution | README, CONTRIBUTING, architecture overview |
-| **AI Agents** | Context files, role definitions, system prompts | .cursor/agents/*, .cursor/setup/* |
+| **AI Agents** | Context files, role definitions, system prompts | .cursor/2. agents/*, .cursor/setup/* |
 | **Experienced Contributor** | Deep dives, design decisions, advanced patterns | Architecture docs, ADRs, API reference |
 | **End User** (if applicable) | How to use the product, tutorials, troubleshooting | User guides, FAQ, video tutorials |
 | **DevOps/Ops** | Deployment, monitoring, runbooks | Deployment guides, runbooks, incident response |
@@ -810,7 +810,7 @@ AI agents need special documentation to function effectively:
 
 ---
 
-#### B. Agent Instruction Files (`.cursor/agents/`)
+#### B. Agent Instruction Files (`.cursor/2. agents/`)
 
 **Purpose**: Define AI agent roles, responsibilities, workflows
 

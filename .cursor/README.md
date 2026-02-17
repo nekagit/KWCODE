@@ -13,8 +13,8 @@ This folder is the **project-specific** `.cursor/` for KWCode. It was created fr
 
 ### Use agents
 
-- **Assign to tickets:** When generating or editing a ticket, the app lists all `.cursor/agents/*.md` (backend-dev, frontend-dev, solution-architect, tester, documentation-writer). Assign one or more; they are used when running Implement All.
-- **Run tab:** Load `.cursor/worker/` base prompt (worker.md); per-ticket agents are loaded from `.cursor/agents/`. Move tickets to "In progress" in the Kanban, then click **Implement All**.
+- **Assign to tickets:** When generating or editing a ticket, the app lists all `.cursor/2. agents/*.md` (backend-dev, frontend-dev, solution-architect, tester, documentation-writer). Assign one or more; they are used when running Implement All.
+- **Run tab:** Load `.cursor/8. worker/implement-all.md` as the base prompt; per-ticket agents are loaded from `.cursor/2. agents/`. Move tickets to "In progress" in the Kanban, then click **Implement All**.
 
 ### Manage milestones and tickets
 
@@ -45,11 +45,11 @@ Numbered entity folders (prompts use `.prompt.md` suffix; outputs use the same f
 | **0. ideas/** | ideas.prompt.md (prompt), ideas.md (output) |
 | **1. project/** | project.prompt.md (prompt), PROJECT-INFO.md (output) |
 | **2. setup/** | design, architecture, testing, documentation, frontend, backend — each has `{name}.prompt.md` and output(s); subfolders testing/, documentation/, setup/, development/ for nested prompts |
-| **agents/** | backend-dev, frontend-dev, solution-architect, tester, documentation-writer |
+| **2. agents/** | backend-dev, frontend-dev, solution-architect, tester, documentation-writer |
 | **adr/** | Architecture decision records |
 | **7. planner/** | tickets.md, features.md, kanban-state.json; ticket-templates/, ai-suggestions/ |
 | **milestones/** | mvp/feature/release templates; 01–05 numbered milestones |
-| **worker/** | queue/ (ready, in-progress, completed, analyze-jobs.json), workflows/ticket-workflow.md; worker.md for Run tab base prompt |
+| **8. worker/** | implement-all.md (Run tab base prompt), fix-bug.md; queue/ and workflows in worker/ |
 | **documentation/** | setup-guide, development-guide, architecture-overview, api-reference, best practices |
 
 Planner (7. planner), worker, agents, adr, technologies.
@@ -62,6 +62,6 @@ Planner (7. planner), worker, agents, adr, technologies.
 - `.cursor/7. planner/tickets.md` — work items (checklist format)
 - `.cursor/7. planner/kanban-state.json` — in-progress ticket ids
 - `.cursor/7. planner/features.md` — feature roadmap
-- `.cursor/agents/*.md` — agent list
-- `.cursor/worker/queue/analyze-jobs.json` — analyze queue; `.cursor/worker/` for Run tab
+- `.cursor/2. agents/*.md` — agent list
+- `.cursor/8. worker/implement-all.md` — Run tab (Implement All) base prompt; `.cursor/worker/queue/` for analyze queue
 - `.cursor/2. setup/frontend.json`, `.cursor/2. setup/backend.json` — Frontend/Backend tabs

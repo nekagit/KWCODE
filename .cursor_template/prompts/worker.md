@@ -1,6 +1,6 @@
 # Worker prompt (Implement All)
 
-Use this file as the base prompt when running **Implement All** from the Run tab. Per-ticket agents are loaded from `.cursor/agents/`.
+Use this file as the base prompt when running **Implement All** from the Run tab. Per-ticket agents are loaded from `.cursor/2. agents/`. (The app uses `.cursor/8. worker/implement-all.md` when present.)
 
 ## Instructions
 

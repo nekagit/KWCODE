@@ -5,7 +5,7 @@ Use when implementing a feature described in a ticket or milestone.
 ## Context
 
 - Ticket/milestone: (paste title and acceptance criteria).
-- Agents: use `.cursor/agents/` roles (frontend-dev, backend-dev, etc.) as needed.
+- Agents: use `.cursor/2. agents/` roles (frontend-dev, backend-dev, etc.) as needed.
 - Architecture: `.cursor/setup/architecture.md` and setup JSON.
 
 ## Instructions

@@ -357,7 +357,7 @@ run-prompts becomes the **AI-native project cockpit** that turns scattered promp
 
 **Solution**: Multi-agent pipelines where “architect” produces a plan, “frontend” and “backend” agents implement, and “QA” suggests or generates tests. Handoffs are structured (e.g. plan document, file list) so each agent has clear input.
 
-**AI Integration**: Per-agent system prompts (from `.cursor/agents/`); orchestration layer that runs agents in sequence or parallel and passes outputs; optional human approval between steps.
+**AI Integration**: Per-agent system prompts (from `.cursor/2. agents/`); orchestration layer that runs agents in sequence or parallel and passes outputs; optional human approval between steps.
 
 **User Flow**: User selects “Full stack implementation”; app runs architect → frontend + backend (parallel) → QA; user reviews each stage and can re-run or edit.  
 **Technical Approach**: Job queue or state machine; agent runner per type; shared context (plan, file paths).  

@@ -216,14 +216,14 @@ After design is created:
 
 > "Design is ready! To start implementation, use:
 >
-> `Read .cursor/agents/frontend-dev.md and implement the feature`
+> `Read .cursor/2. agents/frontend-dev.md and implement the feature`
 >
 > The Frontend Developer will build the UI based on this design."
 
 If backend work is needed:
 > "This also needs backend work. Use:
 >
-> `Read .cursor/agents/backend-dev.md and implement the Tauri commands`"
+> `Read .cursor/2. agents/backend-dev.md and implement the Tauri commands`"
 
 ---
 

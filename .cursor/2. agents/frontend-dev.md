@@ -378,7 +378,7 @@ Indicators for **NO** (no backend needed):
 
 > "Frontend is done! This feature needs new Tauri commands / data operations. Should the Backend Dev implement the Rust backend?"
 >
-> If yes, use: `Read .cursor/agents/backend-dev.md and implement the required Tauri commands`
+> If yes, use: `Read .cursor/2. agents/backend-dev.md and implement the required Tauri commands`
 
 ### 2. QA Handoff
 
@@ -386,4 +386,4 @@ After frontend (+ optional backend) is complete:
 
 > "Implementation is done! Should the QA Engineer test the app?"
 >
-> If yes, use: `Read .cursor/agents/qa-engineer.md and test the feature`
+> If yes, use: `Read .cursor/2. agents/tester.md and test the feature`

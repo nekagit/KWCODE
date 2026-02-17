@@ -12,9 +12,9 @@ How to start a project, use agents, manage milestones and tickets, use the worke
 
 ## Use agents
 
-- **Agents** are defined in `.cursor/agents/*.md` (e.g. backend-dev, frontend-dev, solution-architect, tester, documentation-writer).
+- **Agents** are defined in `.cursor/2. agents/*.md` (e.g. backend-dev, frontend-dev, solution-architect, tester, documentation-writer).
 - When creating or editing a ticket, assign one or more agents; they are used when you run **Implement All** from the Run tab.
-- The Run tab uses `.cursor/prompts/worker.md` as the base prompt and loads per-ticket agents from `.cursor/agents/`. Move tickets to "In progress" in the Kanban, then click **Implement All**.
+- The Run tab uses `.cursor/8. worker/implement-all.md` as the base prompt and loads per-ticket agents from `.cursor/2. agents/`. Move tickets to "In progress" in the Kanban, then click **Implement All**.
 
 ## Manage milestones and tickets
 
@@ -34,5 +34,5 @@ How to start a project, use agents, manage milestones and tickets, use the worke
 
 ## Customize templates
 
-- To change what **new** projects get when they Initialize, edit the **`.cursor_template`** folder in the KWCode repo. Do not remove or rename paths the app expects (e.g. `.cursor/7. planner/tickets.md`, `.cursor/agents/*.md`, `.cursor/prompts/worker.md`, `.cursor/setup/frontend.json`, `.cursor/setup/backend.json`).
+- To change what **new** projects get when they Initialize, edit the **`.cursor_template`** folder in the KWCode repo. Do not remove or rename paths the app expects (e.g. `.cursor/7. planner/tickets.md`, `.cursor/2. agents/*.md`, `.cursor/8. worker/implement-all.md`, `.cursor/setup/frontend.json`, `.cursor/setup/backend.json`).
 - Tech stack variants: add JSON under `.cursor_template/configs/tech-stacks/` and reference them in scripts or docs.

@@ -22,7 +22,7 @@ P0 | P1 | P2 | P3
 
 ## Agents
 
-@frontend-dev @backend-dev (or agents from .cursor/agents/)
+@frontend-dev @backend-dev (or agents from .cursor/2. agents/)
 
 ## Notes
 

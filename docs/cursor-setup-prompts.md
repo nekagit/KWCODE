@@ -384,7 +384,7 @@ Define each documentation type, when to use it, and where it lives:
 |------|---------|----------|--------|
 | **README** | Project overview, getting started | Root `/README.md` | Markdown |
 | **Setup Docs** | AI agent context files | `.cursor/setup/*.md` | Markdown |
-| **Agent Docs** | Role-specific agent instructions | `.cursor/agents/*.md` | Markdown + YAML front matter |
+| **Agent Docs** | Role-specific agent instructions | `.cursor/2. agents/*.md` | Markdown + YAML front matter |
 | **ADRs** | Architectural Decision Records | `.cursor/adr/*.md` | Markdown (MADR format) |
 | **API Docs** | Endpoint reference | `docs/api/*.md` or inline JSDoc | Markdown / JSDoc |
 | **Component Docs** | Component usage, props, examples | Co-located or Storybook | TSDoc + examples |
@@ -490,7 +490,7 @@ Follow the MADR format:
 ```
 
 ### 7. Documentation for AI Agents
-Special rules for `.cursor/setup/` and `.cursor/agents/` files:
+Special rules for `.cursor/setup/` and `.cursor/2. agents/` files:
 - Be extremely explicit — AI agents have no implicit context
 - Use structured data (tables, lists) over prose
 - Include concrete file paths and command examples

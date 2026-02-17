@@ -213,7 +213,7 @@ export async function POST(request: Request) {
 KWCode executes shell scripts for prompt running and implementation:
 
 ### Key Scripts
-- **`script/implement_all.sh`** — runs AI implementation across terminal slots
+- **`script/worker/implement_all.sh`** — runs AI implementation across terminal slots
 - **`script/run_prompt.sh`** — executes a prompt in Cursor/agent
 - **`script/scaffold-cursor-md.mjs`** — scaffolds `.cursor/` directory structure
 - **`script/extract-tailwind-classes.mjs`** — extracts Tailwind class catalog
