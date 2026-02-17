@@ -3,6 +3,8 @@ import path from "path";
 import { runAgentPrompt } from "@/lib/agent-runner";
 import { parseAndValidate, generatePromptRecordSchema } from "@/lib/api-validation";
 
+export const dynamic = "force-static";
+
 export async function POST(request: NextRequest) {
   const parsed = await parseAndValidate(request, generatePromptRecordSchema);
   if (!parsed.success) return parsed.response;

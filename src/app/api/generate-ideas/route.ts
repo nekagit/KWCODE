@@ -3,6 +3,8 @@ import path from "path";
 import { runAgentPrompt } from "@/lib/agent-runner";
 import { parseAndValidate, generateIdeasSchema } from "@/lib/api-validation";
 
+export const dynamic = "force-static";
+
 const CATEGORIES = ["saas", "iaas", "paas", "website", "webapp", "webshop", "other"] as const;
 
 export async function POST(request: NextRequest) {

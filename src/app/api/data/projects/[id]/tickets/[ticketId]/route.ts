@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, type PlanTicketRow } from "@/lib/db";
 
+export const dynamic = "force-static";
+
+export function generateStaticParams() {
+  return [{ id: "placeholder", ticketId: "1" }];
+}
+
 function rowToTicket(r: PlanTicketRow) {
   return {
     id: r.id,

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 
+export const dynamic = "force-static";
+
 const ROOT = process.cwd();
 
 /** Allow only paths under ROOT; no ".." or absolute outside ROOT. */
@@ -14,6 +16,7 @@ function resolveSafe(relativePath: string): string | null {
 }
 
 export async function GET(request: Request) {
+  if (process.env.TAURI_BUILD === "1") return NextResponse.json({ error: "Missing path" }, { status: 400 });
   const { searchParams } = new URL(request.url);
   const rawPath = searchParams.get("path");
   if (!rawPath || typeof rawPath !== "string") {

@@ -57,7 +57,21 @@ export function NewProjectForm() {
       });
       router.push(`/projects/${project.id}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      const msg = e instanceof Error ? e.message : String(e);
+      // #region agent log
+      fetch("http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          location: "NewProjectForm.tsx:handleSubmit",
+          message: "createProject error",
+          data: { error: msg },
+          timestamp: Date.now(),
+          hypothesisId: "A",
+        }),
+      }).catch(() => {});
+      // #endregion
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -70,11 +84,16 @@ export function NewProjectForm() {
       );
       return;
     }
-    const selectedPath = await showOpenDirectoryDialog();
-    if (selectedPath) {
-      setRepoPath(selectedPath);
-    } else {
-      toast.info("No folder selected.");
+    try {
+      const selectedPath = await showOpenDirectoryDialog();
+      if (selectedPath) {
+        setRepoPath(selectedPath);
+      } else {
+        toast.info("No folder selected.");
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error(`Could not open folder dialog: ${msg}`);
     }
   };
 

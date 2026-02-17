@@ -4,6 +4,8 @@ import fs from "fs";
 import type { Project } from "@/types/project";
 import { parseAndValidate, createProjectSchema } from "@/lib/api-validation";
 
+export const dynamic = "force-static";
+
 function findDataDir(): string {
   const cwd = process.cwd();
   const inCwd = path.join(cwd, "data");

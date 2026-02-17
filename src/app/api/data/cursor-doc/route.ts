@@ -2,12 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 
+export const dynamic = "force-static";
+
 /**
  * GET: Read a file from process.cwd()/.cursor/ (app root .cursor folder).
  * Query param: path = relative path under .cursor (e.g. "0. ideas/ideas.md", "1. project/design.md").
  * Used as fallback when project repo read returns empty so tabs show content when project is the app repo.
  */
 export async function GET(request: NextRequest) {
+  if (process.env.TAURI_BUILD === "1") return NextResponse.json({ content: null }, { status: 200 });
   try {
     const { searchParams } = new URL(request.url);
     const relativeParam = searchParams.get("path");

@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb, type IdeaRow } from "@/lib/db";
 import type { IdeaRecord } from "../route";
 
+export const dynamic = "force-static";
+
+export function generateStaticParams() {
+  return [{ id: "1" }];
+}
+
 function rowToRecord(r: IdeaRow): IdeaRecord {
   return {
     id: r.id,

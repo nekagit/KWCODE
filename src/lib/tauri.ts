@@ -25,9 +25,15 @@ const listenReadyPromise: Promise<void> | null = isTauri
     })
   : null;
 const openReadyPromise: Promise<void> | null = isTauri
-  ? import("@tauri-apps/plugin-dialog").then((m: { open: OpenFn }) => {
-      tauriOpen = m.open;
-    })
+  ? import("@tauri-apps/plugin-dialog")
+      .then((m: { open: OpenFn }) => {
+        tauriOpen = m.open;
+      })
+      .catch(() => {
+        // Fallback when withGlobalTauri: true (dialog exposed on window)
+        const w = typeof window !== "undefined" ? (window as unknown as { __TAURI__?: { dialog?: { open: OpenFn } } }) : null;
+        if (w?.__TAURI__?.dialog?.open) tauriOpen = w.__TAURI__.dialog.open;
+      })
   : null;
 
 if (!isTauri) {
@@ -79,12 +85,17 @@ export const showOpenDirectoryDialog = async (): Promise<string | undefined> => 
       setTimeout(() => reject(new Error("Tauri dialog API load timeout")), TAURI_API_WAIT_MS)
     );
     await Promise.race([openReadyPromise, timeout]);
-  } else if (!tauriOpen) {
-    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+  if (!tauriOpen && typeof window !== "undefined") {
+    const w = window as unknown as { __TAURI__?: { dialog?: { open: OpenFn } } };
+    if (w.__TAURI__?.dialog?.open) tauriOpen = w.__TAURI__.dialog.open;
+  }
+  if (!tauriOpen) {
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
   if (!tauriOpen) {
     console.warn("Tauri 'dialog.open' API not available yet.");
-    return Promise.resolve(undefined);
+    return undefined;
   }
 
   try {
@@ -96,12 +107,14 @@ export const showOpenDirectoryDialog = async (): Promise<string | undefined> => 
 
     if (typeof selected === "string") {
       return selected;
-    } else if (Array.isArray(selected) && selected.length > 0) {
-      return selected[0];
+    }
+    if (Array.isArray(selected) && selected.length > 0) {
+      const first = selected[0];
+      return typeof first === "string" ? first : undefined;
     }
     return undefined;
   } catch (error) {
     console.error("Error opening directory dialog:", error);
-    return undefined;
+    throw error;
   }
 };

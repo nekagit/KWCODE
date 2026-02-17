@@ -1,6 +1,11 @@
 import dynamic from "next/dynamic";
 import { Loader2 } from "lucide-react";
 
+/** For static export (Tauri build): at least one path so the segment is included. */
+export function generateStaticParams() {
+  return [{ id: "new" }];
+}
+
 const ProjectDetailsPageContent = dynamic(
   () =>
     import("@/components/organisms/ProjectDetailsPageContent").then((m) => m.ProjectDetailsPageContent),

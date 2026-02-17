@@ -151,13 +151,7 @@ export function HomePageContent() {
         </ScrollArea>
 
         <TabsContent value="dashboard" className={c["4"]}>
-          <DashboardTabContent
-            navigateToTab={navigateToTab}
-            tickets={tickets}
-            updateTicket={updateTicket}
-            deleteTicket={deleteTicket}
-            router={router}
-          />
+          <DashboardTabContent />
         </TabsContent>
 
         <TabsContent value="prompts" className={c["5"]}>

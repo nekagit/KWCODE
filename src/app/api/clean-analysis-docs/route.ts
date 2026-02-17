@@ -6,6 +6,8 @@ import { DEFAULT_ANALYZE_JOBS } from "@/lib/api-projects";
 import type { Project } from "@/types/project";
 import { repoAllowed } from "@/lib/repo-allowed";
 
+export const dynamic = "force-static";
+
 function findDataDir(): string {
   const cwd = process.cwd();
   const inCwd = path.join(cwd, "data");

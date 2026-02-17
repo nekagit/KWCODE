@@ -5,7 +5,7 @@
   "build": {
     "beforeDevCommand": "npm run dev:tauri",
     "devUrl": "http://127.0.0.1:4000/",
-    "beforeBuildCommand": "npm run build",
+    "beforeBuildCommand": "node script/build-for-tauri.mjs",
     "frontendDist": "../out"
   },
   "app": {

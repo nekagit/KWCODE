@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, type MilestoneRow } from "@/lib/db";
 
+export const dynamic = "force-static";
+
+export function generateStaticParams() {
+  return [{ id: "placeholder" }];
+}
+
 function rowToMilestone(r: MilestoneRow) {
   return {
     id: r.id,

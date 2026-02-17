@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { IdeaTemplateCard } from "@/components/molecules/CardsAndDisplay/IdeaTemplateCard";
 import { MyIdeasCard } from "@/components/molecules/CardsAndDisplay/MyIdeasCard";
 import { AiGeneratedIdeasCard } from "@/components/molecules/CardsAndDisplay/AiGeneratedIdeasCard";
-import { IdeasDocAccordion } from "@/components/molecules/CardsAndDisplay/IdeasDocAccordion";
 import { IdeaFormDialog } from "@/components/molecules/FormsAndDialogs/IdeaFormDialog";
 import { ThreeTabResourcePageContent } from "@/components/organisms/ThreeTabResourcePageContent";
 import { getOrganismClasses } from "./organism-classes";
@@ -204,7 +203,7 @@ export function IdeasPageContent() {
     title: "Business ideas",
     description: "SaaS, IaaS, PaaS, websites, webapps, webshops — templates, AI-generated, or your own.",
     icon: <Lightbulb className={c["0"]} />,
-    tabListClassName: "grid w-full max-w-xl grid-cols-3 gap-1.5 p-1.5 glass-card rounded-xl mx-auto bg-muted/20 backdrop-blur-md border-border/40 shadow-sm",
+    tabListClassName: "grid w-full max-w-xl grid-cols-3 gap-2 p-2 glass-card rounded-xl mx-auto bg-muted/20 backdrop-blur-md border-border/40 shadow-sm [&_button]:min-w-0 [&_button]:truncate [&_button]:text-sm",
     tabLabels: ["Templates", "AI generated", "My ideas"] as [string, string, string],
   };
 
@@ -237,7 +236,6 @@ export function IdeasPageContent() {
     <ThreeTabResourcePageContent
       config={config}
       resource={resource}
-      renderAboveTabs={() => <IdeasDocAccordion onConvert={loadIdeas} />}
       renderTemplatesTab={(r) => (
         <IdeaTemplateCard
           TEMPLATE_IDEAS={r.TEMPLATE_IDEAS}

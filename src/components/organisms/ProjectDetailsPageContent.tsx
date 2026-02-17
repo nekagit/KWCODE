@@ -32,7 +32,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Project } from "@/types/project";
 import { getProjectResolved, deleteProject, listProjects, updateProject } from "@/lib/api-projects";
 import { ProjectTicketsTab } from "@/components/molecules/TabAndContentSections/ProjectTicketsTab";
-import { PlannerFilesSection } from "@/components/molecules/TabAndContentSections/PlannerFilesSection";
 import { ProjectGitTab } from "@/components/molecules/TabAndContentSections/ProjectGitTab";
 import { ProjectMilestonesTab } from "@/components/molecules/TabAndContentSections/ProjectMilestonesTab";
 import { ProjectFrontendTab } from "@/components/molecules/TabAndContentSections/ProjectFrontendTab";
@@ -728,9 +727,6 @@ export function ProjectDetailsPageContent() {
             value="todo"
             className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
           >
-            {project?.repoPath && (
-              <PlannerFilesSection project={project} projectId={projectId} />
-            )}
             <div key={plannerRefreshKey} className="rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-4 md:p-6">
               <ProjectTicketsTab
                 project={project}

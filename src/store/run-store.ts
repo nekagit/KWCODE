@@ -27,6 +27,8 @@ export interface RunState {
   timing: Timing;
   runningRuns: RunInfo[];
   selectedRunId: string | null;
+  /** Queue of temp-ticket jobs (fast dev, debug) waiting for a free terminal slot. */
+  pendingTempTicketQueue: PendingTempTicketJob[];
 
   /** Archived Implement All logs (saved when user clicks Archive). */
   archivedImplementAllLogs: Array<{ id: string; timestamp: string; logLines: string[] }>;
@@ -68,7 +70,7 @@ export interface RunActions {
   ) => Promise<string | null>;
   /** Run a single setup prompt (design/ideas/etc.) and open it in the floating terminal. */
   runSetupPrompt: (projectPath: string, promptContent: string, label: string) => Promise<string | null>;
-  /** Run a temporary ticket (single prompt) on slot 1 with optional meta for post-run actions. */
+  /** Run a temporary ticket (single prompt) on the next free slot (1–3) with optional meta for post-run actions. */
   runTempTicket: (
     projectPath: string,
     promptContent: string,
@@ -112,6 +114,70 @@ export function takeRunCompleteHandler(key: string): ((stdout: string) => void) 
   return h;
 }
 
+/** Pending temp-ticket job (fast dev, debug, etc.) waiting for a free slot. */
+export interface PendingTempTicketJob {
+  projectPath: string;
+  promptContent: string;
+  label: string;
+  meta?: RunMeta;
+}
+
+/** Next free terminal slot (1–3) or null if all occupied. Used so we only start when a slot is free. */
+function getNextFreeSlotOrNull(runningRuns: RunInfo[]): 1 | 2 | 3 | null {
+  const occupied = new Set<1 | 2 | 3>();
+  for (const r of runningRuns) {
+    if (r.status !== "running") continue;
+    if (!isImplementAllRun(r)) continue;
+    if (r.slot === 1 || r.slot === 2 || r.slot === 3) occupied.add(r.slot);
+  }
+  for (const slot of [1, 2, 3] as const) {
+    if (!occupied.has(slot)) return slot;
+  }
+  return null;
+}
+
+/** Start one pending temp-ticket job if queue non-empty and a slot is free. Called after enqueue and on run exit. */
+function processTempTicketQueue(
+  get: () => RunStore,
+  set: (partial: RunState | ((s: RunState) => RunState | Partial<RunState>)) => void
+): void {
+  const state = get();
+  if (state.pendingTempTicketQueue.length === 0) return;
+  const slot = getNextFreeSlotOrNull(state.runningRuns);
+  if (slot === null) return;
+  const job = state.pendingTempTicketQueue[0];
+  set((s) => ({ pendingTempTicketQueue: s.pendingTempTicketQueue.slice(1) }));
+  (async () => {
+    try {
+      const { run_id } = await invoke<{ run_id: string }>("run_run_terminal_agent", {
+        projectPath: job.projectPath,
+        promptContent: job.promptContent,
+        label: job.label,
+      });
+      set((s) => ({
+        runningRuns: [
+          ...s.runningRuns,
+          {
+            runId: run_id,
+            label: job.label,
+            logLines: [],
+            status: "running" as const,
+            startedAt: Date.now(),
+            slot,
+            meta: job.meta ?? undefined,
+          },
+        ],
+        selectedRunId: run_id,
+      }));
+      processTempTicketQueue(get, set);
+    } catch (e) {
+      set((s) => ({ ...s, error: e instanceof Error ? e.message : String(e) }));
+      toast.error("Failed to start queued agent.");
+      set((s) => ({ pendingTempTicketQueue: [job, ...s.pendingTempTicketQueue] }));
+    }
+  })();
+}
+
 const initialState: RunState = {
   isTauriEnv: null,
   loading: true,
@@ -124,6 +190,7 @@ const initialState: RunState = {
   timing: DEFAULT_TIMING,
   runningRuns: [],
   selectedRunId: null,
+  pendingTempTicketQueue: [],
 
   archivedImplementAllLogs: [],
   floatingTerminalRunId: null,
@@ -204,7 +271,7 @@ export const useRunStore = create<RunStore>()((set, get) => ({
           invoke<string[]>("get_active_projects"),
           invoke<PromptRecordItem[]>("get_prompts"),
         ]);
-        set({ allProjects: all, activeProjects: active, prompts: promptList });
+        set({ allProjects: all ?? [], activeProjects: active ?? [], prompts: promptList ?? [] });
       } else {
         const [dataRes, promptsRes] = await Promise.all([
           fetch("/api/data"),
@@ -239,7 +306,21 @@ export const useRunStore = create<RunStore>()((set, get) => ({
         });
       }
     } catch (e) {
-      set({ error: e instanceof Error ? e.message : String(e) });
+      const errMsg = e instanceof Error ? e.message : String(e);
+      // #region agent log
+      fetch("http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          location: "run-store.ts:refreshData",
+          message: "refreshData error (list_february_folders / get_active_projects / get_prompts)",
+          data: { error: errMsg },
+          timestamp: Date.now(),
+          hypothesisId: "B",
+        }),
+      }).catch(() => {});
+      // #endregion
+      set({ error: errMsg });
     } finally {
       set({ loading: false });
     }
@@ -475,32 +556,21 @@ export const useRunStore = create<RunStore>()((set, get) => ({
       return null;
     }
     set({ error: null });
-    try {
-      const { run_id } = await invoke<{ run_id: string }>("run_run_terminal_agent", {
-        projectPath: path,
-        promptContent: promptContent.trim(),
-        label,
-      });
-      set((s) => ({
-        runningRuns: [
-          ...s.runningRuns,
-          {
-            runId: run_id,
-            label,
-            logLines: [],
-            status: "running" as const,
-            startedAt: Date.now(),
-            slot: 1,
-            meta: meta ?? undefined,
-          },
-        ],
-        selectedRunId: run_id,
-      }));
-      return run_id;
-    } catch (e) {
-      set({ error: e instanceof Error ? e.message : String(e) });
-      return null;
-    }
+    const job: PendingTempTicketJob = {
+      projectPath: path,
+      promptContent: promptContent.trim(),
+      label,
+      meta,
+    };
+    set((s) => ({
+      pendingTempTicketQueue: [...s.pendingTempTicketQueue, job],
+    }));
+    processTempTicketQueue(get, set);
+    return "queued";
+  },
+
+  runNextInQueue: () => {
+    processTempTicketQueue(get, set);
   },
 
   setLocalUrl: (runId, localUrl) => {
@@ -593,10 +663,6 @@ export const useRunStore = create<RunStore>()((set, get) => ({
     } catch (e) {
       set({ error: e instanceof Error ? e.message : String(e) });
     }
-  },
-
-  runNextInQueue: () => {
-    // No-op: queue handling not used after Run page removal
   },
 
   stopAllImplementAll: async () => {

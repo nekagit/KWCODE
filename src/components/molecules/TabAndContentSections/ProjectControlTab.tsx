@@ -1,13 +1,19 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { ClipboardList, Loader2, FileText, Flag, Lightbulb, CheckCircle2, XCircle } from "lucide-react";
+import { ClipboardList, Loader2, FileText, Flag, Lightbulb, CheckCircle2, XCircle, Archive } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { invoke, isTauri } from "@/lib/tauri";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 type LogEntryStatus = "pending" | "accepted" | "declined";
 
@@ -144,6 +150,106 @@ export function ProjectControlTab({ projectId, refreshKey = 0 }: ProjectControlT
     );
   }
 
+  const pendingEntries = entries.filter((e) => e.status !== "accepted");
+  const acceptedEntries = entries.filter((e) => e.status === "accepted");
+
+  const renderEntryCard = (entry: LogEntry, showAcceptDecline: boolean) => (
+    <div
+      key={entry.id}
+      className="rounded-lg border border-border/60 bg-card/80 p-4 space-y-3"
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="font-semibold text-foreground">
+          Ticket #{entry.ticket_number}: {entry.ticket_title}
+        </span>
+        <span className="text-xs text-muted-foreground">
+          {new Date(entry.completed_at).toLocaleString()}
+        </span>
+        {entry.status === "accepted" && (
+          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-emerald-500/15 text-emerald-600 border border-emerald-500/30">
+            <CheckCircle2 className="size-3" />
+            Accepted
+          </span>
+        )}
+        {entry.status === "declined" && (
+          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-red-500/15 text-red-600 border border-red-500/30">
+            <XCircle className="size-3" />
+            Declined
+          </span>
+        )}
+        {showAcceptDecline && (entry.status === "pending" || !entry.status) && (
+          <div className="flex items-center gap-1 ml-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-[10px] gap-1 bg-emerald-500/10 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/20"
+              onClick={() => setEntryStatus(entry.id, "accepted")}
+            >
+              <CheckCircle2 className="size-3" />
+              Accept
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-[10px] gap-1 bg-red-500/10 border-red-500/30 text-red-600 hover:bg-red-500/20"
+              onClick={() => setEntryStatus(entry.id, "declined")}
+            >
+              <XCircle className="size-3" />
+              Decline
+            </Button>
+          </div>
+        )}
+      </div>
+      <div className="flex flex-wrap gap-2 text-xs">
+        <span className="flex items-center gap-1 text-muted-foreground">
+          <Flag className="size-3" />
+          {entry.milestone_id != null && milestones[entry.milestone_id] != null
+            ? milestones[entry.milestone_id]
+            : entry.milestone_id != null
+              ? `Milestone ${entry.milestone_id}`
+              : "—"}
+        </span>
+        <span className="flex items-center gap-1 text-muted-foreground">
+          <Lightbulb className="size-3" />
+          {entry.idea_id != null && ideas[entry.idea_id] != null
+            ? ideas[entry.idea_id]
+            : entry.idea_id != null
+              ? `Idea ${entry.idea_id}`
+              : "—"}
+        </span>
+      </div>
+      {entry.files_changed.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {entry.files_changed.slice(0, 20).map((f, i) => (
+            <span
+              key={i}
+              className={cn(
+                "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-mono",
+                f.status === "A" && "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20",
+                f.status === "M" && "bg-amber-500/10 text-amber-600 border border-amber-500/20",
+                f.status === "D" && "bg-red-500/10 text-red-600 border border-red-500/20",
+                !["A", "M", "D"].includes(f.status) && "bg-muted/50 text-muted-foreground"
+              )}
+            >
+              {f.status === "A" ? "Added" : f.status === "M" ? "Modified" : f.status === "D" ? "Deleted" : f.status} {f.path}
+            </span>
+          ))}
+          {entry.files_changed.length > 20 && (
+            <span className="text-xs text-muted-foreground">
+              +{entry.files_changed.length - 20} more
+            </span>
+          )}
+        </div>
+      )}
+      {entry.summary && (
+        <div className="flex gap-2 text-sm text-muted-foreground">
+          <FileText className="size-4 shrink-0 mt-0.5" />
+          <p className="line-clamp-3">{entry.summary}</p>
+        </div>
+      )}
+    </div>
+  );
+
   if (entries.length === 0) {
     return (
       <EmptyState
@@ -157,108 +263,38 @@ export function ProjectControlTab({ projectId, refreshKey = 0 }: ProjectControlT
   return (
     <div className="w-full flex flex-col gap-4">
       <p className="text-sm text-muted-foreground">
-        Completed ticket runs (newest first). Intention = Milestone + Idea assigned to the ticket.
+        Completed ticket runs (newest first). Accept moves an entry to Archived below.
       </p>
-      <ScrollArea className="flex-1 min-h-[400px] rounded-xl border border-border/40 bg-card/50">
+      <ScrollArea className="flex-1 min-h-[300px] rounded-xl border border-border/40 bg-card/50">
         <div className="p-4 space-y-4">
-          {entries.map((entry) => (
-            <div
-              key={entry.id}
-              className="rounded-lg border border-border/60 bg-card/80 p-4 space-y-3"
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-semibold text-foreground">
-                  Ticket #{entry.ticket_number}: {entry.ticket_title}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {new Date(entry.completed_at).toLocaleString()}
-                </span>
-                {entry.status === "accepted" && (
-                  <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-emerald-500/15 text-emerald-600 border border-emerald-500/30">
-                    <CheckCircle2 className="size-3" />
-                    Accepted
-                  </span>
-                )}
-                {entry.status === "declined" && (
-                  <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-red-500/15 text-red-600 border border-red-500/30">
-                    <XCircle className="size-3" />
-                    Declined
-                  </span>
-                )}
-                {(entry.status === "pending" || !entry.status) && (
-                  <div className="flex items-center gap-1 ml-auto">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 px-2 text-[10px] gap-1 bg-emerald-500/10 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/20"
-                      onClick={() => setEntryStatus(entry.id, "accepted")}
-                    >
-                      <CheckCircle2 className="size-3" />
-                      Accept
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 px-2 text-[10px] gap-1 bg-red-500/10 border-red-500/30 text-red-600 hover:bg-red-500/20"
-                      onClick={() => setEntryStatus(entry.id, "declined")}
-                    >
-                      <XCircle className="size-3" />
-                      Decline
-                    </Button>
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-2 text-xs">
-                <span className="flex items-center gap-1 text-muted-foreground">
-                  <Flag className="size-3" />
-                  {entry.milestone_id != null && milestones[entry.milestone_id] != null
-                    ? milestones[entry.milestone_id]
-                    : entry.milestone_id != null
-                      ? `Milestone ${entry.milestone_id}`
-                      : "—"}
-                </span>
-                <span className="flex items-center gap-1 text-muted-foreground">
-                  <Lightbulb className="size-3" />
-                  {entry.idea_id != null && ideas[entry.idea_id] != null
-                    ? ideas[entry.idea_id]
-                    : entry.idea_id != null
-                      ? `Idea ${entry.idea_id}`
-                      : "—"}
-                </span>
-              </div>
-              {entry.files_changed.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {entry.files_changed.slice(0, 20).map((f, i) => (
-                    <span
-                      key={i}
-                      className={cn(
-                        "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-mono",
-                        f.status === "A" && "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20",
-                        f.status === "M" && "bg-amber-500/10 text-amber-600 border border-amber-500/20",
-                        f.status === "D" && "bg-red-500/10 text-red-600 border border-red-500/20",
-                        !["A", "M", "D"].includes(f.status) && "bg-muted/50 text-muted-foreground"
-                      )}
-                    >
-                      {f.status === "A" ? "Added" : f.status === "M" ? "Modified" : f.status === "D" ? "Deleted" : f.status} {f.path}
-                    </span>
-                  ))}
-                  {entry.files_changed.length > 20 && (
-                    <span className="text-xs text-muted-foreground">
-                      +{entry.files_changed.length - 20} more
-                    </span>
-                  )}
-                </div>
-              )}
-              {entry.summary && (
-                <div className="flex gap-2 text-sm text-muted-foreground">
-                  <FileText className="size-4 shrink-0 mt-0.5" />
-                  <p className="line-clamp-3">{entry.summary}</p>
-                </div>
-              )}
-            </div>
-          ))}
+          {pendingEntries.length === 0 ? (
+            <p className="text-xs text-muted-foreground py-2">No pending entries. Accepted entries are in Archived below.</p>
+          ) : (
+            pendingEntries.map((entry) => renderEntryCard(entry, true))
+          )}
         </div>
       </ScrollArea>
+
+      {acceptedEntries.length > 0 && (
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="archived" className="rounded-xl border border-border/40 bg-card/50 overflow-hidden">
+            <AccordionTrigger className="px-4 py-3 hover:no-underline [&[data-state=open]]:border-b [&[data-state=open]]:border-border/40">
+              <span className="flex items-center gap-2">
+                <Archive className="size-4 text-muted-foreground" />
+                <span className="font-medium">Archived</span>
+                <span className="text-xs text-muted-foreground font-normal">
+                  ({acceptedEntries.length} accepted)
+                </span>
+              </span>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4 pt-2">
+              <div className="space-y-4">
+                {acceptedEntries.map((entry) => renderEntryCard(entry, false))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      )}
     </div>
   );
 }

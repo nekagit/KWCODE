@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, type ImplementationLogRow } from "@/lib/db";
 
+export const dynamic = "force-static";
+
+export function generateStaticParams() {
+  return [{ id: "placeholder" }];
+}
+
 function rowToEntry(r: ImplementationLogRow) {
   return {
     id: r.id,

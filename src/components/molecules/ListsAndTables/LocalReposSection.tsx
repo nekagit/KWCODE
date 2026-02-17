@@ -21,6 +21,7 @@ const classes = getClasses("ListsAndTables/LocalReposSection.tsx");
 export function LocalReposSection() {
   const [localPaths, setLocalPaths] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [configPath, setConfigPath] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -38,7 +39,6 @@ export function LocalReposSection() {
         .catch(() => [] as string[]);
 
     if (isTauri) {
-      // In Tauri, always use the Rust backend so listing uses the app's filesystem context and february-dir.txt resolution (same as exe/cwd).
       invoke<string[]>("list_february_folders")
         .then((paths) => {
           if (!cancelled) apply(paths ?? []);
@@ -57,6 +57,13 @@ export function LocalReposSection() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!isTauri || loading || localPaths.length > 0) return;
+    invoke<string>("get_february_dir_config_path")
+      .then(setConfigPath)
+      .catch(() => setConfigPath(null));
+  }, [isTauri, loading, localPaths.length]);
+
   const triggerLabel =
     localPaths.length > 0
       ? `Local repos (${localPaths.length})`
@@ -74,6 +81,9 @@ export function LocalReposSection() {
       );
     }
     if (localPaths.length === 0) {
+      const description = configPath
+        ? `Add one parent path per line to:\n${configPath}\nOr set FEBRUARY_DIR (paths separated by ; or ,).`
+        : "Add parent path(s) to data/february-dir.txt (one per line) or set FEBRUARY_DIR (paths separated by ; or ,).";
       return (
         <>
           <p className={classes[0]}>
@@ -82,7 +92,7 @@ export function LocalReposSection() {
           <EmptyState
             icon={FolderOpen}
             message="No project folders found"
-            description="No subfolders in the configured projects directory, or the app cannot read that path. Set data/february-dir.txt (one path per line) or FEBRUARY_DIR (paths separated by ; or ,), or run from the Tauri desktop app."
+            description={description}
           />
         </>
       );

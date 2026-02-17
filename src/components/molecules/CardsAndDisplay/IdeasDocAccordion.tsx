@@ -174,7 +174,13 @@ export function IdeasDocAccordion({ onConvert }: IdeasDocAccordionProps) {
         <Accordion
           type="multiple"
           className="w-full rounded-xl border border-border/40 bg-muted/5 p-2"
-          defaultValue={structured.sections.slice(0, 4).map((s) => s.id)}
+          defaultValue={
+            structured.sections.some((s) => s.id === "section-preamble")
+              ? ["section-preamble"]
+              : structured.sections[0]
+                ? [structured.sections[0].id]
+                : []
+          }
         >
           {structured.sections.map((section: IdeasStructuredSection) => (
             <AccordionItem key={section.id} value={section.id} className="border-border/40">
@@ -214,7 +220,7 @@ export function IdeasDocAccordion({ onConvert }: IdeasDocAccordionProps) {
         <Lightbulb className="h-4 w-4 text-amber-500" />
         From {IDEAS_MD_PATH}
       </h3>
-      <Accordion type="multiple" className="w-full rounded-xl border border-border/40 bg-muted/5 p-2">
+      <Accordion type="multiple" className="w-full rounded-xl border border-border/40 bg-muted/5 p-2" defaultValue={["intro"]}>
         {parsed?.intro && (
           <AccordionItem value="intro" className="border-border/40">
             <AccordionTrigger className="text-left hover:no-underline py-3">

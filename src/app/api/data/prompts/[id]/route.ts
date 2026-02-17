@@ -3,6 +3,12 @@ import path from "path";
 import fs from "fs";
 import type { PromptRecordRecord } from "../route";
 
+export const dynamic = "force-static";
+
+export function generateStaticParams() {
+  return [{ id: "1" }];
+}
+
 function findDataDir(): string {
   const cwd = process.cwd();
   const inCwd = path.join(cwd, "data");

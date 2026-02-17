@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { Cpu, Loader2, Pencil, Save } from "lucide-react";
+import { Cpu, Loader2, Pencil, Save, Layout, Server, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { SingleContentPage } from "@/components/organisms/SingleContentPage";
 import { SectionCard } from "@/components/shared/DisplayPrimitives";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -16,6 +15,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { getOrganismClasses } from "./organism-classes";
+import { getTechLogoUrl } from "@/lib/tech-logos";
 
 const c = getOrganismClasses("TechnologiesPageContent.tsx");
 
@@ -37,23 +37,49 @@ function parseTechStack(raw: string | undefined): TechStackJson | null {
   }
 }
 
+function TechBadge({ label, value }: { label: string; value: string }) {
+  const logoUrl = getTechLogoUrl(value);
+  return (
+    <div className="inline-flex items-center gap-2 rounded-xl border border-border/60 bg-muted/30 px-3 py-2 text-sm shadow-sm transition-colors hover:border-border hover:bg-muted/50">
+      {logoUrl ? (
+        <img
+          src={logoUrl}
+          alt=""
+          className="size-5 shrink-0 object-contain"
+          onError={(e) => {
+            (e.target as HTMLImageElement).style.display = "none";
+          }}
+        />
+      ) : null}
+      <span className="text-muted-foreground shrink-0 font-medium">{label}:</span>
+      <span className="font-medium text-foreground">{value}</span>
+    </div>
+  );
+}
+
+const CATEGORY_META: Record<string, { accent: "blue" | "emerald" | "amber"; icon: React.ReactNode }> = {
+  Frontend: { accent: "blue", icon: <Layout className="size-4" /> },
+  Backend: { accent: "emerald", icon: <Server className="size-4" /> },
+  Tooling: { accent: "amber", icon: <Wrench className="size-4" /> },
+};
+
 function renderCategoryCard(
   title: string,
-  accent: "blue" | "emerald" | "amber",
   entries: Record<string, string> | undefined
 ) {
   if (!entries || Object.keys(entries).length === 0) return null;
+  const meta = CATEGORY_META[title] ?? { accent: "blue" as const, icon: null };
   return (
-    <SectionCard key={title} accentColor={accent} className="space-y-3">
-      <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-        {title}
-      </h3>
+    <SectionCard key={title} accentColor={meta.accent} className="space-y-4">
+      <div className="flex items-center gap-2">
+        {meta.icon && <span className="text-muted-foreground">{meta.icon}</span>}
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          {title}
+        </h3>
+      </div>
       <div className="flex flex-wrap gap-2">
         {Object.entries(entries).map(([key, value]) => (
-          <Badge key={key} variant="outline" className="font-normal">
-            <span className="text-muted-foreground">{key}:</span>{" "}
-            <span className="ml-1">{value}</span>
-          </Badge>
+          <TechBadge key={key} label={key} value={value} />
         ))}
       </div>
     </SectionCard>
@@ -149,8 +175,15 @@ export function TechnologiesPageContent() {
         <div className="space-y-6">
           {/* Tech stack */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold">Tech stack</h2>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h2 className="text-base font-semibold">Tech stack</h2>
+                {(techStack?.description ?? techStack?.name) && (
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    {techStack?.description ?? techStack?.name}
+                  </p>
+                )}
+              </div>
               {files["tech-stack.json"] != null && (
                 <Button
                   variant="outline"
@@ -164,21 +197,9 @@ export function TechnologiesPageContent() {
             </div>
             {techStack ? (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {renderCategoryCard(
-                  "Frontend",
-                  "blue",
-                  techStack.frontend
-                )}
-                {renderCategoryCard(
-                  "Backend",
-                  "emerald",
-                  techStack.backend
-                )}
-                {renderCategoryCard(
-                  "Tooling",
-                  "amber",
-                  techStack.tooling
-                )}
+                {renderCategoryCard("Frontend", techStack.frontend)}
+                {renderCategoryCard("Backend", techStack.backend)}
+                {renderCategoryCard("Tooling", techStack.tooling)}
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">

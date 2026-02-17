@@ -54,13 +54,26 @@ export async function getProjectResolved(id: string): Promise<ResolvedProject> {
 
 export async function listProjects(): Promise<Project[]> {
   if (isTauri) {
-    return invoke("list_projects", {});
+    return invoke<Project[]>("list_projects", {});
   }
   return fetchJson<Project[]>("/api/data/projects");
 }
 
 export async function createProject(body: CreateProjectBody): Promise<Project> {
   if (isTauri) {
+    // #region agent log
+    fetch("http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "api-projects.ts:createProject",
+        message: "createProject invoking create_project",
+        data: { name: body.name },
+        timestamp: Date.now(),
+        hypothesisId: "A",
+      }),
+    }).catch(() => {});
+    // #endregion
     return invoke("create_project", { project: body });
   } else {
     return fetchJson<Project>("/api/data/projects", {

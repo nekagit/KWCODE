@@ -58,8 +58,8 @@ export function ProjectIdeasDocTab({ project, projectId, docsRefreshKey }: Proje
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [introExpanded, setIntroExpanded] = useState(false);
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["section-preamble", "section-0", "section-1", "section-2"]));
+  const [introExpanded, setIntroExpanded] = useState(true);
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["section-preamble"]));
   const [expandedIdeas, setExpandedIdeas] = useState<Set<string>>(new Set());
   const [showRawDialog, setShowRawDialog] = useState(false);
   const [newIdeaRaw, setNewIdeaRaw] = useState("");

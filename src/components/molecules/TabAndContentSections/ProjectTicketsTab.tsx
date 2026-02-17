@@ -63,7 +63,6 @@ import {
 import { EmptyState, LoadingState } from "@/components/shared/EmptyState";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { KanbanColumnCard } from "@/components/molecules/Kanban/KanbanColumnCard";
-import { GenerateKanbanPromptSection } from "@/components/atoms/forms/GenerateKanbanPromptSection";
 import { cn, humanizeAgentId } from "@/lib/utils";
 import { isImplementAllRun } from "@/lib/run-helpers";
 import { AddPromptDialog } from "@/components/molecules/FormsAndDialogs/AddPromptDialog";
@@ -349,8 +348,6 @@ export function ProjectTicketsTab({
   const [kanbanData, setKanbanData] = useState<TodosKanbanData | null>(null);
   const [kanbanLoading, setKanbanLoading] = useState(false);
   const [kanbanError, setKanbanError] = useState<string | null>(null);
-  const [kanbanPrompt, setKanbanPrompt] = useState("");
-  const [kanbanPromptLoading, setKanbanPromptLoading] = useState(false);
   const [addTicketOpen, setAddTicketOpen] = useState(false);
   const [addTicketTitle, setAddTicketTitle] = useState("");
   const [addTicketDesc, setAddTicketDesc] = useState("");
@@ -451,20 +448,6 @@ export function ProjectTicketsTab({
       setIdeas([]);
     }
   }, [projectId, project?.ideaIds]);
-
-  const generateKanbanPrompt = useCallback(async () => {
-    if (!project || !kanbanData) return;
-    setKanbanPromptLoading(true);
-    setKanbanError(null);
-    try {
-      const block = buildKanbanContextBlock(kanbanData);
-      setKanbanPrompt(block);
-    } catch (e) {
-      setKanbanError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setKanbanPromptLoading(false);
-    }
-  }, [project, kanbanData]);
 
   /* ── Ticket / Feature mutations ── */
 
@@ -1115,16 +1098,6 @@ export function ProjectTicketsTab({
               </AccordionContent>
             </AccordionItem>
           </Accordion>
-
-          {/* ═══════ Generate Kanban Prompt ═══════ */}
-          <div className="rounded-xl border border-border/40 bg-card/30 backdrop-blur-sm p-1">
-            <GenerateKanbanPromptSection
-              kanbanData={kanbanData}
-              kanbanPrompt={kanbanPrompt}
-              kanbanPromptLoading={kanbanPromptLoading}
-              generateKanbanPrompt={generateKanbanPrompt}
-            />
-          </div>
         </>
       )}
 

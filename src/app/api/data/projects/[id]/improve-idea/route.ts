@@ -3,6 +3,12 @@ import path from "path";
 import { runAgentPrompt } from "@/lib/agent-runner";
 import { parseAndValidate, improveIdeaSchema } from "@/lib/api-validation";
 
+export const dynamic = "force-static";
+
+export function generateStaticParams() {
+  return [{ id: "placeholder" }];
+}
+
 /**
  * POST: Improve a raw idea with AI and return polished markdown for ideas.md.
  * Used when adding new ideas from the project Ideas tab.

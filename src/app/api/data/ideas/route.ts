@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, type IdeaRow } from "@/lib/db";
 
+export const dynamic = "force-static";
+
 export type IdeaCategory =
   | "saas"
   | "iaas"

@@ -3,6 +3,8 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { parseTicketsMd } from "@/lib/todos-kanban";
 
+export const dynamic = "force-static";
+
 const CURSOR_PATH = ".cursor";
 const PLANNER_PATH = `${CURSOR_PATH}/7. planner`;
 const TICKETS_MD_PATH = `${PLANNER_PATH}/tickets.md`;

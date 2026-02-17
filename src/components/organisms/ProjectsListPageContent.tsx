@@ -8,7 +8,6 @@ import { ProjectsHeader } from "@/components/molecules/LayoutAndNavigation/Proje
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { NoProjectsFoundCard } from "@/components/molecules/CardsAndDisplay/NoProjectsFoundCard";
 import { ProjectLoadingState } from "@/components/molecules/UtilitiesAndHelpers/ProjectLoadingState";
-import { LocalReposSection } from "@/components/molecules/ListsAndTables/LocalReposSection";
 import { ProjectListContainer } from "@/components/molecules/ListsAndTables/ProjectListContainer";
 import { getOrganismClasses } from "./organism-classes";
 
@@ -92,9 +91,6 @@ export function ProjectsListPageContent() {
           }}
         />
       )}
-
-      {/* Local repos: configured projects directory — create a project from one without typing the path */}
-      <LocalReposSection />
 
       {/* Existing projects: simple list to open them */}
       {loading ? (

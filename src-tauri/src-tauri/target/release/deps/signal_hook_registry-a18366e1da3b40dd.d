@@ -1,0 +1,9 @@
+/Users/nenadkalicanin/Documents/February/KW-February-KWCode/src-tauri/src-tauri/target/release/deps/signal_hook_registry-a18366e1da3b40dd.d: /Users/nenadkalicanin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-registry-1.4.8/src/lib.rs /Users/nenadkalicanin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-registry-1.4.8/src/half_lock.rs /Users/nenadkalicanin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-registry-1.4.8/src/vec_map.rs
+
+/Users/nenadkalicanin/Documents/February/KW-February-KWCode/src-tauri/src-tauri/target/release/deps/libsignal_hook_registry-a18366e1da3b40dd.rlib: /Users/nenadkalicanin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-registry-1.4.8/src/lib.rs /Users/nenadkalicanin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-registry-1.4.8/src/half_lock.rs /Users/nenadkalicanin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-registry-1.4.8/src/vec_map.rs
+
+/Users/nenadkalicanin/Documents/February/KW-February-KWCode/src-tauri/src-tauri/target/release/deps/libsignal_hook_registry-a18366e1da3b40dd.rmeta: /Users/nenadkalicanin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-registry-1.4.8/src/lib.rs /Users/nenadkalicanin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-registry-1.4.8/src/half_lock.rs /Users/nenadkalicanin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-registry-1.4.8/src/vec_map.rs
+
+/Users/nenadkalicanin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-registry-1.4.8/src/lib.rs:
+/Users/nenadkalicanin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-registry-1.4.8/src/half_lock.rs:
+/Users/nenadkalicanin/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-registry-1.4.8/src/vec_map.rs:

@@ -5,6 +5,12 @@ import type { Project } from "@/types/project";
 import type { ArchitectureRecord } from "@/types/architecture";
 import type { DesignConfig } from "@/types/design";
 
+export const dynamic = "force-static";
+
+export function generateStaticParams() {
+  return [{ id: "placeholder" }];
+}
+
 function findDataDir(): string {
   const cwd = process.cwd();
   const inCwd = path.join(cwd, "data");

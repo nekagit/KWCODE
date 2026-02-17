@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 
+export const dynamic = "force-static";
+
 const ROOT = process.cwd();
 const CURSOR_DIR = path.join(ROOT, ".cursor");
 const CURSOR_TEMPLATE_DIR = path.join(ROOT, ".cursor_template");

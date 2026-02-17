@@ -93,9 +93,19 @@ function runMigrations(conn: Database.Database): void {
 export function getDb(): Database.Database {
   if (db) return db;
   const dataDir = getDataDir();
-  fs.mkdirSync(dataDir, { recursive: true });
+  try {
+    fs.mkdirSync(dataDir, { recursive: true });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    throw new Error(`Database: cannot create data dir at ${dataDir}: ${msg}`);
+  }
   const dbPath = path.join(dataDir, "app.db");
-  db = new Database(dbPath);
+  try {
+    db = new Database(dbPath);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    throw new Error(`Database: cannot open ${dbPath}: ${msg}`);
+  }
   runMigrations(db);
   migrateIdeasFromJson(db, dataDir);
   return db;

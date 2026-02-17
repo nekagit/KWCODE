@@ -6,6 +6,8 @@ import type { Project, ProjectEntityCategories, EntityCategory } from "@/types/p
 import type { ArchitectureRecord } from "@/types/architecture";
 import type { DesignConfig, SectionKind, PageTemplateId } from "@/types/design";
 
+export const dynamic = "force-static";
+
 function findDataDir(): string {
   const cwd = process.cwd();
   const inCwd = path.join(cwd, "data");

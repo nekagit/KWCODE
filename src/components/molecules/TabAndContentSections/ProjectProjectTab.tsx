@@ -10,7 +10,7 @@ import { isTauri } from "@/lib/tauri";
 import { useRunStore } from "@/store/run-store";
 import type { Project } from "@/types/project";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { SectionCard, CountBadge, MetadataBadge } from "@/components/shared/DisplayPrimitives";
+import { CountBadge, MetadataBadge } from "@/components/shared/DisplayPrimitives";
 import { EmptyState, LoadingState } from "@/components/shared/EmptyState";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,6 +36,12 @@ import { SetupDocBlock } from "@/components/molecules/TabAndContentSections/Setu
 import { ProjectDesignTab } from "@/components/molecules/TabAndContentSections/ProjectDesignTab";
 import { ProjectArchitectureTab } from "@/components/molecules/TabAndContentSections/ProjectArchitectureTab";
 import { ProjectAgentsSection } from "@/components/molecules/TabAndContentSections/ProjectAgentsSection";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const markdownClasses =
   "text-sm text-foreground [&_h1]:text-lg [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-semibold [&_h3]:text-sm [&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_pre]:bg-muted/50 [&_pre]:p-3 [&_pre]:rounded-md [&_pre]:overflow-x-auto [&_code]:bg-muted/50 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_p]:mb-2 last:[&_p]:mb-0 [&_table]:border-collapse [&_th]:border [&_td]:border [&_th]:px-2 [&_td]:px-2 [&_th]:py-1 [&_td]:py-1";
@@ -245,13 +251,17 @@ export function ProjectProjectTab({ project, projectId, docsRefreshKey, onProjec
   return (
     <div className="space-y-6">
       <ScrollArea className="h-[calc(100vh-14rem)]">
-        <div className="space-y-6 pr-4">
-          {/* Run section: scripts from package.json + Play + terminal output */}
-          <SectionCard accentColor="emerald">
-            <div className="flex items-center gap-2 mb-3">
-              <Play className="h-4 w-4 text-emerald-500" />
-              <h3 className="text-sm font-semibold">Run</h3>
-            </div>
+        <div className="space-y-2 pr-4">
+          <Accordion type="single" collapsible defaultValue="run" className="w-full space-y-2">
+            {/* Run section: scripts from package.json + Play + terminal output — only one expanded by default */}
+            <AccordionItem value="run" className="rounded-xl border border-border/40 bg-card/60 backdrop-blur-sm overflow-hidden data-[state=open]:border-emerald-500/30">
+              <AccordionTrigger className="px-5 py-3 hover:no-underline hover:bg-muted/20 [&[data-state=open]]:border-b [&[data-state=open]]:border-border/40">
+                <div className="flex items-center gap-2">
+                  <Play className="h-4 w-4 text-emerald-500" />
+                  <h3 className="text-sm font-semibold">Run</h3>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-5 pb-5 pt-2">
             <p className="text-xs text-muted-foreground mb-4">
               Run npm scripts from the project directory. On macOS, each script opens in Terminal.app; on other platforms output appears below (localhost URL becomes &quot;Open app&quot;).
             </p>
@@ -388,21 +398,21 @@ export function ProjectProjectTab({ project, projectId, docsRefreshKey, onProjec
                 })()}
               </div>
             )}
-          </SectionCard>
+              </AccordionContent>
+            </AccordionItem>
 
-          {/* Project Files — .cursor directory browser */}
-          <SectionCard accentColor="rose">
+            {/* Project Files — .cursor directory browser */}
+            <AccordionItem
+              value="project-files" className="rounded-xl border border-border/40 bg-card/60 backdrop-blur-sm overflow-hidden data-[state=open]:border-rose-500/30">
+              <AccordionTrigger className="px-5 py-3 hover:no-underline hover:bg-muted/20 [&[data-state=open]]:border-b [&[data-state=open]]:border-border/40">
+                <div className="flex items-center gap-2">
+                  <FolderGit2 className="w-4 h-4 text-rose-500" />
+                  <h3 className="text-sm font-semibold">Project Files</h3>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-5 pb-5 pt-2">
             <div className="flex flex-col gap-4">
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500">
-                    <FolderGit2 className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-foreground">Project Files</h3>
-                    <p className="text-xs text-muted-foreground">Files in .cursor directory</p>
-                  </div>
-                </div>
                 <Button variant="ghost" size="sm" onClick={() => setFolderRefreshKey((k) => k + 1)} className="gap-1.5">
                   <RefreshCw className="h-3.5 w-3.5" />
                   Refresh
@@ -410,14 +420,18 @@ export function ProjectProjectTab({ project, projectId, docsRefreshKey, onProjec
               </div>
               <ProjectFilesTab project={project} projectId={projectId} />
             </div>
-          </SectionCard>
+              </AccordionContent>
+            </AccordionItem>
 
-          {/* Overview + file list */}
-          <SectionCard accentColor="sky">
-            <div className="flex items-center gap-2 mb-3">
-              <FolderOpen className="h-4 w-4 text-sky-500" />
-              <h3 className="text-sm font-semibold">Project info</h3>
-            </div>
+            {/* Overview + file list */}
+            <AccordionItem value="project-info" className="rounded-xl border border-border/40 bg-card/60 backdrop-blur-sm overflow-hidden data-[state=open]:border-sky-500/30">
+              <AccordionTrigger className="px-5 py-3 hover:no-underline hover:bg-muted/20 [&[data-state=open]]:border-b [&[data-state=open]]:border-border/40">
+                <div className="flex items-center gap-2">
+                  <FolderOpen className="h-4 w-4 text-sky-500" />
+                  <h3 className="text-sm font-semibold">Project info</h3>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-5 pb-5 pt-2">
             <p className="text-xs text-muted-foreground mb-3">
               Documents in <code className="rounded bg-muted px-1.5 py-0.5 font-mono">{PROJECT_DIR}</code> (e.g.
               PROJECT-INFO.md, TECH-STACK.md, ROADMAP.md).{" "}
@@ -524,15 +538,19 @@ export function ProjectProjectTab({ project, projectId, docsRefreshKey, onProjec
                 </TableBody>
               </Table>
             )}
-          </SectionCard>
+              </AccordionContent>
+            </AccordionItem>
 
-          {/* Document preview */}
-          {entries.length > 0 && (
-            <SectionCard accentColor="sky">
-              <div className="flex items-center gap-2 mb-3">
-                <FileText className="h-4 w-4 text-sky-500" />
-                <h3 className="text-sm font-semibold">{selectedFile ?? "Select a document"}</h3>
-              </div>
+            {/* Document preview */}
+            {entries.length > 0 && (
+            <AccordionItem value="document-preview" className="rounded-xl border border-border/40 bg-card/60 backdrop-blur-sm overflow-hidden data-[state=open]:border-sky-500/30">
+              <AccordionTrigger className="px-5 py-3 hover:no-underline hover:bg-muted/20 [&[data-state=open]]:border-b [&[data-state=open]]:border-border/40">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-sky-500" />
+                  <h3 className="text-sm font-semibold">{selectedFile ?? "Select a document"}</h3>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-5 pb-5 pt-2">
               {loadingContent ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -546,35 +564,47 @@ export function ProjectProjectTab({ project, projectId, docsRefreshKey, onProjec
               ) : (
                 <p className="text-sm text-muted-foreground py-4">Select a document from the table above.</p>
               )}
-            </SectionCard>
-          )}
+              </AccordionContent>
+            </AccordionItem>
+            )}
 
-          {/* Design */}
-          <SectionCard accentColor="violet">
-            <div className="flex items-center gap-2 mb-3">
-              <Palette className="h-4 w-4 text-violet-500" />
-              <h3 className="text-sm font-semibold">Design</h3>
-            </div>
+            {/* Design */}
+            <AccordionItem value="design" className="rounded-xl border border-border/40 bg-card/60 backdrop-blur-sm overflow-hidden data-[state=open]:border-violet-500/30">
+              <AccordionTrigger className="px-5 py-3 hover:no-underline hover:bg-muted/20 [&[data-state=open]]:border-b [&[data-state=open]]:border-border/40">
+                <div className="flex items-center gap-2">
+                  <Palette className="h-4 w-4 text-violet-500" />
+                  <h3 className="text-sm font-semibold">Design</h3>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-5 pb-5 pt-2">
             <SetupDocBlock project={project} projectId={projectId} setupKey="design" docsRefreshKey={docsRefreshKey} />
             <ProjectDesignTab project={project} projectId={projectId} showHeader={false} />
-          </SectionCard>
+              </AccordionContent>
+            </AccordionItem>
 
-          {/* Architecture */}
-          <SectionCard accentColor="blue">
-            <div className="flex items-center gap-2 mb-3">
-              <Building2 className="h-4 w-4 text-blue-500" />
-              <h3 className="text-sm font-semibold">Architecture</h3>
-            </div>
+            {/* Architecture */}
+            <AccordionItem value="architecture" className="rounded-xl border border-border/40 bg-card/60 backdrop-blur-sm overflow-hidden data-[state=open]:border-blue-500/30">
+              <AccordionTrigger className="px-5 py-3 hover:no-underline hover:bg-muted/20 [&[data-state=open]]:border-b [&[data-state=open]]:border-border/40">
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4 text-blue-500" />
+                  <h3 className="text-sm font-semibold">Architecture</h3>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-5 pb-5 pt-2">
             <SetupDocBlock project={project} projectId={projectId} setupKey="architecture" docsRefreshKey={docsRefreshKey} />
             <ProjectArchitectureTab project={project} projectId={projectId} showHeader={false} />
-          </SectionCard>
+              </AccordionContent>
+            </AccordionItem>
 
-          {/* ADR — Architecture decision records */}
-          <SectionCard accentColor="violet">
-            <div className="flex items-center gap-2 mb-3">
-              <FileText className="h-4 w-4 text-violet-500" />
-              <h3 className="text-sm font-semibold">ADR</h3>
-            </div>
+            {/* ADR — Architecture decision records */}
+            <AccordionItem value="adr" className="rounded-xl border border-border/40 bg-card/60 backdrop-blur-sm overflow-hidden data-[state=open]:border-violet-500/30">
+              <AccordionTrigger className="px-5 py-3 hover:no-underline hover:bg-muted/20 [&[data-state=open]]:border-b [&[data-state=open]]:border-border/40">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-violet-500" />
+                  <h3 className="text-sm font-semibold">ADR</h3>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-5 pb-5 pt-2">
             <p className="text-xs text-muted-foreground mb-3">
               Architecture decision records in <code className="rounded bg-muted px-1 py-0.5 font-mono text-[10px]">{ADR_DIR}</code>.
             </p>
@@ -600,23 +630,31 @@ export function ProjectProjectTab({ project, projectId, docsRefreshKey, onProjec
                 </TableBody>
               </Table>
             )}
-          </SectionCard>
+              </AccordionContent>
+            </AccordionItem>
 
-          {/* Agents */}
-          <SectionCard accentColor="cyan">
-            <div className="flex items-center gap-2 mb-3">
-              <Bot className="h-4 w-4 text-cyan-500" />
-              <h3 className="text-sm font-semibold">Agents</h3>
-            </div>
+            {/* Agents */}
+            <AccordionItem value="agents" className="rounded-xl border border-border/40 bg-card/60 backdrop-blur-sm overflow-hidden data-[state=open]:border-cyan-500/30">
+              <AccordionTrigger className="px-5 py-3 hover:no-underline hover:bg-muted/20 [&[data-state=open]]:border-b [&[data-state=open]]:border-border/40">
+                <div className="flex items-center gap-2">
+                  <Bot className="h-4 w-4 text-cyan-500" />
+                  <h3 className="text-sm font-semibold">Agents</h3>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-5 pb-5 pt-2">
             <ProjectAgentsSection project={project} projectId={projectId} />
-          </SectionCard>
+              </AccordionContent>
+            </AccordionItem>
 
-          {/* Rules */}
-          <SectionCard accentColor="teal">
-            <div className="flex items-center gap-2 mb-3">
-              <Folder className="h-4 w-4 text-teal-500" />
-              <h3 className="text-sm font-semibold">Rules</h3>
-            </div>
+            {/* Rules */}
+            <AccordionItem value="rules" className="rounded-xl border border-border/40 bg-card/60 backdrop-blur-sm overflow-hidden data-[state=open]:border-teal-500/30">
+              <AccordionTrigger className="px-5 py-3 hover:no-underline hover:bg-muted/20 [&[data-state=open]]:border-b [&[data-state=open]]:border-border/40">
+                <div className="flex items-center gap-2">
+                  <Folder className="h-4 w-4 text-teal-500" />
+                  <h3 className="text-sm font-semibold">Rules</h3>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-5 pb-5 pt-2">
             <p className="text-xs text-muted-foreground mb-3">
               Cursor rules and conventions in <code className="rounded bg-muted px-1 py-0.5 font-mono text-[10px]">{RULES_DIR}</code>.
             </p>
@@ -642,7 +680,9 @@ export function ProjectProjectTab({ project, projectId, docsRefreshKey, onProjec
                 </TableBody>
               </Table>
             )}
-          </SectionCard>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
       </ScrollArea>
     </div>

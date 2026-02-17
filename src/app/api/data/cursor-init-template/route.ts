@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 
+export const dynamic = "force-static";
+
 const TEMPLATE_DIR = ".cursor_template";
 
 function readDirRecursive(dir: string, baseDir: string): Record<string, string> {

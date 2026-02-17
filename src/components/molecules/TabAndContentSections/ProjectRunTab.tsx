@@ -31,7 +31,6 @@ import {
   Zap,
   CheckCircle2,
   Circle,
-  Sparkles,
   Activity,
   MonitorUp,
   Layers,
@@ -356,7 +355,7 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
           label: `Ticket #${ticket.number}: ${ticket.title}`,
           meta: {
             projectId,
-            repoPath,
+            repoPath: repoPath ?? "",
             ticketId: ticket.id,
             ticketNumber: ticket.number,
             ticketTitle: ticket.title,
@@ -418,24 +417,6 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
       {/* ═══ Status Bar ═══ */}
       <WorkerStatusBar />
 
-      {/* ═══ General queue (In Progress tickets from DB) ═══ */}
-      <WorkerGeneralQueueSection
-        projectId={projectId}
-        repoPath={project.repoPath ?? ""}
-        projectPath={project.repoPath?.trim() ?? ""}
-        kanbanData={kanbanData}
-        onRunInProgress={handleRunInProgressTickets}
-      />
-
-      {/* ═══ Command Center (Implement All) ═══ */}
-      <WorkerCommandCenter
-        projectPath={project.repoPath.trim()}
-        projectId={projectId}
-        repoPath={project.repoPath ?? ""}
-        kanbanData={kanbanData}
-        onRunInProgress={handleRunInProgressTickets}
-      />
-
       {/* ═══ Fast development — type command, run agent immediately ═══ */}
       <WorkerFastDevelopmentSection projectPath={project.repoPath?.trim() ?? ""} />
 
@@ -446,16 +427,27 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
         repoPath={project.repoPath ?? ""}
       />
 
-      {/* ═══ Terminals + ticket per slot (each ticket directly below its terminal) ═══ */}
+      {/* ═══ Terminal Output (Command Center + terminals) ═══ */}
       <WorkerTerminalsSection
         kanbanData={kanbanData}
         projectId={projectId}
+        projectPath={project.repoPath?.trim() ?? ""}
+        repoPath={project.repoPath ?? ""}
+        onRunInProgress={handleRunInProgressTickets}
         handleMarkDone={handleMarkDone}
         handleRedo={handleRedo}
         handleArchive={handleArchive}
       />
 
-      {/* ═══ Other in-progress tickets (not currently in a terminal slot) ═══ */}
+      {/* ═══ Queue + Other in progress (together below Terminal) ═══ */}
+      <WorkerGeneralQueueSection
+        projectId={projectId}
+        repoPath={project.repoPath ?? ""}
+        projectPath={project.repoPath?.trim() ?? ""}
+        kanbanData={kanbanData}
+        onRunInProgress={handleRunInProgressTickets}
+      />
+
       <WorkerTicketQueue
         kanbanData={kanbanData}
         projectId={projectId}
@@ -474,6 +466,7 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
 
 function WorkerStatusBar() {
   const runningRuns = useRunStore((s) => s.runningRuns);
+  const pendingQueueLength = useRunStore((s) => s.pendingTempTicketQueue.length);
   const implementAllRuns = runningRuns.filter(isImplementAllRun);
   const runningCount = implementAllRuns.filter((r) => r.status === "running").length;
   const doneCount = implementAllRuns.filter((r) => r.status === "done").length;
@@ -515,6 +508,15 @@ function WorkerStatusBar() {
 
         {/* Status pills */}
         <div className="flex items-center gap-2">
+          {pendingQueueLength > 0 && (
+            <StatusPill
+              icon={<Circle className="size-3" />}
+              label="Queued"
+              count={pendingQueueLength}
+              color="violet"
+              pulse
+            />
+          )}
           {totalCount > 0 && (
             <>
               <StatusPill
@@ -547,143 +549,6 @@ function WorkerStatusBar() {
 /* StatusPill is now imported from @/components/shared/DisplayPrimitives */
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Command Center — actions toolbar
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-function WorkerCommandCenter({
-  projectPath,
-  projectId,
-  repoPath,
-  kanbanData,
-  onRunInProgress,
-}: {
-  projectPath: string;
-  projectId: string;
-  repoPath: string;
-  kanbanData: TodosKanbanData | null;
-  onRunInProgress: () => Promise<void>;
-}) {
-  const runImplementAll = useRunStore((s) => s.runImplementAll);
-  const stopAllImplementAll = useRunStore((s) => s.stopAllImplementAll);
-  const clearImplementAllLogs = useRunStore((s) => s.clearImplementAllLogs);
-  const archiveImplementAllLogs = useRunStore((s) => s.archiveImplementAllLogs);
-  const runningRuns = useRunStore((s) => s.runningRuns);
-  const [loading, setLoading] = useState(false);
-
-  const implementAllRuns = runningRuns.filter(isImplementAllRun);
-  const anyRunning = implementAllRuns.some((r) => r.status === "running");
-  const tickets = kanbanData?.columns?.in_progress?.items ?? [];
-
-  const handleImplementAll = async () => {
-    setLoading(true);
-    try {
-      if (tickets.length > 0) {
-        await onRunInProgress();
-      } else {
-        const implementAllMd = repoPath
-          ? (await readProjectFileOrEmpty(projectId, WORKER_IMPLEMENT_ALL_PROMPT_PATH, repoPath))?.trim() ?? ""
-          : "";
-        const kanbanContext = kanbanData ? buildKanbanContextBlock(kanbanData) : "";
-        const combinedPrompt = combinePromptRecordWithKanban(kanbanContext, implementAllMd);
-        const promptContent = combinedPrompt.trim() || undefined;
-        await runImplementAll(projectPath, promptContent);
-        toast.success(
-          promptContent
-            ? "Implement All started (worker prompt + ticket info). Check the terminals below."
-            : "Implement All started. For interactive agent (no prompt), use Open in system terminal."
-        );
-      }
-    } catch {
-      toast.error("Failed to start Implement All");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleStopAll = async () => {
-    try {
-      await stopAllImplementAll();
-      toast.success("All terminals stopped. Logs kept.");
-    } catch {
-      toast.error("Failed to stop");
-    }
-  };
-
-  return (
-    <div className="rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm overflow-hidden">
-      {/* Section Header */}
-      <div className="flex items-center gap-2.5 px-5 pt-5 pb-4">
-        <div className="flex items-center justify-center size-7 rounded-lg bg-emerald-500/10">
-          <Sparkles className="size-3.5 text-emerald-400" />
-        </div>
-        <div>
-          <h3 className="text-xs font-semibold text-foreground tracking-tight">
-            Command Center
-          </h3>
-          <p className="text-[10px] text-muted-foreground normal-case">
-            Launch, stop, and manage automated runs
-          </p>
-        </div>
-      </div>
-
-      {/* Actions: single row */}
-      <div className="px-5 pb-5">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <Button
-            variant="default"
-            size="sm"
-            onClick={handleImplementAll}
-            disabled={loading}
-            className="gap-1.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 shadow-sm shadow-emerald-500/20 text-xs h-8 rounded-lg transition-all duration-200"
-            title="Runs in app with worker prompt and ticket agents."
-          >
-            {loading ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : (
-              <Play className="size-3.5" />
-            )}
-            Implement All
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleStopAll}
-            disabled={!anyRunning}
-            className={cn(
-              "gap-1.5 text-xs h-8 rounded-lg transition-all duration-200",
-              anyRunning
-                ? "text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20"
-                : "text-muted-foreground hover:bg-muted/40"
-            )}
-          >
-            <Square className="size-3" />
-            Stop all
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={clearImplementAllLogs}
-            className="gap-1.5 text-xs h-8 rounded-lg text-muted-foreground hover:text-amber-400 hover:bg-amber-500/10 transition-all duration-200"
-          >
-            <Eraser className="size-3" />
-            Clear
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={archiveImplementAllLogs}
-            className="gap-1.5 text-xs h-8 rounded-lg text-muted-foreground hover:text-cyan-400 hover:bg-cyan-500/10 transition-all duration-200"
-          >
-            <Archive className="size-3" />
-            Archive
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
    Fast development — type command, run agent immediately
    ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -711,7 +576,7 @@ function WorkerFastDevelopmentSection({ projectPath }: { projectPath: string }) 
       const label = `Fast dev: ${labelSuffix}`;
       const runId = await runTempTicket(projectPath.trim(), fullPrompt, label);
       if (runId) {
-        toast.success("Agent started. Check the terminal below.");
+        toast.success(runId === "queued" ? "Added to queue. Agent will start when a slot is free." : "Agent started. Check the terminal below.");
         setCommand("");
       } else {
         toast.error("Failed to start agent.");
@@ -755,7 +620,7 @@ function WorkerFastDevelopmentSection({ projectPath }: { projectPath: string }) 
             onClick={handleRunAgent}
             disabled={loading || !command.trim()}
             className="gap-1.5 bg-violet-500 hover:bg-violet-600 text-violet-950 shadow-sm text-xs h-8 rounded-lg shrink-0"
-            title="Run the terminal agent with this command (slot 1)"
+            title="Run the terminal agent with this command (uses next free terminal slot)"
           >
             {loading ? (
               <Loader2 className="size-3.5 animate-spin" />
@@ -807,7 +672,7 @@ function WorkerDebuggingSection({
       const fullPrompt = basePrompt.endsWith("\n") ? basePrompt + logs : basePrompt + "\n\n" + logs;
       const runId = await runTempTicket(projectPath.trim(), fullPrompt, "Debug: fix errors");
       if (runId) {
-        toast.success("Debug agent started. Check the terminal below.");
+        toast.success(runId === "queued" ? "Added to queue. Agent will start when a slot is free." : "Debug agent started. Check the terminal below.");
       } else {
         toast.error("Failed to start debug agent.");
       }
@@ -847,7 +712,7 @@ function WorkerDebuggingSection({
           onClick={handleRunDebugAgent}
           disabled={loading}
           className="gap-1.5 bg-amber-500 hover:bg-amber-600 text-amber-950 shadow-sm text-xs h-8 rounded-lg"
-          title="Runs the debugging prompt + your logs in the terminal agent (slot 1)"
+          title="Runs the debugging prompt + your logs in the terminal agent (uses next free terminal slot)"
         >
           {loading ? (
             <Loader2 className="size-3.5 animate-spin" />
@@ -865,21 +730,72 @@ function WorkerDebuggingSection({
    Terminals Section — each terminal with its ticket directly below
    ═══════════════════════════════════════════════════════════════════════════ */
 
-function WorkerTerminalsSection({
-  kanbanData,
-  projectId,
-  handleMarkDone,
-  handleRedo,
-  handleArchive,
-}: {
+interface WorkerTerminalsSectionProps {
   kanbanData: TodosKanbanData | null;
   projectId: string;
+  projectPath: string;
+  repoPath: string;
+  onRunInProgress: () => Promise<void>;
   handleMarkDone: (id: string) => Promise<void>;
   handleRedo: (id: string) => Promise<void>;
   handleArchive: (id: string) => Promise<void>;
-}) {
+}
+
+function WorkerTerminalsSection({
+  kanbanData,
+  projectId,
+  projectPath,
+  repoPath,
+  onRunInProgress,
+  handleMarkDone,
+  handleRedo,
+  handleArchive,
+}: WorkerTerminalsSectionProps) {
   const runningRuns = useRunStore((s) => s.runningRuns);
+  const runImplementAll = useRunStore((s) => s.runImplementAll);
+  const stopAllImplementAll = useRunStore((s) => s.stopAllImplementAll);
+  const clearImplementAllLogs = useRunStore((s) => s.clearImplementAllLogs);
+  const archiveImplementAllLogs = useRunStore((s) => s.archiveImplementAllLogs);
+  const [commandCenterLoading, setCommandCenterLoading] = useState(false);
+
   const implementAllRuns = runningRuns.filter(isImplementAllRun);
+  const anyRunning = implementAllRuns.some((r) => r.status === "running");
+  const tickets = kanbanData?.columns?.in_progress?.items ?? [];
+
+  const handleImplementAll = async () => {
+    setCommandCenterLoading(true);
+    try {
+      if (tickets.length > 0) {
+        await onRunInProgress();
+      } else {
+        const implementAllMd = repoPath
+          ? (await readProjectFileOrEmpty(projectId, WORKER_IMPLEMENT_ALL_PROMPT_PATH, repoPath))?.trim() ?? ""
+          : "";
+        const kanbanContext = kanbanData ? buildKanbanContextBlock(kanbanData) : "";
+        const combinedPrompt = combinePromptRecordWithKanban(kanbanContext, implementAllMd);
+        const promptContent = combinedPrompt.trim() || undefined;
+        await runImplementAll(projectPath, promptContent);
+        toast.success(
+          promptContent
+            ? "Implement All started (worker prompt + ticket info). Check the terminals below."
+            : "Implement All started. For interactive agent (no prompt), use Open in system terminal."
+        );
+      }
+    } catch {
+      toast.error("Failed to start Implement All");
+    } finally {
+      setCommandCenterLoading(false);
+    }
+  };
+
+  const handleStopAll = async () => {
+    try {
+      await stopAllImplementAll();
+      toast.success("All terminals stopped. Logs kept.");
+    } catch {
+      toast.error("Failed to stop");
+    }
+  };
 
   const runsForSlots: ((typeof implementAllRuns)[0] | null)[] = [null, null, null];
   for (const run of implementAllRuns) {
@@ -901,8 +817,62 @@ function WorkerTerminalsSection({
             Terminal Output
           </h3>
           <p className="text-[10px] text-muted-foreground normal-case">
-            Each terminal shows the ticket executing in it directly below
+            Command Center and terminals — each slot shows the ticket below
           </p>
+        </div>
+      </div>
+
+      {/* Command Center: Implement All, Stop all, Clear, Archive */}
+      <div className="px-5 pb-4">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={handleImplementAll}
+            disabled={commandCenterLoading}
+            className="gap-1.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 shadow-sm shadow-emerald-500/20 text-xs h-8 rounded-lg transition-all duration-200"
+            title="Runs in app with worker prompt and ticket agents."
+          >
+            {commandCenterLoading ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Play className="size-3.5" />
+            )}
+            Implement All
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleStopAll}
+            disabled={!anyRunning}
+            className={cn(
+              "gap-1.5 text-xs h-8 rounded-lg transition-all duration-200",
+              anyRunning
+                ? "text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20"
+                : "text-muted-foreground hover:bg-muted/40"
+            )}
+          >
+            <Square className="size-3" />
+            Stop all
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearImplementAllLogs}
+            className="gap-1.5 text-xs h-8 rounded-lg text-muted-foreground hover:text-amber-400 hover:bg-amber-500/10 transition-all duration-200"
+          >
+            <Eraser className="size-3" />
+            Clear
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={archiveImplementAllLogs}
+            className="gap-1.5 text-xs h-8 rounded-lg text-muted-foreground hover:text-cyan-400 hover:bg-cyan-500/10 transition-all duration-200"
+          >
+            <Archive className="size-3" />
+            Archive
+          </Button>
         </div>
       </div>
 

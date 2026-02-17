@@ -13,6 +13,8 @@ export default function Error({
     console.error("App error boundary:", error);
   }, [error]);
 
+  const isInternalServerError = error.message === "Internal Server Error" || error.digest?.startsWith("NEXT_");
+
   return (
     <div
       className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center"
@@ -25,6 +27,11 @@ export default function Error({
       <p className="text-muted-foreground mb-4 max-w-md font-mono text-sm">
         {error.message}
       </p>
+      {isInternalServerError && (
+        <p className="text-muted-foreground mb-4 max-w-md text-sm">
+          Check the terminal where <code className="bg-muted px-1 rounded">npm run dev</code> is running for the actual error.
+        </p>
+      )}
       <button
         type="button"
         onClick={reset}

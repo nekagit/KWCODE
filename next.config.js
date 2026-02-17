@@ -2,6 +2,11 @@ const path = require('path');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Tauri bundles from ../out; enable static export only when building for Tauri.
+  ...(process.env.TAURI_BUILD === '1' && {
+    output: 'export',
+    images: { unoptimized: true },
+  }),
   webpack: (config, { webpack }) => {
     config.plugins.push(
       new webpack.NormalModuleReplacementPlugin(

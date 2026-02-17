@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 
+export const dynamic = "force-static";
+
 function findRoot(): string {
   const cwd = process.cwd();
   const scriptInCwd = path.join(cwd, "script");

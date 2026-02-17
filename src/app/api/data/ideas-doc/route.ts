@@ -3,6 +3,8 @@ import path from "path";
 import fs from "fs";
 import { IDEAS_DOC_PATH } from "@/lib/cursor-paths";
 
+export const dynamic = "force-static";
+
 const IDEAS_MD_RELATIVE = IDEAS_DOC_PATH;
 
 /**

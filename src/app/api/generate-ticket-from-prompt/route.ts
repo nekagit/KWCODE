@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import { runAgentPrompt } from "@/lib/agent-runner";
 
+export const dynamic = "force-static";
+
 /** Ticket shape returned by AI for .cursor/7. planner/tickets.md (see .cursor/tickets-format.md). */
 type GeneratedTicket = {
   title: string;

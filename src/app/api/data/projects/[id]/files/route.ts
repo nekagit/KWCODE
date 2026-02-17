@@ -4,6 +4,12 @@ import fs from "fs";
 import type { Project } from "@/types/project";
 import { repoAllowed } from "@/lib/repo-allowed";
 
+export const dynamic = "force-static";
+
+export function generateStaticParams() {
+  return [{ id: "placeholder" }];
+}
+
 function findDataDir(): string {
     const cwd = process.cwd();
     const inCwd = path.join(cwd, "data");

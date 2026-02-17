@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import { runAgentPrompt } from "@/lib/agent-runner";
 
+export const dynamic = "force-static";
+
 const CATEGORIES = [
   "ddd", "tdd", "bdd", "dry", "solid", "kiss", "yagni",
   "clean", "hexagonal", "cqrs", "event_sourcing", "microservices",

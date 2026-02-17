@@ -6,6 +6,8 @@ import { stripTerminalArtifacts, MIN_DOCUMENT_LENGTH } from "@/lib/strip-termina
 import type { Project } from "@/types/project";
 import { repoAllowed } from "@/lib/repo-allowed";
 
+export const dynamic = "force-static";
+
 function findDataDir(): string {
   const cwd = process.cwd();
   const inCwd = path.join(cwd, "data");

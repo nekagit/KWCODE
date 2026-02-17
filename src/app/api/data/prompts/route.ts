@@ -3,6 +3,8 @@ import path from "path";
 import fs from "fs";
 import { parseAndValidate, createPromptRecordSchema } from "@/lib/api-validation";
 
+export const dynamic = "force-static";
+
 function findDataDir(): string {
   const cwd = process.cwd();
   const inCwd = path.join(cwd, "data");

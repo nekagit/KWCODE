@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 
+export const dynamic = "force-static";
+
 /** Direct subdirectories under dir only (one level). Include every entry that is a directory or symlink by type; no existsSync so we don't skip valid folders on macOS. */
 function listSubdirPaths(dir: string): string[] {
   const folders: string[] = [];

@@ -59,6 +59,26 @@ pub struct RunningRunInfo {
     pub label: String,
 }
 
+// #region agent log
+fn debug_log(location: &str, message: &str, data: &[(&str, &str)]) {
+    let data_obj: std::collections::HashMap<String, String> = data.iter().map(|(k, v)| ((*k).to_string(), (*v).to_string())).collect();
+    let payload = serde_json::json!({
+        "timestamp": SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis(),
+        "location": location,
+        "message": message,
+        "data": data_obj,
+        "hypothesisId": "A"
+    });
+    if let Ok(line) = serde_json::to_string(&payload) {
+        let _ = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open("/Users/nenadkalicanin/Documents/February/KW-February-KWCode/.cursor/debug.log")
+            .and_then(|mut f| std::io::Write::write_all(&mut f, format!("{}\n", line).as_bytes()));
+    }
+}
+// #endregion
+
 fn gen_run_id() -> String {
     let nanos = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -639,7 +659,40 @@ fn project_root() -> Result<PathBuf, String> {
         }
     }
 
-    Err("Project root not found. Run the app from the repo root (contains script/worker/implement_all.sh and data/).".to_string())
+    // #region agent log
+    let err_msg = "Project root not found. Run the app from the repo root (contains script/worker/implement_all.sh and data/).";
+    debug_log("lib.rs:project_root", "project_root returning Err", &[("err", err_msg)]);
+    // #endregion
+    Err(err_msg.to_string())
+}
+
+/// App data directory for the built app (e.g. ~/Library/Application Support/com.kwcode.app/data). Created if missing.
+fn app_data_data_dir() -> Result<PathBuf, String> {
+    let home = std::env::var("HOME").map_err(|_| "HOME not set".to_string())?;
+    #[cfg(target_os = "macos")]
+    let app_data = PathBuf::from(&home).join("Library").join("Application Support").join("com.kwcode.app");
+    #[cfg(not(target_os = "macos"))]
+    let app_data = PathBuf::from(&home).join(".local").join("share").join("com.kwcode.app");
+    let data = app_data.join("data");
+    std::fs::create_dir_all(&data).map_err(|e| e.to_string())?;
+    Ok(data)
+}
+
+/// Directory that holds app.db and february-dir.txt. In dev: repo data dir; when bundled: app data dir so DB and config work.
+fn data_root() -> Result<PathBuf, String> {
+    // #region agent log
+    debug_log("lib.rs:data_root", "data_root called", &[]);
+    // #endregion
+    if let Ok(ws) = project_root() {
+        // #region agent log
+        debug_log("lib.rs:data_root", "data_root: using project_root", &[("path", ws.to_string_lossy().as_ref())]);
+        // #endregion
+        return Ok(data_dir(&ws));
+    }
+    // #region agent log
+    debug_log("lib.rs:data_root", "data_root: project_root failed, using app_data_data_dir", &[]);
+    // #endregion
+    app_data_data_dir()
 }
 
 /// Read a file from disk and return its contents as base64 (for sending to API for PDF/text extraction).
@@ -1013,18 +1066,16 @@ fn with_db<F, T>(f: F) -> Result<T, String>
 where
     F: FnOnce(&rusqlite::Connection) -> Result<T, String>,
 {
-    let ws = project_root()?;
-    let data = data_dir(&ws);
+    let data = data_root()?;
     let conn = db::open_db(&data.join("app.db"))?;
     seed_initial_data(&conn)?; // New seeding call
     f(&conn)
 }
 
-/// Resolve data directory from DB (ADR 069). Uses path stored in kv_store, or fallback from project root, and persists it.
+/// Resolve data directory from DB (ADR 069). Uses path stored in kv_store, or fallback from data root, and persists it.
 #[tauri::command]
 fn resolve_data_dir() -> Result<PathBuf, String> {
-    let ws = project_root()?;
-    let fallback = data_dir(&ws);
+    let fallback = data_root()?;
     with_db(|conn| Ok(db::get_data_dir(conn, &fallback)))
 }
 
@@ -1091,6 +1142,9 @@ fn get_project(id: String) -> Result<Option<Project>, String> {
 
 #[tauri::command]
 fn create_project(project: Project) -> Result<Project, String> {
+    // #region agent log
+    debug_log("lib.rs:create_project", "create_project command entered", &[("name", project.name.as_str())]);
+    // #endregion
     with_db(|conn| {
         let mut projects = list_projects_impl(conn)?;
         let now = now_iso();
@@ -1381,6 +1435,16 @@ fn february_dirs_from_data_file() -> Vec<PathBuf> {
                 dir = p.to_path_buf();
             } else {
                 break;
+            }
+        }
+    }
+    // 4) Bundled app: use app data dir so user can add february-dir.txt there
+    if let Ok(data_dir) = app_data_data_dir() {
+        let path_file = data_dir.join("february-dir.txt");
+        if path_file.exists() {
+            let dirs = read_february_dirs_from_file(&path_file);
+            if !dirs.is_empty() {
+                return dirs;
             }
         }
     }
@@ -1714,6 +1778,12 @@ fn get_kv_store_entries() -> Result<Vec<db::KvEntry>, String> {
 #[tauri::command]
 fn get_data_dir() -> Result<String, String> {
     resolve_data_dir().map(|p| p.to_string_lossy().to_string())
+}
+
+/// Path to february-dir.txt (one path per line = project roots). In dev: repo data dir; when bundled: app data dir so the built app can find config.
+#[tauri::command]
+fn get_february_dir_config_path() -> Result<String, String> {
+    data_root().map(|d| d.join("february-dir.txt").to_string_lossy().to_string())
 }
 
 /// Aggregated counts for the dashboard metrics view.
@@ -2694,6 +2764,7 @@ pub fn run() {
             stop_script,
             get_kv_store_entries,
             get_data_dir,
+            get_february_dir_config_path,
             get_dashboard_metrics
         ])
         .run(tauri::generate_context!())
