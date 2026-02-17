@@ -12,6 +12,7 @@ import {
   type PromptRecordItem,
   type RunInfo,
   type RunMeta,
+  type TerminalOutputHistoryEntry,
 } from "@/types/run";
 
 export interface RunState {
@@ -36,6 +37,8 @@ export interface RunState {
   floatingTerminalRunId: string | null;
   /** Whether the floating terminal is minimized (pill); false = expanded. */
   floatingTerminalMinimized: boolean;
+  /** History of agent terminal outputs (completed runs). Newest first; capped at TERMINAL_HISTORY_MAX. */
+  terminalOutputHistory: TerminalOutputHistoryEntry[];
 }
 
 export interface RunActions {
@@ -89,6 +92,9 @@ export interface RunActions {
   stopAllImplementAll: () => Promise<void>;
   clearImplementAllLogs: () => void;
   archiveImplementAllLogs: () => void;
+  /** Append a completed run's output to terminal output history (called from hydration on script-exited). */
+  addTerminalOutputToHistory: (entry: Omit<TerminalOutputHistoryEntry, "id">) => void;
+  clearTerminalOutputHistory: () => void;
   getTimingForRun: () => Record<string, number>;
   // Hydration/setters used by RunStoreHydration
   setIsTauriEnv: (v: boolean | null | ((prev: boolean | null) => boolean | null)) => void;
@@ -207,7 +213,10 @@ const initialState: RunState = {
   archivedImplementAllLogs: [],
   floatingTerminalRunId: null,
   floatingTerminalMinimized: false,
+  terminalOutputHistory: [],
 };
+
+const TERMINAL_HISTORY_MAX = 100;
 
 export const useRunStore = create<RunStore>()((set, get) => ({
   ...initialState,
@@ -558,7 +567,7 @@ export const useRunStore = create<RunStore>()((set, get) => ({
     }
   },
 
-  runTempTicket: async (projectPath, promptContent, label, meta) => {
+  runTempTicket: async (projectPath, promptContent, label, meta): Promise<string | null> => {
     const path = projectPath?.trim();
     if (!path) {
       set({ error: "Project path is required" });
@@ -713,6 +722,16 @@ export const useRunStore = create<RunStore>()((set, get) => ({
     toast.success("Logs archived.");
   },
 
+  addTerminalOutputToHistory: (entry) => {
+    set((s) => {
+      const id = `history-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      const list = [{ ...entry, id }, ...s.terminalOutputHistory].slice(0, TERMINAL_HISTORY_MAX);
+      return { terminalOutputHistory: list };
+    });
+  },
+
+  clearTerminalOutputHistory: () => set({ terminalOutputHistory: [] }),
+
   setIsTauriEnv: (v) =>
     set((s) => ({
       isTauriEnv: typeof v === "function" ? v(s.isTauriEnv) : v,
@@ -776,6 +795,9 @@ export function useRunState() {
       clearImplementAllLogs: s.clearImplementAllLogs,
       archiveImplementAllLogs: s.archiveImplementAllLogs,
       archivedImplementAllLogs: s.archivedImplementAllLogs,
+      terminalOutputHistory: s.terminalOutputHistory,
+      addTerminalOutputToHistory: s.addTerminalOutputToHistory,
+      clearTerminalOutputHistory: s.clearTerminalOutputHistory,
       getTimingForRun: s.getTimingForRun,
       runSetupPrompt: s.runSetupPrompt,
       runTempTicket: s.runTempTicket,

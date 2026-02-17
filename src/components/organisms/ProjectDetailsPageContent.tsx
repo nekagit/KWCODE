@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -101,6 +101,7 @@ export type ProjectDetailsPageContentProps = {
 export function ProjectDetailsPageContent(props: ProjectDetailsPageContentProps = {}) {
   const { overrideProjectId, onBack } = props;
   const params = useParams();
+  const router = useRouter();
   const projectId = overrideProjectId ?? (params?.id as string) ?? "";
   // #region agent log
   React.useEffect(() => {
@@ -358,7 +359,7 @@ export function ProjectDetailsPageContent(props: ProjectDetailsPageContentProps 
                   ) {
                     await deleteProject(projectId);
                     if (onBack) onBack();
-                    else window.location.href = "/projects";
+                    else router.replace("/projects");
                   }
                 }}
               >

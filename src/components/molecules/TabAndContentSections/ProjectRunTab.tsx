@@ -38,6 +38,9 @@ import {
   ListTodo,
   Send,
   MessageCircleQuestion,
+  History,
+  Trash2,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isImplementAllRun, parseTicketNumberFromRunLabel } from "@/lib/run-helpers";
@@ -45,6 +48,20 @@ import { StatusPill } from "@/components/shared/DisplayPrimitives";
 import { TerminalSlot } from "@/components/shared/TerminalSlot";
 import { KanbanTicketCard } from "@/components/molecules/Kanban/KanbanTicketCard";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 /** Fallback when project has no .cursor/8. worker/fix-bug.md */
 const DEBUG_ASSISTANT_PROMPT_FALLBACK = `You are a debugging assistant in the current workspace. The user has pasted error/log output below. Identify the root cause, apply the fix in this workspace (edit files, run commands), and state what you fixed. Work only in this repo; be specific. If logs refer to another path, say so.
@@ -471,6 +488,139 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
         handleArchive={handleArchive}
         ticketNumbersShownInTerminals={ticketNumbersShownInTerminals}
       />
+
+      <WorkerHistorySection />
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   History — table of all agent terminal outputs
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+const OUTPUT_PREVIEW_LEN = 80;
+
+function WorkerHistorySection() {
+  const history = useRunStore((s) => s.terminalOutputHistory);
+  const clearTerminalOutputHistory = useRunStore((s) => s.clearTerminalOutputHistory);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const entry = expandedId ? history.find((e) => e.id === expandedId) : null;
+
+  const formatTime = (iso: string) => {
+    try {
+      const d = new Date(iso);
+      return d.toLocaleString(undefined, { dateStyle: "short", timeStyle: "medium" });
+    } catch {
+      return iso;
+    }
+  };
+
+  return (
+    <div className="rounded-2xl surface-card border border-border/50 overflow-hidden bg-gradient-to-r from-slate-500/[0.04] to-zinc-500/[0.04]">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+        <div className="flex items-center gap-2.5">
+          <div className="flex items-center justify-center size-7 rounded-lg bg-slate-500/10">
+            <History className="size-3.5 text-slate-400" />
+          </div>
+          <div>
+            <h3 className="text-xs font-semibold text-foreground tracking-tight">History</h3>
+            <p className="text-[10px] text-muted-foreground normal-case">
+              Outputs of completed agent runs (newest first)
+            </p>
+          </div>
+        </div>
+        {history.length > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => clearTerminalOutputHistory()}
+            className="gap-1.5 text-xs h-8 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10"
+          >
+            <Trash2 className="size-3" />
+            Clear history
+          </Button>
+        )}
+      </div>
+      <div className="px-4 pb-4">
+        {history.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-6 text-center">
+            No runs yet. Completed terminal runs will appear here.
+          </p>
+        ) : (
+          <div className="rounded-lg border border-border/40 overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-border/60 hover:bg-transparent">
+                  <TableHead className="w-[140px]">Time</TableHead>
+                  <TableHead className="min-w-[160px]">Label</TableHead>
+                  <TableHead className="w-14">Slot</TableHead>
+                  <TableHead className="w-14">Exit</TableHead>
+                  <TableHead>Output (preview)</TableHead>
+                  <TableHead className="w-16 text-right">View</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {history.map((h) => {
+                  const preview = h.output.trim().slice(0, OUTPUT_PREVIEW_LEN);
+                  const hasMore = h.output.trim().length > OUTPUT_PREVIEW_LEN;
+                  return (
+                    <TableRow key={h.id} className="group">
+                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap font-mono">
+                        {formatTime(h.timestamp)}
+                      </TableCell>
+                      <TableCell className="text-xs font-medium truncate max-w-[200px]" title={h.label}>
+                        {h.label}
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        {h.slot != null ? `T${h.slot}` : "—"}
+                      </TableCell>
+                      <TableCell>
+                        {h.exitCode !== undefined ? (
+                          <span className={cn(
+                            "text-xs font-mono px-1.5 py-0.5 rounded",
+                            h.exitCode === 0 ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" : "bg-red-500/20 text-red-600 dark:text-red-400"
+                          )}>
+                            {h.exitCode}
+                          </span>
+                        ) : "—"}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground font-mono max-w-[280px] truncate" title={preview}>
+                        {preview}{hasMore ? "…" : ""}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-xs gap-1 opacity-70 group-hover:opacity-100"
+                          onClick={() => setExpandedId(h.id)}
+                        >
+                          <ChevronDown className="size-3 rotate-[-90deg]" />
+                          Full
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </div>
+
+      <Dialog open={!!expandedId} onOpenChange={(open) => !open && setExpandedId(null)}>
+        <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="text-sm font-semibold truncate pr-8">
+              {entry?.label ?? "Output"}
+            </DialogTitle>
+          </DialogHeader>
+          {entry && (
+            <pre className="flex-1 overflow-auto rounded-lg bg-muted/50 p-4 text-xs font-mono whitespace-pre-wrap border border-border/40">
+              {entry.output || "(no output)"}
+            </pre>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -653,7 +803,15 @@ function WorkerAskingSection({ projectPath }: { projectPath: string }) {
   );
 }
 
-function WorkerFastDevelopmentSection({ projectPath }: { projectPath: string }) {
+function WorkerFastDevelopmentSection({
+  projectId,
+  projectPath,
+  onTicketCreated,
+}: {
+  projectId: string;
+  projectPath: string;
+  onTicketCreated: () => Promise<void>;
+}) {
   const runTempTicket = useRunStore((s) => s.runTempTicket);
   const [command, setCommand] = useState("");
   const [loading, setLoading] = useState(false);
@@ -671,17 +829,78 @@ function WorkerFastDevelopmentSection({ projectPath }: { projectPath: string }) 
     setLoading(true);
     try {
       const fullPrompt = FAST_DEV_PROMPT_PREFIX + text;
-      const labelSuffix = text.length > 40 ? `${text.slice(0, 37)}…` : text;
-      const label = `Fast dev: ${labelSuffix}`;
-      const runId = await runTempTicket(projectPath.trim(), fullPrompt, label);
+      const title = text.length > 120 ? `${text.slice(0, 117)}…` : text;
+
+      let milestoneId: number;
+      if (isTauri) {
+        const mils = await invoke<{ id: number; name: string }[]>("get_project_milestones", { projectIdArg: { projectId } });
+        const general = mils?.find((m) => m.name === "General Development");
+        milestoneId = general?.id ?? mils?.[0]?.id;
+      } else {
+        const milRes = await fetch(`/api/data/projects/${projectId}/milestones`);
+        if (!milRes.ok) throw new Error("Failed to load milestones");
+        const mils = (await milRes.json()) as { id: number; name: string }[];
+        const general = mils.find((m) => m.name === "General Development");
+        milestoneId = (general ?? mils[0])?.id;
+      }
+      if (milestoneId == null) {
+        toast.error("No milestone found. Add a milestone in the Milestones tab (e.g. General Development).");
+        setLoading(false);
+        return;
+      }
+
+      const createRes = await fetch(`/api/data/projects/${projectId}/tickets`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          description: fullPrompt,
+          priority: "P1",
+          feature_name: "Fast development",
+          milestone_id: milestoneId,
+        }),
+      });
+      if (!createRes.ok) {
+        const err = await createRes.json();
+        throw new Error((err as { error?: string }).error ?? "Failed to create ticket");
+      }
+      const newTicket = (await createRes.json()) as { id: string; number: number; title: string; milestone_id?: number };
+
+      let inProgressIds: string[];
+      if (isTauri) {
+        const state = await invoke<{ inProgressIds: string[] }>("get_project_kanban_state", { projectIdArg: { projectId } });
+        inProgressIds = state?.inProgressIds ?? [];
+      } else {
+        const stateRes = await fetch(`/api/data/projects/${projectId}/kanban-state`);
+        if (!stateRes.ok) throw new Error("Failed to load kanban state");
+        const state = (await stateRes.json()) as { inProgressIds: string[] };
+        inProgressIds = state.inProgressIds ?? [];
+      }
+      inProgressIds = [...inProgressIds.filter((id) => id !== newTicket.id), newTicket.id];
+      const patchRes = await fetch(`/api/data/projects/${projectId}/kanban-state`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ inProgressIds }),
+      });
+      if (!patchRes.ok) throw new Error("Failed to add ticket to queue");
+
+      await onTicketCreated();
+
+      const label = `Ticket #${newTicket.number}: ${title.length > 40 ? `${title.slice(0, 37)}…` : title}`;
+      const runId = await runTempTicket(projectPath.trim(), fullPrompt, label, {
+        ticketId: newTicket.id,
+        ticketNumber: newTicket.number,
+        ticketTitle: newTicket.title,
+        milestoneId: newTicket.milestone_id,
+      });
       if (runId) {
-        toast.success(runId === "queued" ? "Added to queue. Agent will start when a slot is free." : "Agent started. Check the terminal below.");
+        toast.success(runId === "queued" ? "Ticket created and queued. Agent will start when a slot is free." : "Ticket created and agent started. Check the queue and terminal below.");
         setCommand("");
       } else {
         toast.error("Failed to start agent.");
       }
-    } catch {
-      toast.error("Failed to start agent.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to create ticket or start agent.");
     } finally {
       setLoading(false);
     }

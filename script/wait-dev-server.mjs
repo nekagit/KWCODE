@@ -105,6 +105,16 @@ async function waitForChunk() {
   return false;
 }
 
+/** Find chunk URL that looks like app/projects/page (from HTML script tags). Next may use slashes or dashes. */
+function findProjectsPageChunkUrl(html) {
+  const urls = findAllChunkUrls(html);
+  const pageLike = urls.find(
+    (u) =>
+      /app[\\/]projects[\\/]page|projects[\\/]page\.js|app-projects-page|projects-page\.js/i.test(u)
+  );
+  return pageLike || null;
+}
+
 /** Warm app/layout chunk so it is compiled before Tauri opens (avoids "Loading chunk app/layout failed" timeout). */
 async function warmAppLayoutChunk() {
   try {
@@ -119,6 +129,41 @@ async function warmAppLayoutChunk() {
     console.log("App/layout chunk warmed.");
   } catch (e) {
     console.log("Warm app/layout skipped: ", e.message);
+  }
+}
+
+/** Warm app/projects/page chunk so navigating to /projects does not fail with missing chunk. */
+async function warmProjectsPageChunk() {
+  try {
+    const projectsUrl = new URL("/projects", devUrl).href;
+    const res = await fetch(projectsUrl, { method: "GET", signal: AbortSignal.timeout(fetchTimeoutMs) });
+    if (!res.ok) return;
+    const html = await res.text();
+    const pageSrc = findProjectsPageChunkUrl(html);
+    if (!pageSrc) return;
+    const pageUrl = resolveChunkUrl(pageSrc);
+    console.log("Warming app/projects/page chunk: ", pageUrl);
+    await fetch(pageUrl, { method: "GET", signal: AbortSignal.timeout(fetchTimeoutMs) });
+    console.log("App/projects/page chunk warmed.");
+  } catch (e) {
+    console.log("Warm projects page chunk skipped: ", e.message);
+  }
+}
+
+/** Warm app/projects/page chunk so it is compiled before Tauri opens (avoids "Loading chunk app/projects/page failed" missing). */
+async function warmProjectsPageChunk() {
+  try {
+    const projectsUrl = new URL("/projects", baseUrl).href;
+    console.log("Warming app/projects/page chunk: ", projectsUrl);
+    const res = await fetch(projectsUrl, { method: "GET", signal: AbortSignal.timeout(fetchTimeoutMs) });
+    if (!res.ok) {
+      console.log("Warm projects page response: ", res.status);
+      return;
+    }
+    await res.text();
+    console.log("App/projects/page chunk warmed.");
+  } catch (e) {
+    console.log("Warm projects page skipped: ", e.message);
   }
 }
 
@@ -161,6 +206,8 @@ if (!chunkReady) {
 } else {
   console.log("Chunks OK, warming app/layout chunk so Tauri does not hit timeout…");
   await warmAppLayoutChunk();
+  console.log("Warming app/projects/page chunk so /projects route loads without missing chunk…");
+  await warmProjectsPageChunk();
 }
 console.log("Tauri can open.");
 console.log("(If you ran only dev:tauri:wait, the window will not open. Use 'npm run dev:tauri' for wait + open, or run 'npm run tauri -- dev' in another terminal.)");

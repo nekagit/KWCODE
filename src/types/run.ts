@@ -65,6 +65,17 @@ export interface Run {
 /** Alias for Run used by run store and UI. */
 export type RunInfo = Run;
 
+/** One completed terminal run stored for History section. */
+export interface TerminalOutputHistoryEntry {
+  id: string;
+  runId: string;
+  label: string;
+  output: string;
+  timestamp: string;
+  exitCode?: number;
+  slot?: 1 | 2 | 3;
+}
+
 export interface FileEntry {
   name: string;
   path: string;

@@ -83,12 +83,23 @@ export function ProjectControlTab({ projectId, refreshKey = 0 }: ProjectControlT
       }
       setEntries(list);
 
-      const [milRes, ideasRes] = await Promise.all([
-        fetch(`/api/data/projects/${projectId}/milestones`),
-        fetch(`/api/data/ideas`),
-      ]);
-      const milList = milRes.ok ? ((await milRes.json()) as { id: number; name: string }[]) : [];
-      const ideaList = ideasRes.ok ? ((await ideasRes.json()) as { id: number; title: string }[]) : [];
+      let milList: { id: number; name: string }[] = [];
+      let ideaList: { id: number; title: string }[] = [];
+      if (isTauri) {
+        const [mils, ideas] = await Promise.all([
+          invoke<{ id: number; name: string; slug?: string }[]>("get_project_milestones", { projectIdArg: { projectId } }),
+          invoke<{ id: number; title: string }[]>("get_ideas_list", { projectIdArgOptional: { projectId } }),
+        ]);
+        milList = mils ?? [];
+        ideaList = ideas ?? [];
+      } else {
+        const [milRes, ideasRes] = await Promise.all([
+          fetch(`/api/data/projects/${projectId}/milestones`),
+          fetch(`/api/data/ideas`),
+        ]);
+        milList = milRes.ok ? ((await milRes.json()) as { id: number; name: string }[]) : [];
+        ideaList = ideasRes.ok ? ((await ideasRes.json()) as { id: number; title: string }[]) : [];
+      }
       const milMap: Record<number, string> = {};
       milList.forEach((m) => { milMap[m.id] = m.name; });
       const ideaMap: Record<number, string> = {};

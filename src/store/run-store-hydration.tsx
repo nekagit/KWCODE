@@ -89,6 +89,19 @@ export function RunStoreHydration() {
       );
       store.runNextInQueue(run_id);
 
+      // Append to terminal output history (all completed runs)
+      if (run) {
+        const output = run.logLines.join("\n");
+        store.addTerminalOutputToHistory({
+          runId: run.runId,
+          label: run.label,
+          output,
+          timestamp: new Date().toISOString(),
+          exitCode: exit_code,
+          slot: run.slot,
+        });
+      }
+
       if (run?.meta) {
         const stdout = run.logLines.join("\n");
         const projectId = run.meta.projectId;

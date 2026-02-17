@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import type { Project } from "@/types/project";
@@ -14,6 +15,7 @@ interface ProjectHeaderProps {
 }
 
 export function ProjectHeader({ project, projectId }: ProjectHeaderProps) {
+  const router = useRouter();
   return (
     <div className={classes[0]}>
       <ButtonGroup alignment="right">
@@ -22,7 +24,7 @@ export function ProjectHeader({ project, projectId }: ProjectHeaderProps) {
           onClick={async () => {
             if (confirm("Are you sure you want to delete this project?")) {
               await deleteProject(projectId);
-              window.location.href = "/projects";
+              router.replace("/projects");
             }
           }}
         >

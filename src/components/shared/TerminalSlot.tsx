@@ -5,6 +5,7 @@ import { Loader2, CheckCircle2, Circle, Terminal, ExternalLink } from "lucide-re
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { formatElapsed } from "@/lib/run-helpers";
+import type { RunInfo } from "@/types/run";
 
 /* ═══════════════════════════════════════════════════════════════
    RunData — shape of a single run for the terminal display
@@ -29,7 +30,7 @@ export interface TerminalRunData {
    ═══════════════════════════════════════════════════════════════ */
 
 interface TerminalSlotProps {
-    run: TerminalRunData | null;
+    run: (TerminalRunData | RunInfo) | null;
     slotIndex: number;
     /** Height class for the ScrollArea. Default: "h-[280px]" */
     heightClass?: string;
@@ -50,13 +51,13 @@ export function TerminalSlot({
     const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (!run?.startedAt) return;
+        if (!run || run.startedAt == null) return;
         if (run.status === "done" && run.doneAt != null) {
             setElapsedSeconds((run.doneAt - run.startedAt) / 1000);
             return;
         }
         const tick = () =>
-            setElapsedSeconds(Math.floor((Date.now() - run.startedAt!) / 1000));
+            setElapsedSeconds(Math.floor((Date.now() - run.startedAt) / 1000));
         tick();
         const id = setInterval(tick, 1000);
         return () => clearInterval(id);
@@ -161,6 +162,7 @@ export function TerminalSlot({
                             "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium tabular-nums",
                             statusColor === "emerald" && "bg-emerald-500/15 text-emerald-400",
                             statusColor === "sky" && "bg-sky-500/15 text-sky-400",
+                            statusColor === "rose" && "bg-rose-500/15 text-rose-400",
                             statusColor === "muted" && "bg-muted/40 text-muted-foreground"
                         )}
                     >
