@@ -25,3 +25,7 @@ The Planner Manager (project Tickets tab) had two inputs: a short "What do you w
 
 - Simpler Planner Manager: one input instead of two.
 - Users can still describe what they want in the single "What do you want?" field; longer descriptions go in that field.
+
+## Follow-up
+
+- A stray call to `setPlannerPromptTextarea("")` remained in `confirmAddGeneratedTicketToBacklog` and was removed in **ADR 0044**.

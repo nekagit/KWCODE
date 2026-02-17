@@ -124,15 +124,15 @@ function extractTicketJsonFromStdout(
 
 /* isImplementAllRun is now imported from @/lib/run-helpers */
 
-/** Grid of 3 terminal slots (last 3 Implement All runs). */
+/** Grid of 3 terminal slots. Runs are placed by slot (1 → first terminal, 2 → second, 3 → third). */
 export function ImplementAllTerminalsGrid() {
   const runningRuns = useRunStore((s) => s.runningRuns);
   const implementAllRuns = runningRuns.filter(isImplementAllRun);
-  const runsForSlots = [
-    implementAllRuns[implementAllRuns.length - 3] ?? null,
-    implementAllRuns[implementAllRuns.length - 2] ?? null,
-    implementAllRuns[implementAllRuns.length - 1] ?? null,
-  ];
+  const runsForSlots: ((typeof implementAllRuns)[0] | null)[] = [null, null, null];
+  for (const run of implementAllRuns) {
+    const s = run.slot;
+    if (s === 1 || s === 2 || s === 3) runsForSlots[s - 1] = run;
+  }
   return (
     <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3 min-w-0">
       {runsForSlots.map((run, i) => (
@@ -787,7 +787,6 @@ export function ProjectTicketsTab({
       setGeneratedTicketMilestoneId(null);
       setGeneratedTicketIdeaId(null);
       setPlannerPromptInput("");
-      setPlannerPromptTextarea("");
       toast.success(`Ticket #${newTicket.number} added to backlog.`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : String(e));

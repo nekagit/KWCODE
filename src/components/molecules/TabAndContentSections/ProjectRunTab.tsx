@@ -788,11 +788,11 @@ function WorkerTerminalsSection({
   const runningRuns = useRunStore((s) => s.runningRuns);
   const implementAllRuns = runningRuns.filter(isImplementAllRun);
 
-  const runsForSlots = [
-    implementAllRuns[implementAllRuns.length - 3] ?? null,
-    implementAllRuns[implementAllRuns.length - 2] ?? null,
-    implementAllRuns[implementAllRuns.length - 1] ?? null,
-  ];
+  const runsForSlots: ((typeof implementAllRuns)[0] | null)[] = [null, null, null];
+  for (const run of implementAllRuns) {
+    const s = run.slot;
+    if (s === 1 || s === 2 || s === 3) runsForSlots[s - 1] = run;
+  }
 
   const inProgressTickets = kanbanData?.columns?.in_progress?.items ?? [];
 

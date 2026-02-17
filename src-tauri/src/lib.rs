@@ -356,6 +356,99 @@ fn get_git_diff_name_status(project_path: String, from_ref: String) -> Result<Ve
     Ok(entries)
 }
 
+#[derive(serde::Serialize)]
+pub struct ImplementationLogEntry {
+    pub id: i64,
+    pub project_id: String,
+    pub run_id: String,
+    pub ticket_number: i64,
+    pub ticket_title: String,
+    pub milestone_id: Option<i64>,
+    pub idea_id: Option<i64>,
+    pub completed_at: String,
+    pub files_changed: String,
+    pub summary: String,
+    pub created_at: String,
+    pub status: String,
+}
+
+#[tauri::command]
+fn get_implementation_log_entries(project_id: String) -> Result<Vec<ImplementationLogEntry>, String> {
+    with_db(|conn| {
+        let mut stmt = conn.prepare(
+            "SELECT id, project_id, run_id, ticket_number, ticket_title, milestone_id, idea_id, completed_at, files_changed, summary, created_at, status FROM implementation_log WHERE project_id = ?1 ORDER BY completed_at DESC, id DESC",
+        )
+        .map_err(|e| e.to_string())?;
+        let rows = stmt
+            .query_map(rusqlite::params![project_id.trim()], |row| {
+                Ok(ImplementationLogEntry {
+                    id: row.get(0)?,
+                    project_id: row.get(1)?,
+                    run_id: row.get(2)?,
+                    ticket_number: row.get(3)?,
+                    ticket_title: row.get(4)?,
+                    milestone_id: row.get(5)?,
+                    idea_id: row.get(6)?,
+                    completed_at: row.get(7)?,
+                    files_changed: row.get(8)?,
+                    summary: row.get(9)?,
+                    created_at: row.get(10)?,
+                    status: row.get::<_, String>(11).unwrap_or_else(|_| "pending".to_string()),
+                })
+            })
+            .map_err(|e| e.to_string())?;
+        let entries: Vec<ImplementationLogEntry> = rows
+            .filter_map(|r| r.ok())
+            .collect();
+        Ok(entries)
+    })
+}
+
+#[tauri::command]
+fn update_implementation_log_entry_status(
+    project_id: String,
+    entry_id: i64,
+    status: String,
+) -> Result<ImplementationLogEntry, String> {
+    let status = status.trim();
+    if status != "accepted" && status != "declined" {
+        return Err("status must be 'accepted' or 'declined'".to_string());
+    }
+    with_db(|conn| {
+        let updated = conn
+            .execute(
+                "UPDATE implementation_log SET status = ?1 WHERE id = ?2 AND project_id = ?3",
+                rusqlite::params![status, entry_id, project_id.trim()],
+            )
+            .map_err(|e| e.to_string())?;
+        if updated == 0 {
+            return Err("Implementation log entry not found".to_string());
+        }
+        let entry = conn.query_row(
+            "SELECT id, project_id, run_id, ticket_number, ticket_title, milestone_id, idea_id, completed_at, files_changed, summary, created_at, status FROM implementation_log WHERE id = ?1",
+            rusqlite::params![entry_id],
+            |row| {
+                Ok(ImplementationLogEntry {
+                    id: row.get(0)?,
+                    project_id: row.get(1)?,
+                    run_id: row.get(2)?,
+                    ticket_number: row.get(3)?,
+                    ticket_title: row.get(4)?,
+                    milestone_id: row.get(5)?,
+                    idea_id: row.get(6)?,
+                    completed_at: row.get(7)?,
+                    files_changed: row.get(8)?,
+                    summary: row.get(9)?,
+                    created_at: row.get(10)?,
+                    status: row.get::<_, String>(11).unwrap_or_else(|_| "pending".to_string()),
+                })
+            },
+        )
+        .map_err(|e| e.to_string())?;
+        Ok(entry)
+    })
+}
+
 #[tauri::command]
 fn append_implementation_log_entry(
     project_id: String,
@@ -2521,6 +2614,8 @@ pub fn run() {
             get_git_info,
             get_git_head,
             get_git_diff_name_status,
+            get_implementation_log_entries,
+            update_implementation_log_entry_status,
             append_implementation_log_entry,
             get_git_file_view,
             git_fetch,

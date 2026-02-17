@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { invoke, isTauri } from "@/lib/tauri";
 
 type LogEntryStatus = "pending" | "accepted" | "declined";
 
@@ -41,15 +42,40 @@ export function ProjectControlTab({ projectId }: ProjectControlTabProps) {
     setLoading(true);
     setError(null);
     try {
-      const [logRes, milRes, ideasRes] = await Promise.all([
-        fetch(`/api/data/projects/${projectId}/implementation-log`),
+      let list: LogEntry[];
+      if (isTauri) {
+        const raw = await invoke<{ id: number; project_id: string; run_id: string; ticket_number: number; ticket_title: string; milestone_id: number | null; idea_id: number | null; completed_at: string; files_changed: string; summary: string; created_at: string; status: string }[]>("get_implementation_log_entries", { project_id: projectId });
+        list = raw.map((r) => ({
+          id: r.id,
+          project_id: r.project_id,
+          run_id: r.run_id,
+          ticket_number: r.ticket_number,
+          ticket_title: r.ticket_title,
+          milestone_id: r.milestone_id ?? undefined,
+          idea_id: r.idea_id ?? undefined,
+          completed_at: r.completed_at,
+          files_changed: (() => {
+            try {
+              return JSON.parse(r.files_changed || "[]") as { path: string; status: string }[];
+            } catch {
+              return [];
+            }
+          })(),
+          summary: r.summary,
+          created_at: r.created_at,
+          status: r.status,
+        }));
+      } else {
+        const logRes = await fetch(`/api/data/projects/${projectId}/implementation-log`);
+        if (!logRes.ok) throw new Error("Failed to load implementation log");
+        list = (await logRes.json()) as LogEntry[];
+      }
+      setEntries(list);
+
+      const [milRes, ideasRes] = await Promise.all([
         fetch(`/api/data/projects/${projectId}/milestones`),
         fetch(`/api/data/ideas`),
       ]);
-      if (!logRes.ok) throw new Error("Failed to load implementation log");
-      const list = (await logRes.json()) as LogEntry[];
-      setEntries(list);
-
       const milList = milRes.ok ? ((await milRes.json()) as { id: number; name: string }[]) : [];
       const ideaList = ideasRes.ok ? ((await ideasRes.json()) as { id: number; title: string }[]) : [];
       const milMap: Record<number, string> = {};
@@ -69,13 +95,21 @@ export function ProjectControlTab({ projectId }: ProjectControlTabProps) {
   const setEntryStatus = useCallback(
     async (entryId: number, status: LogEntryStatus) => {
       try {
-        const res = await fetch(
-          `/api/data/projects/${projectId}/implementation-log/${entryId}`,
-          { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) }
-        );
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(typeof err.error === "string" ? err.error : "Failed to update");
+        if (isTauri) {
+          await invoke("update_implementation_log_entry_status", {
+            project_id: projectId,
+            entry_id: entryId,
+            status,
+          });
+        } else {
+          const res = await fetch(
+            `/api/data/projects/${projectId}/implementation-log/${entryId}`,
+            { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) }
+          );
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(typeof err.error === "string" ? err.error : "Failed to update");
+          }
         }
         setEntries((prev) =>
           prev.map((e) => (e.id === entryId ? { ...e, status } : e))

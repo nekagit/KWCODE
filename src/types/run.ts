@@ -46,6 +46,8 @@ export interface Run {
   label: string;
   logLines: string[];
   status: "running" | "done";
+  /** Terminal slot 1–3 for Implement All; used to place run in correct column (slot 1 = first terminal). */
+  slot?: 1 | 2 | 3;
   /** When the run was started (ms since epoch). Used for elapsed timer. */
   startedAt?: number;
   /** When the run finished (ms since epoch). Set on script-exited for duration. */

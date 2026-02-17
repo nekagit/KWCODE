@@ -120,21 +120,36 @@ export function RunStoreHydration() {
             const logPreview = stdout.trim().slice(0, 400);
             if (logPreview) summaryParts.push(logPreview);
             const summary = summaryParts.join(" ");
+            const completedAt = new Date().toISOString();
             try {
-              await fetch(`/api/data/projects/${run.meta!.projectId}/implementation-log`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  run_id: run_id,
+              if (isTauri) {
+                await invoke("append_implementation_log_entry", {
+                  project_id: run.meta!.projectId,
+                  run_id,
                   ticket_number: run.meta!.ticketNumber,
                   ticket_title: run.meta!.ticketTitle ?? "",
                   milestone_id: run.meta!.milestoneId ?? null,
                   idea_id: run.meta!.ideaId ?? null,
-                  completed_at: new Date().toISOString(),
-                  files_changed: filesChanged,
+                  completed_at: completedAt,
+                  files_changed: JSON.stringify(filesChanged),
                   summary,
-                }),
-              });
+                });
+              } else {
+                await fetch(`/api/data/projects/${run.meta!.projectId}/implementation-log`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    run_id,
+                    ticket_number: run.meta!.ticketNumber,
+                    ticket_title: run.meta!.ticketTitle ?? "",
+                    milestone_id: run.meta!.milestoneId ?? null,
+                    idea_id: run.meta!.ideaId ?? null,
+                    completed_at: completedAt,
+                    files_changed: filesChanged,
+                    summary,
+                  }),
+                });
+              }
             } catch (err) {
               console.error("[run-exited] implementation-log POST failed:", err);
             }
