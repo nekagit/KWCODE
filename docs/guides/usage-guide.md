@@ -14,7 +14,7 @@ How to start a project, use agents, manage milestones and tickets, use the worke
 
 - **Agents** are defined in `.cursor/2. agents/*.md` (e.g. backend-dev, frontend-dev, solution-architect, tester, documentation-writer).
 - When creating or editing a ticket, assign one or more agents; they are used when you run **Implement All** from the Run tab.
-- The Run tab uses `.cursor/8. worker/implement-all.md` as the base prompt and loads per-ticket agents from `.cursor/2. agents/`. Move tickets to "In progress" in the Kanban, then click **Implement All**. When a run finishes, each terminal slot shows the duration and, if the script exited with an error, the exit code (e.g. "Done in 2m 5s (exit 1)").
+- The Run tab uses `.cursor/8. worker/implement-all.md` as the base prompt and loads per-ticket agents from `.cursor/2. agents/`. Move tickets to "In progress" in the Kanban, then click **Implement All**. When a run finishes, each terminal slot shows success as "Done" or "Done in Xs" and failure as "Failed (exit N)" so you can see at a glance whether the script succeeded or failed.
 
 ## Manage milestones and tickets
 

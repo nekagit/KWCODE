@@ -72,7 +72,8 @@ export function TerminalSlot({
         }
     }, [displayLogLines.length]);
 
-    const statusColor = running ? "emerald" : done ? "sky" : "muted";
+    const failed = done && run && run.exitCode !== undefined && run.exitCode !== 0;
+    const statusColor = running ? "emerald" : failed ? "rose" : done ? "sky" : "muted";
 
     const doneDurationSeconds =
         run?.doneAt != null && run?.startedAt != null
@@ -82,25 +83,25 @@ export function TerminalSlot({
         doneDurationSeconds != null
             ? ` in ${doneDurationSeconds < 1 ? "<1s" : formatElapsed(doneDurationSeconds)}`
             : "";
-    const exitPart =
-        run && done && run.exitCode !== undefined && run.exitCode !== 0
-            ? ` (exit ${run.exitCode})`
-            : "";
     const statusLabel = run
         ? running
             ? `Running — ${formatElapsed(elapsedSeconds)}`
-            : `Done${durationPart}${exitPart}`
+            : failed
+              ? `Failed (exit ${run.exitCode})`
+              : `Done${durationPart}`
         : "Idle";
 
     const borderColor = {
         emerald: "border-emerald-500/30",
         sky: "border-sky-500/20",
+        rose: "border-rose-500/30",
         muted: "border-border/40",
     }[statusColor];
 
     const headerBg = {
         emerald: "bg-emerald-500/10",
         sky: "bg-sky-500/10",
+        rose: "bg-rose-500/10",
         muted: "bg-muted/40",
     }[statusColor];
 
