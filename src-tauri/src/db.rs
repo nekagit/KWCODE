@@ -119,7 +119,8 @@ fn init_schema(conn: &Connection) -> Result<(), String> {
             completed_at TEXT NOT NULL,
             files_changed TEXT NOT NULL DEFAULT '[]',
             summary TEXT NOT NULL DEFAULT '',
-            created_at TEXT NOT NULL
+            created_at TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pending'
         );
         ",
     )

@@ -82,6 +82,8 @@ export interface RunActions {
   setFloatingTerminalRunId: (id: string | null) => void;
   setFloatingTerminalMinimized: (minimized: boolean) => void;
   clearFloatingTerminal: () => void;
+  /** Remove a run from the dock (runningRuns); clears floating terminal if it was that run. */
+  removeRunFromDock: (runId: string) => void;
   stopAllImplementAll: () => Promise<void>;
   clearImplementAllLogs: () => void;
   archiveImplementAllLogs: () => void;
@@ -319,9 +321,12 @@ export const useRunStore = create<RunStore>()((set, get) => ({
   stopScript: async () => {
     try {
       await invoke("stop_script");
+      const now = Date.now();
       set((s) => ({
         runningRuns: s.runningRuns.map((r) =>
-          r.status === "running" ? { ...r, status: "done" as const } : r
+          r.status === "running"
+            ? { ...r, status: "done" as const, doneAt: now }
+            : r
         ),
       }));
     } catch (e) {
@@ -566,6 +571,12 @@ export const useRunStore = create<RunStore>()((set, get) => ({
 
   clearFloatingTerminal: () => set({ floatingTerminalRunId: null }),
 
+  removeRunFromDock: (runId) =>
+    set((s) => ({
+      runningRuns: s.runningRuns.filter((r) => r.runId !== runId),
+      floatingTerminalRunId: s.floatingTerminalRunId === runId ? null : s.floatingTerminalRunId,
+    })),
+
   stopRun: async (runId) => {
     try {
       await invoke("stop_run", { runId });
@@ -693,6 +704,7 @@ export function useRunState() {
       floatingTerminalMinimized: s.floatingTerminalMinimized,
       setFloatingTerminalMinimized: s.setFloatingTerminalMinimized,
       clearFloatingTerminal: s.clearFloatingTerminal,
+      removeRunFromDock: s.removeRunFromDock,
     }))
   );
 }

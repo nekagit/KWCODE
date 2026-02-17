@@ -79,9 +79,15 @@ function runMigrations(conn: Database.Database): void {
       completed_at TEXT NOT NULL,
       files_changed TEXT NOT NULL DEFAULT '[]',
       summary TEXT NOT NULL DEFAULT '',
-      created_at TEXT NOT NULL
+      created_at TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending'
     );
   `);
+  // Migration: add status to existing implementation_log tables
+  const tableInfo = conn.prepare("PRAGMA table_info(implementation_log)").all() as { name: string }[];
+  if (tableInfo.length > 0 && !tableInfo.some((c) => c.name === "status")) {
+    conn.exec("ALTER TABLE implementation_log ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'");
+  }
 }
 
 export function getDb(): Database.Database {
@@ -176,4 +182,5 @@ export type ImplementationLogRow = {
   files_changed: string;
   summary: string;
   created_at: string;
+  status: string;
 };

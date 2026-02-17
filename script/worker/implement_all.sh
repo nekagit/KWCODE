@@ -52,22 +52,35 @@ echo "cd $PROJECT_PATH"
 cd "$PROJECT_PATH" || exit 1
 echo "  → $(pwd)"
 echo ""
+
+# Track time from start of agent until it finishes (so UI can show real duration).
+START_TIME=$(date +%s)
 if [ -n "$PROMPT_FILE" ] && [ -f "$PROMPT_FILE" ]; then
   PROMPT_CONTENT=$(cat "$PROMPT_FILE")
   rm -f "$PROMPT_FILE"
   ESCAPED=$(printf '%s' "$PROMPT_CONTENT" | sed 's/\\/\\\\/g; s/"/\\"/g')
   echo "Running: agent -F -p \"<from file>\" (print mode, -F = trust workspace)"
   echo "(Output may appear when the agent finishes.)"
-  agent -F -p "$ESCAPED"
+  agent -p "$ESCAPED"
 else
   echo "Running: agent"
   echo "(Output may appear when the agent finishes.)"
   agent
 fi
 AGENT_EXIT=$?
+END_TIME=$(date +%s)
+DURATION=$((END_TIME - START_TIME))
+DURATION_MIN=$((DURATION / 60))
+DURATION_SEC=$((DURATION % 60))
+if [ "$DURATION_MIN" -gt 0 ]; then
+  DURATION_STR="${DURATION_MIN}m ${DURATION_SEC}s"
+else
+  DURATION_STR="${DURATION}s"
+fi
+
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "Done. Agent exited with code $AGENT_EXIT."
+echo "Done. Agent exited with code $AGENT_EXIT. Duration: $DURATION_STR"
 if [ "$AGENT_EXIT" -ne 0 ]; then
   echo "Agent failed (non-zero exit). Scroll up for agent output or look for [stderr] lines."
 fi

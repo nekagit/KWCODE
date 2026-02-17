@@ -14,6 +14,7 @@ function rowToEntry(r: ImplementationLogRow) {
     files_changed: JSON.parse(r.files_changed) as { path: string; status: string }[],
     summary: r.summary,
     created_at: r.created_at,
+    status: r.status ?? "pending",
   };
 }
 

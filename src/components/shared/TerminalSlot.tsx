@@ -72,11 +72,15 @@ export function TerminalSlot({
 
     const statusColor = running ? "emerald" : done ? "sky" : "muted";
 
+    const doneDurationSeconds =
+        run?.doneAt != null && run?.startedAt != null
+            ? (run.doneAt - run.startedAt) / 1000
+            : null;
     const statusLabel = run
         ? running
             ? `Running — ${formatElapsed(elapsedSeconds)}`
-            : run.doneAt != null && run.startedAt != null
-                ? `Done in ${formatElapsed((run.doneAt - run.startedAt) / 1000)}`
+            : doneDurationSeconds != null
+                ? `Done in ${doneDurationSeconds < 1 ? "<1s" : formatElapsed(doneDurationSeconds)}`
                 : "Done"
         : "Idle";
 

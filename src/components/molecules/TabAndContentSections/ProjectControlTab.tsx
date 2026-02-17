@@ -1,10 +1,14 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { ClipboardList, Loader2, FileText, Flag, Lightbulb } from "lucide-react";
+import { ClipboardList, Loader2, FileText, Flag, Lightbulb, CheckCircle2, XCircle } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+
+type LogEntryStatus = "pending" | "accepted" | "declined";
 
 type LogEntry = {
   id: number;
@@ -18,6 +22,7 @@ type LogEntry = {
   files_changed: { path: string; status: string }[];
   summary: string;
   created_at: string;
+  status?: string;
 };
 
 interface ProjectControlTabProps {
@@ -60,6 +65,28 @@ export function ProjectControlTab({ projectId }: ProjectControlTabProps) {
       setLoading(false);
     }
   }, [projectId]);
+
+  const setEntryStatus = useCallback(
+    async (entryId: number, status: LogEntryStatus) => {
+      try {
+        const res = await fetch(
+          `/api/data/projects/${projectId}/implementation-log/${entryId}`,
+          { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) }
+        );
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(typeof err.error === "string" ? err.error : "Failed to update");
+        }
+        setEntries((prev) =>
+          prev.map((e) => (e.id === entryId ? { ...e, status } : e))
+        );
+        toast.success(status === "accepted" ? "Entry accepted." : "Entry declined.");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Failed to update entry");
+      }
+    },
+    [projectId]
+  );
 
   useEffect(() => {
     load();
@@ -110,6 +137,40 @@ export function ProjectControlTab({ projectId }: ProjectControlTabProps) {
                 <span className="text-xs text-muted-foreground">
                   {new Date(entry.completed_at).toLocaleString()}
                 </span>
+                {entry.status === "accepted" && (
+                  <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-emerald-500/15 text-emerald-600 border border-emerald-500/30">
+                    <CheckCircle2 className="size-3" />
+                    Accepted
+                  </span>
+                )}
+                {entry.status === "declined" && (
+                  <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-red-500/15 text-red-600 border border-red-500/30">
+                    <XCircle className="size-3" />
+                    Declined
+                  </span>
+                )}
+                {(entry.status === "pending" || !entry.status) && (
+                  <div className="flex items-center gap-1 ml-auto">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2 text-[10px] gap-1 bg-emerald-500/10 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/20"
+                      onClick={() => setEntryStatus(entry.id, "accepted")}
+                    >
+                      <CheckCircle2 className="size-3" />
+                      Accept
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2 text-[10px] gap-1 bg-red-500/10 border-red-500/30 text-red-600 hover:bg-red-500/20"
+                      onClick={() => setEntryStatus(entry.id, "declined")}
+                    >
+                      <XCircle className="size-3" />
+                      Decline
+                    </Button>
+                  </div>
+                )}
               </div>
               <div className="flex flex-wrap gap-2 text-xs">
                 <span className="flex items-center gap-1 text-muted-foreground">
