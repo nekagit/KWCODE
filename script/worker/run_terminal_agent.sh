@@ -1,6 +1,6 @@
 #!/bin/bash
 # Run terminal agent: single run, cd to project, run agent with prompt from file.
-# Used for: Run terminal agent to fix (debugging), Setup prompt, temp ticket (ideas, analyze, etc.).
+# Used for: "Run terminal agent to fix" (prompt from .cursor/8. worker/fix-bug.md + pasted logs), Setup prompt, temp ticket (ideas, analyze, etc.).
 # Not used for Implement All (see implement_all.sh).
 
 set -e

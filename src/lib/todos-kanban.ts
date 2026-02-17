@@ -11,7 +11,7 @@ export type ParsedTicket = {
   featureName: string;
   done: boolean;
   status: "Todo" | "Done";
-  /** Agents from .cursor/agents (filenames without .md), e.g. ["frontend-dev", "backend-dev"]. */
+  /** Agents from .cursor/2. agents (filenames without .md), e.g. ["frontend-dev", "backend-dev"]. */
   agents?: string[];
   /** Assigned milestone (DB id). */
   milestoneId?: number;

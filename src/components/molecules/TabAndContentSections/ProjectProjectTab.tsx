@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Loader2, FileText, FolderOpen, RefreshCw, Play, Square, FolderGit2, Bot, Folder } from "lucide-react";
+import { Loader2, FileText, FolderOpen, RefreshCw, Play, Square, FolderGit2, Bot, Folder, Palette, Building2 } from "lucide-react";
 import { AnalyzeButtonSplit } from "@/components/molecules/ControlsAndButtons/AnalyzeButtonSplit";
 import { listProjectFiles, readProjectFileOrEmpty, readCursorDocFromServer, analyzeProjectDoc, updateProject, type FileEntry } from "@/lib/api-projects";
 import { isTauri } from "@/lib/tauri";
@@ -32,7 +32,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ProjectFilesTab } from "@/components/molecules/TabAndContentSections/ProjectFilesTab";
-import { ProjectIdeasDocTab } from "@/components/molecules/TabAndContentSections/ProjectIdeasDocTab";
+import { SetupDocBlock } from "@/components/molecules/TabAndContentSections/SetupDocBlock";
+import { ProjectDesignTab } from "@/components/molecules/TabAndContentSections/ProjectDesignTab";
+import { ProjectArchitectureTab } from "@/components/molecules/TabAndContentSections/ProjectArchitectureTab";
 import { ProjectAgentsSection } from "@/components/molecules/TabAndContentSections/ProjectAgentsSection";
 
 const markdownClasses =
@@ -244,6 +246,150 @@ export function ProjectProjectTab({ project, projectId, docsRefreshKey, onProjec
     <div className="space-y-6">
       <ScrollArea className="h-[calc(100vh-14rem)]">
         <div className="space-y-6 pr-4">
+          {/* Run section: scripts from package.json + Play + terminal output */}
+          <SectionCard accentColor="emerald">
+            <div className="flex items-center gap-2 mb-3">
+              <Play className="h-4 w-4 text-emerald-500" />
+              <h3 className="text-sm font-semibold">Run</h3>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4">
+              Run npm scripts from the project directory. On macOS, each script opens in Terminal.app; on other platforms output appears below (localhost URL becomes &quot;Open app&quot;).
+            </p>
+            {loadingScripts ? (
+              <div className="flex items-center gap-2 py-4 text-muted-foreground">
+                <Loader2 className="size-4 animate-spin" />
+                <span className="text-xs">Loading package.json…</span>
+              </div>
+            ) : Object.keys(scripts).length === 0 ? (
+              <p className="text-xs text-muted-foreground py-4 rounded-lg border border-border/40 bg-muted/10 px-4">
+                No package.json or no scripts found. Add a package.json with a <code className="rounded bg-muted px-1 font-mono">scripts</code> section to run commands from here.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(scripts).map(([name, cmd]) => {
+                    const canRun = isTauri && project.repoPath;
+                    return (
+                      <TooltipProvider key={name}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-flex">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-1.5 text-xs"
+                                disabled={!canRun}
+                                onClick={async () => {
+                                  if (!canRun || !project.repoPath) return;
+                                  try {
+                                    const opened = await runNpmScriptInExternalTerminal(project.repoPath, name);
+                                    if (opened) {
+                                      toast.success("Opened in Terminal.");
+                                      return;
+                                    }
+                                    const err = useRunStore.getState().error ?? "";
+                                    if (err.includes("only supported on macOS")) {
+                                      const runId = await runNpmScript(project.repoPath, name);
+                                      if (runId) {
+                                        setLastRunId(runId);
+                                        toast.success("Running. Output below.");
+                                      }
+                                    } else {
+                                      toast.error(err || "Failed to open terminal");
+                                    }
+                                  } catch (e) {
+                                    toast.error(e instanceof Error ? e.message : "Failed to start");
+                                  }
+                                }}
+                              >
+                                <Play className="size-3" />
+                                {name}
+                              </Button>
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {canRun ? `npm run ${name} (opens Terminal on Mac)` : "Run scripts in Tauri app"}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    );
+                  })}
+                </div>
+                {!isTauri && Object.keys(scripts).length > 0 && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Run scripts from the Tauri desktop app to see output here.
+                  </p>
+                )}
+                {lastRunId && (() => {
+                  const run = runningRuns.find((r) => r.runId === lastRunId);
+                  if (!run) return null;
+                  const isRunning = run.status === "running";
+                  const portFromUrl = run.localUrl ? getPortFromLocalUrl(run.localUrl) : null;
+                  const canSavePort =
+                    portFromUrl != null &&
+                    (project.runPort == null || project.runPort !== portFromUrl);
+                  return (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <span className="text-xs font-medium text-muted-foreground">{run.label}</span>
+                        <div className="flex items-center gap-2">
+                          {canSavePort && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1.5 text-xs"
+                              disabled={savingPort}
+                              onClick={async () => {
+                                if (portFromUrl == null) return;
+                                setSavingPort(true);
+                                try {
+                                  await updateProject(projectId, { runPort: portFromUrl });
+                                  onProjectUpdate?.();
+                                  toast.success("Run port saved. Use View Running Project in the top bar.");
+                                } catch (e) {
+                                  toast.error(e instanceof Error ? e.message : "Failed to save port");
+                                } finally {
+                                  setSavingPort(false);
+                                }
+                              }}
+                            >
+                              {savingPort ? <Loader2 className="size-3 animate-spin" /> : null}
+                              Use as project URL
+                            </Button>
+                          )}
+                          {isRunning && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1.5 text-xs text-destructive hover:bg-destructive/10"
+                              onClick={() => stopRun(lastRunId)}
+                            >
+                              <Square className="size-3" />
+                              Stop
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      <TerminalSlot
+                        run={{
+                          runId: run.runId,
+                          label: run.label,
+                          logLines: run.logLines,
+                          status: run.status,
+                          startedAt: run.startedAt,
+                          doneAt: run.doneAt,
+                          localUrl: run.localUrl,
+                        }}
+                        slotIndex={0}
+                        heightClass="h-[240px]"
+                      />
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+          </SectionCard>
+
           {/* Project Files — .cursor directory browser */}
           <SectionCard accentColor="rose">
             <div className="flex flex-col gap-4">
@@ -403,157 +549,25 @@ export function ProjectProjectTab({ project, projectId, docsRefreshKey, onProjec
             </SectionCard>
           )}
 
-          {/* Run section: scripts from package.json + Play + terminal output */}
-          <SectionCard accentColor="emerald">
+          {/* Design */}
+          <SectionCard accentColor="violet">
             <div className="flex items-center gap-2 mb-3">
-              <Play className="h-4 w-4 text-emerald-500" />
-              <h3 className="text-sm font-semibold">Run</h3>
+              <Palette className="h-4 w-4 text-violet-500" />
+              <h3 className="text-sm font-semibold">Design</h3>
             </div>
-            <p className="text-xs text-muted-foreground mb-4">
-              Run npm scripts from the project directory. On macOS, each script opens in Terminal.app; on other platforms output appears below (localhost URL becomes &quot;Open app&quot;).
-            </p>
-            {loadingScripts ? (
-              <div className="flex items-center gap-2 py-4 text-muted-foreground">
-                <Loader2 className="size-4 animate-spin" />
-                <span className="text-xs">Loading package.json…</span>
-              </div>
-            ) : Object.keys(scripts).length === 0 ? (
-              <p className="text-xs text-muted-foreground py-4 rounded-lg border border-border/40 bg-muted/10 px-4">
-                No package.json or no scripts found. Add a package.json with a <code className="rounded bg-muted px-1 font-mono">scripts</code> section to run commands from here.
-              </p>
-            ) : (
-              <div className="space-y-3">
-                <div className="flex flex-wrap gap-2">
-                  {Object.entries(scripts).map(([name, cmd]) => {
-                    const canRun = isTauri && project.repoPath;
-                    return (
-                      <TooltipProvider key={name}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="inline-flex">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="gap-1.5 text-xs"
-                                disabled={!canRun}
-                                onClick={async () => {
-                                  if (!canRun || !project.repoPath) return;
-                                  try {
-                                    const opened = await runNpmScriptInExternalTerminal(project.repoPath, name);
-                                    if (opened) {
-                                      toast.success("Opened in Terminal.");
-                                      return;
-                                    }
-                                    const err = useRunStore.getState().error ?? "";
-                                    if (err.includes("only supported on macOS")) {
-                                      const runId = await runNpmScript(project.repoPath, name);
-                                      if (runId) {
-                                        setLastRunId(runId);
-                                        toast.success("Running. Output below.");
-                                      }
-                                    } else {
-                                      toast.error(err || "Failed to open terminal");
-                                    }
-                                  } catch (e) {
-                                    toast.error(e instanceof Error ? e.message : "Failed to start");
-                                  }
-                                }}
-                              >
-                                <Play className="size-3" />
-                                {name}
-                              </Button>
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {canRun ? `npm run ${name} (opens Terminal on Mac)` : "Run scripts in Tauri app"}
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    );
-                  })}
-                </div>
-                {!isTauri && Object.keys(scripts).length > 0 && (
-                  <p className="text-[11px] text-muted-foreground">
-                    Run scripts from the Tauri desktop app to see output here.
-                  </p>
-                )}
-                {lastRunId && (() => {
-                  const run = runningRuns.find((r) => r.runId === lastRunId);
-                  if (!run) return null;
-                  const isRunning = run.status === "running";
-                  const portFromUrl = run.localUrl ? getPortFromLocalUrl(run.localUrl) : null;
-                  const canSavePort =
-                    portFromUrl != null &&
-                    (project.runPort == null || project.runPort !== portFromUrl);
-                  return (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between gap-2 flex-wrap">
-                        <span className="text-xs font-medium text-muted-foreground">{run.label}</span>
-                        <div className="flex items-center gap-2">
-                          {canSavePort && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="gap-1.5 text-xs"
-                              disabled={savingPort}
-                              onClick={async () => {
-                                if (portFromUrl == null) return;
-                                setSavingPort(true);
-                                try {
-                                  await updateProject(projectId, { runPort: portFromUrl });
-                                  onProjectUpdate?.();
-                                  toast.success("Run port saved. Use View Running Project in the top bar.");
-                                } catch (e) {
-                                  toast.error(e instanceof Error ? e.message : "Failed to save port");
-                                } finally {
-                                  setSavingPort(false);
-                                }
-                              }}
-                            >
-                              {savingPort ? <Loader2 className="size-3 animate-spin" /> : null}
-                              Use as project URL
-                            </Button>
-                          )}
-                          {isRunning && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="gap-1.5 text-xs text-destructive hover:bg-destructive/10"
-                              onClick={() => stopRun(lastRunId)}
-                            >
-                              <Square className="size-3" />
-                              Stop
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                      <TerminalSlot
-                        run={{
-                          runId: run.runId,
-                          label: run.label,
-                          logLines: run.logLines,
-                          status: run.status,
-                          startedAt: run.startedAt,
-                          doneAt: run.doneAt,
-                          localUrl: run.localUrl,
-                        }}
-                        slotIndex={0}
-                        heightClass="h-[240px]"
-                      />
-                    </div>
-                  );
-                })()}
-              </div>
-            )}
+            <SetupDocBlock project={project} projectId={projectId} setupKey="design" docsRefreshKey={docsRefreshKey} />
+            <ProjectDesignTab project={project} projectId={projectId} showHeader={false} />
           </SectionCard>
 
-          {/* Ideas */}
-          <div>
-            <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
-              <span className="text-amber-500">Ideas</span>
-            </h3>
-            <ProjectIdeasDocTab project={project} projectId={projectId} docsRefreshKey={docsRefreshKey} />
-          </div>
+          {/* Architecture */}
+          <SectionCard accentColor="blue">
+            <div className="flex items-center gap-2 mb-3">
+              <Building2 className="h-4 w-4 text-blue-500" />
+              <h3 className="text-sm font-semibold">Architecture</h3>
+            </div>
+            <SetupDocBlock project={project} projectId={projectId} setupKey="architecture" docsRefreshKey={docsRefreshKey} />
+            <ProjectArchitectureTab project={project} projectId={projectId} showHeader={false} />
+          </SectionCard>
 
           {/* ADR — Architecture decision records */}
           <SectionCard accentColor="violet">

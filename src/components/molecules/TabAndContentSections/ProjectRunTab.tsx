@@ -2,18 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from "react";
 import type { Project } from "@/types/project";
-import {
-  readProjectFile,
-  readProjectFileOrEmpty,
-  writeProjectFile,
-  listProjectFiles,
-  readAnalyzeQueue,
-  writeAnalyzeQueue,
-  runAnalyzeQueueProcessing,
-  ANALYZE_QUEUE_PATH,
-  type AnalyzeJob,
-  type AnalyzeQueueData,
-} from "@/lib/api-projects";
+import { readProjectFileOrEmpty } from "@/lib/api-projects";
 import { invoke, isTauri } from "@/lib/tauri";
 import {
   buildKanbanFromTickets,
@@ -21,16 +10,15 @@ import {
   type TodosKanbanData,
   type ParsedTicket,
 } from "@/lib/todos-kanban";
+import { WORKER_IMPLEMENT_ALL_PROMPT_PATH, WORKER_FIX_BUG_PROMPT_PATH, AGENTS_ROOT } from "@/lib/cursor-paths";
 import {
   buildKanbanContextBlock,
   combinePromptRecordWithKanban,
   buildTicketPromptBlock,
-  combineTicketPromptWithUserPrompt,
 } from "@/lib/analysis-prompt";
 import { EmptyState, LoadingState } from "@/components/shared/EmptyState";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useRunStore } from "@/store/run-store";
 import { toast } from "sonner";
 import {
@@ -47,37 +35,110 @@ import {
   Activity,
   MonitorUp,
   Layers,
-  Workflow,
-  FileText,
-  ScanSearch,
   Bug,
-  ChevronDown,
+  ListTodo,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isImplementAllRun, parseTicketNumberFromRunLabel } from "@/lib/run-helpers";
 import { StatusPill } from "@/components/shared/DisplayPrimitives";
 import { TerminalSlot } from "@/components/shared/TerminalSlot";
 import { KanbanTicketCard } from "@/components/molecules/Kanban/KanbanTicketCard";
-import * as AccordionPrimitive from "@radix-ui/react-accordion";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Textarea } from "@/components/ui/textarea";
 
-/** System prompt for the debugging terminal agent. User pastes error logs below; this is prepended so the agent gets instructions + logs. */
-const DEBUG_ASSISTANT_PROMPT = `You are an expert debugging assistant. You are running in the current workspace—the user has pasted error/log output below.
-
-TASK:
-1. Read ALL logs/errors below and identify the root cause.
-2. APPLY THE FIX: Edit the relevant files in this workspace to fix the issue. Do not only suggest—make the code or config changes yourself.
-3. If you need to run commands (install, build, restart), run them.
-4. Briefly state what you fixed and why.
-
-RULES:
-- Work in the current workspace only. Use real file paths and real edits.
-- Be specific: exact files, exact changes. No generic advice.
-- If the logs refer to a service or path not in this repo, say so and suggest what the user should do (e.g. open the correct project).
+/** Fallback when project has no .cursor/8. worker/fix-bug.md */
+const DEBUG_ASSISTANT_PROMPT_FALLBACK = `You are a debugging assistant in the current workspace. The user has pasted error/log output below. Identify the root cause, apply the fix in this workspace (edit files, run commands), and state what you fixed. Work only in this repo; be specific. If logs refer to another path, say so.
 
 ERROR/LOG INFORMATION:
 `;
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   General queue — In Progress tickets from DB; run up to 3 at a time
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function WorkerGeneralQueueSection({
+  projectId,
+  repoPath,
+  projectPath,
+  kanbanData,
+  onRunInProgress,
+}: {
+  projectId: string;
+  repoPath: string;
+  projectPath: string;
+  kanbanData: TodosKanbanData | null;
+  onRunInProgress: () => Promise<void>;
+}) {
+  const [loading, setLoading] = useState(false);
+  const inProgressTickets = kanbanData?.columns?.in_progress?.items ?? [];
+  const count = inProgressTickets.length;
+  const canRun = count > 0 && projectPath.length > 0;
+
+  const handleRun = async () => {
+    setLoading(true);
+    try {
+      await onRunInProgress();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border border-border/40 bg-card/50 backdrop-blur-sm overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+        <div className="flex items-center gap-2.5">
+          <div className="flex items-center justify-center size-7 rounded-lg bg-rose-500/10">
+            <ListTodo className="size-3.5 text-rose-400" />
+          </div>
+          <div>
+            <h3 className="text-xs font-semibold text-foreground tracking-tight">Queue</h3>
+            <p className="text-[10px] text-muted-foreground normal-case">
+              In Progress tickets from the database — run up to 3 at a time
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted/50 text-muted-foreground border border-border/50">
+            {count} {count === 1 ? "ticket" : "tickets"}
+          </span>
+          <Button
+            variant="default"
+            size="sm"
+            className="h-8 text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700"
+            disabled={!canRun || loading}
+            onClick={handleRun}
+            title="Run first 3 In Progress tickets in terminals"
+          >
+            {loading ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Play className="size-3.5" />
+            )}
+            Run
+          </Button>
+        </div>
+      </div>
+      {count > 0 && (
+        <div className="px-5 pb-4 pt-0">
+          <ul className="space-y-1.5">
+            {inProgressTickets.map((ticket) => (
+              <li key={ticket.id} className="flex items-center gap-2 text-xs">
+                <span className="font-medium text-foreground/90">#{ticket.number}</span>
+                <span className="text-muted-foreground truncate">{ticket.title}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {count === 0 && (
+        <div className="px-5 pb-4 pt-0">
+          <p className="text-xs text-muted-foreground">
+            No tickets in progress. Move tickets to In Progress in the Planner tab, then run them here.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Main Component
@@ -229,6 +290,86 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
     [projectId, kanbanData]
   );
 
+  const runImplementAllForTickets = useRunStore((s) => s.runImplementAllForTickets);
+  const handleRunInProgressTickets = useCallback(async () => {
+    const repoPath = project.repoPath?.trim();
+    const projectPath = repoPath ?? "";
+    if (!projectPath) return;
+    const tickets = kanbanData?.columns?.in_progress?.items ?? [];
+    if (tickets.length === 0) {
+      toast.error("No tickets in progress. Move tickets to In Progress in the Planner tab.");
+      return;
+    }
+    try {
+      const implementAllMd = repoPath
+        ? (await readProjectFileOrEmpty(projectId, WORKER_IMPLEMENT_ALL_PROMPT_PATH, repoPath))?.trim() ?? ""
+        : "";
+      let gitRefAtStart = "";
+      if (isTauri) {
+        try {
+          gitRefAtStart = (await invoke<string>("get_git_head", { projectPath })) ?? "";
+        } catch {
+          /* ignore */
+        }
+      }
+      const slots: Array<{
+        slot: 1 | 2 | 3;
+        promptContent: string;
+        label: string;
+        meta?: {
+          projectId: string;
+          repoPath: string;
+          ticketNumber: number;
+          ticketTitle: string;
+          milestoneId?: number;
+          ideaId?: number;
+          gitRefAtStart?: string;
+        };
+      }> = [];
+      const ticketsToRun = tickets.slice(0, 3);
+      for (let i = 0; i < ticketsToRun.length; i++) {
+        const ticket = ticketsToRun[i];
+        const slot = (i + 1) as 1 | 2 | 3;
+        let agentMd: string | null = null;
+        if (ticket.agents?.length && repoPath) {
+          const parts: string[] = [];
+          for (const agentId of ticket.agents) {
+            const content = await readProjectFileOrEmpty(
+              projectId,
+              `${AGENTS_ROOT}/${agentId}.md`,
+              repoPath
+            );
+            if (content?.trim()) parts.push(content.trim());
+          }
+          if (parts.length) agentMd = parts.join("\n\n---\n\n");
+        }
+        const ticketBlock = buildTicketPromptBlock(ticket, agentMd);
+        const promptContent = (implementAllMd
+          ? `${implementAllMd}\n\n---\n\n${ticketBlock}`
+          : ticketBlock
+        ).trim();
+        slots.push({
+          slot,
+          promptContent: promptContent || ticketBlock.trim(),
+          label: `Ticket #${ticket.number}: ${ticket.title}`,
+          meta: {
+            projectId,
+            repoPath,
+            ticketNumber: ticket.number,
+            ticketTitle: ticket.title,
+            milestoneId: ticket.milestoneId,
+            ideaId: ticket.ideaId,
+            gitRefAtStart: gitRefAtStart || undefined,
+          },
+        });
+      }
+      await runImplementAllForTickets(projectPath, slots);
+      toast.success(`${slots.length} ticket run(s) started. Check the terminals below.`);
+    } catch {
+      toast.error("Failed to start run.");
+    }
+  }, [projectId, project.repoPath, kanbanData, runImplementAllForTickets]);
+
   if (!project.repoPath?.trim()) {
     return (
       <div className="rounded-2xl border border-border/40 bg-gradient-to-br from-card via-card to-emerald-500/[0.03] p-8 backdrop-blur-sm">
@@ -274,11 +415,14 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
       {/* ═══ Status Bar ═══ */}
       <WorkerStatusBar />
 
-      {/* ═══ Queue & workflow (.cursor/worker) ═══ */}
-      <WorkerQueueSection projectId={projectId} repoPath={project.repoPath ?? ""} />
-
-      {/* ═══ Analyze queue (8 prompts, 3 at a time) ═══ */}
-      <WorkerAnalyzeQueueSection projectId={projectId} repoPath={project.repoPath ?? ""} />
+      {/* ═══ General queue (In Progress tickets from DB) ═══ */}
+      <WorkerGeneralQueueSection
+        projectId={projectId}
+        repoPath={project.repoPath ?? ""}
+        projectPath={project.repoPath?.trim() ?? ""}
+        kanbanData={kanbanData}
+        onRunInProgress={handleRunInProgressTickets}
+      />
 
       {/* ═══ Command Center (Implement All) ═══ */}
       <WorkerCommandCenter
@@ -286,10 +430,15 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
         projectId={projectId}
         repoPath={project.repoPath ?? ""}
         kanbanData={kanbanData}
+        onRunInProgress={handleRunInProgressTickets}
       />
 
       {/* ═══ Debugging — paste error logs, run terminal agent to fix ═══ */}
-      <WorkerDebuggingSection projectPath={project.repoPath.trim()} />
+      <WorkerDebuggingSection
+        projectId={projectId}
+        projectPath={project.repoPath?.trim() ?? ""}
+        repoPath={project.repoPath ?? ""}
+      />
 
       {/* ═══ Terminals + ticket per slot (each ticket directly below its terminal) ═══ */}
       <WorkerTerminalsSection
@@ -310,307 +459,6 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
         ticketNumbersShownInTerminals={ticketNumbersShownInTerminals}
       />
     </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   Queue & workflow — .cursor/worker/queue and .cursor/worker/workflows
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-function WorkerQueueSection({ projectId, repoPath }: { projectId: string; repoPath: string }) {
-  const [queueFiles, setQueueFiles] = useState<string[]>([]);
-  const [workflowFiles, setWorkflowFiles] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [previewPath, setPreviewPath] = useState<string | null>(null);
-  const [previewContent, setPreviewContent] = useState<string | null>(null);
-  const [loadingPreview, setLoadingPreview] = useState(false);
-
-  useEffect(() => {
-    if (!repoPath) {
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-    setLoading(true);
-    Promise.all([
-      listProjectFiles(projectId, ".cursor/worker/queue", repoPath),
-      listProjectFiles(projectId, ".cursor/worker/workflows", repoPath),
-    ])
-      .then(([queue, workflows]) => {
-        if (cancelled) return;
-        setQueueFiles(queue.filter((e) => !e.isDirectory).map((e) => e.name));
-        setWorkflowFiles(workflows.filter((e) => !e.isDirectory).map((e) => e.name));
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setQueueFiles([]);
-          setWorkflowFiles([]);
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [projectId, repoPath]);
-
-  useEffect(() => {
-    if (!previewPath || !repoPath) {
-      setPreviewContent(null);
-      return;
-    }
-    let cancelled = false;
-    setLoadingPreview(true);
-    const name = previewPath.split("/").pop() ?? "";
-    const subdir = previewPath.includes("workflows/") ? ".cursor/worker/workflows" : ".cursor/worker/queue";
-    readProjectFileOrEmpty(projectId, `${subdir}/${name}`, repoPath)
-      .then((t) => {
-        if (!cancelled) setPreviewContent(t?.trim() ?? null);
-      })
-      .catch(() => {
-        if (!cancelled) setPreviewContent(null);
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingPreview(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [projectId, repoPath, previewPath]);
-
-  if (!repoPath) return null;
-
-  const totalFiles = queueFiles.length + workflowFiles.length;
-  if (loading && totalFiles === 0) {
-    return (
-      <div className="rounded-2xl border border-border/40 bg-card/50 p-4 backdrop-blur-sm">
-        <div className="flex items-center gap-2">
-          <Workflow className="size-4 text-rose-500" />
-          <span className="text-xs font-medium">Queue & workflow</span>
-          <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
-        </div>
-      </div>
-    );
-  }
-
-  if (totalFiles === 0) {
-    return (
-      <div className="rounded-2xl border border-border/40 bg-card/50 p-4 backdrop-blur-sm">
-        <div className="flex items-center gap-2">
-          <Workflow className="size-4 text-rose-500" />
-          <span className="text-xs font-medium">Queue & workflow</span>
-        </div>
-        <p className="text-xs text-muted-foreground mt-2">
-          No files in .cursor/worker/queue or .cursor/worker/workflows. Add ready.md, in-progress.md, completed.md, or ticket-workflow.md.
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <Accordion type="single" collapsible className="rounded-2xl border border-border/40 bg-card/50 overflow-hidden backdrop-blur-sm">
-      <AccordionItem value="queue" className="border-none">
-        <AccordionTrigger className="px-4 py-3 hover:no-underline [&[data-state=open]]:border-b [&[data-state=open]]:border-border/40">
-          <div className="flex items-center gap-2">
-            <Workflow className="size-4 text-rose-500" />
-            <span className="text-xs font-semibold">Queue & workflow</span>
-          </div>
-        </AccordionTrigger>
-        <AccordionContent className="pb-0 pt-0">
-          <div className="flex flex-col sm:flex-row gap-0 divide-y sm:divide-y-0 sm:divide-x divide-border/40">
-            <div className="flex-1 p-4 min-w-0">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <p className="text-[10px] font-medium text-muted-foreground mb-1.5">.cursor/worker/queue/</p>
-                  <ul className="space-y-1">
-                    {queueFiles.map((name) => (
-                      <li key={name}>
-                        <button
-                          type="button"
-                          onClick={() => setPreviewPath(`.cursor/worker/queue/${name}`)}
-                          className={cn(
-                            "text-xs font-mono hover:underline text-left",
-                            previewPath === `.cursor/worker/queue/${name}` ? "text-rose-500 font-medium" : "text-foreground/80"
-                          )}
-                        >
-                          {name}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <p className="text-[10px] font-medium text-muted-foreground mb-1.5">.cursor/worker/workflows/</p>
-                  <ul className="space-y-1">
-                    {workflowFiles.map((name) => (
-                      <li key={name}>
-                        <button
-                          type="button"
-                          onClick={() => setPreviewPath(`.cursor/worker/workflows/${name}`)}
-                          className={cn(
-                            "text-xs font-mono hover:underline text-left",
-                            previewPath === `.cursor/worker/workflows/${name}` ? "text-rose-500 font-medium" : "text-foreground/80"
-                          )}
-                        >
-                          {name}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
-            <div className="flex-1 min-w-0 max-h-[200px] sm:max-h-[160px] overflow-hidden flex flex-col">
-              {loadingPreview ? (
-                <div className="flex items-center justify-center flex-1 p-4">
-                  <Loader2 className="size-4 animate-spin text-muted-foreground" />
-                </div>
-              ) : previewContent ? (
-                <ScrollArea className="flex-1 p-3">
-                  <pre className="text-[11px] text-muted-foreground whitespace-pre-wrap font-sans">{previewContent}</pre>
-                </ScrollArea>
-              ) : (
-                <div className="flex items-center justify-center flex-1 p-4 text-xs text-muted-foreground">
-                  <FileText className="size-4 mr-1.5" />
-                  Click a file to preview
-                </div>
-              )}
-            </div>
-          </div>
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   Analyze queue — 8 prompts as jobs, process 3 at a time
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-function WorkerAnalyzeQueueSection({ projectId, repoPath }: { projectId: string; repoPath: string }) {
-  const [data, setData] = useState<AnalyzeQueueData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [processing, setProcessing] = useState(false);
-
-  const loadQueue = useCallback(async () => {
-    if (!repoPath) {
-      setData(null);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    try {
-      const q = await readAnalyzeQueue(projectId, repoPath);
-      setData(q);
-    } catch {
-      setData(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [projectId, repoPath]);
-
-  useEffect(() => {
-    loadQueue();
-  }, [loadQueue]);
-
-  const pendingCount = data?.jobs?.filter((j) => j.status === "pending").length ?? 0;
-  const hasPending = pendingCount > 0;
-
-  if (!repoPath) return null;
-
-  return (
-    <Accordion type="single" collapsible className="rounded-2xl border border-border/40 bg-card/50 overflow-hidden backdrop-blur-sm">
-      <AccordionItem value="analyze" className="border-none">
-        <AccordionPrimitive.Header className="flex flex-1 items-center px-4 py-3 [&[data-state=open]]:border-b [&[data-state=open]]:border-border/40">
-          <AccordionPrimitive.Trigger className="flex flex-1 items-center justify-between gap-2 text-left hover:no-underline [&[data-state=open]>svg]:rotate-180">
-            <div className="flex items-center gap-2">
-              <ScanSearch className="size-4 text-primary" />
-              <span className="text-xs font-semibold">Analyze queue</span>
-            </div>
-            <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200" />
-          </AccordionPrimitive.Trigger>
-          <div className="flex items-center gap-2 pl-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-[10px]"
-              disabled={loading || processing}
-              onClick={async () => {
-                await writeAnalyzeQueue(projectId, repoPath);
-                await loadQueue();
-                toast.success("8 jobs enqueued.");
-              }}
-            >
-              Enqueue (8 jobs)
-            </Button>
-            <Button
-              variant="default"
-              size="sm"
-              className="h-7 text-[10px]"
-              disabled={!hasPending || processing}
-              onClick={async () => {
-                setProcessing(true);
-                try {
-                  const { completed, failed } = await runAnalyzeQueueProcessing(projectId, repoPath, {
-                    getQueue: () => readAnalyzeQueue(projectId, repoPath),
-                    setQueue: (d) =>
-                      writeProjectFile(projectId, ANALYZE_QUEUE_PATH, JSON.stringify(d, null, 2), repoPath),
-                  });
-                  await loadQueue();
-                  if (failed === 0) toast.success(`All ${completed} done.`);
-                  else toast.warning(`${completed} done, ${failed} failed.`);
-                } finally {
-                  setProcessing(false);
-                }
-              }}
-            >
-              {processing ? (
-                <>
-                  <Loader2 className="size-3.5 animate-spin mr-1" />
-                  Process…
-                </>
-              ) : (
-                "Process (3 at a time)"
-              )}
-            </Button>
-          </div>
-        </AccordionPrimitive.Header>
-        <AccordionContent className="pb-0 pt-0">
-          <div className="p-4 min-h-[80px]">
-            {loading ? (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Loader2 className="size-4 animate-spin" />
-                <span className="text-xs">Loading queue…</span>
-              </div>
-            ) : !data?.jobs?.length ? (
-              <p className="text-xs text-muted-foreground">
-                No analyze queue. Click &quot;Enqueue (8 jobs)&quot; to add ideas, project, design, architecture, testing, documentation, frontend, backend.
-              </p>
-            ) : (
-              <ul className="space-y-1.5">
-                {data.jobs.map((job: AnalyzeJob) => (
-                  <li key={job.id} className="flex items-center gap-2 text-xs">
-                    <span className="font-mono text-foreground/90">{job.id}</span>
-                    <span
-                      className={cn(
-                        "rounded border px-1.5 py-0.5 text-[10px] font-medium capitalize",
-                        job.status === "done" && "bg-emerald-500/10 border-emerald-500/25 text-emerald-400",
-                        job.status === "failed" && "bg-rose-500/10 border-rose-500/25 text-rose-400",
-                        job.status === "running" && "bg-amber-500/10 border-amber-500/25 text-amber-400",
-                        job.status === "pending" && "bg-muted/30 border-border/50 text-muted-foreground"
-                      )}
-                    >
-                      {job.status}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
   );
 }
 
@@ -701,14 +549,15 @@ function WorkerCommandCenter({
   projectId,
   repoPath,
   kanbanData,
+  onRunInProgress,
 }: {
   projectPath: string;
   projectId: string;
   repoPath: string;
   kanbanData: TodosKanbanData | null;
+  onRunInProgress: () => Promise<void>;
 }) {
   const runImplementAll = useRunStore((s) => s.runImplementAll);
-  const runImplementAllForTickets = useRunStore((s) => s.runImplementAllForTickets);
   const stopAllImplementAll = useRunStore((s) => s.stopAllImplementAll);
   const clearImplementAllLogs = useRunStore((s) => s.clearImplementAllLogs);
   const archiveImplementAllLogs = useRunStore((s) => s.archiveImplementAllLogs);
@@ -717,69 +566,19 @@ function WorkerCommandCenter({
 
   const implementAllRuns = runningRuns.filter(isImplementAllRun);
   const anyRunning = implementAllRuns.some((r) => r.status === "running");
+  const tickets = kanbanData?.columns?.in_progress?.items ?? [];
 
   const handleImplementAll = async () => {
-    const tickets = kanbanData?.columns?.in_progress?.items ?? [];
-
     setLoading(true);
     try {
-      // Use only .cursor/prompts/worker.md as the base prompt; agents are loaded per-ticket from .cursor/agents
-      const workerMd = repoPath
-        ? (await readProjectFileOrEmpty(projectId, ".cursor/prompts/worker.md", repoPath))?.trim() ?? ""
-        : "";
-      const userPrompt = workerMd;
-
       if (tickets.length > 0) {
-        let gitRefAtStart = "";
-        if (isTauri) {
-          try {
-            gitRefAtStart = (await invoke<string>("get_git_head", { projectPath })) ?? "";
-          } catch {
-            /* ignore */
-          }
-        }
-        const slots: Array<{ slot: 1 | 2 | 3; promptContent: string; label: string; meta?: { projectId: string; repoPath: string; ticketNumber: number; ticketTitle: string; milestoneId?: number; ideaId?: number; gitRefAtStart?: string } }> = [];
-        const ticketsToRun = tickets.slice(0, 3);
-        for (let i = 0; i < ticketsToRun.length; i++) {
-          const ticket = ticketsToRun[i];
-          const slot = (i + 1) as 1 | 2 | 3;
-          let agentMd: string | null = null;
-          if (ticket.agents?.length && repoPath) {
-            const parts: string[] = [];
-            for (const agentId of ticket.agents) {
-              const content = await readProjectFileOrEmpty(
-                projectId,
-                `.cursor/agents/${agentId}.md`,
-                repoPath
-              );
-              if (content?.trim()) parts.push(content.trim());
-            }
-            if (parts.length) agentMd = parts.join("\n\n---\n\n");
-          }
-          const ticketBlock = buildTicketPromptBlock(ticket, agentMd);
-          const promptContent = combineTicketPromptWithUserPrompt(ticketBlock, userPrompt).trim();
-          slots.push({
-            slot,
-            promptContent: promptContent || ticketBlock.trim(),
-            label: `Ticket #${ticket.number}: ${ticket.title}`,
-            meta: {
-              projectId,
-              repoPath,
-              ticketNumber: ticket.number,
-              ticketTitle: ticket.title,
-              milestoneId: ticket.milestoneId,
-              ideaId: ticket.ideaId,
-              gitRefAtStart: gitRefAtStart || undefined,
-            },
-          });
-        }
-        await runImplementAllForTickets(projectPath, slots);
-        toast.success(
-          `${slots.length} ticket run(s) started. Check the terminals below.`
-        );
+        await onRunInProgress();
       } else {
+        const implementAllMd = repoPath
+          ? (await readProjectFileOrEmpty(projectId, WORKER_IMPLEMENT_ALL_PROMPT_PATH, repoPath))?.trim() ?? ""
+          : "";
         const kanbanContext = kanbanData ? buildKanbanContextBlock(kanbanData) : "";
-        const combinedPrompt = combinePromptRecordWithKanban(kanbanContext, userPrompt);
+        const combinedPrompt = combinePromptRecordWithKanban(kanbanContext, implementAllMd);
         const promptContent = combinedPrompt.trim() || undefined;
         await runImplementAll(projectPath, promptContent);
         toast.success(
@@ -882,7 +681,15 @@ function WorkerCommandCenter({
    Debugging — paste error logs, run terminal agent to fix
    ═══════════════════════════════════════════════════════════════════════════ */
 
-function WorkerDebuggingSection({ projectPath }: { projectPath: string }) {
+function WorkerDebuggingSection({
+  projectId,
+  projectPath,
+  repoPath,
+}: {
+  projectId: string;
+  projectPath: string;
+  repoPath: string;
+}) {
   const runTempTicket = useRunStore((s) => s.runTempTicket);
   const [errorLogs, setErrorLogs] = useState("");
   const [loading, setLoading] = useState(false);
@@ -899,7 +706,12 @@ function WorkerDebuggingSection({ projectPath }: { projectPath: string }) {
     }
     setLoading(true);
     try {
-      const fullPrompt = DEBUG_ASSISTANT_PROMPT + logs;
+      const fixBugMd =
+        repoPath && projectId
+          ? (await readProjectFileOrEmpty(projectId, WORKER_FIX_BUG_PROMPT_PATH, repoPath))?.trim()
+          : "";
+      const basePrompt = fixBugMd || DEBUG_ASSISTANT_PROMPT_FALLBACK;
+      const fullPrompt = basePrompt.endsWith("\n") ? basePrompt + logs : basePrompt + "\n\n" + logs;
       const runId = await runTempTicket(projectPath.trim(), fullPrompt, "Debug: fix errors");
       if (runId) {
         toast.success("Debug agent started. Check the terminal below.");

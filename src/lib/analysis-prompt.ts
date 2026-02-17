@@ -144,7 +144,7 @@ export type TicketPromptTicket = {
  * Build the combined prompt block for one ticket: ticket details + optional agent instructions.
  * Used by Worker "Implement All" when running one terminal per in-progress ticket.
  * @param ticket - Ticket fields (number, title, description, priority, featureName, agents).
- * @param agentMdContent - Concatenated content of .cursor/agents/<id>.md for each ticket.agents, or null/empty.
+ * @param agentMdContent - Concatenated content of .cursor/2. agents/<id>.md for each ticket.agents, or null/empty.
  */
 export function buildTicketPromptBlock(ticket: TicketPromptTicket, agentMdContent: string | null): string {
   const agents = ticket.agents?.length ? ticket.agents : undefined;

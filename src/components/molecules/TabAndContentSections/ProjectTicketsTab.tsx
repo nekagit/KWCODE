@@ -47,6 +47,7 @@ import {
 import { toast } from "sonner";
 import type { Project } from "@/types/project";
 import { listProjectFiles } from "@/lib/api-projects";
+import { AGENTS_ROOT } from "@/lib/cursor-paths";
 import { invoke, isTauri } from "@/lib/tauri";
 import { useRunStore, registerRunCompleteHandler } from "@/store/run-store";
 import {
@@ -73,6 +74,21 @@ const PRIORITIES: Array<"P0" | "P1" | "P2" | "P3"> = ["P0", "P1", "P2", "P3"];
 /** Agent ids to never auto-assign to generated tickets (e.g. devops, requirements). */
 const EXCLUDED_AGENT_IDS = ["devops", "requirements"];
 
+/** Normalize agent JSON to expected shape (accepts snake_case e.g. feature_name). */
+function normalizeTicketParsed(
+  parsed: Record<string, unknown>
+): { title?: string; description?: string; priority?: string; featureName?: string } {
+  return {
+    title: typeof parsed.title === "string" ? parsed.title : undefined,
+    description: typeof parsed.description === "string" ? parsed.description : undefined,
+    priority: typeof parsed.priority === "string" ? parsed.priority : undefined,
+    featureName:
+      typeof (parsed.featureName ?? parsed.feature_name) === "string"
+        ? String(parsed.featureName ?? parsed.feature_name)
+        : undefined,
+  };
+}
+
 /** Extract a ticket-shaped JSON object from agent stdout (handles markdown code blocks and extra text). */
 function extractTicketJsonFromStdout(
   stdout: string
@@ -89,8 +105,8 @@ function extractTicketJsonFromStdout(
       depth--;
       if (depth === 0) {
         try {
-          const parsed = JSON.parse(fromBrace.slice(0, end + 1)) as Record<string, unknown>;
-          if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed as { title?: string; description?: string; priority?: string; featureName?: string };
+          const raw = JSON.parse(fromBrace.slice(0, end + 1)) as Record<string, unknown>;
+          if (raw && typeof raw === "object" && !Array.isArray(raw)) return normalizeTicketParsed(raw);
         } catch {
           /* try next closing brace */
         }
@@ -99,7 +115,7 @@ function extractTicketJsonFromStdout(
   }
   try {
     const fallback = JSON.parse(fromBrace) as Record<string, unknown>;
-    if (fallback && typeof fallback === "object" && !Array.isArray(fallback)) return fallback as { title?: string; description?: string; priority?: string; featureName?: string };
+    if (fallback && typeof fallback === "object" && !Array.isArray(fallback)) return normalizeTicketParsed(fallback);
   } catch {
     /* ignore */
   }
@@ -350,14 +366,13 @@ export function ProjectTicketsTab({
   /* Planner Manager: AI-generated ticket from prompt */
   // Removed plannerManagerMode, always default to ticket
   const [plannerPromptInput, setPlannerPromptInput] = useState("");
-  const [plannerPromptTextarea, setPlannerPromptTextarea] = useState("");
   const [generatedTicket, setGeneratedTicket] = useState<{
     title: string;
     description?: string;
     priority: "P0" | "P1" | "P2" | "P3";
     featureName: string;
   } | null>(null);
-  /** When a ticket is generated, we assign all agents from .cursor/agents; stored here for display and for newTicket.agents. */
+  /** When a ticket is generated, we assign all agents from AGENTS_ROOT (.cursor/2. agents); stored here for display and for newTicket.agents. */
   const [assignedAgentsForGenerated, setAssignedAgentsForGenerated] = useState<string[]>([]);
   const [generatingTicket, setGeneratingTicket] = useState(false);
   const [generatedTicketMilestoneId, setGeneratedTicketMilestoneId] = useState<number | null>(null);
@@ -643,7 +658,7 @@ export function ProjectTicketsTab({
   const runTempTicket = useRunStore((s) => s.runTempTicket);
 
   const generateTicketFromPrompt = useCallback(async () => {
-    const prompt = [plannerPromptInput.trim(), plannerPromptTextarea.trim()].filter(Boolean).join("\n");
+    const prompt = plannerPromptInput.trim();
     if (!prompt) {
       toast.error("Enter a short description (e.g. “I want a new page with settings”).");
       return;
@@ -675,8 +690,8 @@ export function ProjectTicketsTab({
         }
         registerRunCompleteHandler(`parse_ticket:${projectId}`, (stdout: string) => {
           const parsed = extractTicketJsonFromStdout(stdout);
-          if (parsed) {
-            const priority = ["P0", "P1", "P2", "P3"].includes(parsed.priority ?? "") ? parsed.priority! : "P1";
+          const priority = parsed?.priority && ["P0", "P1", "P2", "P3"].includes(parsed.priority) ? parsed.priority : "P1";
+          if (parsed && (parsed.title != null || parsed.description != null)) {
             setGeneratedTicket({
               title: String(parsed.title ?? prompt.slice(0, 80)).trim().slice(0, 200),
               description: typeof parsed.description === "string" ? parsed.description.trim().slice(0, 2000) : undefined,
@@ -684,7 +699,14 @@ export function ProjectTicketsTab({
               featureName: String(parsed.featureName ?? "Uncategorized").trim().slice(0, 100),
             });
           } else {
-            toast.error("Could not parse agent output. Expected a single JSON object with title, description, priority, featureName.");
+            // Fallback: use prompt as ticket so user can still add to backlog (DB)
+            setGeneratedTicket({
+              title: prompt.trim().slice(0, 200) || "New ticket",
+              description: prompt.trim().slice(0, 2000) || undefined,
+              priority: priority as "P0" | "P1" | "P2" | "P3",
+              featureName: "Uncategorized",
+            });
+            toast.info("Could not parse agent output. Use the ticket below (from your description), pick Milestone and Idea, then add to backlog.");
           }
           setGeneratingTicket(false);
         });
@@ -716,7 +738,7 @@ export function ProjectTicketsTab({
     } finally {
       setGeneratingTicket(false);
     }
-  }, [plannerPromptInput, plannerPromptTextarea, project, projectId, runTempTicket]);
+  }, [plannerPromptInput, project, projectId, runTempTicket]);
 
   const confirmAddGeneratedTicketToBacklog = useCallback(async () => {
     if (!generatedTicket) return;
@@ -774,7 +796,7 @@ export function ProjectTicketsTab({
     }
   }, [projectId, kanbanData, generatedTicket, assignedAgentsForGenerated, generatedTicketMilestoneId, generatedTicketIdeaId]);
 
-  /** When a ticket is generated, assign all agents from .cursor/agents (.md files). */
+  /** When a ticket is generated, assign all agents from AGENTS_ROOT (.md files). */
   useEffect(() => {
     if (!generatedTicket) {
       setAssignedAgentsForGenerated([]);
@@ -784,7 +806,7 @@ export function ProjectTicketsTab({
     let cancelled = false;
     (async () => {
       try {
-        const list = await listProjectFiles(projectId, ".cursor/agents", project.repoPath);
+        const list = await listProjectFiles(projectId, AGENTS_ROOT, project.repoPath);
         const mdFiles = list.filter((e) => !e.isDirectory && e.name.toLowerCase().endsWith(".md"));
         const excluded = new Set(EXCLUDED_AGENT_IDS.map((x) => x.toLowerCase()));
         const ids = mdFiles
@@ -874,20 +896,6 @@ export function ProjectTicketsTab({
                       tabIndex={0}
                     />
                   </div>
-                  <div className="grid gap-2">
-                    <label htmlFor="planner-prompt-textarea" className="text-sm font-medium text-muted-foreground">
-                      Details (optional)
-                    </label>
-                    <textarea
-                      id="planner-prompt-textarea"
-                      placeholder="e.g. I want a new page with settings for theme and notifications."
-                      value={plannerPromptTextarea}
-                      onChange={(e) => setPlannerPromptTextarea(e.target.value)}
-                      rows={3}
-                      className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                      tabIndex={0}
-                    />
-                  </div>
                   <div className="flex flex-wrap items-center gap-3">
                     <Button
                       type="button"
@@ -922,7 +930,7 @@ export function ProjectTicketsTab({
                             ))}
                           </p>
                         ) : (
-                          <p className="text-muted-foreground text-xs">No agents (add .md files to .cursor/agents to assign)</p>
+                          <p className="text-muted-foreground text-xs">No agents (add .md files to {AGENTS_ROOT} to assign)</p>
                         )}
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1007,7 +1015,7 @@ export function ProjectTicketsTab({
           </Accordion>
 
           {/* ═══════ Project Planner (stats + Kanban) ═══════ */}
-          <Accordion type="single" collapsible className="w-full">
+          <Accordion type="single" collapsible defaultValue="planner-stats" className="w-full">
             <AccordionItem value="planner-stats" className="border-none">
               <AccordionTrigger className="hover:no-underline py-0">
                 <div className="flex flex-col items-start text-left gap-1">

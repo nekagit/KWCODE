@@ -39,6 +39,7 @@ import { ProjectFrontendTab } from "@/components/molecules/TabAndContentSections
 import { ProjectBackendTab } from "@/components/molecules/TabAndContentSections/ProjectBackendTab";
 import { ProjectProjectTab } from "@/components/molecules/TabAndContentSections/ProjectProjectTab";
 import { ProjectTestingTab } from "@/components/molecules/TabAndContentSections/ProjectTestingTab";
+import { ProjectSetupDocTab } from "@/components/molecules/TabAndContentSections/ProjectSetupDocTab";
 import { ProjectControlTab } from "@/components/molecules/TabAndContentSections/ProjectControlTab";
 import { ProjectIdeasDocTab } from "@/components/molecules/TabAndContentSections/ProjectIdeasDocTab";
 import { ProjectRunTab } from "@/components/molecules/TabAndContentSections/ProjectRunTab";
@@ -78,6 +79,7 @@ const TAB_ROW_1 = [
   { value: "frontend", label: "Frontend", icon: Monitor, color: "text-cyan-400", activeGlow: "shadow-cyan-500/10" },
   { value: "backend", label: "Backend", icon: Server, color: "text-orange-400", activeGlow: "shadow-orange-500/10" },
   { value: "testing", label: "Testing", icon: TestTube2, color: "text-emerald-400", activeGlow: "shadow-emerald-500/10" },
+  { value: "documentation", label: "Documentation", icon: FileText, color: "text-teal-400", activeGlow: "shadow-teal-500/10" },
 ] as const;
 
 const TAB_ROW_2 = [
@@ -690,6 +692,21 @@ export function ProjectDetailsPageContent() {
             className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
           >
             <ProjectTestingTab project={project} projectId={projectId} docsRefreshKey={docsRefreshKey} />
+          </TabsContent>
+
+          {/* ── Documentation Tab ── */}
+          <TabsContent
+            value="documentation"
+            className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
+          >
+            <div className="rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-4 md:p-6">
+              <ProjectSetupDocTab
+                project={project}
+                projectId={projectId}
+                setupKey="documentation"
+                docsRefreshKey={docsRefreshKey}
+              />
+            </div>
           </TabsContent>
 
           {/* ── Planner Tab ── */}

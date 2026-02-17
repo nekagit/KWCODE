@@ -8,8 +8,7 @@ import { SectionCard } from "@/components/shared/DisplayPrimitives";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-
-const AGENTS_DIR = ".cursor/agents";
+import { AGENTS_ROOT } from "@/lib/cursor-paths";
 
 interface ProjectAgentsSectionProps {
   project: Project;
@@ -53,7 +52,7 @@ export function ProjectAgentsSection({ project, projectId }: ProjectAgentsSectio
     if (!getIsCancelled?.()) setLoading(true);
     if (!getIsCancelled?.()) setError(null);
     try {
-      const list = await listProjectFiles(projectId, AGENTS_DIR, project.repoPath);
+      const list = await listProjectFiles(projectId, AGENTS_ROOT, project.repoPath);
       if (getIsCancelled?.()) return;
       const mdFiles = list
         .filter((e) => !e.isDirectory && e.name.toLowerCase().endsWith(".md"))
@@ -78,7 +77,7 @@ export function ProjectAgentsSection({ project, projectId }: ProjectAgentsSectio
   }, [fetchAgents]);
 
   const openPreview = async (entry: FileEntry) => {
-    const path = `${AGENTS_DIR}/${entry.name}`;
+    const path = `${AGENTS_ROOT}/${entry.name}`;
     setPreviewLoading(true);
     try {
       const content = await readProjectFile(projectId, path, project.repoPath);
@@ -100,7 +99,7 @@ export function ProjectAgentsSection({ project, projectId }: ProjectAgentsSectio
       <SectionCard accentColor="violet" className="w-full">
         <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
           <Bot className="h-10 w-10 mb-3 opacity-50" />
-          <p className="text-sm">Set a repository path to view agents in <code className="text-xs bg-muted px-1 rounded">{AGENTS_DIR}</code>.</p>
+          <p className="text-sm">Set a repository path to view agents in <code className="text-xs bg-muted px-1 rounded">{AGENTS_ROOT}</code>.</p>
         </div>
       </SectionCard>
     );
@@ -116,7 +115,7 @@ export function ProjectAgentsSection({ project, projectId }: ProjectAgentsSectio
             </div>
             <div>
               <h3 className="text-sm font-semibold text-foreground">Agents</h3>
-              <p className="text-xs text-muted-foreground">One column per file in .cursor/agents</p>
+              <p className="text-xs text-muted-foreground">One column per file in {AGENTS_ROOT}</p>
             </div>
           </div>
 
@@ -131,7 +130,7 @@ export function ProjectAgentsSection({ project, projectId }: ProjectAgentsSectio
           ) : entries.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
               <FileText className="h-8 w-8 mb-2 opacity-50" />
-              <p className="text-sm">No .md files in <code className="text-xs bg-muted px-1 rounded">{AGENTS_DIR}</code>.</p>
+              <p className="text-sm">No .md files in <code className="text-xs bg-muted px-1 rounded">{AGENTS_ROOT}</code>.</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 w-full">

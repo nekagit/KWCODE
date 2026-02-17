@@ -1,7 +1,6 @@
 #!/bin/bash
-# Implement All: open 3 terminal slots; each run cd into project path, then run agent.
-# Optional -S 1|2|3: terminal slot in the project details 3-split section.
-# Output streams to the Tauri app terminal card for this slot.
+# Implement All: one run per terminal slot; prompt is built by the app from .cursor/8. worker/implement-all.md and the ticket (+ .cursor/2. agents when assigned).
+# Usage: -P project path (required), -S 1|2|3 (optional slot), -F prompt file (optional; when set, runs agent -F -p "<content>").
 
 set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"

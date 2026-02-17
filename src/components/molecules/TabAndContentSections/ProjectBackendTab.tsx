@@ -11,7 +11,6 @@ import {
   Server,
   FileText,
   Network,
-  Building2,
 } from "lucide-react";
 import { AnalyzeButtonSplit } from "@/components/molecules/ControlsAndButtons/AnalyzeButtonSplit";
 import { readProjectFileOrEmpty, readCursorDocFromServer, writeProjectFile, analyzeProjectDoc } from "@/lib/api-projects";
@@ -38,8 +37,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { SetupDocBlock } from "@/components/molecules/TabAndContentSections/SetupDocBlock";
-import { ProjectArchitectureTab } from "@/components/molecules/TabAndContentSections/ProjectArchitectureTab";
 
 import {
   SETUP_BACKEND_JSON_PATH,
@@ -589,16 +586,6 @@ export function ProjectBackendTab({ project, projectId, docsRefreshKey }: Projec
             >
               <Plus className="h-3.5 w-3.5" /> Add endpoint
             </Button>
-          </SectionCard>
-
-          {/* Architecture */}
-          <SectionCard accentColor="blue">
-            <div className="flex items-center gap-2 mb-3">
-              <Building2 className="h-4 w-4 text-blue-500" />
-              <h3 className="text-sm font-semibold">Architecture</h3>
-            </div>
-            <SetupDocBlock project={project} projectId={projectId} setupKey="architecture" docsRefreshKey={docsRefreshKey} />
-            <ProjectArchitectureTab project={project} projectId={projectId} showHeader={false} />
           </SectionCard>
         </div>
       </ScrollArea>

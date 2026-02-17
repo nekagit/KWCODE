@@ -11,7 +11,6 @@ import {
   Layers,
   Route,
   FileText,
-  Palette,
 } from "lucide-react";
 import { AnalyzeButtonSplit } from "@/components/molecules/ControlsAndButtons/AnalyzeButtonSplit";
 import { readProjectFileOrEmpty, readCursorDocFromServer, writeProjectFile, analyzeProjectDoc } from "@/lib/api-projects";
@@ -39,8 +38,6 @@ import {
 } from "@/components/ui/table";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { SetupDocBlock } from "@/components/molecules/TabAndContentSections/SetupDocBlock";
-import { ProjectDesignTab } from "@/components/molecules/TabAndContentSections/ProjectDesignTab";
 
 import {
   SETUP_FRONTEND_JSON_PATH,
@@ -590,16 +587,6 @@ export function ProjectFrontendTab({ project, projectId, docsRefreshKey }: Proje
             >
               <Plus className="h-3.5 w-3.5" /> Add route
             </Button>
-          </SectionCard>
-
-          {/* Design */}
-          <SectionCard accentColor="violet">
-            <div className="flex items-center gap-2 mb-3">
-              <Palette className="h-4 w-4 text-violet-500" />
-              <h3 className="text-sm font-semibold">Design</h3>
-            </div>
-            <SetupDocBlock project={project} projectId={projectId} setupKey="design" docsRefreshKey={docsRefreshKey} />
-            <ProjectDesignTab project={project} projectId={projectId} showHeader={false} />
           </SectionCard>
         </div>
       </ScrollArea>

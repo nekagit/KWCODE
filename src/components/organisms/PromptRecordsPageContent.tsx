@@ -12,6 +12,10 @@ import { useRunStore, registerRunCompleteHandler } from "@/store/run-store";
 import type { Project } from "@/types/project";
 import { PromptRecordActionButtons } from "@/components/molecules/ControlsAndButtons/PromptRecordActionButtons";
 import { PromptRecordTable } from "@/components/molecules/ListsAndTables/PromptRecordTable";
+import {
+  CursorPromptFilesTable,
+  type CursorPromptFileEntry,
+} from "@/components/molecules/ListsAndTables/CursorPromptFilesTable";
 import { PromptRecordFormDialog } from "@/components/molecules/FormsAndDialogs/PromptRecordFormDialog";
 import { GeneratePromptRecordDialog } from "@/components/molecules/FormsAndDialogs/GeneratePromptRecordDialog";
 import { PromptContentViewDialog } from "@/components/molecules/FormsAndDialogs/PromptContentViewDialog";
@@ -20,6 +24,7 @@ import { getOrganismClasses } from "./organism-classes";
 
 const c = getOrganismClasses("PromptRecordsPageContent.tsx");
 
+const CURSOR_PROMPTS_TAB = "cursor-prompts";
 const GENERAL_TAB = "general";
 
 type PromptRecordRecord = {
@@ -57,8 +62,10 @@ export function PromptRecordsPageContent() {
   const [fullPromptRecords, setFullPromptRecords] = useState<PromptRecordRecord[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [tableLoading, setTableLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<string>(GENERAL_TAB);
+  const [activeTab, setActiveTab] = useState<string>(CURSOR_PROMPTS_TAB);
   const [viewingPrompt, setViewingPrompt] = useState<PromptRecordRecord | null>(null);
+  const [cursorPromptFiles, setCursorPromptFiles] = useState<CursorPromptFileEntry[]>([]);
+  const [cursorPromptFilesLoading, setCursorPromptFilesLoading] = useState(true);
   const cancelledRef = useRef(false);
   const searchParams = useSearchParams();
 
@@ -91,14 +98,33 @@ export function PromptRecordsPageContent() {
     }
   }, []);
 
+  const fetchCursorPromptFiles = useCallback(async () => {
+    setCursorPromptFilesLoading(true);
+    try {
+      const res = await fetch("/api/data/cursor-prompt-files");
+      if (cancelledRef.current) return;
+      if (res.ok) {
+        const data: { files: CursorPromptFileEntry[] } = await res.json();
+        if (!cancelledRef.current) setCursorPromptFiles(Array.isArray(data.files) ? data.files : []);
+      } else {
+        if (!cancelledRef.current) setCursorPromptFiles([]);
+      }
+    } catch {
+      if (!cancelledRef.current) setCursorPromptFiles([]);
+    } finally {
+      if (!cancelledRef.current) setCursorPromptFilesLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     cancelledRef.current = false;
     fetchFullPromptRecords();
     fetchProjects();
+    fetchCursorPromptFiles();
     return () => {
       cancelledRef.current = true;
     };
-  }, [fetchFullPromptRecords, fetchProjects]);
+  }, [fetchFullPromptRecords, fetchProjects, fetchCursorPromptFiles]);
 
   // Pre-select project tab when opening from project page (e.g. /prompts?projectId=...)
   useEffect(() => {
@@ -314,6 +340,25 @@ export function PromptRecordsPageContent() {
 
   const canEdit = selectedPromptRecordIds.length === 1;
 
+  const handleViewCursorPromptFile = useCallback(async (entry: CursorPromptFileEntry) => {
+    if (entry.source !== ".cursor") return;
+    try {
+      const res = await fetch(
+        `/api/data/cursor-doc?path=${encodeURIComponent(entry.relativePath)}`
+      );
+      if (!res.ok) return;
+      const data: { content?: string | null } = await res.json();
+      setViewingPrompt({
+        id: 0,
+        title: entry.path,
+        content: data.content ?? "",
+      });
+    } catch {
+      setError("Failed to load file content");
+    }
+  }, [setError]);
+
+
   const handleDelete = useCallback(
     async (promptId: number) => {
       setError(null);
@@ -372,6 +417,7 @@ export function PromptRecordsPageContent() {
           ) : (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="flex w-full flex-wrap gap-1 bg-muted/50">
+                <TabsTrigger value={CURSOR_PROMPTS_TAB}>.cursor prompts</TabsTrigger>
                 <TabsTrigger value={GENERAL_TAB}>General</TabsTrigger>
                 {projectsWithPrompts.map((p) => (
                   <TabsTrigger key={p.id} value={p.id}>
@@ -379,6 +425,14 @@ export function PromptRecordsPageContent() {
                   </TabsTrigger>
                 ))}
               </TabsList>
+              <TabsContent value={CURSOR_PROMPTS_TAB} className="mt-4 focus-visible:outline-none">
+                <CursorPromptFilesTable
+                  files={cursorPromptFiles}
+                  loading={cursorPromptFilesLoading}
+                  onRefresh={fetchCursorPromptFiles}
+                  onView={handleViewCursorPromptFile}
+                />
+              </TabsContent>
               <TabsContent value={GENERAL_TAB} className="mt-4 focus-visible:outline-none">
                 <PromptRecordTable
                   fullPromptRecords={generalPrompts}

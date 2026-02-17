@@ -483,7 +483,9 @@ fn git_commit(project_path: String, message: String) -> Result<String, String> {
 }
 
 fn is_valid_workspace(p: &PathBuf) -> bool {
-    p.join("script").join("implement_all.sh").exists() && p.join("data").is_dir()
+    let has_implement_all = p.join("script").join("implement_all.sh").exists()
+        || p.join("script").join("worker").join("implement_all.sh").exists();
+    has_implement_all && p.join("data").is_dir()
 }
 
 fn data_dir(ws: &PathBuf) -> PathBuf {
@@ -504,11 +506,11 @@ fn analysis_script_path(ws: &PathBuf) -> PathBuf {
 }
 
 fn implement_all_script_path(ws: &PathBuf) -> PathBuf {
-    ws.join("script").join("implement_all.sh")
+    ws.join("script").join("worker").join("implement_all.sh")
 }
 
 fn run_terminal_agent_script_path(ws: &PathBuf) -> PathBuf {
-    ws.join("script").join("run_terminal_agent.sh")
+    ws.join("script").join("worker").join("run_terminal_agent.sh")
 }
 
 /// Resolve project root (contains script/ and data/). Tries current working directory first,
@@ -541,7 +543,7 @@ fn project_root() -> Result<PathBuf, String> {
         }
     }
 
-    Err("Project root not found. Run the app from the repo root (contains script/implement_all.sh and data/).".to_string())
+    Err("Project root not found. Run the app from the repo root (contains script/worker/implement_all.sh and data/).".to_string())
 }
 
 /// Read a file from disk and return its contents as base64 (for sending to API for PDF/text extraction).
