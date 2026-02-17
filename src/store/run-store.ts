@@ -39,6 +39,10 @@ export interface RunState {
   floatingTerminalMinimized: boolean;
   /** History of agent terminal outputs (completed runs). Newest first; capped at TERMINAL_HISTORY_MAX. */
   terminalOutputHistory: TerminalOutputHistoryEntry[];
+  /** Night shift: 3 agents run same prompt in a loop until stopped. */
+  nightShiftActive: boolean;
+  /** Called when a night-shift run exits to enqueue one more job (replenish). */
+  nightShiftReplenishCallback: ((slot: 1 | 2 | 3) => Promise<void>) | null;
 }
 
 export interface RunActions {
@@ -103,6 +107,8 @@ export interface RunActions {
   setActiveProjectsSync: (v: string[]) => void;
   setPromptRecords: (v: PromptRecordItem[]) => void;
   addPrompt: (title: string, content: string) => void;
+  setNightShiftActive: (active: boolean) => void;
+  setNightShiftReplenishCallback: (cb: ((slot: 1 | 2 | 3) => Promise<void>) | null) => void;
 }
 
 export type RunStore = RunState & RunActions;
@@ -214,6 +220,8 @@ const initialState: RunState = {
   floatingTerminalRunId: null,
   floatingTerminalMinimized: false,
   terminalOutputHistory: [],
+  nightShiftActive: false,
+  nightShiftReplenishCallback: null,
 };
 
 const TERMINAL_HISTORY_MAX = 100;
@@ -758,6 +766,9 @@ export const useRunStore = create<RunStore>()((set, get) => ({
       };
     });
   },
+
+  setNightShiftActive: (active) => set({ nightShiftActive: active }),
+  setNightShiftReplenishCallback: (cb) => set({ nightShiftReplenishCallback: cb }),
 }));
 
 /** Hook with same API as legacy useRunState from context. Use anywhere run state is needed. */
@@ -809,6 +820,9 @@ export function useRunState() {
       setFloatingTerminalMinimized: s.setFloatingTerminalMinimized,
       clearFloatingTerminal: s.clearFloatingTerminal,
       removeRunFromDock: s.removeRunFromDock,
+      nightShiftActive: s.nightShiftActive,
+      setNightShiftActive: s.setNightShiftActive,
+      setNightShiftReplenishCallback: s.setNightShiftReplenishCallback,
     }))
   );
 }

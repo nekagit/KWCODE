@@ -41,6 +41,8 @@ export interface RunMeta {
   ideaId?: number;
   /** Git ref (e.g. HEAD) at run start for diff when run exits. */
   gitRefAtStart?: string;
+  /** Night shift run: replenish with same prompt when this run exits (if night shift still active). */
+  isNightShift?: boolean;
 }
 
 export interface Run {

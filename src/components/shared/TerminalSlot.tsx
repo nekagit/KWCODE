@@ -52,12 +52,13 @@ export function TerminalSlot({
 
     useEffect(() => {
         if (!run || run.startedAt == null) return;
+        const startedAt = run.startedAt;
         if (run.status === "done" && run.doneAt != null) {
-            setElapsedSeconds((run.doneAt - run.startedAt) / 1000);
+            setElapsedSeconds((run.doneAt - startedAt) / 1000);
             return;
         }
         const tick = () =>
-            setElapsedSeconds(Math.floor((Date.now() - run.startedAt) / 1000));
+            setElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000));
         tick();
         const id = setInterval(tick, 1000);
         return () => clearInterval(id);

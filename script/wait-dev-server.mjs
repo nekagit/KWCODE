@@ -150,23 +150,6 @@ async function warmProjectsPageChunk() {
   }
 }
 
-/** Warm app/projects/page chunk so it is compiled before Tauri opens (avoids "Loading chunk app/projects/page failed" missing). */
-async function warmProjectsPageChunk() {
-  try {
-    const projectsUrl = new URL("/projects", baseUrl).href;
-    console.log("Warming app/projects/page chunk: ", projectsUrl);
-    const res = await fetch(projectsUrl, { method: "GET", signal: AbortSignal.timeout(fetchTimeoutMs) });
-    if (!res.ok) {
-      console.log("Warm projects page response: ", res.status);
-      return;
-    }
-    await res.text();
-    console.log("App/projects/page chunk warmed.");
-  } catch (e) {
-    console.log("Warm projects page skipped: ", e.message);
-  }
-}
-
 // If something is already serving on the port (e.g. previous npm run dev), reuse it
 const alreadyUp = await check(devUrl);
 if (!alreadyUp) {

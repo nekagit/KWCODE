@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from "react";
 import type { Project } from "@/types/project";
-import { readProjectFileOrEmpty } from "@/lib/api-projects";
+import { readProjectFileOrEmpty, listProjectFiles } from "@/lib/api-projects";
 import { invoke, isTauri } from "@/lib/tauri";
 import {
   buildKanbanFromTickets,
@@ -10,7 +10,7 @@ import {
   type TodosKanbanData,
   type ParsedTicket,
 } from "@/lib/todos-kanban";
-import { WORKER_IMPLEMENT_ALL_PROMPT_PATH, WORKER_FIX_BUG_PROMPT_PATH, AGENTS_ROOT } from "@/lib/cursor-paths";
+import { WORKER_IMPLEMENT_ALL_PROMPT_PATH, WORKER_FIX_BUG_PROMPT_PATH, WORKER_NIGHT_SHIFT_PROMPT_PATH, AGENTS_ROOT } from "@/lib/cursor-paths";
 import {
   buildKanbanContextBlock,
   combinePromptRecordWithKanban,
@@ -41,6 +41,7 @@ import {
   History,
   Trash2,
   ChevronDown,
+  Moon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isImplementAllRun, parseTicketNumberFromRunLabel } from "@/lib/run-helpers";
@@ -62,6 +63,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+
+/** Load concatenated content of all .md files in .cursor/2. agents for appending to terminal-agent prompts. */
+async function loadAllAgentsContent(projectId: string, repoPath: string): Promise<string> {
+  if (!repoPath?.trim()) return "";
+  try {
+    const entries = await listProjectFiles(projectId, AGENTS_ROOT, repoPath);
+    const mdFiles = entries.filter((e) => !e.isDirectory && e.name.endsWith(".md"));
+    const parts: string[] = [];
+    for (const f of mdFiles) {
+      const content = await readProjectFileOrEmpty(projectId, `${AGENTS_ROOT}/${f.name}`, repoPath);
+      if (content?.trim()) parts.push(content.trim());
+    }
+    if (parts.length === 0) return "";
+    return "\n\n---\n\n## Agent instructions (from .cursor/2. agents)\n\n" + parts.join("\n\n---\n\n");
+  } catch {
+    return "";
+  }
+}
 
 /** Fallback when project has no .cursor/8. worker/fix-bug.md */
 const DEBUG_ASSISTANT_PROMPT_FALLBACK = `You are a debugging assistant in the current workspace. The user has pasted error/log output below. Identify the root cause, apply the fix in this workspace (edit files, run commands), and state what you fixed. Work only in this repo; be specific. If logs refer to another path, say so.
@@ -154,6 +173,108 @@ function WorkerGeneralQueueSection({
           </p>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Night shift — 3 agents run same prompt in a loop until stopped
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function WorkerNightShiftSection({
+  projectId,
+  projectPath,
+}: {
+  projectId: string;
+  projectPath: string;
+}) {
+  const runTempTicket = useRunStore((s) => s.runTempTicket);
+  const nightShiftActive = useRunStore((s) => s.nightShiftActive);
+  const setNightShiftActive = useRunStore((s) => s.setNightShiftActive);
+  const setNightShiftReplenishCallback = useRunStore((s) => s.setNightShiftReplenishCallback);
+  const [starting, setStarting] = useState(false);
+
+  const handleStart = useCallback(async () => {
+    if (!projectPath?.trim()) return;
+    setStarting(true);
+    try {
+      const basePrompt =
+        (await readProjectFileOrEmpty(projectId, WORKER_NIGHT_SHIFT_PROMPT_PATH, projectPath))?.trim() ?? "";
+      if (!basePrompt) {
+        toast.error("Night shift prompt is empty. Add content to .cursor/8. worker/night-shift.md");
+        return;
+      }
+      const agentsBlock = await loadAllAgentsContent(projectId, projectPath);
+      const promptContent = (basePrompt + agentsBlock).trim();
+      setNightShiftActive(true);
+      setNightShiftReplenishCallback(async (slot: 1 | 2 | 3) => {
+        const base =
+          (await readProjectFileOrEmpty(projectId, WORKER_NIGHT_SHIFT_PROMPT_PATH, projectPath))?.trim() ?? "";
+        if (base) {
+          const agents = await loadAllAgentsContent(projectId, projectPath);
+          runTempTicket(projectPath, (base + agents).trim(), `Night shift (Terminal ${slot})`, {
+            isNightShift: true,
+          });
+        }
+      });
+      for (const slot of [1, 2, 3] as const) {
+        runTempTicket(projectPath, promptContent, `Night shift (Terminal ${slot})`, { isNightShift: true });
+      }
+      toast.success("Night shift started. 3 agents will run until you stop.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to start night shift");
+    } finally {
+      setStarting(false);
+    }
+  }, [projectId, projectPath, runTempTicket, setNightShiftActive, setNightShiftReplenishCallback]);
+
+  const handleStop = useCallback(() => {
+    setNightShiftActive(false);
+    setNightShiftReplenishCallback(null);
+    toast.success("Night shift stopped. Current runs will finish; no new runs will start.");
+  }, [setNightShiftActive, setNightShiftReplenishCallback]);
+
+  return (
+    <div className="rounded-2xl surface-card border border-border/50 overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+        <div className="flex items-center gap-2.5">
+          <div className="flex items-center justify-center size-7 rounded-lg bg-indigo-500/10">
+            <Moon className="size-3.5 text-indigo-400" />
+          </div>
+          <div>
+            <h3 className="text-xs font-semibold text-foreground tracking-tight">Night shift</h3>
+            <p className="text-[10px] text-muted-foreground normal-case">
+              Prompt from .cursor/8. worker/night-shift.md runs on 3 agents; when one finishes, the same prompt runs again until you stop. Edit that file to change the prompt.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {nightShiftActive ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1.5 border-amber-500/50 text-amber-600 hover:bg-amber-500/10"
+              onClick={handleStop}
+              title="Stop night shift (no new runs)"
+            >
+              <Square className="size-3.5" />
+              Stop
+            </Button>
+          ) : (
+            <Button
+              variant="default"
+              size="sm"
+              className="h-8 text-xs gap-1.5 bg-indigo-600 hover:bg-indigo-700"
+              disabled={!projectPath?.trim() || starting}
+              onClick={handleStart}
+              title="Start 3 agents with same prompt in a loop"
+            >
+              {starting ? <Loader2 className="size-3.5 animate-spin" /> : <Play className="size-3.5" />}
+              Start
+            </Button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -446,11 +567,18 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
       {/* ═══ Status Bar ═══ */}
       <WorkerStatusBar />
 
+      {/* ═══ Night shift — 3 agents, same prompt, loop until stop ═══ */}
+      <WorkerNightShiftSection projectId={projectId} projectPath={project.repoPath?.trim() ?? ""} />
+
       {/* ═══ Asking — questions only, no file create/modify/delete; same terminal agent ═══ */}
       <WorkerAskingSection projectPath={project.repoPath?.trim() ?? ""} />
 
       {/* ═══ Fast development — type command, run agent immediately ═══ */}
-      <WorkerFastDevelopmentSection projectPath={project.repoPath?.trim() ?? ""} />
+      <WorkerFastDevelopmentSection
+        projectId={projectId}
+        projectPath={project.repoPath?.trim() ?? ""}
+        onTicketCreated={loadTicketsAndKanban}
+      />
 
       {/* ═══ Debugging — paste error logs, run terminal agent to fix ═══ */}
       <WorkerDebuggingSection
@@ -722,7 +850,7 @@ const FAST_DEV_PROMPT_PREFIX = "Do the following in this project. Be concise and
 /** Prefix for asking section: agent must never create, modify, or delete files; only answer. */
 const ASK_ONLY_PROMPT_PREFIX = "You are in ask-only mode. Do NOT create, modify, or delete any files. Only answer the following question using the project context. You may use the terminal to run read-only commands (e.g. list, grep, cat) if needed.\n\n";
 
-function WorkerAskingSection({ projectPath }: { projectPath: string }) {
+function WorkerAskingSection({ projectId, projectPath }: { projectId: string; projectPath: string }) {
   const runTempTicket = useRunStore((s) => s.runTempTicket);
   const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(false);
@@ -739,7 +867,8 @@ function WorkerAskingSection({ projectPath }: { projectPath: string }) {
     }
     setLoading(true);
     try {
-      const fullPrompt = ASK_ONLY_PROMPT_PREFIX + text;
+      const agentsBlock = await loadAllAgentsContent(projectId, projectPath);
+      const fullPrompt = ASK_ONLY_PROMPT_PREFIX + text + agentsBlock;
       const labelSuffix = text.length > 40 ? `${text.slice(0, 37)}…` : text;
       const label = `Ask: ${labelSuffix}`;
       const runId = await runTempTicket(projectPath.trim(), fullPrompt, label);
@@ -828,7 +957,8 @@ function WorkerFastDevelopmentSection({
     }
     setLoading(true);
     try {
-      const fullPrompt = FAST_DEV_PROMPT_PREFIX + text;
+      const agentsBlock = await loadAllAgentsContent(projectId, projectPath.trim());
+      const fullPrompt = FAST_DEV_PROMPT_PREFIX + text + agentsBlock;
       const title = text.length > 120 ? `${text.slice(0, 117)}…` : text;
 
       let milestoneId: number;

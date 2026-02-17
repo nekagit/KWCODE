@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { listen, invoke, isTauri } from "@/lib/tauri";
 import { writeProjectFile } from "@/lib/api-projects";
 import { stripTerminalArtifacts, MIN_DOCUMENT_LENGTH } from "@/lib/strip-terminal-artifacts";
+import { toast } from "sonner";
 import { useRunStore, takeRunCompleteHandler } from "./run-store";
 
 /** Match first localhost/127.0.0.1 URL in a line (e.g. from Next.js, Vite dev server output). */
@@ -88,6 +89,24 @@ export function RunStoreHydration() {
         )
       );
       store.runNextInQueue(run_id);
+
+      // Night shift: replenish when a night-shift run exits (or run not found but night shift active — e.g. event before runId was set)
+      const state = useRunStore.getState();
+      if (state.nightShiftActive && state.nightShiftReplenishCallback) {
+        const isNightShiftExit = run?.meta?.isNightShift === true;
+        const runNotFoundAssumeNightShift = run === undefined;
+        if (isNightShiftExit || runNotFoundAssumeNightShift) {
+          const slot = (run?.meta?.isNightShift ? run.slot : null) ?? 1;
+          (async () => {
+            try {
+              await state.nightShiftReplenishCallback!(slot);
+            } catch (err) {
+              console.error("[night-shift] replenish failed:", err);
+              toast.error("Night shift replenish failed. Check console.");
+            }
+          })();
+        }
+      }
 
       // Append to terminal output history (all completed runs)
       if (run) {
