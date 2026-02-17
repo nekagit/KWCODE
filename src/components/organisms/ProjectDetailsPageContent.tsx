@@ -97,7 +97,7 @@ export function ProjectDetailsPageContent() {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("todo");
+  const [activeTab, setActiveTab] = useState("worker");
   const [initializing, setInitializing] = useState(false);
   const [analyzingAll, setAnalyzingAll] = useState(false);
   const [analyzingStep, setAnalyzingStep] = useState(0);
@@ -786,27 +786,33 @@ export function ProjectDetailsPageContent() {
 
       {/* View Running Project modal: iframe + open in new tab */}
       <Dialog open={viewRunningOpen} onOpenChange={setViewRunningOpen}>
-        <DialogContent className="max-w-[95vw] w-full h-[90vh] flex flex-col gap-3 p-0">
-          <DialogHeader className="px-4 pt-4 pb-0">
+        <DialogContent className="max-w-[95vw] w-full h-[90vh] flex flex-col gap-3 p-0 overflow-hidden">
+          <DialogHeader className="px-4 pt-4 pb-0 shrink-0">
             <DialogTitle className="text-sm font-medium">Running project</DialogTitle>
           </DialogHeader>
-          <div className="flex-1 min-h-0 flex flex-col gap-2 px-4 pb-4">
+          <div className="flex-1 min-h-0 flex flex-col gap-2 px-4 pb-4 overflow-hidden">
             {project?.runPort != null && (
               <>
                 <a
                   href={`http://localhost:${project.runPort}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                  className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline shrink-0"
                 >
                   <ExternalLink className="size-3" />
                   Open in new tab
                 </a>
-                <iframe
-                  title="Running project"
-                  src={`http://localhost:${project.runPort}`}
-                  className="w-full flex-1 min-h-[400px] rounded-md border border-border bg-muted/30"
-                />
+                <p className="text-xs text-muted-foreground shrink-0">
+                  If the app does not load below (e.g. when this page is on HTTPS), use &quot;Open in new tab&quot; above.
+                </p>
+                <div className="flex-1 min-h-0 rounded-md border border-border bg-muted/30 overflow-hidden">
+                  <iframe
+                    title="Running project"
+                    src={`http://localhost:${project.runPort}`}
+                    className="w-full h-full min-h-[400px] block rounded-md border-0"
+                    style={{ height: "100%" }}
+                  />
+                </div>
               </>
             )}
           </div>

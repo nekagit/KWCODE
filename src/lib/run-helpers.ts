@@ -3,13 +3,14 @@
  * Previously duplicated across ProjectTicketsTab.tsx and ProjectRunTab.tsx.
  */
 
-/** Check whether a run is an Implement All, Ticket, Analyze doc, or Debug run (shown in terminal slots). */
+/** Check whether a run is an Implement All, Ticket, Analyze doc, Debug, or Fast dev run (shown in terminal slots). */
 export const isImplementAllRun = (r: { label: string }) =>
     r.label === "Implement All" ||
     r.label.startsWith("Implement All (") ||
     r.label.startsWith("Ticket #") ||
     r.label.startsWith("Analyze:") ||
-    r.label.startsWith("Debug:");
+    r.label.startsWith("Debug:") ||
+    r.label.startsWith("Fast dev:");
 
 /** Parse ticket number from run label e.g. "Ticket #3: My title" → 3. Returns null if not a ticket run. */
 export function parseTicketNumberFromRunLabel(label: string | undefined): number | null {

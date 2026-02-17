@@ -46,7 +46,7 @@ export function ProjectControlTab({ projectId, refreshKey = 0 }: ProjectControlT
     try {
       let list: LogEntry[];
       if (isTauri) {
-        const raw = await invoke<{ id: number; project_id: string; run_id: string; ticket_number: number; ticket_title: string; milestone_id: number | null; idea_id: number | null; completed_at: string; files_changed: string; summary: string; created_at: string; status: string }[]>("get_implementation_log_entries", { project_id: projectId });
+        const raw = await invoke<{ id: number; project_id: string; run_id: string; ticket_number: number; ticket_title: string; milestone_id: number | null; idea_id: number | null; completed_at: string; files_changed: string; summary: string; created_at: string; status: string }[]>("get_implementation_log_entries", { projectId });
         list = raw.map((r) => ({
           id: r.id,
           project_id: r.project_id,
@@ -99,8 +99,8 @@ export function ProjectControlTab({ projectId, refreshKey = 0 }: ProjectControlT
       try {
         if (isTauri) {
           await invoke("update_implementation_log_entry_status", {
-            project_id: projectId,
-            entry_id: entryId,
+            projectId,
+            entryId,
             status,
           });
         } else {

@@ -37,6 +37,7 @@ import {
   Layers,
   Bug,
   ListTodo,
+  Send,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isImplementAllRun, parseTicketNumberFromRunLabel } from "@/lib/run-helpers";
@@ -435,6 +436,9 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
         onRunInProgress={handleRunInProgressTickets}
       />
 
+      {/* ═══ Fast development — type command, run agent immediately ═══ */}
+      <WorkerFastDevelopmentSection projectPath={project.repoPath?.trim() ?? ""} />
+
       {/* ═══ Debugging — paste error logs, run terminal agent to fix ═══ */}
       <WorkerDebuggingSection
         projectId={projectId}
@@ -672,6 +676,93 @@ function WorkerCommandCenter({
           >
             <Archive className="size-3" />
             Archive
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Fast development — type command, run agent immediately
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+const FAST_DEV_PROMPT_PREFIX = "Do the following in this project. Be concise and execute.\n\n";
+
+function WorkerFastDevelopmentSection({ projectPath }: { projectPath: string }) {
+  const runTempTicket = useRunStore((s) => s.runTempTicket);
+  const [command, setCommand] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleRunAgent = async () => {
+    const text = command.trim();
+    if (!text) {
+      toast.error("Enter a command or task above, then run the agent.");
+      return;
+    }
+    if (!projectPath?.trim()) {
+      toast.error("Project path is missing. Set the project repo path in project details.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const fullPrompt = FAST_DEV_PROMPT_PREFIX + text;
+      const labelSuffix = text.length > 40 ? `${text.slice(0, 37)}…` : text;
+      const label = `Fast dev: ${labelSuffix}`;
+      const runId = await runTempTicket(projectPath.trim(), fullPrompt, label);
+      if (runId) {
+        toast.success("Agent started. Check the terminal below.");
+        setCommand("");
+      } else {
+        toast.error("Failed to start agent.");
+      }
+    } catch {
+      toast.error("Failed to start agent.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm overflow-hidden">
+      <div className="flex items-center gap-2.5 px-5 pt-5 pb-4">
+        <div className="flex items-center justify-center size-7 rounded-lg bg-violet-500/10">
+          <Zap className="size-3.5 text-violet-400" />
+        </div>
+        <div>
+          <h3 className="text-xs font-semibold text-foreground tracking-tight">
+            Fast development
+          </h3>
+          <p className="text-[10px] text-muted-foreground normal-case">
+            Enter a command or task; the agent runs immediately in this project
+          </p>
+        </div>
+      </div>
+      <div className="px-5 pb-5 space-y-3">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="e.g. Add a dark mode toggle to the header"
+            value={command}
+            onChange={(e) => setCommand(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleRunAgent()}
+            className="flex-1 min-w-0 rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-xs font-mono placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            disabled={loading}
+          />
+          <Button
+            variant="default"
+            size="sm"
+            onClick={handleRunAgent}
+            disabled={loading || !command.trim()}
+            className="gap-1.5 bg-violet-500 hover:bg-violet-600 text-violet-950 shadow-sm text-xs h-8 rounded-lg shrink-0"
+            title="Run the terminal agent with this command (slot 1)"
+          >
+            {loading ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Send className="size-3.5" />
+            )}
+            Run agent
           </Button>
         </div>
       </div>
