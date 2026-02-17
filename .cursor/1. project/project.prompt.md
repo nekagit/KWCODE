@@ -1,6 +1,6 @@
 # PROMPT: GENERATE PROJECT-INFO.MD
 
-Use this prompt to generate or update `.cursor/project/PROJECT-INFO.md` from current project data.
+Use this prompt to generate or update `.cursor/1. project/PROJECT-INFO.md` from current project data.
 
 ---
 

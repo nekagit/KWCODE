@@ -37,8 +37,9 @@ export async function getApiErrorMessage(res: Response): Promise<string> {
   return res.status === 500 ? FRIENDLY_500 : res.statusText || "Request failed";
 }
 
-/** Pseudo-random 0..1 from index (different primes to avoid column/row patterns). */
+/** Pseudo-random 0..1 from index (different primes to avoid column/row patterns). Returns 0 when mod is 0 to avoid division by zero. */
 export function scatter(i: number, prime: number, mod: number) {
+  if (mod === 0) return 0;
   return ((i * prime) % mod) / mod;
 }
 
@@ -49,6 +50,7 @@ export function normalizePath(p: string) {
 export function formatDate(iso: string): string {
   try {
     const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
     return d.toLocaleDateString(undefined, { dateStyle: "short" }) + " " + d.toLocaleTimeString(undefined, { timeStyle: "short" });
   } catch {
     return iso;

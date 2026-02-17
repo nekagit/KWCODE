@@ -477,6 +477,7 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
           gitRefAtStart?: string;
         };
       }> = [];
+      const allAgentsBlock = await loadAllAgentsContent(projectId, repoPath ?? "");
       const ticketsToRun = tickets.slice(0, 3);
       for (let i = 0; i < ticketsToRun.length; i++) {
         const ticket = ticketsToRun[i];
@@ -495,13 +496,14 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
           if (parts.length) agentMd = parts.join("\n\n---\n\n");
         }
         const ticketBlock = buildTicketPromptBlock(ticket, agentMd);
-        const promptContent = (implementAllMd
+        const baseContent = (implementAllMd
           ? `${implementAllMd}\n\n---\n\n${ticketBlock}`
           : ticketBlock
         ).trim();
+        const promptContent = (baseContent + allAgentsBlock).trim() || ticketBlock.trim();
         slots.push({
           slot,
-          promptContent: promptContent || ticketBlock.trim(),
+          promptContent,
           label: `Ticket #${ticket.number}: ${ticket.title}`,
           meta: {
             projectId,
@@ -571,7 +573,7 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
       <WorkerNightShiftSection projectId={projectId} projectPath={project.repoPath?.trim() ?? ""} />
 
       {/* ═══ Asking — questions only, no file create/modify/delete; same terminal agent ═══ */}
-      <WorkerAskingSection projectPath={project.repoPath?.trim() ?? ""} />
+      <WorkerAskingSection projectId={projectId} projectPath={project.repoPath?.trim() ?? ""} />
 
       {/* ═══ Fast development — type command, run agent immediately ═══ */}
       <WorkerFastDevelopmentSection
@@ -1117,7 +1119,9 @@ function WorkerDebuggingSection({
           ? (await readProjectFileOrEmpty(projectId, WORKER_FIX_BUG_PROMPT_PATH, repoPath))?.trim()
           : "";
       const basePrompt = fixBugMd || DEBUG_ASSISTANT_PROMPT_FALLBACK;
-      const fullPrompt = basePrompt.endsWith("\n") ? basePrompt + logs : basePrompt + "\n\n" + logs;
+      const promptWithLogs = basePrompt.endsWith("\n") ? basePrompt + logs : basePrompt + "\n\n" + logs;
+      const agentsBlock = await loadAllAgentsContent(projectId, repoPath);
+      const fullPrompt = (promptWithLogs + agentsBlock).trim();
       const runId = await runTempTicket(projectPath.trim(), fullPrompt, "Debug: fix errors");
       if (runId) {
         toast.success(runId === "queued" ? "Added to queue. Agent will start when a slot is free." : "Debug agent started. Check the terminal below.");
@@ -1221,7 +1225,8 @@ function WorkerTerminalsSection({
           : "";
         const kanbanContext = kanbanData ? buildKanbanContextBlock(kanbanData) : "";
         const combinedPrompt = combinePromptRecordWithKanban(kanbanContext, implementAllMd);
-        const promptContent = combinedPrompt.trim() || undefined;
+        const agentsBlock = await loadAllAgentsContent(projectId, repoPath);
+        const promptContent = (combinedPrompt.trim() + agentsBlock).trim() || undefined;
         await runImplementAll(projectPath, promptContent);
         toast.success(
           promptContent
