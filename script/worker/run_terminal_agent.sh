@@ -43,8 +43,23 @@ echo ""
 PROMPT_CONTENT=$(cat "$PROMPT_FILE")
 rm -f "$PROMPT_FILE"
 ESCAPED=$(printf '%s' "$PROMPT_CONTENT" | sed 's/\\/\\\\/g; s/"/\\"/g')
-echo "Running: agent -F -p \"<from file>\" (print mode, -F = trust workspace)"
-agent -p "$ESCAPED"
+
+# Cursor CLI: binary may be 'agent' or 'cursor-agent' (e.g. in ~/.local/bin)
+AGENT_CMD=""
+for cmd in agent cursor-agent; do
+    if command -v "$cmd" >/dev/null 2>&1; then
+        AGENT_CMD="$cmd"
+        break
+    fi
+done
+if [ -z "$AGENT_CMD" ]; then
+    echo "[stderr] Cursor CLI not found (looked for 'agent' and 'cursor-agent'). Install: curl https://cursor.com/install -fsS | bash"
+    echo "[stderr] This app adds ~/.local/bin and /usr/local/bin to PATH; ensure the CLI is in one of those or on your PATH."
+    exit 127
+fi
+
+echo "Running: $AGENT_CMD -F -p \"<from file>\" (print mode, -F = trust workspace)"
+"$AGENT_CMD" -p "$ESCAPED"
 AGENT_EXIT=$?
 echo ""
 echo "Done. Agent exited with code $AGENT_EXIT."

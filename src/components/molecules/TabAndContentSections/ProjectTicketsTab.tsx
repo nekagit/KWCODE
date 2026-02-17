@@ -130,7 +130,11 @@ export function ImplementAllTerminalsGrid() {
   const runsForSlots: ((typeof implementAllRuns)[0] | null)[] = [null, null, null];
   for (const run of implementAllRuns) {
     const s = run.slot;
-    if (s === 1 || s === 2 || s === 3) runsForSlots[s - 1] = run;
+    if (s !== 1 && s !== 2 && s !== 3) continue;
+    const existing = runsForSlots[s - 1];
+    const preferThis =
+      !existing || (run.status === "running" && existing.status !== "running");
+    if (preferThis) runsForSlots[s - 1] = run;
   }
   return (
     <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3 min-w-0">

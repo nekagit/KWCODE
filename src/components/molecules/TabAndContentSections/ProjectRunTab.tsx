@@ -37,6 +37,7 @@ import {
   Bug,
   ListTodo,
   Send,
+  MessageCircleQuestion,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isImplementAllRun, parseTicketNumberFromRunLabel } from "@/lib/run-helpers";
@@ -83,7 +84,7 @@ function WorkerGeneralQueueSection({
   };
 
   return (
-    <div className="rounded-2xl border border-border/40 bg-card/50 backdrop-blur-sm overflow-hidden">
+    <div className="rounded-2xl surface-card border border-border/50 overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
         <div className="flex items-center gap-2.5">
           <div className="flex items-center justify-center size-7 rounded-lg bg-rose-500/10">
@@ -215,7 +216,9 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
       const errMsg = e instanceof Error ? e.message : String(e);
       setKanbanError(errMsg);
       // #region agent log
-      invoke("frontend_debug_log", { location: "ProjectRunTab.tsx:loadTicketsAndKanban:catch", message: "Worker: loadTicketsAndKanban failed", data: { error: errMsg, projectId } }).catch(() => {});
+      if (isTauri) {
+        invoke("frontend_debug_log", { location: "ProjectRunTab.tsx:loadTicketsAndKanban:catch", message: "Worker: loadTicketsAndKanban failed", data: { error: errMsg, projectId } }).catch(() => {});
+      }
       fetch("http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ location: "ProjectRunTab.tsx:loadTicketsAndKanban:catch", message: "Worker loadTicketsAndKanban failed", data: { error: errMsg }, timestamp: Date.now(), hypothesisId: "WorkerTab" }) }).catch(() => {});
       // #endregion
     } finally {
@@ -426,6 +429,9 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
       {/* ═══ Status Bar ═══ */}
       <WorkerStatusBar />
 
+      {/* ═══ Asking — questions only, no file create/modify/delete; same terminal agent ═══ */}
+      <WorkerAskingSection projectPath={project.repoPath?.trim() ?? ""} />
+
       {/* ═══ Fast development — type command, run agent immediately ═══ */}
       <WorkerFastDevelopmentSection projectPath={project.repoPath?.trim() ?? ""} />
 
@@ -563,6 +569,90 @@ function WorkerStatusBar() {
 
 const FAST_DEV_PROMPT_PREFIX = "Do the following in this project. Be concise and execute.\n\n";
 
+/** Prefix for asking section: agent must never create, modify, or delete files; only answer. */
+const ASK_ONLY_PROMPT_PREFIX = "You are in ask-only mode. Do NOT create, modify, or delete any files. Only answer the following question using the project context. You may use the terminal to run read-only commands (e.g. list, grep, cat) if needed.\n\n";
+
+function WorkerAskingSection({ projectPath }: { projectPath: string }) {
+  const runTempTicket = useRunStore((s) => s.runTempTicket);
+  const [question, setQuestion] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleAsk = async () => {
+    const text = question.trim();
+    if (!text) {
+      toast.error("Enter a question above, then run the agent.");
+      return;
+    }
+    if (!projectPath?.trim()) {
+      toast.error("Project path is missing. Set the project repo path in project details.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const fullPrompt = ASK_ONLY_PROMPT_PREFIX + text;
+      const labelSuffix = text.length > 40 ? `${text.slice(0, 37)}…` : text;
+      const label = `Ask: ${labelSuffix}`;
+      const runId = await runTempTicket(projectPath.trim(), fullPrompt, label);
+      if (runId) {
+        toast.success(runId === "queued" ? "Added to queue. Agent will start when a slot is free." : "Agent started. Check the terminal below.");
+        setQuestion("");
+      } else {
+        toast.error("Failed to start agent.");
+      }
+    } catch {
+      toast.error("Failed to start agent.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl surface-card border border-border/50 overflow-hidden">
+      <div className="flex items-center gap-2.5 px-5 pt-5 pb-4">
+        <div className="flex items-center justify-center size-7 rounded-lg bg-sky-500/10">
+          <MessageCircleQuestion className="size-3.5 text-sky-400" />
+        </div>
+        <div>
+          <h3 className="text-xs font-semibold text-foreground tracking-tight">
+            Asking
+          </h3>
+          <p className="text-[10px] text-muted-foreground normal-case">
+            Ask questions about the project; the agent answers only (no file changes), using the terminal below
+          </p>
+        </div>
+      </div>
+      <div className="px-5 pb-5 space-y-3">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="e.g. Where is the login form defined?"
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleAsk()}
+            className="flex-1 min-w-0 rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-xs font-mono placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            disabled={loading}
+          />
+          <Button
+            variant="default"
+            size="sm"
+            onClick={handleAsk}
+            disabled={loading || !question.trim()}
+            className="gap-1.5 bg-sky-500 hover:bg-sky-600 text-sky-950 shadow-sm text-xs h-8 rounded-lg shrink-0"
+            title="Run the terminal agent in ask-only mode (same script as fast dev, no file edits)"
+          >
+            {loading ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Send className="size-3.5" />
+            )}
+            Ask
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function WorkerFastDevelopmentSection({ projectPath }: { projectPath: string }) {
   const runTempTicket = useRunStore((s) => s.runTempTicket);
   const [command, setCommand] = useState("");
@@ -598,7 +688,7 @@ function WorkerFastDevelopmentSection({ projectPath }: { projectPath: string }) 
   };
 
   return (
-    <div className="rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm overflow-hidden">
+    <div className="rounded-2xl surface-card border border-border/50 overflow-hidden">
       <div className="flex items-center gap-2.5 px-5 pt-5 pb-4">
         <div className="flex items-center justify-center size-7 rounded-lg bg-violet-500/10">
           <Zap className="size-3.5 text-violet-400" />
@@ -693,7 +783,7 @@ function WorkerDebuggingSection({
   };
 
   return (
-    <div className="rounded-2xl border border-border/40 bg-card/60 backdrop-blur-sm overflow-hidden">
+    <div className="rounded-2xl surface-card border border-border/50 overflow-hidden">
       <div className="flex items-center gap-2.5 px-5 pt-5 pb-4">
         <div className="flex items-center justify-center size-7 rounded-lg bg-amber-500/10">
           <Bug className="size-3.5 text-amber-400" />
@@ -809,13 +899,17 @@ function WorkerTerminalsSection({
   const runsForSlots: ((typeof implementAllRuns)[0] | null)[] = [null, null, null];
   for (const run of implementAllRuns) {
     const s = run.slot;
-    if (s === 1 || s === 2 || s === 3) runsForSlots[s - 1] = run;
+    if (s !== 1 && s !== 2 && s !== 3) continue;
+    const existing = runsForSlots[s - 1];
+    const preferThis =
+      !existing || (run.status === "running" && existing.status !== "running");
+    if (preferThis) runsForSlots[s - 1] = run;
   }
 
   const inProgressTickets = kanbanData?.columns?.in_progress?.items ?? [];
 
   return (
-    <div className="rounded-2xl border border-border/40 bg-card/50 backdrop-blur-sm overflow-hidden">
+    <div className="rounded-2xl surface-card border border-border/50 overflow-hidden">
       {/* Section Header */}
       <div className="flex items-center gap-2.5 px-5 pt-5 pb-4">
         <div className="flex items-center justify-center size-7 rounded-lg bg-teal-500/10">
@@ -961,7 +1055,7 @@ function WorkerTicketQueue({
   }
 
   return (
-    <div className="rounded-2xl border border-border/40 bg-gradient-to-r from-blue-500/[0.04] to-violet-500/[0.04] backdrop-blur-sm overflow-hidden flex flex-col">
+    <div className="rounded-2xl surface-card border border-border/50 overflow-hidden flex flex-col bg-gradient-to-r from-blue-500/[0.04] to-violet-500/[0.04]">
       {/* Header */}
       <div className="flex items-center gap-2.5 px-5 pt-4 pb-1">
         <div className="flex items-center justify-center size-7 rounded-lg bg-blue-500/10">

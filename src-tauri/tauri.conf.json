@@ -3,7 +3,7 @@
   "productName": "KWCode",
   "identifier": "com.kwcode.app",
   "build": {
-    "beforeDevCommand": "npm run dev:tauri",
+    "beforeDevCommand": "npm run dev:tauri:wait",
     "devUrl": "http://127.0.0.1:4000/",
     "beforeBuildCommand": "node script/build-for-tauri.mjs",
     "frontendDist": "../out"
@@ -30,6 +30,11 @@
       "capabilities": [
         "default"
       ]
+    }
+  },
+  "bundle": {
+    "resources": {
+      "../script/worker/run_terminal_agent.sh": "run_terminal_agent.sh"
     }
   },
   "plugins": {}

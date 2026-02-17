@@ -147,6 +147,22 @@ function processTempTicketQueue(
   if (slot === null) return;
   const job = state.pendingTempTicketQueue[0];
   set((s) => ({ pendingTempTicketQueue: s.pendingTempTicketQueue.slice(1) }));
+
+  const tempId = `pending-${Date.now()}-${slot}-${Math.random().toString(36).slice(2, 9)}`;
+  const placeholder: RunInfo = {
+    runId: tempId,
+    label: job.label,
+    logLines: [],
+    status: "running",
+    startedAt: Date.now(),
+    slot,
+    meta: job.meta ?? undefined,
+  };
+  set((s) => ({
+    runningRuns: [...s.runningRuns, placeholder],
+    selectedRunId: tempId,
+  }));
+
   (async () => {
     try {
       const { run_id } = await invoke<{ run_id: string }>("run_run_terminal_agent", {
@@ -155,25 +171,21 @@ function processTempTicketQueue(
         label: job.label,
       });
       set((s) => ({
-        runningRuns: [
-          ...s.runningRuns,
-          {
-            runId: run_id,
-            label: job.label,
-            logLines: [],
-            status: "running" as const,
-            startedAt: Date.now(),
-            slot,
-            meta: job.meta ?? undefined,
-          },
-        ],
+        runningRuns: s.runningRuns.map((r) =>
+          r.runId === tempId ? { ...r, runId: run_id } : r
+        ),
         selectedRunId: run_id,
       }));
       processTempTicketQueue(get, set);
     } catch (e) {
-      set((s) => ({ ...s, error: e instanceof Error ? e.message : String(e) }));
+      set((s) => ({
+        ...s,
+        error: e instanceof Error ? e.message : String(e),
+        runningRuns: s.runningRuns.filter((r) => r.runId !== tempId),
+        pendingTempTicketQueue: [job, ...s.pendingTempTicketQueue],
+      }));
       toast.error("Failed to start queued agent.");
-      set((s) => ({ pendingTempTicketQueue: [job, ...s.pendingTempTicketQueue] }));
+      processTempTicketQueue(get, set);
     }
   })();
 }

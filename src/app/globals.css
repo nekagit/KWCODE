@@ -550,10 +550,34 @@
     @apply border-border;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-foreground;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    line-height: 1.6;
+  }
+
+  /* Main content area: subtle depth and readability */
+  .main-content-area {
+    background: linear-gradient(
+      180deg,
+      hsl(var(--background)) 0%,
+      hsl(var(--background) / 0.98) 100%
+    );
+  }
+
+  .dark .main-content-area,
+  .dark[data-theme] .main-content-area {
+    background: linear-gradient(
+      180deg,
+      hsl(var(--background)) 0%,
+      hsl(var(--background) / 0.97) 100%
+    );
   }
 }
 

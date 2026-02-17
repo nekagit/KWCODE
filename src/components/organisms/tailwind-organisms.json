@@ -33,12 +33,12 @@
   "ProjectDetailsPageContent.tsx": {},
   "ProjectsListPageContent.tsx": {
     "0": "space-y-6",
-    "1": "space-y-3",
-    "2": "text-lg font-semibold tracking-tight",
-    "3": "space-y-1 rounded-xl border border-border/60 bg-card/80 backdrop-blur-sm p-3 shadow-sm",
-    "4": "flex items-center justify-between gap-2 py-2 px-3 rounded-lg hover:bg-accent/50 transition-all duration-200 group",
-    "5": "flex-1 min-w-0 truncate font-medium text-primary hover:underline transition-colors",
-    "6": "text-xs text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-all duration-200"
+    "1": "space-y-4",
+    "2": "text-lg font-semibold tracking-tight text-foreground/90",
+    "3": "space-y-1 rounded-xl border border-border/70 bg-card/90 backdrop-blur-sm p-4 shadow-sm",
+    "4": "flex items-center justify-between gap-3 py-2.5 px-3.5 rounded-xl hover:bg-accent/50 transition-all duration-200 group border border-transparent hover:border-border/50",
+    "5": "flex-1 min-w-0 truncate font-medium text-foreground hover:text-primary transition-colors",
+    "6": "text-xs text-muted-foreground hover:text-destructive opacity-70 group-hover:opacity-100 transition-all duration-200"
   },
   "PromptRecordsPageContent.tsx": {
     "0": "space-y-6",

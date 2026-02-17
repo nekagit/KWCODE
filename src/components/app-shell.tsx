@@ -127,17 +127,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             role="separator"
             aria-label="Resize sidebar"
             onMouseDown={startResize}
-            className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:w-1.5 hover:bg-primary/20 active:bg-primary/30 transition-all shrink-0 z-10"
+            className="absolute top-0 right-0 w-0.5 h-full cursor-col-resize hover:w-1 hover:bg-primary/25 active:bg-primary/40 rounded-full transition-[width,background] duration-150 shrink-0 z-10"
           />
         )}
       </aside>
 
-      {/* Main content: scrollable, sidebar stays fixed. Grey-black content area for contrast with dark-black sidebar. */}
-      <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-auto p-6 md:p-8 lg:p-10 xl:p-12 bg-background">
+      {/* Main content: scrollable, subtle depth */}
+      <main className="main-content-area flex-1 flex flex-col min-w-0 min-h-0 overflow-auto p-6 md:p-8 lg:p-10 xl:p-12 shadow-[inset_1px_0_0_0_hsl(var(--border)/0.25)]">
         <Suspense
           fallback={
             <div className="min-h-[60vh] flex items-center justify-center" aria-hidden>
-              <div className="h-8 w-8 rounded-full border-2 border-border border-t-muted-foreground animate-spin" />
+              <div className="h-8 w-8 rounded-full border-2 border-muted-foreground/30 border-t-primary animate-spin" />
             </div>
           }
         >

@@ -10,6 +10,7 @@ use std::process::{Child, Command, Stdio};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{SystemTime, UNIX_EPOCH};
+use tauri::path::BaseDirectory;
 use tauri::{AppHandle, Emitter, Manager, State};
 use url::Url;
 
@@ -2352,35 +2353,46 @@ fn run_implement_all_script_inner(
 }
 
 /// Single-prompt terminal agent run (debug "Run terminal agent to fix", Setup prompt, temp ticket, etc.).
-/// Uses script/run_terminal_agent.sh. Not used for Implement All.
+/// Uses script/run_terminal_agent.sh (from repo ws or from app bundle resources). Not used for Implement All.
 fn run_run_terminal_agent_script_inner(
     app: AppHandle,
     state: State<'_, RunningState>,
-    ws: PathBuf,
+    script_path: PathBuf,
+    current_dir: PathBuf,
     run_id: String,
     run_label: String,
     project_path: String,
     prompt_content: String,
 ) -> Result<(), String> {
     let run_label_clone = run_label.clone();
-    let script = run_terminal_agent_script_path(&ws);
-    if !script.exists() {
+    if !script_path.exists() {
         return Err(format!(
             "Run terminal agent script not found: {}",
-            script.to_string_lossy()
+            script_path.to_string_lossy()
         ));
     }
     let p = std::env::temp_dir().join(format!("kw_run_terminal_agent_prompt_{}.txt", run_id));
     std::fs::write(&p, &prompt_content).map_err(|e| e.to_string())?;
     let mut cmd = Command::new("bash");
-    cmd.arg(script.as_os_str())
+    cmd.arg(script_path.as_os_str())
         .arg("-P")
         .arg(project_path.as_str())
         .arg("-F")
         .arg(p.as_os_str())
-        .current_dir(&ws)
+        .current_dir(&current_dir)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
+    // GUI apps (e.g. launched from Desktop) get a minimal PATH; extend so `agent` and other CLIs are found
+    if let Ok(home) = std::env::var("HOME") {
+        let extra = format!("{}/.local/bin:/usr/local/bin", home);
+        let path = std::env::var_os("PATH").unwrap_or_default();
+        let new_path = if path.is_empty() {
+            extra
+        } else {
+            format!("{}:{}", extra, path.to_string_lossy())
+        };
+        cmd.env("PATH", new_path);
+    }
     #[cfg(unix)]
     cmd.process_group(0);
 
@@ -2570,14 +2582,36 @@ async fn run_run_terminal_agent(
     prompt_content: String,
     label: String,
 ) -> Result<RunIdResponse, String> {
-    let ws = project_root()?;
     let run_id = gen_run_id();
     let run_label = if label.trim().is_empty() {
         "Terminal agent".to_string()
     } else {
         label.trim().to_string()
     };
-    run_run_terminal_agent_script_inner(app, state, ws, run_id.clone(), run_label, project_path, prompt_content)?;
+    let (script_path, current_dir) = match project_root() {
+        Ok(ws) => (run_terminal_agent_script_path(&ws), ws),
+        Err(_) => {
+            let resource = app
+                .path()
+                .resolve("run_terminal_agent.sh", BaseDirectory::Resource)
+                .map_err(|e| format!("Worker script not found in app bundle: {}", e))?;
+            let dir = resource
+                .parent()
+                .map(|p| p.to_path_buf())
+                .unwrap_or_else(std::env::temp_dir);
+            (resource, dir)
+        }
+    };
+    run_run_terminal_agent_script_inner(
+        app,
+        state,
+        script_path,
+        current_dir,
+        run_id.clone(),
+        run_label,
+        project_path,
+        prompt_content,
+    )?;
     Ok(RunIdResponse { run_id })
 }
 

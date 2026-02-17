@@ -163,4 +163,5 @@ if (!chunkReady) {
   await warmAppLayoutChunk();
 }
 console.log("Tauri can open.");
+console.log("(If you ran only dev:tauri:wait, the window will not open. Use 'npm run dev:tauri' for wait + open, or run 'npm run tauri -- dev' in another terminal.)");
 process.exit(0);

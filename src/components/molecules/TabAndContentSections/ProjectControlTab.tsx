@@ -100,7 +100,9 @@ export function ProjectControlTab({ projectId, refreshKey = 0 }: ProjectControlT
       setError(errMsg);
       setEntries([]);
       // #region agent log
-      invoke("frontend_debug_log", { location: "ProjectControlTab.tsx:load:catch", message: "Control: get_implementation_log_entries failed", data: { error: errMsg, projectId } }).catch(() => {});
+      if (isTauri) {
+        invoke("frontend_debug_log", { location: "ProjectControlTab.tsx:load:catch", message: "Control: get_implementation_log_entries failed", data: { error: errMsg, projectId } }).catch(() => {});
+      }
       fetch("http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ location: "ProjectControlTab.tsx:load:catch", message: "Control load failed", data: { error: errMsg, command: "get_implementation_log_entries" }, timestamp: Date.now(), hypothesisId: "ControlTab" }) }).catch(() => {});
       // #endregion
     } finally {
@@ -152,7 +154,7 @@ export function ProjectControlTab({ projectId, refreshKey = 0 }: ProjectControlT
 
   if (error) {
     return (
-      <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6 text-sm text-destructive">
+      <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-6 text-sm text-destructive shadow-sm">
         {error}
       </div>
     );
@@ -164,7 +166,7 @@ export function ProjectControlTab({ projectId, refreshKey = 0 }: ProjectControlT
   const renderEntryCard = (entry: LogEntry, showAcceptDecline: boolean) => (
     <div
       key={entry.id}
-      className="rounded-lg border border-border/60 bg-card/80 p-4 space-y-3"
+      className="surface-card rounded-xl border border-border/50 p-4 space-y-3"
     >
       <div className="flex flex-wrap items-center gap-2">
         <span className="font-semibold text-foreground">
@@ -273,7 +275,7 @@ export function ProjectControlTab({ projectId, refreshKey = 0 }: ProjectControlT
       <p className="text-sm text-muted-foreground">
         Completed ticket runs (newest first). Accept moves an entry to Archived below.
       </p>
-      <ScrollArea className="flex-1 min-h-[300px] rounded-xl border border-border/40 bg-card/50">
+      <ScrollArea className="flex-1 min-h-[300px] rounded-xl surface-card border border-border/50">
         <div className="p-4 space-y-4">
           {pendingEntries.length === 0 ? (
             <p className="text-xs text-muted-foreground py-2">No pending entries. Accepted entries are in Archived below.</p>
@@ -285,7 +287,7 @@ export function ProjectControlTab({ projectId, refreshKey = 0 }: ProjectControlT
 
       {acceptedEntries.length > 0 && (
         <Accordion type="single" collapsible className="w-full">
-          <AccordionItem value="archived" className="rounded-xl border border-border/40 bg-card/50 overflow-hidden">
+          <AccordionItem value="archived" className="rounded-xl surface-card border border-border/50 overflow-hidden">
             <AccordionTrigger className="px-4 py-3 hover:no-underline [&[data-state=open]]:border-b [&[data-state=open]]:border-border/40">
               <span className="flex items-center gap-2">
                 <Archive className="size-4 text-muted-foreground" />
