@@ -107,6 +107,7 @@ export function ProjectDetailsPageContent() {
   const [savingPort, setSavingPort] = useState(false);
   const [plannerRefreshKey, setPlannerRefreshKey] = useState(0);
   const [docsRefreshKey, setDocsRefreshKey] = useState(0);
+  const [controlTabRefreshKey, setControlTabRefreshKey] = useState(0);
   const [projectIds, setProjectIds] = useState<string[]>([]);
 
   const mountedRef = useRef(true);
@@ -128,6 +129,19 @@ export function ProjectDetailsPageContent() {
     window.addEventListener("run-complete", handler);
     return () => window.removeEventListener("run-complete", handler);
   }, []);
+
+  // When a ticket Implement All run completes, switch to Control tab and refresh it.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { projectId?: string };
+      if (detail?.projectId === projectId) {
+        setActiveTab("control");
+        setControlTabRefreshKey((k) => k + 1);
+      }
+    };
+    window.addEventListener("ticket-implementation-done", handler);
+    return () => window.removeEventListener("ticket-implementation-done", handler);
+  }, [projectId]);
 
   const fetchProject = useCallback(async () => {
     setLoading(true);
@@ -746,7 +760,7 @@ export function ProjectDetailsPageContent() {
             className="mt-0 animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
           >
             <div className="rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm p-4 md:p-6">
-              <ProjectControlTab projectId={projectId} />
+              <ProjectControlTab projectId={projectId} refreshKey={controlTabRefreshKey} />
             </div>
           </TabsContent>
 

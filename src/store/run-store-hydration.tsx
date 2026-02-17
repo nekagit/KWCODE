@@ -91,10 +91,25 @@ export function RunStoreHydration() {
 
       if (run?.meta) {
         const stdout = run.logLines.join("\n");
+        const projectId = run.meta.projectId;
+        const ticketId = run.meta.ticketId;
+        const success = exit_code === undefined || exit_code === 0;
+
+        // Mark ticket as Done in DB when run completed successfully (so it leaves In Progress).
+        if (success && projectId && ticketId) {
+          fetch(`/api/data/projects/${projectId}/tickets/${ticketId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ done: true, status: "Done" }),
+          }).catch((err) =>
+            console.error("[run-exited] PATCH ticket done failed:", err)
+          );
+        }
+
         // Ticket Implement All finished: record implementation_log entry (diff + summary).
         if (
           typeof run.meta.ticketNumber === "number" &&
-          run.meta.projectId &&
+          projectId &&
           run.meta.repoPath
         ) {
           (async () => {
@@ -135,7 +150,7 @@ export function RunStoreHydration() {
                   summary,
                 });
               } else {
-                await fetch(`/api/data/projects/${run.meta!.projectId}/implementation-log`, {
+                const res = await fetch(`/api/data/projects/${run.meta!.projectId}/implementation-log`, {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
@@ -149,7 +164,14 @@ export function RunStoreHydration() {
                     summary,
                   }),
                 });
+                if (!res.ok) throw new Error(await res.text());
               }
+              // Move UI to Control tab immediately so the new entry is visible.
+              window.dispatchEvent(
+                new CustomEvent("ticket-implementation-done", {
+                  detail: { projectId: run.meta!.projectId },
+                })
+              );
             } catch (err) {
               console.error("[run-exited] implementation-log POST failed:", err);
             }

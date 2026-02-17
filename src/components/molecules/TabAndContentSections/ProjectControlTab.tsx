@@ -28,9 +28,11 @@ type LogEntry = {
 
 interface ProjectControlTabProps {
   projectId: string;
+  /** When this changes, the tab reloads implementation log (e.g. after a run completes). */
+  refreshKey?: number;
 }
 
-export function ProjectControlTab({ projectId }: ProjectControlTabProps) {
+export function ProjectControlTab({ projectId, refreshKey = 0 }: ProjectControlTabProps) {
   const [entries, setEntries] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -124,7 +126,7 @@ export function ProjectControlTab({ projectId }: ProjectControlTabProps) {
 
   useEffect(() => {
     load();
-  }, [load]);
+  }, [load, refreshKey]);
 
   if (loading) {
     return (

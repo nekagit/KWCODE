@@ -44,7 +44,7 @@ PROMPT_CONTENT=$(cat "$PROMPT_FILE")
 rm -f "$PROMPT_FILE"
 ESCAPED=$(printf '%s' "$PROMPT_CONTENT" | sed 's/\\/\\\\/g; s/"/\\"/g')
 echo "Running: agent -F -p \"<from file>\" (print mode, -F = trust workspace)"
-agent -F -p "$ESCAPED"
+agent -p "$ESCAPED"
 AGENT_EXIT=$?
 echo ""
 echo "Done. Agent exited with code $AGENT_EXIT."

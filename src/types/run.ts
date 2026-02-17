@@ -29,6 +29,8 @@ export interface RunMeta {
   payload?: Record<string, unknown>;
   /** For ticket Implement All runs: repo path for git diff. */
   repoPath?: string;
+  /** Ticket id (UUID) for marking ticket done when run completes. */
+  ticketId?: string;
   /** Ticket number (for implementation_log). */
   ticketNumber?: number;
   /** Ticket title (for implementation_log). */

@@ -490,6 +490,7 @@ export const useRunStore = create<RunStore>()((set, get) => ({
             logLines: [],
             status: "running" as const,
             startedAt: Date.now(),
+            slot: 1,
             meta: meta ?? undefined,
           },
         ],

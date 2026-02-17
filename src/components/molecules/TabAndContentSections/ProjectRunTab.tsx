@@ -319,6 +319,7 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
         meta?: {
           projectId: string;
           repoPath: string;
+          ticketId: string;
           ticketNumber: number;
           ticketTitle: string;
           milestoneId?: number;
@@ -355,6 +356,7 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
           meta: {
             projectId,
             repoPath,
+            ticketId: ticket.id,
             ticketNumber: ticket.number,
             ticketTitle: ticket.title,
             milestoneId: ticket.milestoneId,
