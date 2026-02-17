@@ -63,10 +63,8 @@ function ProjectCard({ project }: { project: Project }) {
       }),
     }).catch(() => {});
     // #endregion
-    const origin = typeof window !== "undefined" ? window.location?.origin : "";
-    if (isTauri && origin) {
-      const url = `${origin}/projects?open=${encodeURIComponent(project.id)}`;
-      invoke("navigate_webview_to", { url }).catch(() => {});
+    if (isTauri) {
+      router.push(`/projects?open=${encodeURIComponent(project.id)}`);
     } else {
       router.push(`/projects/${project.id}`);
     }

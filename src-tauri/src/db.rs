@@ -436,3 +436,114 @@ pub fn save_designs(conn: &Connection, designs: &[super::Design]) -> Result<(), 
     }
     Ok(())
 }
+
+// --- Project-scoped data for Worker/Planner (avoid fetch to /api which triggers URL parse error in Tauri) ---
+
+pub fn get_plan_tickets_for_project(conn: &Connection, project_id: &str) -> Result<Vec<serde_json::Value>, String> {
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, project_id, number, title, description, priority, feature_name, done, status, milestone_id, idea_id, agents, created_at, updated_at FROM plan_tickets WHERE project_id = ?1 ORDER BY number ASC",
+        )
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map(rusqlite::params![project_id.trim()], |row| {
+            let agents: Option<String> = row.get(11)?;
+            Ok(serde_json::json!({
+                "id": row.get::<_, String>(0)?,
+                "project_id": row.get::<_, String>(1)?,
+                "number": row.get::<_, i64>(2)?,
+                "title": row.get::<_, String>(3)?,
+                "description": row.get::<_, Option<String>>(4)?,
+                "priority": row.get::<_, String>(5)?,
+                "feature_name": row.get::<_, String>(6)?,
+                "featureName": row.get::<_, String>(6)?,
+                "done": row.get::<_, i64>(7)? != 0,
+                "status": row.get::<_, String>(8)?,
+                "milestone_id": row.get::<_, Option<i64>>(9)?,
+                "idea_id": row.get::<_, Option<i64>>(10)?,
+                "milestoneId": row.get::<_, Option<i64>>(9)?,
+                "ideaId": row.get::<_, Option<i64>>(10)?,
+                "agents": agents.and_then(|s| serde_json::from_str::<Vec<String>>(&s).ok()),
+                "created_at": row.get::<_, String>(12)?,
+                "updated_at": row.get::<_, String>(13)?,
+            }))
+        })
+        .map_err(|e| e.to_string())?;
+    let mut out = vec![];
+    for row in rows {
+        out.push(row.map_err(|e| e.to_string())?);
+    }
+    Ok(out)
+}
+
+pub fn get_plan_kanban_state_for_project(conn: &Connection, project_id: &str) -> Result<serde_json::Value, String> {
+    let in_progress_ids: String = conn
+        .query_row(
+            "SELECT in_progress_ids FROM plan_kanban_state WHERE project_id = ?1",
+            rusqlite::params![project_id.trim()],
+            |row| row.get(0),
+        )
+        .unwrap_or_else(|_| "[]".to_string());
+    let ids: Vec<String> = serde_json::from_str(&in_progress_ids).unwrap_or_default();
+    Ok(serde_json::json!({ "inProgressIds": ids }))
+}
+
+pub fn get_milestones_for_project(conn: &Connection, project_id: &str) -> Result<Vec<serde_json::Value>, String> {
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, project_id, name, slug, content, created_at, updated_at FROM milestones WHERE project_id = ?1 ORDER BY name ASC",
+        )
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map(rusqlite::params![project_id.trim()], |row| {
+            Ok(serde_json::json!({
+                "id": row.get::<_, i64>(0)?,
+                "project_id": row.get::<_, String>(1)?,
+                "name": row.get::<_, String>(2)?,
+                "slug": row.get::<_, String>(3)?,
+                "content": row.get::<_, Option<String>>(4)?,
+                "created_at": row.get::<_, String>(5)?,
+                "updated_at": row.get::<_, String>(6)?,
+            }))
+        })
+        .map_err(|e| e.to_string())?;
+    let mut out = vec![];
+    for row in rows {
+        out.push(row.map_err(|e| e.to_string())?);
+    }
+    Ok(out)
+}
+
+pub fn get_ideas_list(conn: &Connection, project_id: Option<&str>) -> Result<Vec<serde_json::Value>, String> {
+    let mut out = vec![];
+    let map_row = |row: &rusqlite::Row| {
+        Ok(serde_json::json!({
+            "id": row.get::<_, i64>(0)?,
+            "project_id": row.get::<_, Option<String>>(1)?,
+            "title": row.get::<_, String>(2)?,
+            "description": row.get::<_, String>(3)?,
+            "category": row.get::<_, String>(4)?,
+            "source": row.get::<_, String>(5)?,
+            "created_at": row.get::<_, String>(6)?,
+            "updated_at": row.get::<_, String>(7)?,
+        }))
+    };
+    if let Some(pid) = project_id {
+        let mut stmt = conn
+            .prepare("SELECT id, project_id, title, description, category, source, created_at, updated_at FROM ideas WHERE project_id = ?1 OR project_id IS NULL ORDER BY id ASC")
+            .map_err(|e| e.to_string())?;
+        let rows = stmt.query_map(rusqlite::params![pid.trim()], map_row).map_err(|e| e.to_string())?;
+        for row in rows {
+            out.push(row.map_err(|e| e.to_string())?);
+        }
+    } else {
+        let mut stmt = conn
+            .prepare("SELECT id, project_id, title, description, category, source, created_at, updated_at FROM ideas ORDER BY id ASC")
+            .map_err(|e| e.to_string())?;
+        let rows = stmt.query_map([], map_row).map_err(|e| e.to_string())?;
+        for row in rows {
+            out.push(row.map_err(|e| e.to_string())?);
+        }
+    }
+    Ok(out)
+}

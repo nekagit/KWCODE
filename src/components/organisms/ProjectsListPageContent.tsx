@@ -80,13 +80,7 @@ export function ProjectsListPageContent() {
   }, []);
 
   const goBackToList = useCallback(() => {
-    const origin = typeof window !== "undefined" ? window.location?.origin : "";
-    const projectsUrl = origin ? `${origin}/projects` : "/projects";
-    if (isTauri && origin) {
-      invoke("navigate_webview_to", { url: projectsUrl }).catch(() => {});
-    } else {
-      router.replace("/projects");
-    }
+    router.replace("/projects");
   }, [router]);
 
   if (openProjectId) {
@@ -158,10 +152,8 @@ export function ProjectsListPageContent() {
                       };
                       logClick();
                       // #endregion
-                      const origin = typeof window !== "undefined" ? window.location?.origin : "";
-                      if (isTauri && origin) {
-                        const url = `${origin}/projects?open=${encodeURIComponent(project.id)}`;
-                        invoke("navigate_webview_to", { url }).catch(() => {});
+                      if (isTauri) {
+                        router.push(`/projects?open=${encodeURIComponent(project.id)}`);
                       } else {
                         router.push(`/projects/${project.id}`);
                       }
@@ -189,10 +181,8 @@ export function ProjectsListPageContent() {
                     onKeyDown={(e: React.KeyboardEvent) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
-                        const origin = typeof window !== "undefined" ? window.location?.origin : "";
-                        if (isTauri && origin) {
-                          const url = `${origin}/projects?open=${encodeURIComponent(project.id)}`;
-                          invoke("navigate_webview_to", { url }).catch(() => {});
+                        if (isTauri) {
+                          router.push(`/projects?open=${encodeURIComponent(project.id)}`);
                         } else {
                           router.push(`/projects/${project.id}`);
                         }

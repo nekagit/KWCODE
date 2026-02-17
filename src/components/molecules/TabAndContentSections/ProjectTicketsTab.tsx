@@ -382,45 +382,50 @@ export function ProjectTicketsTab({
     setKanbanLoading(true);
     setKanbanError(null);
     try {
-      const [ticketsRes, stateRes] = await Promise.all([
-        fetch(`/api/data/projects/${projectId}/tickets`),
-        fetch(`/api/data/projects/${projectId}/kanban-state`),
-      ]);
-      if (!ticketsRes.ok || !stateRes.ok) {
-        const err = await ticketsRes.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to load tickets");
+      type TicketRow = { id: string; number: number; title: string; description?: string; priority: string; feature_name?: string; featureName?: string; done: boolean; status: string; agents?: string[]; milestone_id?: number; idea_id?: number };
+      let apiTickets: TicketRow[];
+      let inProgressIds: string[];
+      if (isTauri) {
+        const [ticketsList, kanbanState] = await Promise.all([
+          invoke<TicketRow[]>("get_project_tickets", { projectIdArg: { projectId } }),
+          invoke<{ inProgressIds: string[] }>("get_project_kanban_state", { projectIdArg: { projectId } }),
+        ]);
+        apiTickets = ticketsList ?? [];
+        inProgressIds = kanbanState?.inProgressIds ?? [];
+      } else {
+        const [ticketsRes, stateRes] = await Promise.all([
+          fetch(`/api/data/projects/${projectId}/tickets`),
+          fetch(`/api/data/projects/${projectId}/kanban-state`),
+        ]);
+        if (!ticketsRes.ok || !stateRes.ok) {
+          const err = await ticketsRes.json().catch(() => ({}));
+          throw new Error((err as { error?: string }).error || "Failed to load tickets");
+        }
+        apiTickets = (await ticketsRes.json()) as TicketRow[];
+        const state = (await stateRes.json()) as { inProgressIds: string[] };
+        inProgressIds = state.inProgressIds ?? [];
       }
-      const apiTickets = (await ticketsRes.json()) as {
-        id: string;
-        number: number;
-        title: string;
-        description?: string;
-        priority: string;
-        feature_name: string;
-        done: boolean;
-        status: string;
-        agents?: string[];
-        milestone_id?: number;
-        idea_id?: number;
-      }[];
-      const { inProgressIds } = (await stateRes.json()) as { inProgressIds: string[] };
       const tickets: ParsedTicket[] = apiTickets.map((t) => ({
         id: t.id,
         number: t.number,
         title: t.title,
         description: t.description,
         priority: (t.priority as ParsedTicket["priority"]) || "P1",
-        featureName: t.feature_name || "General",
+        featureName: t.featureName ?? t.feature_name ?? "General",
         done: t.done,
         status: (t.status as ParsedTicket["status"]) || "Todo",
         agents: t.agents,
         milestoneId: t.milestone_id,
         ideaId: t.idea_id,
       }));
-      const data = buildKanbanFromTickets(tickets, inProgressIds ?? []);
+      const data = buildKanbanFromTickets(tickets, inProgressIds);
       setKanbanData(data);
     } catch (e) {
-      setKanbanError(e instanceof Error ? e.message : String(e));
+      const errMsg = e instanceof Error ? e.message : String(e);
+      setKanbanError(errMsg);
+      if (isTauri) {
+        invoke("frontend_debug_log", { location: "ProjectTicketsTab.tsx:loadTicketsAndKanban:catch", message: "Planner: loadTicketsAndKanban failed", data: { error: errMsg, projectId } }).catch(() => {});
+      }
     } finally {
       setKanbanLoading(false);
     }
@@ -429,12 +434,23 @@ export function ProjectTicketsTab({
   const loadMilestonesAndIdeas = useCallback(async () => {
     if (!projectId) return;
     try {
-      const [milRes, ideasRes] = await Promise.all([
-        fetch(`/api/data/projects/${projectId}/milestones`),
-        fetch(`/api/data/ideas`),
-      ]);
-      const milestonesList = milRes.ok ? ((await milRes.json()) as { id: number; name: string; slug: string }[]) : [];
-      const allIdeas = ideasRes.ok ? ((await ideasRes.json()) as { id: number; title: string }[]) : [];
+      let milestonesList: { id: number; name: string; slug: string }[];
+      let allIdeas: { id: number; title: string }[];
+      if (isTauri) {
+        const [mils, ideas] = await Promise.all([
+          invoke<{ id: number; name: string; slug: string }[]>("get_project_milestones", { projectIdArg: { projectId } }),
+          invoke<{ id: number; title: string }[]>("get_ideas_list", { projectIdArgOptional: { projectId } }),
+        ]);
+        milestonesList = mils ?? [];
+        allIdeas = ideas ?? [];
+      } else {
+        const [milRes, ideasRes] = await Promise.all([
+          fetch(`/api/data/projects/${projectId}/milestones`),
+          fetch(`/api/data/ideas`),
+        ]);
+        milestonesList = milRes.ok ? ((await milRes.json()) as { id: number; name: string; slug: string }[]) : [];
+        allIdeas = ideasRes.ok ? ((await ideasRes.json()) as { id: number; title: string }[]) : [];
+      }
       const ideaIds = Array.isArray(project?.ideaIds) ? project.ideaIds : [];
       let ideasList = ideaIds.length > 0 ? allIdeas.filter((i) => ideaIds.includes(i.id)) : allIdeas;
       const generalDevIdea = allIdeas.find((i) => i.title === "General Development");
@@ -443,9 +459,13 @@ export function ProjectTicketsTab({
       }
       setMilestones(milestonesList);
       setIdeas(ideasList);
-    } catch {
+    } catch (e) {
+      const errMsg = e instanceof Error ? e.message : String(e);
       setMilestones([]);
       setIdeas([]);
+      if (isTauri) {
+        invoke("frontend_debug_log", { location: "ProjectTicketsTab.tsx:loadMilestonesAndIdeas:catch", message: "Planner: loadMilestonesAndIdeas failed", data: { error: errMsg, projectId } }).catch(() => {});
+      }
     }
   }, [projectId, project?.ideaIds]);
 

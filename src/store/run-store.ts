@@ -266,6 +266,7 @@ export const useRunStore = create<RunStore>()((set, get) => ({
     set({ error: null, dataWarning: null });
     try {
       if (isTauri) {
+        invoke("frontend_debug_log", { location: "run-store.ts:refreshData", message: "run-store: about to invoke list_february_folders, get_active_projects, get_prompts", data: {} }).catch(() => {});
         const [all, active, promptList] = await Promise.all([
           invoke<string[]>("list_february_folders"),
           invoke<string[]>("get_active_projects"),

@@ -177,6 +177,9 @@ export function ProjectDetailsPageContent(props: ProjectDetailsPageContentProps 
     setLoading(true);
     setError(null);
     try {
+      if (isTauri) {
+        invoke("frontend_debug_log", { location: "ProjectDetailsPageContent.tsx:fetchProject", message: "ProjectDetails: about to call get_project_resolved", data: { projectId } }).catch(() => {});
+      }
       const data = await getProjectResolved(projectId);
       if (mountedRef.current) setProject(data);
       // #region agent log
@@ -193,16 +196,19 @@ export function ProjectDetailsPageContent(props: ProjectDetailsPageContentProps 
       }).catch(() => {});
       // #endregion
     } catch (e) {
-      if (mountedRef.current)
-        setError(e instanceof Error ? e.message : String(e));
+      const errMsg = e instanceof Error ? e.message : String(e);
+      if (mountedRef.current) setError(errMsg);
       // #region agent log
+      if (isTauri) {
+        invoke("frontend_debug_log", { location: "ProjectDetailsPageContent.tsx:fetchProject:catch", message: "ProjectDetails: get_project_resolved failed", data: { projectId, error: errMsg } }).catch(() => {});
+      }
       fetch("http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           location: "ProjectDetailsPageContent.tsx:fetchProject:err",
           message: "getProjectResolved failed",
-          data: { projectId, error: e instanceof Error ? e.message : String(e) },
+          data: { projectId, error: errMsg },
           timestamp: Date.now(),
           hypothesisId: "H4",
         }),
@@ -688,7 +694,12 @@ export function ProjectDetailsPageContent(props: ProjectDetailsPageContentProps 
         {/* ═══════════════ TABS ═══════════════ */}
         <Tabs
           value={activeTab}
-          onValueChange={setActiveTab}
+          onValueChange={(v) => {
+            if (isTauri) {
+              invoke("frontend_debug_log", { location: "ProjectDetailsPageContent.tsx:tabChange", message: "ProjectDetails: tab changed", data: { from: activeTab, to: v } }).catch(() => {});
+            }
+            setActiveTab(v);
+          }}
           className="w-full"
           data-testid="project-detail-tabs"
         >

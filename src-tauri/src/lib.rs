@@ -396,7 +396,7 @@ pub struct ImplementationLogEntry {
 }
 
 #[tauri::command]
-fn get_implementation_log_entries(project_id: String) -> Result<Vec<ImplementationLogEntry>, String> {
+fn get_implementation_log_entries(ProjectIdArg { project_id }: ProjectIdArg) -> Result<Vec<ImplementationLogEntry>, String> {
     with_db(|conn| {
         let mut stmt = conn.prepare(
             "SELECT id, project_id, run_id, ticket_number, ticket_title, milestone_id, idea_id, completed_at, files_changed, summary, created_at, status FROM implementation_log WHERE project_id = ?1 ORDER BY completed_at DESC, id DESC",
@@ -425,6 +425,43 @@ fn get_implementation_log_entries(project_id: String) -> Result<Vec<Implementati
             .collect();
         Ok(entries)
     })
+}
+
+/// Args for project-scoped commands; accept camelCase projectId from frontend.
+#[derive(serde::Deserialize)]
+struct ProjectIdArg {
+    #[serde(alias = "projectId")]
+    project_id: String,
+}
+
+#[derive(serde::Deserialize)]
+struct ProjectIdArgOptional {
+    #[serde(alias = "projectId", default)]
+    project_id: Option<String>,
+}
+
+/// Project-scoped tickets (plan_tickets). Used when isTauri to avoid fetch to /api which triggers URL parse error.
+#[tauri::command]
+fn get_project_tickets(ProjectIdArg { project_id }: ProjectIdArg) -> Result<Vec<serde_json::Value>, String> {
+    with_db(|conn| db::get_plan_tickets_for_project(conn, &project_id))
+}
+
+/// Project kanban state (inProgressIds). Used when isTauri to avoid fetch to /api.
+#[tauri::command]
+fn get_project_kanban_state(ProjectIdArg { project_id }: ProjectIdArg) -> Result<serde_json::Value, String> {
+    with_db(|conn| db::get_plan_kanban_state_for_project(conn, &project_id))
+}
+
+/// Project milestones. Used when isTauri to avoid fetch to /api.
+#[tauri::command]
+fn get_project_milestones(ProjectIdArg { project_id }: ProjectIdArg) -> Result<Vec<serde_json::Value>, String> {
+    with_db(|conn| db::get_milestones_for_project(conn, &project_id))
+}
+
+/// Ideas list (optional project filter). Used when isTauri to avoid fetch to /api.
+#[tauri::command]
+fn get_ideas_list(ProjectIdArgOptional { project_id }: ProjectIdArgOptional) -> Result<Vec<serde_json::Value>, String> {
+    with_db(|conn| db::get_ideas_list(conn, project_id.as_deref()))
 }
 
 #[tauri::command]
@@ -701,14 +738,15 @@ fn frontend_debug_log(location: String, message: String, data: Option<serde_json
     }
 }
 
-/// Navigate the webview to a full URL from the backend so the asset protocol keeps the path (fixes project details not opening when set from JS).
+/// Navigate the webview by setting window.location.href via eval. We never parse the URL in Rust nor call w.navigate(),
+/// so the user never sees "The string did not match the expected pattern" (url crate / WebView).
 #[tauri::command]
 fn navigate_webview_to(app: AppHandle, url: String) -> Result<(), String> {
-    let url_parsed: Url = url.parse().map_err(|e: url::ParseError| e.to_string())?;
+    let escaped = serde_json::to_string(&url).unwrap_or_else(|_| "\"/\"".to_string());
     let app_clone = app.clone();
-    app.run_on_main_thread(move || {
+    let _ = app.run_on_main_thread(move || {
         if let Some((_, w)) = app_clone.webview_windows().into_iter().next() {
-            let _ = w.navigate(url_parsed.to_string().parse().unwrap_or_else(|_| "http://127.0.0.1:4000/".parse().unwrap()));
+            let _ = w.eval(&format!("window.location.href = {};", escaped));
         }
     });
     Ok(())
@@ -2829,6 +2867,10 @@ pub fn run() {
             get_git_head,
             get_git_diff_name_status,
             get_implementation_log_entries,
+            get_project_tickets,
+            get_project_kanban_state,
+            get_project_milestones,
+            get_ideas_list,
             update_implementation_log_entry_status,
             append_implementation_log_entry,
             get_git_file_view,

@@ -171,44 +171,53 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
     setKanbanLoading(true);
     setKanbanError(null);
     try {
-      const [ticketsRes, stateRes] = await Promise.all([
-        fetch(`/api/data/projects/${projectId}/tickets`),
-        fetch(`/api/data/projects/${projectId}/kanban-state`),
-      ]);
-      if (!ticketsRes.ok || !stateRes.ok) {
-        throw new Error("Failed to load tickets");
+      // #region agent log
+      if (isTauri) {
+        invoke("frontend_debug_log", { location: "ProjectRunTab.tsx:loadTicketsAndKanban", message: "Worker: loadTicketsAndKanban start", data: { projectId, useInvoke: true } }).catch(() => {});
       }
-      const apiTickets = (await ticketsRes.json()) as {
-        id: string;
-        number: number;
-        title: string;
-        description?: string;
-        priority: string;
-        feature_name: string;
-        done: boolean;
-        status: string;
-        agents?: string[];
-        milestone_id?: number;
-        idea_id?: number;
-      }[];
-      const { inProgressIds } = (await stateRes.json()) as { inProgressIds: string[] };
+      // #endregion
+      type TicketRow = { id: string; number: number; title: string; description?: string; priority: string; feature_name?: string; featureName?: string; done: boolean; status: string; agents?: string[]; milestone_id?: number; idea_id?: number };
+      let apiTickets: TicketRow[];
+      let inProgressIds: string[];
+      if (isTauri) {
+        const [ticketsList, kanbanState] = await Promise.all([
+          invoke<TicketRow[]>("get_project_tickets", { projectIdArg: { projectId } }),
+          invoke<{ inProgressIds: string[] }>("get_project_kanban_state", { projectIdArg: { projectId } }),
+        ]);
+        apiTickets = ticketsList ?? [];
+        inProgressIds = kanbanState?.inProgressIds ?? [];
+      } else {
+        const [ticketsRes, stateRes] = await Promise.all([
+          fetch(`/api/data/projects/${projectId}/tickets`),
+          fetch(`/api/data/projects/${projectId}/kanban-state`),
+        ]);
+        if (!ticketsRes.ok || !stateRes.ok) throw new Error("Failed to load tickets");
+        apiTickets = (await ticketsRes.json()) as TicketRow[];
+        const state = (await stateRes.json()) as { inProgressIds: string[] };
+        inProgressIds = state.inProgressIds ?? [];
+      }
       const tickets: ParsedTicket[] = apiTickets.map((t) => ({
         id: t.id,
         number: t.number,
         title: t.title,
         description: t.description,
         priority: (t.priority as ParsedTicket["priority"]) || "P1",
-        featureName: t.feature_name || "General",
+        featureName: t.featureName ?? t.feature_name ?? "General",
         done: t.done,
         status: (t.status as ParsedTicket["status"]) || "Todo",
         agents: t.agents,
         milestoneId: t.milestone_id,
         ideaId: t.idea_id,
       }));
-      const data = buildKanbanFromTickets(tickets, inProgressIds ?? []);
+      const data = buildKanbanFromTickets(tickets, inProgressIds);
       setKanbanData(data);
     } catch (e) {
-      setKanbanError(e instanceof Error ? e.message : String(e));
+      const errMsg = e instanceof Error ? e.message : String(e);
+      setKanbanError(errMsg);
+      // #region agent log
+      invoke("frontend_debug_log", { location: "ProjectRunTab.tsx:loadTicketsAndKanban:catch", message: "Worker: loadTicketsAndKanban failed", data: { error: errMsg, projectId } }).catch(() => {});
+      fetch("http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ location: "ProjectRunTab.tsx:loadTicketsAndKanban:catch", message: "Worker loadTicketsAndKanban failed", data: { error: errMsg }, timestamp: Date.now(), hypothesisId: "WorkerTab" }) }).catch(() => {});
+      // #endregion
     } finally {
       setKanbanLoading(false);
     }

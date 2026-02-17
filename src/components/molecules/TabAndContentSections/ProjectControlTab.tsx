@@ -52,7 +52,10 @@ export function ProjectControlTab({ projectId, refreshKey = 0 }: ProjectControlT
     try {
       let list: LogEntry[];
       if (isTauri) {
-        const raw = await invoke<{ id: number; project_id: string; run_id: string; ticket_number: number; ticket_title: string; milestone_id: number | null; idea_id: number | null; completed_at: string; files_changed: string; summary: string; created_at: string; status: string }[]>("get_implementation_log_entries", { projectId });
+        // #region agent log
+        invoke("frontend_debug_log", { location: "ProjectControlTab.tsx:load", message: "Control: about to invoke get_implementation_log_entries", data: { projectId } }).catch(() => {});
+        // #endregion
+        const raw = await invoke<{ id: number; project_id: string; run_id: string; ticket_number: number; ticket_title: string; milestone_id: number | null; idea_id: number | null; completed_at: string; files_changed: string; summary: string; created_at: string; status: string }[]>("get_implementation_log_entries", { projectIdArg: { projectId } });
         list = raw.map((r) => ({
           id: r.id,
           project_id: r.project_id,
@@ -93,8 +96,13 @@ export function ProjectControlTab({ projectId, refreshKey = 0 }: ProjectControlT
       setMilestones(milMap);
       setIdeas(ideaMap);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      const errMsg = e instanceof Error ? e.message : String(e);
+      setError(errMsg);
       setEntries([]);
+      // #region agent log
+      invoke("frontend_debug_log", { location: "ProjectControlTab.tsx:load:catch", message: "Control: get_implementation_log_entries failed", data: { error: errMsg, projectId } }).catch(() => {});
+      fetch("http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ location: "ProjectControlTab.tsx:load:catch", message: "Control load failed", data: { error: errMsg, command: "get_implementation_log_entries" }, timestamp: Date.now(), hypothesisId: "ControlTab" }) }).catch(() => {});
+      // #endregion
     } finally {
       setLoading(false);
     }
