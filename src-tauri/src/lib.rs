@@ -678,6 +678,42 @@ fn app_data_data_dir() -> Result<PathBuf, String> {
     Ok(data)
 }
 
+/// Frontend can call this to append a debug log line (e.g. when running from Desktop so ingest server may be unreachable).
+#[tauri::command]
+fn frontend_debug_log(location: String, message: String, data: Option<serde_json::Value>) {
+    let data = data.unwrap_or(serde_json::json!({}));
+    let payload = serde_json::json!({
+        "timestamp": SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis(),
+        "location": location,
+        "message": message,
+        "data": data,
+        "source": "frontend"
+    });
+    if let Ok(line) = serde_json::to_string(&payload) {
+        if let Ok(dir) = app_data_data_dir() {
+            let path = dir.join("debug.log");
+            let _ = std::fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(&path)
+                .and_then(|mut f| std::io::Write::write_all(&mut f, format!("{}\n", line).as_bytes()));
+        }
+    }
+}
+
+/// Navigate the webview to a full URL from the backend so the asset protocol keeps the path (fixes project details not opening when set from JS).
+#[tauri::command]
+fn navigate_webview_to(app: AppHandle, url: String) -> Result<(), String> {
+    let url_parsed: Url = url.parse().map_err(|e: url::ParseError| e.to_string())?;
+    let app_clone = app.clone();
+    app.run_on_main_thread(move || {
+        if let Some((_, w)) = app_clone.webview_windows().into_iter().next() {
+            let _ = w.navigate(url_parsed.to_string().parse().unwrap_or_else(|_| "http://127.0.0.1:4000/".parse().unwrap()));
+        }
+    });
+    Ok(())
+}
+
 /// Directory that holds app.db and february-dir.txt. In dev: repo data dir; when bundled: app data dir so DB and config work.
 fn data_root() -> Result<PathBuf, String> {
     // #region agent log
@@ -2836,7 +2872,9 @@ pub fn run() {
             get_kv_store_entries,
             get_data_dir,
             get_february_dir_config_path,
-            get_dashboard_metrics
+            get_dashboard_metrics,
+            frontend_debug_log,
+            navigate_webview_to
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

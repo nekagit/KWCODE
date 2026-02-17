@@ -358,7 +358,7 @@ export function ProjectProjectTab({ project, projectId, docsRefreshKey, onProjec
             <ArchitectureVisualization
               architectures={
                 Array.isArray((project as { architectures?: unknown[] }).architectures)
-                  ? ((project as { architectures: ResolvedArchitecture[] }).architectures)
+                  ? (project as unknown as { architectures: ResolvedArchitecture[] }).architectures
                   : []
               }
             />

@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Project } from "@/types/project";
+import { invoke, isTauri } from "@/lib/tauri";
 import { getProjectResolved, deleteProject, listProjects, updateProject } from "@/lib/api-projects";
 import { ProjectTicketsTab } from "@/components/molecules/TabAndContentSections/ProjectTicketsTab";
 import { ProjectGitTab } from "@/components/molecules/TabAndContentSections/ProjectGitTab";
@@ -90,11 +91,26 @@ const TAB_ROW_2 = [
   { value: "git", label: "Versioning", icon: FolderGit2, color: "text-amber-400", activeGlow: "shadow-amber-500/10" },
 ] as const;
 
-export function ProjectDetailsPageContent() {
+export type ProjectDetailsPageContentProps = {
+  /** When set (e.g. from /projects?open=id), use this id instead of route params. Used by Tauri to avoid navigating to /projects/[id]. */
+  overrideProjectId?: string;
+  /** When set, "Back to list" calls this instead of linking to /projects. */
+  onBack?: () => void;
+};
+
+export function ProjectDetailsPageContent(props: ProjectDetailsPageContentProps = {}) {
+  const { overrideProjectId, onBack } = props;
   const params = useParams();
-  const projectId = (params?.id as string) ?? "";
+  const projectId = overrideProjectId ?? (params?.id as string) ?? "";
   // #region agent log
   React.useEffect(() => {
+    if (isTauri) {
+      invoke("frontend_debug_log", {
+        location: "ProjectDetailsPageContent.tsx:mount",
+        message: "project details page mounted",
+        data: { projectId, hasId: !!projectId },
+      }).catch(() => {});
+    }
     fetch("http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -306,13 +322,24 @@ export function ProjectDetailsPageContent() {
           <div className="relative z-10 flex flex-col gap-5">
             {/* Top bar: back + delete */}
             <div className="flex items-center justify-between">
-              <Link
-                href="/projects"
-                className="group inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors duration-200"
-              >
-                <ArrowLeft className="size-3.5 transition-transform duration-200 group-hover:-translate-x-0.5" />
-                <span className="tracking-wide">All projects</span>
-              </Link>
+              {onBack ? (
+                <button
+                  type="button"
+                  onClick={onBack}
+                  className="group inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors duration-200"
+                >
+                  <ArrowLeft className="size-3.5 transition-transform duration-200 group-hover:-translate-x-0.5" />
+                  <span className="tracking-wide">All projects</span>
+                </button>
+              ) : (
+                <Link
+                  href="/projects"
+                  className="group inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors duration-200"
+                >
+                  <ArrowLeft className="size-3.5 transition-transform duration-200 group-hover:-translate-x-0.5" />
+                  <span className="tracking-wide">All projects</span>
+                </Link>
+              )}
               <Button
                 variant="ghost"
                 size="sm"
@@ -324,7 +351,8 @@ export function ProjectDetailsPageContent() {
                     )
                   ) {
                     await deleteProject(projectId);
-                    window.location.href = "/projects";
+                    if (onBack) onBack();
+                    else window.location.href = "/projects";
                   }
                 }}
               >

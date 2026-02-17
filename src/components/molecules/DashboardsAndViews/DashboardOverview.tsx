@@ -42,39 +42,66 @@ function ProjectCard({ project }: { project: Project }) {
   const prompts = project.promptIds?.length ?? 0;
   const ideas = (project.ideaIds?.length ?? 0) + (project.designIds?.length ?? 0);
   const total = tickets + prompts + ideas;
+  const goToProject = () => {
+    // #region agent log
+    if (isTauri) {
+      invoke("frontend_debug_log", {
+        location: "DashboardOverview.tsx:ProjectCard:onClick",
+        message: "dashboard project card click",
+        data: { projectId: project.id, hasId: !!project.id },
+      }).catch(() => {});
+    }
+    fetch("http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "DashboardOverview.tsx:ProjectCard:onClick",
+        message: "dashboard project card click",
+        data: { projectId: project.id, hasId: !!project.id },
+        timestamp: Date.now(),
+        hypothesisId: "H1",
+      }),
+    }).catch(() => {});
+    // #endregion
+    const origin = typeof window !== "undefined" ? window.location?.origin : "";
+    if (isTauri && origin) {
+      const url = `${origin}/projects?open=${encodeURIComponent(project.id)}`;
+      invoke("navigate_webview_to", { url }).catch(() => {});
+    } else {
+      router.push(`/projects/${project.id}`);
+    }
+    // #region agent log
+    if (isTauri) {
+      invoke("frontend_debug_log", {
+        location: "DashboardOverview.tsx:afterNav",
+        message: "navigation triggered",
+        data: { projectId: project.id, openParam: true },
+      }).catch(() => {});
+    }
+    fetch("http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "DashboardOverview.tsx:afterPush",
+        message: "navigation triggered",
+        data: { projectId: project.id },
+        timestamp: Date.now(),
+        hypothesisId: "H2",
+      }),
+    }).catch(() => {});
+    // #endregion
+  };
   return (
-    <Link
-      href={`/projects/${project.id}`}
-      className="block group"
-      onClick={(e: React.MouseEvent) => {
-        // #region agent log
-        fetch("http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            location: "DashboardOverview.tsx:ProjectCard:onClick",
-            message: "dashboard project card click",
-            data: { projectId: project.id, hasId: !!project.id },
-            timestamp: Date.now(),
-            hypothesisId: "H1",
-          }),
-        }).catch(() => {});
-        // #endregion
-        e.preventDefault();
-        router.push(`/projects/${project.id}`);
-        // #region agent log
-        fetch("http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            location: "DashboardOverview.tsx:afterPush",
-            message: "router.push called",
-            data: { projectId: project.id },
-            timestamp: Date.now(),
-            hypothesisId: "H2",
-          }),
-        }).catch(() => {});
-        // #endregion
+    <div
+      role="link"
+      tabIndex={0}
+      className="block group cursor-pointer"
+      onClick={goToProject}
+      onKeyDown={(e: React.KeyboardEvent) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          goToProject();
+        }
       }}
     >
       <Card className="h-full transition-all duration-200 hover:shadow-md hover:border-primary/20 hover:bg-muted/20">
@@ -116,7 +143,7 @@ function ProjectCard({ project }: { project: Project }) {
           </div>
         </CardContent>
       </Card>
-    </Link>
+    </div>
   );
 }
 
