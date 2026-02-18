@@ -492,6 +492,23 @@ fn set_plan_kanban_state(project_id: String, in_progress_ids: Vec<String>) -> Re
     with_db(|conn| db::set_plan_kanban_state_for_project(conn, &project_id, &in_progress_ids))
 }
 
+/// Update a plan ticket's done and status (for Worker tab Mark done/Redo; avoids fetch in Tauri).
+#[tauri::command]
+fn update_plan_ticket(
+    project_id: String,
+    ticket_id: String,
+    done: bool,
+    status: String,
+) -> Result<(), String> {
+    with_db(|conn| db::update_plan_ticket(conn, &project_id, &ticket_id, done, status.trim()))
+}
+
+/// Delete a plan ticket (for Worker tab Archive; avoids fetch in Tauri).
+#[tauri::command]
+fn delete_plan_ticket(project_id: String, ticket_id: String) -> Result<(), String> {
+    with_db(|conn| db::delete_plan_ticket(conn, &project_id, &ticket_id))
+}
+
 /// Ideas list (optional project filter). Used when isTauri to avoid fetch to /api.
 #[tauri::command]
 fn get_ideas_list(ProjectIdArgOptional { project_id }: ProjectIdArgOptional) -> Result<Vec<serde_json::Value>, String> {
@@ -2869,14 +2886,27 @@ async fn run_implement_all(
     Ok(RunIdResponse { run_id })
 }
 
+/// Args for run_run_terminal_agent; accept camelCase from frontend (projectPath, promptContent, label).
+#[derive(serde::Deserialize)]
+struct RunTerminalAgentArgs {
+    #[serde(alias = "projectPath")]
+    project_path: String,
+    #[serde(alias = "promptContent")]
+    prompt_content: String,
+    label: String,
+}
+
 #[tauri::command]
 async fn run_run_terminal_agent(
     app: AppHandle,
     state: State<'_, RunningState>,
-    project_path: String,
-    prompt_content: String,
-    label: String,
+    args: RunTerminalAgentArgs,
 ) -> Result<RunIdResponse, String> {
+    let RunTerminalAgentArgs {
+        project_path,
+        prompt_content,
+        label,
+    } = args;
     let run_id = gen_run_id();
     let run_label = if label.trim().is_empty() {
         "Terminal agent".to_string()
@@ -3201,6 +3231,8 @@ pub fn run() {
             get_project_milestones,
             create_plan_ticket,
             set_plan_kanban_state,
+            update_plan_ticket,
+            delete_plan_ticket,
             get_ideas_list,
             update_implementation_log_entry_status,
             append_implementation_log_entry,

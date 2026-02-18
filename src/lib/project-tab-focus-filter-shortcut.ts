@@ -3,13 +3,13 @@
 import { useEffect, type RefObject } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
-export type ProjectTabSlug = "design" | "architecture" | "worker";
+export type ProjectTabSlug = "design" | "architecture" | "worker" | "git";
 
 /**
  * On a project detail page (/projects/[id]?tab=<tab>), pressing "/" focuses the
  * given input unless focus is already in an input, textarea, or select.
  * Uses the Next.js app router pathname and search params.
- * Shared implementation for Design, Architecture, and Run (worker) tabs.
+ * Shared implementation for Design, Architecture, Run (worker), and Versioning (git) tabs.
  */
 export function useProjectTabFocusFilterShortcut(
   inputRef: RefObject<HTMLInputElement | null>,

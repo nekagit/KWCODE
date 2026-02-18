@@ -407,8 +407,8 @@ export function ProjectTicketsTab({
       let inProgressIds: string[];
       if (isTauri) {
         const [ticketsList, kanbanState] = await Promise.all([
-          invoke<TicketRow[]>("get_project_tickets", { projectIdArg: { projectId } }),
-          invoke<{ inProgressIds: string[] }>("get_project_kanban_state", { projectIdArg: { projectId } }),
+          invoke<TicketRow[]>("get_project_tickets", { projectId }),
+          invoke<{ inProgressIds: string[] }>("get_project_kanban_state", { projectId }),
         ]);
         apiTickets = ticketsList ?? [];
         inProgressIds = kanbanState?.inProgressIds ?? [];
@@ -458,8 +458,8 @@ export function ProjectTicketsTab({
       let allIdeas: { id: number; title: string }[];
       if (isTauri) {
         const [mils, ideas] = await Promise.all([
-          invoke<{ id: number; name: string; slug: string }[]>("get_project_milestones", { projectIdArg: { projectId } }),
-          invoke<{ id: number; title: string }[]>("get_ideas_list", { projectIdArgOptional: { projectId } }),
+          invoke<{ id: number; name: string; slug: string }[]>("get_project_milestones", { projectId }),
+          invoke<{ id: number; title: string }[]>("get_ideas_list", { projectId }),
         ]);
         milestonesList = mils ?? [];
         allIdeas = ideas ?? [];

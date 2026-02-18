@@ -2,41 +2,1652 @@
 
 ---
 
-## Night Shift Plan — 2025-02-18 (This run: Refactor — Dashboard metrics API module)
+## Night Shift Plan — 2025-02-18 (This run: Command palette — Download/Copy projects list)
 
 ### Chosen Feature
 
-**Refactor: Single module for dashboard metrics API** — Dashboard metrics are fetched with the same dual-mode logic (Tauri invoke vs fetch) in both `DashboardOverview.tsx` and `DashboardMetricsCards.tsx`. Extract a single `getDashboardMetrics()` in `src/lib/api-dashboard-metrics.ts` and use it from both components. Behaviour unchanged; removes duplication and gives one place for the dashboard-metrics contract.
+**Command palette: Download projects list and Copy projects list (JSON and CSV)** — The Projects page has "Download as JSON", "Copy as JSON", "Download as CSV", and "Copy as CSV" for the projects list. The command palette has "Go to Projects" but no way to export or copy the projects list from ⌘K. Adding four palette actions that fetch the current projects list via existing `listProjects()` (dual-mode) and call the existing export libs (`download-projects-list-json`, `download-projects-list-csv`) lets keyboard-first users export the projects list without opening the Projects page. Real, additive UX that would show up in a changelog.
 
 ### Approach
 
-- **New `src/lib/api-dashboard-metrics.ts`**: Export `getDashboardMetrics(): Promise<DashboardMetrics>`. Internal: if `isTauri` return `invoke<DashboardMetrics>("get_dashboard_metrics", {})`; else GET `/api/data/dashboard-metrics`, same error handling as current (e.g. `!res.ok` → throw with response text).
-- **DashboardOverview.tsx**: Remove local `fetchMetrics`; import `getDashboardMetrics` from `@/lib/api-dashboard-metrics` and use it where `fetchMetrics` was used.
-- **DashboardMetricsCards.tsx**: Same — remove local `fetchMetrics`, import `getDashboardMetrics`, use it.
-- **ADR** `.cursor/adr/0194-refactor-api-dashboard-metrics.md`. Run `npm run verify` and fix any failures.
+- **No new lib** — Use existing `listProjects()` from `@/lib/api-projects` (already used in CommandPalette for "Go to project"). Handlers: call `listProjects()`, on error toast and return; if empty the export libs already show "No projects to export"; else call `downloadProjectsListAsJson` / `copyProjectsListAsJsonToClipboard` / `downloadProjectsListAsCsv` / `copyProjectsListAsCsvToClipboard`.
+- **CommandPalette.tsx**: Import export libs, four handlers, four action entries after tech stack entries.
+- **keyboard-shortcuts.ts**: Add four entries in the Command palette group.
+- **ADR** `.cursor/adr/0224-command-palette-download-copy-projects-list.md`.
+- Run `npm run verify` and fix any failures.
 
 ### Files to Create
 
-- `src/lib/api-dashboard-metrics.ts` — `getDashboardMetrics()` dual-mode fetch.
-- `.cursor/adr/0194-refactor-api-dashboard-metrics.md` — ADR for this refactor.
+- `.cursor/adr/0224-command-palette-download-copy-projects-list.md` — ADR for this feature.
 
 ### Files to Touch (minimise)
 
-- `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` — use `getDashboardMetrics` instead of local `fetchMetrics`.
-- `src/components/molecules/CardsAndDisplay/DashboardMetricsCards.tsx` — use `getDashboardMetrics` instead of local `fetchMetrics`.
+- `src/components/shared/CommandPalette.tsx` — import export libs, four handlers, four action entries.
+- `src/data/keyboard-shortcuts.ts` — four shortcut descriptions in Command palette group.
 - `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
 
 ### Checklist
 
-- [ ] Create `src/lib/api-dashboard-metrics.ts` with `getDashboardMetrics()`.
-- [ ] Refactor DashboardOverview and DashboardMetricsCards to use it.
-- [ ] Add ADR `.cursor/adr/0194-refactor-api-dashboard-metrics.md`.
-- [ ] Run `npm run verify` and fix any failures.
-- [ ] Update this plan with Outcome section.
+- [x] Add four handlers and four action entries in CommandPalette.tsx.
+- [x] Add four entries to keyboard-shortcuts.ts Command palette group.
+- [x] Add ADR .cursor/adr/0224-command-palette-download-copy-projects-list.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
 
 ### Outcome
 
-_To be filled after implementation._
+**What was built** — Command palette actions **"Download projects list as JSON"**, **"Copy projects list as JSON"**, **"Download projects list as CSV"**, and **"Copy projects list as CSV"** let users export the projects list from ⌘K without opening the Projects page. Handlers use existing `listProjects()` from `@/lib/api-projects` (dual-mode); on success they call `downloadProjectsListAsJson`, `copyProjectsListAsJsonToClipboard`, `downloadProjectsListAsCsv`, `copyProjectsListAsCsvToClipboard` from the existing export libs (same format and toasts as the Projects page). On fetch error a single "Failed to load projects" toast is shown and the palette closes. Empty list is handled by the export libs ("No projects to export"). Four entries added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0224-command-palette-download-copy-projects-list.md` documents the decision.
+
+**Files created:** `.cursor/adr/0224-command-palette-download-copy-projects-list.md`
+
+**Files touched:** `CommandPalette.tsx` (imports, four handlers, four action entries, useMemo deps), `keyboard-shortcuts.ts` (four Command palette entries), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Run history filter by label and output)
+
+### Chosen Feature
+
+**Run history filter by label and output** — The Run tab History section filters runs by label only. Users cannot find runs by searching inside the terminal output (e.g. "error", "failed", or a specific log line). Adding a small filter module that matches the search query against both the run label and the run output (case-insensitive) gives at-a-glance discovery of runs by content. Same filter box and persisted preference; only the matching logic is extended. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **New lib** `src/lib/run-history-filter.ts`: Export `filterRunHistoryByQuery(entries: TerminalOutputHistoryEntry[], query: string): TerminalOutputHistoryEntry[]`. Trim and lowercase query; if empty return entries unchanged. Otherwise filter entries where `label.toLowerCase().includes(q)` or `output.toLowerCase().includes(q)`.
+- **New test** `src/lib/__tests__/run-history-filter.test.ts`: Unit tests for empty query, label match, output match, label-or-output match, case insensitivity, no match.
+- **ProjectRunTab.tsx**: Replace the inline label-only filter with `filterRunHistoryByQuery(history, filterQuery.trim())` in the `filteredHistory` useMemo (keep rest of pipeline: byStatus, byDate, slot, sort).
+- **ADR** `.cursor/adr/0223-run-history-filter-by-label-and-output.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/run-history-filter.ts` — filter runs by query (label or output).
+- `src/lib/__tests__/run-history-filter.test.ts` — unit tests.
+- `.cursor/adr/0223-run-history-filter-by-label-and-output.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/TabAndContentSections/ProjectRunTab.tsx` — use filterRunHistoryByQuery in History filter pipeline.
+- `.cursor/worker/night-shift-plan.md` — this entry, checklist, and Outcome.
+
+### Checklist
+
+- [x] Create src/lib/run-history-filter.ts (filterRunHistoryByQuery).
+- [x] Create src/lib/__tests__/run-history-filter.test.ts.
+- [x] Use filterRunHistoryByQuery in ProjectRunTab filteredHistory pipeline.
+- [x] Add ADR .cursor/adr/0223-run-history-filter-by-label-and-output.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Run tab History filter now matches the search query against both the run **label** and the run **output** (case-insensitive). Users can find runs by typing text that appears in the terminal output (e.g. "error", "failed") without opening each run. Implemented via a new module `src/lib/run-history-filter.ts` with `filterRunHistoryByQuery(entries, query)`; the same filter input and persisted `filterQuery` preference are used. Placeholder updated to "Filter by label or output…"; run-history-preferences comments updated. Unit tests in `src/lib/__tests__/run-history-filter.test.ts` cover empty query, label match, output match, label-or-output match, case insensitivity, no match, and trimmed query.
+
+**Files created**
+
+- `src/lib/run-history-filter.ts` — filter by label or output.
+- `src/lib/__tests__/run-history-filter.test.ts` — unit tests.
+- `.cursor/adr/0223-run-history-filter-by-label-and-output.md` — ADR for this feature.
+
+**Files touched**
+
+- `src/components/molecules/TabAndContentSections/ProjectRunTab.tsx` — import `filterRunHistoryByQuery`; use it in `filteredHistory` useMemo; placeholder "Filter by label or output…"; useMemo deps use `filterQuery`.
+- `src/lib/run-history-preferences.ts` — comments updated to "Filter by label or output".
+- `.cursor/worker/night-shift-plan.md` — this entry, checklist, and Outcome.
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Command palette — Copy app info as Markdown and as JSON)
+
+### Chosen Feature
+
+**Command palette: Copy app info as Markdown and Copy app info as JSON** — The Configuration page offers "Copy app info" (plain), "Copy as Markdown", "Copy as JSON", "Download as Markdown", and "Download as JSON". The command palette already has "Copy app info", "Download app info", and "Download app info as JSON" but no way to copy app info as Markdown or as JSON from ⌘K. Adding two palette actions that call `copyAppInfoAsMarkdownToClipboard({ version, theme })` and `copyAppInfoAsJsonToClipboard({ version, theme })` (existing libs) lets keyboard-first users paste app info in Markdown or JSON format without opening the Configuration page. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx**: Import `copyAppInfoAsMarkdownToClipboard` from `@/lib/download-app-info-md` and `copyAppInfoAsJsonToClipboard` from `@/lib/download-app-info-json`. Add `handleCopyAppInfoAsMarkdown` and `handleCopyAppInfoAsJson`: get version via `getAppVersion()`, call respective lib with `{ version, theme: effectiveTheme }`, then close palette (libs already toast). Add two action entries after "Download app info as JSON": "Copy app info as Markdown", "Copy app info as JSON".
+- **keyboard-shortcuts.ts**: Add two entries in the Command palette group: "Copy app info as Markdown", "Copy app info as JSON".
+- **ADR** `.cursor/adr/0223-command-palette-copy-app-info-md-json.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0223-command-palette-copy-app-info-md-json.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import copy libs, two handlers, two action entries.
+- `src/data/keyboard-shortcuts.ts` — two shortcut descriptions in Command palette group.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add handleCopyAppInfoAsMarkdown and handleCopyAppInfoAsJson + two action entries in CommandPalette.tsx.
+- [x] Add "Copy app info as Markdown" and "Copy app info as JSON" to keyboard-shortcuts.ts Command palette group.
+- [x] Add ADR .cursor/adr/0223-command-palette-copy-app-info-md-json.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette actions **"Copy app info as Markdown"** and **"Copy app info as JSON"** let users copy app info (version, theme, mode, data folder) to the clipboard in Markdown or JSON format from ⌘K without opening the Configuration page. Implemented by reusing existing libs: `copyAppInfoAsMarkdownToClipboard({ version, theme })` from `@/lib/download-app-info-md` and `copyAppInfoAsJsonToClipboard({ version, theme })` from `@/lib/download-app-info-json`. Palette handlers resolve version via `getAppVersion()`, use `effectiveTheme`, call the lib (which shows success/error toast), then close the palette. Two entries added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0223-command-palette-copy-app-info-md-json.md` documents the decision.
+
+**Files created**
+
+- `.cursor/adr/0223-command-palette-copy-app-info-md-json.md` — ADR for this feature.
+
+**Files touched**
+
+- `src/components/shared/CommandPalette.tsx` — import `copyAppInfoAsMarkdownToClipboard`, `copyAppInfoAsJsonToClipboard`; `handleCopyAppInfoAsMarkdown`, `handleCopyAppInfoAsJson`; two action entries ("Copy app info as Markdown", "Copy app info as JSON"); useMemo deps.
+- `src/data/keyboard-shortcuts.ts` — two entries in Command palette group: "Copy app info as Markdown", "Copy app info as JSON".
+- `.cursor/worker/night-shift-plan.md` — this entry, checklist, and Outcome.
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Command palette — Download/Copy tech stack)
+
+### Chosen Feature
+
+**Command palette: Download tech stack and Copy tech stack (Markdown and JSON)** — The Technologies page offers download/copy for the tech stack (Markdown and JSON). The command palette has "Go to Technologies" but no way to export or copy the tech stack from ⌘K. Adding four palette actions (download/copy × Markdown/JSON) that fetch the current tech stack (Tauri: `read_file_text` for `.cursor/technologies/tech-stack.json`; browser: `GET /api/data/technologies` then `files["tech-stack.json"]`) and call the existing export libs lets keyboard-first users export the tech stack without opening the Technologies page. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **New lib** `src/lib/fetch-tech-stack.ts`: Export `fetchTechStack(): Promise<TechStackExport | null>`. In Tauri invoke `read_file_text` with path `.cursor/technologies/tech-stack.json`, parse JSON to `TechStackExport`. In browser fetch `/api/data/technologies`, use `data.files["tech-stack.json"]`, parse to `TechStackExport`. On error toast and return null. Reuse `TechStackExport` from `@/lib/download-tech-stack`.
+- **CommandPalette.tsx**: Import `fetchTechStack`, `downloadTechStackAsMarkdown`, `downloadTechStack`, `copyTechStackAsMarkdownToClipboard` from `@/lib/download-tech-stack`, `copyTechStackToClipboard` from `@/lib/copy-tech-stack`. Add handlers: fetch tech stack then call respective lib; for copy show success toast if lib returns true. Add four action entries after ideas entries: "Download tech stack", "Download tech stack as JSON", "Copy tech stack", "Copy tech stack as JSON".
+- **keyboard-shortcuts.ts**: Add four entries in the Command palette group: "Download tech stack", "Download tech stack as JSON", "Copy tech stack", "Copy tech stack as JSON".
+- **ADR** `.cursor/adr/0222-command-palette-download-copy-tech-stack.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/fetch-tech-stack.ts` — dual-mode fetch for tech stack (Tauri read_file_text / API fetch).
+- `.cursor/adr/0222-command-palette-download-copy-tech-stack.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import fetch + export libs, four handlers, four action entries.
+- `src/data/keyboard-shortcuts.ts` — four shortcut descriptions in Command palette group.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create src/lib/fetch-tech-stack.ts (fetchTechStack, dual-mode).
+- [x] Add four handlers and four action entries in CommandPalette.tsx.
+- [x] Add four entries to keyboard-shortcuts.ts Command palette group.
+- [x] Add ADR .cursor/adr/0222-command-palette-download-copy-tech-stack.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette actions **"Download tech stack"**, **"Download tech stack as JSON"**, **"Copy tech stack"**, and **"Copy tech stack as JSON"** let users export the tech stack (from `.cursor/technologies/tech-stack.json`) from ⌘K without opening the Technologies page. Implemented via a new dual-mode lib `src/lib/fetch-tech-stack.ts` (`fetchTechStack()`: Tauri uses `read_file_text` for `.cursor/technologies/tech-stack.json`; browser uses `GET /api/data/technologies` and `files["tech-stack.json"]`). Palette handlers fetch the tech stack then call existing export libs: `downloadTechStackAsMarkdown`, `downloadTechStack`, `copyTechStackAsMarkdownToClipboard`, `copyTechStackToClipboard` (same format and toasts as Technologies page). When fetch fails or file is missing, a single error toast is shown and the palette closes without calling the export libs. Four entries added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0222-command-palette-download-copy-tech-stack.md` documents the decision.
+
+**Files created**
+
+- `src/lib/fetch-tech-stack.ts` — `fetchTechStack(): Promise<TechStackExport | null>` for Tauri/browser.
+- `.cursor/adr/0222-command-palette-download-copy-tech-stack.md` — ADR for this feature.
+
+**Files touched**
+
+- `src/components/shared/CommandPalette.tsx` — import `fetchTechStack`, download/copy tech stack libs; `handleDownloadTechStack`, `handleDownloadTechStackJson`, `handleCopyTechStack`, `handleCopyTechStackJson`; four action entries; useMemo deps.
+- `src/data/keyboard-shortcuts.ts` — four entries in Command palette group: "Download tech stack", "Download tech stack as JSON", "Copy tech stack", "Copy tech stack as JSON".
+- `.cursor/worker/night-shift-plan.md` — this entry, checklist, and Outcome.
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Relative time with absolute tooltip)
+
+### Chosen Feature
+
+**Relative time with absolute tooltip** — The Run tab History and the Dashboard show relative times ("2 h ago", "Last refreshed: 5 min ago") and some places use a native `title` for the full date. Adding a reusable `RelativeTimeWithTooltip` component that shows relative time with a shadcn Tooltip displaying the full absolute timestamp gives consistent UX and makes the Run history cell cleaner (show only "2 h ago" with hover for full date). Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **New atom** `src/components/atoms/displays/RelativeTimeWithTooltip.tsx`: Accept `timestamp` as `number` (ms) or `string` (ISO). Render relative time via `formatRelativeTime`; wrap in shadcn `Tooltip` with `TooltipContent` showing `formatTimestampFull(iso)`. Use existing `format-relative-time` and `format-timestamp` libs.
+- **ProjectRunTab.tsx**: In the History table timestamp cell, replace `formatTimeWithRelative(h.timestamp)` and the cell's native `title` with `<RelativeTimeWithTooltip timestamp={h.timestamp} />` so the cell shows only relative time with tooltip for full date.
+- **DashboardTabContent.tsx**: Replace the "Last refreshed" span (with native title) with `<RelativeTimeWithTooltip timestamp={lastRefreshedAt} />` for consistent Tooltip UI.
+- **ADR** `.cursor/adr/0221-relative-time-with-tooltip.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/components/atoms/displays/RelativeTimeWithTooltip.tsx` — atom component (relative time + tooltip with full date).
+- `.cursor/adr/0221-relative-time-with-tooltip.md` — ADR for this feature.
+
+### Files to Touch (minimise this list)
+
+- `src/components/molecules/TabAndContentSections/ProjectRunTab.tsx` — use RelativeTimeWithTooltip in History timestamp cell.
+- `src/components/molecules/TabAndContentSections/DashboardTabContent.tsx` — use RelativeTimeWithTooltip for Last refreshed.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create src/components/atoms/displays/RelativeTimeWithTooltip.tsx.
+- [x] Use RelativeTimeWithTooltip in ProjectRunTab History timestamp cell.
+- [x] Use RelativeTimeWithTooltip in DashboardTabContent for Last refreshed.
+- [x] Add ADR .cursor/adr/0221-relative-time-with-tooltip.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — A reusable **RelativeTimeWithTooltip** atom component that shows relative time (e.g. "2 h ago") with a shadcn Tooltip displaying the full absolute timestamp on hover. Implemented in `src/components/atoms/displays/RelativeTimeWithTooltip.tsx`: accepts `timestamp` as `number` (ms) or `string` (ISO), uses `formatRelativeTime` and `formatTimestampFull`, invalid timestamps render as "—". **ProjectRunTab** History table timestamp cell now shows only relative time with tooltip (replaced inline "absolute (relative)" and native title). **DashboardTabContent** "Last refreshed" now uses the same component instead of native `title`. ADR `.cursor/adr/0221-relative-time-with-tooltip.md` documents the decision.
+
+**Files created**
+
+- `src/components/atoms/displays/RelativeTimeWithTooltip.tsx` — atom component.
+- `.cursor/adr/0221-relative-time-with-tooltip.md` — ADR for this feature.
+
+**Files touched**
+
+- `src/components/molecules/TabAndContentSections/ProjectRunTab.tsx` — import RelativeTimeWithTooltip; removed formatTimeWithRelative and formatTimestamp/formatRelativeTime imports; History timestamp cell uses `<RelativeTimeWithTooltip timestamp={h.timestamp} className="font-mono" />`.
+- `src/components/molecules/TabAndContentSections/DashboardTabContent.tsx` — import RelativeTimeWithTooltip; "Last refreshed" span now wraps `<RelativeTimeWithTooltip timestamp={lastRefreshedAt} />`; removed formatRelativeTime and formatTimestampFull imports.
+- `.cursor/worker/night-shift-plan.md` — this entry, checklist, and Outcome.
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Run history stats summary)
+
+### Chosen Feature
+
+**Run history stats summary** — The Run tab History section shows a table of completed runs with filters and "Showing X of Y runs" but no aggregate summary (passed/failed counts, total duration). Adding a small stats module that computes total runs, success/fail counts, and total duration from the current (filtered) history, and displaying a one-line summary in the History header gives users at-a-glance feedback. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **New lib** `src/lib/run-history-stats.ts`: Export `RunHistoryStats` type (`totalRuns`, `successCount`, `failCount`, `totalDurationMs`), `computeRunHistoryStats(entries: TerminalOutputHistoryEntry[]): RunHistoryStats`, and `formatRunHistoryStatsSummary(stats: RunHistoryStats): string` (e.g. "42 runs, 38 passed, 4 failed, 2h 15m total"). Use `formatDurationMs` from run-helpers for &lt; 1h; for ≥ 1h use "Xh Ym".
+- **ProjectRunTab.tsx** (WorkerHistorySection): Import `computeRunHistoryStats` and `formatRunHistoryStatsSummary`. Compute stats from `displayHistory`. In the toolbar row next to "Showing X of Y runs", show the summary (e.g. "38 passed, 4 failed · 2h 15m total") when there is at least one run.
+- **ADR** `.cursor/adr/0220-run-history-stats-summary.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/run-history-stats.ts` — compute stats and format summary string.
+- `src/lib/__tests__/run-history-stats.test.ts` — unit tests for compute and format.
+- `.cursor/adr/0220-run-history-stats-summary.md` — ADR for this feature.
+
+### Files to Touch (minimise this list)
+
+- `src/components/molecules/TabAndContentSections/ProjectRunTab.tsx` — use stats in History section header/toolbar.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create src/lib/run-history-stats.ts (RunHistoryStats, computeRunHistoryStats, formatRunHistoryStatsSummary).
+- [x] Create src/lib/__tests__/run-history-stats.test.ts.
+- [x] Show stats summary in ProjectRunTab History section (toolbar row).
+- [x] Add ADR .cursor/adr/0220-run-history-stats-summary.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Run tab History section now shows a compact stats summary in the toolbar (e.g. "38 passed, 4 failed · 2h 15m total") for the currently displayed run set (filtered and sorted). Stats are computed from the same `displayHistory` as the table. New module `src/lib/run-history-stats.ts` provides `RunHistoryStats`, `computeRunHistoryStats(entries)`, `formatRunHistoryStatsSummary(stats)`, and `formatRunHistoryStatsToolbar(stats)`. Duration uses existing `formatDurationMs` from run-helpers for &lt; 1h; for ≥ 1h the summary uses "Xh Ym". Unit tests in `src/lib/__tests__/run-history-stats.test.ts` cover empty list, success/fail counts, duration sum, and both formatters.
+
+**Files created**
+
+- `src/lib/run-history-stats.ts` — stats computation and summary/toolbar formatters.
+- `src/lib/__tests__/run-history-stats.test.ts` — unit tests.
+- `.cursor/adr/0220-run-history-stats-summary.md` — ADR for this feature.
+
+**Files touched**
+
+- `src/components/molecules/TabAndContentSections/ProjectRunTab.tsx` — import run-history-stats; `historyStats` and `historyStatsToolbarText` from `displayHistory`; toolbar row shows stats when non-empty.
+- `.cursor/worker/night-shift-plan.md` — this entry, checklist, and Outcome.
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Command palette — Download ideas and Copy ideas)
+
+### Chosen Feature
+
+**Command palette: Download ideas and Copy ideas (Markdown and JSON)** — The Ideas page offers "Download as Markdown", "Copy as Markdown", "Download as JSON", and "Copy as JSON" for the My Ideas list. The command palette has "Go to Ideas" but no way to export or copy ideas from ⌘K. Adding four palette actions (download/copy × Markdown/JSON) that fetch the current ideas list (Tauri: `get_ideas_list` with no project; browser: `/api/data/ideas`) and call the existing export libs lets keyboard-first users export ideas without opening the Ideas page. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **New lib** `src/lib/fetch-ideas.ts`: Export `fetchIdeas(): Promise<IdeaRecord[]>`. In Tauri invoke `get_ideas_list` with `project_id: null`, map rows to `IdeaRecord` (id, title, description, category, source, created_at, updated_at). In browser fetch `/api/data/ideas` and return JSON. On error toast and return [].
+- **CommandPalette.tsx**: Import `fetchIdeas`, `downloadMyIdeasAsMarkdown`, `downloadMyIdeasAsJson`, `copyAllMyIdeasMarkdownToClipboard`, `copyMyIdeasAsJsonToClipboard`. Add handlers: fetch ideas then call respective lib; for copy Markdown show success toast if lib returns true. Add four action entries after documentation copy entries: "Download ideas", "Download ideas as JSON", "Copy ideas", "Copy ideas as JSON".
+- **keyboard-shortcuts.ts**: Add four entries in the Command palette group: "Download ideas", "Download ideas as JSON", "Copy ideas", "Copy ideas as JSON".
+- **ADR** `.cursor/adr/0219-command-palette-download-copy-ideas.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/fetch-ideas.ts` — dual-mode fetch for ideas list (Tauri invoke / API fetch).
+- `.cursor/adr/0219-command-palette-download-copy-ideas.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import fetch + export libs, four handlers, four action entries.
+- `src/data/keyboard-shortcuts.ts` — four shortcut descriptions in Command palette group.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create src/lib/fetch-ideas.ts (fetchIdeas, dual-mode).
+- [x] Add four handlers and four action entries in CommandPalette.tsx.
+- [x] Add four entries to keyboard-shortcuts.ts Command palette group.
+- [x] Add ADR .cursor/adr/0219-command-palette-download-copy-ideas.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette actions **"Download ideas"**, **"Download ideas as JSON"**, **"Copy ideas"**, and **"Copy ideas as JSON"** let users export the My Ideas list from ⌘K without opening the Ideas page. Implemented via a new dual-mode lib `src/lib/fetch-ideas.ts` (`fetchIdeas()`: Tauri uses `get_ideas_list` with no project; browser uses `GET /api/data/ideas`). Palette handlers fetch ideas then call existing export libs: `downloadMyIdeasAsMarkdown`, `downloadMyIdeasAsJson`, `copyAllMyIdeasMarkdownToClipboard`, `copyMyIdeasAsJsonToClipboard` (same format and toasts as Ideas page). Four entries added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0219-command-palette-download-copy-ideas.md` documents the decision.
+
+**Files created**
+
+- `src/lib/fetch-ideas.ts` — `fetchIdeas(): Promise<IdeaRecord[]>` for Tauri/browser.
+- `.cursor/adr/0219-command-palette-download-copy-ideas.md` — ADR for this feature.
+
+**Files touched**
+
+- `src/components/shared/CommandPalette.tsx` — import `fetchIdeas`, download/copy ideas libs; `handleDownloadIdeas`, `handleDownloadIdeasJson`, `handleCopyIdeas`, `handleCopyIdeasJson`; four action entries; useMemo deps.
+- `src/data/keyboard-shortcuts.ts` — four entries in Command palette group: "Download ideas", "Download ideas as JSON", "Copy ideas", "Copy ideas as JSON".
+- `.cursor/worker/night-shift-plan.md` — this entry, checklist, and Outcome.
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Command palette — Copy prompts / Download prompts)
+
+### Chosen Feature
+
+**Command palette: Copy prompts and Download prompts (Markdown)** — The Prompts page offers "Export MD", "Copy as Markdown", "Export JSON", etc. for general prompts. The command palette has no way to copy or download the current prompts list from ⌘K. Adding two palette actions that use the run store's `prompts` (same dataset as Run tab) and call `copyAllPromptsAsMarkdownToClipboard(prompts)` and `downloadAllPromptsAsMarkdown(prompts)` lets keyboard-first users export prompts without opening the Prompts page. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx**: Import `copyAllPromptsAsMarkdownToClipboard` and `downloadAllPromptsAsMarkdown` from `@/lib/download-all-prompts-md`. Read `prompts` from `useRunStore(s => s.prompts)`. Map to export shape (id, title, content). Add `handleCopyPrompts`: call `copyAllPromptsAsMarkdownToClipboard(promptsForExport)` (toast from lib), then close palette. Add `handleDownloadPrompts`: call `downloadAllPromptsAsMarkdown(promptsForExport)` (toast from lib), then close palette. Add two action entries: "Copy prompts" (Copy icon) and "Download prompts" (Download icon), e.g. after documentation actions.
+- **keyboard-shortcuts.ts**: Add two entries in the Command palette group: "Copy prompts", "Download prompts".
+- **ADR** `.cursor/adr/0218-command-palette-copy-download-prompts.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0218-command-palette-copy-download-prompts.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import prompt export lib, two handlers, two action entries.
+- `src/data/keyboard-shortcuts.ts` — two shortcut descriptions in Command palette group.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add handlers and actions in CommandPalette.tsx (import from download-all-prompts-md; handleCopyPrompts, handleDownloadPrompts; two action entries).
+- [x] Add "Copy prompts" and "Download prompts" to keyboard-shortcuts.ts Command palette group.
+- [x] Add ADR .cursor/adr/0218-command-palette-copy-download-prompts.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette actions **"Copy prompts"** and **"Download prompts"** export the current prompts list (from the run store, same dataset as the Run tab) as Markdown from ⌘K. Copy pastes to clipboard; Download saves `all-prompts-{timestamp}.md`. If there are no prompts, the existing lib shows "No prompts to export" toast. Implemented in `CommandPalette.tsx` via `promptsForExport` (mapped from `useRunStore(s => s.prompts)`), `handleCopyPrompts` (calls `copyAllPromptsAsMarkdownToClipboard` from `@/lib/download-all-prompts-md`), and `handleDownloadPrompts` (calls `downloadAllPromptsAsMarkdown`). Two entries added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0218-command-palette-copy-download-prompts.md` documents the decision.
+
+**Files created**
+
+- `.cursor/adr/0218-command-palette-copy-download-prompts.md` — ADR for this feature.
+
+**Files touched**
+
+- `src/components/shared/CommandPalette.tsx` — import `copyAllPromptsAsMarkdownToClipboard`, `downloadAllPromptsAsMarkdown` from `@/lib/download-all-prompts-md`; `prompts` from store; `promptsForExport` useMemo; `handleCopyPrompts`, `handleDownloadPrompts`; action entries "Copy prompts" (Copy icon), "Download prompts" (Download icon) after documentation actions; useMemo dependency array.
+- `src/data/keyboard-shortcuts.ts` — two entries in Command palette group: "Copy prompts", "Download prompts".
+- `.cursor/worker/night-shift-plan.md` — this entry, checklist, and Outcome.
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Command palette — Copy documentation info)
+
+### Chosen Feature
+
+**Command palette: Copy documentation info (Markdown and JSON)** — The Documentation page offers "Download as Markdown", "Copy as Markdown", "Copy as JSON", and "Download as JSON". The command palette already has "Download documentation info" and "Download documentation info as JSON" but no way to copy documentation info to the clipboard from ⌘K. Adding two palette actions that call `copyDocumentationInfoAsMarkdownToClipboard()` and `copyDocumentationInfoAsJsonToClipboard()` lets keyboard-first users paste documentation page info (paths and descriptions for `.cursor/documentation/` and `docs/`) without opening the Documentation page. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx**: Import `copyDocumentationInfoAsMarkdownToClipboard` from `@/lib/download-documentation-info-md` and `copyDocumentationInfoAsJsonToClipboard` from `@/lib/download-documentation-info-json`. Add `handleCopyDocumentationInfo` and `handleCopyDocumentationInfoJson`: await the respective lib (toast from lib), then close palette. Add two action entries after "Download documentation info as JSON": "Copy documentation info" (Copy icon) and "Copy documentation info as JSON" (FileJson icon).
+- **keyboard-shortcuts.ts**: Add two entries in the Command palette group: "Copy documentation info", "Copy documentation info as JSON".
+- **ADR** `.cursor/adr/0217-command-palette-copy-documentation-info.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0217-command-palette-copy-documentation-info.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import copy helpers, two handlers, two action entries.
+- `src/data/keyboard-shortcuts.ts` — two shortcut descriptions in Command palette group.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add handlers and actions in CommandPalette.tsx (import copyDocumentationInfoAsMarkdownToClipboard, copyDocumentationInfoAsJsonToClipboard; handleCopyDocumentationInfo, handleCopyDocumentationInfoJson; two action entries).
+- [x] Add "Copy documentation info" and "Copy documentation info as JSON" to keyboard-shortcuts.ts Command palette group.
+- [x] Add ADR .cursor/adr/0217-command-palette-copy-documentation-info.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette actions **"Copy documentation info"** and **"Copy documentation info as JSON"** copy Documentation page info (paths and descriptions for `.cursor/documentation/` and `docs/`) to the clipboard from ⌘K. Same content as the Documentation page "Copy as Markdown" and "Copy as JSON". Implemented in `CommandPalette.tsx` via `handleCopyDocumentationInfo` and `handleCopyDocumentationInfoJson`: call `copyDocumentationInfoAsMarkdownToClipboard()` from `@/lib/download-documentation-info-md` and `copyDocumentationInfoAsJsonToClipboard()` from `@/lib/download-documentation-info-json` (toasts from lib), then close the palette. Two entries added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0217-command-palette-copy-documentation-info.md` documents the decision.
+
+**Files created**
+
+- `.cursor/adr/0217-command-palette-copy-documentation-info.md` — ADR for this feature.
+
+**Files touched**
+
+- `src/components/shared/CommandPalette.tsx` — import `copyDocumentationInfoAsMarkdownToClipboard`, `copyDocumentationInfoAsJsonToClipboard`; `handleCopyDocumentationInfo`, `handleCopyDocumentationInfoJson`; action entries "Copy documentation info" (Copy icon), "Copy documentation info as JSON" (FileJson icon); useMemo dependency array.
+- `src/data/keyboard-shortcuts.ts` — two entries in Command palette group: "Copy documentation info", "Copy documentation info as JSON".
+- `.cursor/worker/night-shift-plan.md` — this entry, checklist, and Outcome.
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Command palette — Download documentation info)
+
+### Chosen Feature
+
+**Command palette: Download documentation info (Markdown and JSON)** — The Documentation page offers "Download as Markdown", "Copy as Markdown", "Copy as JSON", and "Download as JSON". The command palette has "Open documentation folder" but no way to download documentation info as a file from ⌘K. Adding two palette actions that call `downloadDocumentationInfoAsMarkdown()` and `downloadDocumentationInfoAsJson()` lets keyboard-first users export documentation page info (paths and descriptions for `.cursor/documentation/` and `docs/`) without opening the Documentation page. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx**: Import `downloadDocumentationInfoAsMarkdown` from `@/lib/download-documentation-info-md` and `downloadDocumentationInfoAsJson` from `@/lib/download-documentation-info-json`. Add `handleDownloadDocumentationInfo` and `handleDownloadDocumentationInfoJson`: call the respective lib (toast from lib), then close palette. Add two action entries after "Open documentation folder": "Download documentation info" (Markdown) and "Download documentation info as JSON" (FileJson).
+- **keyboard-shortcuts.ts**: Add two entries in the Command palette group: "Download documentation info", "Download documentation info as JSON".
+- **ADR** `.cursor/adr/0216-command-palette-download-documentation-info.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0216-command-palette-download-documentation-info.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import download helpers, two handlers, two action entries.
+- `src/data/keyboard-shortcuts.ts` — two shortcut descriptions in Command palette group.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add handlers and actions in CommandPalette.tsx (import downloadDocumentationInfoAsMarkdown, downloadDocumentationInfoAsJson; handleDownloadDocumentationInfo, handleDownloadDocumentationInfoJson; two action entries).
+- [x] Add "Download documentation info" and "Download documentation info as JSON" to keyboard-shortcuts.ts Command palette group.
+- [x] Add ADR .cursor/adr/0216-command-palette-download-documentation-info.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette actions **"Download documentation info"** and **"Download documentation info as JSON"** export Documentation page info (paths and descriptions for `.cursor/documentation/` and `docs/`) from ⌘K. Same content and filenames as the Documentation page: `documentation-info-{timestamp}.md` and `documentation-info-{timestamp}.json`. Implemented in `CommandPalette.tsx` via `handleDownloadDocumentationInfo` and `handleDownloadDocumentationInfoJson`: call `downloadDocumentationInfoAsMarkdown()` from `@/lib/download-documentation-info-md` and `downloadDocumentationInfoAsJson()` from `@/lib/download-documentation-info-json` (toasts from lib), then close the palette. Two entries added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0216-command-palette-download-documentation-info.md` documents the decision.
+
+**Files created**
+
+- `.cursor/adr/0216-command-palette-download-documentation-info.md` — ADR for this feature.
+
+**Files touched**
+
+- `src/components/shared/CommandPalette.tsx` — import `downloadDocumentationInfoAsMarkdown`, `downloadDocumentationInfoAsJson`; `handleDownloadDocumentationInfo`, `handleDownloadDocumentationInfoJson`; action entries "Download documentation info" (Download icon), "Download documentation info as JSON" (FileJson icon), after "Open documentation folder"; useMemo dependency array.
+- `src/data/keyboard-shortcuts.ts` — two entries in Command palette group: "Download documentation info", "Download documentation info as JSON".
+- `.cursor/worker/night-shift-plan.md` — this entry, checklist, and Outcome.
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Command palette — Copy last run to clipboard)
+
+### Chosen Feature
+
+**Command palette: Copy last run to clipboard** — The palette has "Copy run history to clipboard" (full history) and the Run tab has per-run "Copy plain" for a single run. Keyboard-first users had no way to copy only the most recent run as plain text from ⌘K without opening the Run tab. Adding a palette action that copies `terminalOutputHistory[0]` via `copySingleRunAsPlainTextToClipboard(entry)` (or shows "No run history to copy" when empty) gives a real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx**: Import `copySingleRunAsPlainTextToClipboard` from `@/lib/copy-single-run-as-plain-text`. Add `handleCopyLastRun`: if `terminalOutputHistory[0]` exists, call `copySingleRunAsPlainTextToClipboard(terminalOutputHistory[0])`, else `toast.info("No run history to copy")`; then close palette. Add action entry after "Copy run history to clipboard" with label "Copy last run to clipboard" and Copy icon.
+- **keyboard-shortcuts.ts**: Add one entry in the Command palette group: "Copy last run to clipboard".
+- **ADR** `.cursor/adr/0215-command-palette-copy-last-run-to-clipboard.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0215-command-palette-copy-last-run-to-clipboard.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import copySingleRunAsPlainTextToClipboard, handler, one action entry.
+- `src/data/keyboard-shortcuts.ts` — one shortcut description in Command palette group.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add handler and action in CommandPalette.tsx (import copySingleRunAsPlainTextToClipboard, handleCopyLastRun, action entry).
+- [x] Add "Copy last run to clipboard" to keyboard-shortcuts.ts Command palette group.
+- [x] Add ADR .cursor/adr/0215-command-palette-copy-last-run-to-clipboard.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette action **"Copy last run to clipboard"** copies the most recent run's output as plain text from ⌘K (same format as Run tab "Copy plain" for a single run). If run history is empty, the palette shows a toast "No run history to copy" and closes. Implemented in `CommandPalette.tsx` via `handleCopyLastRun`: reads `terminalOutputHistory[0]` from `useRunStore`, calls `copySingleRunAsPlainTextToClipboard(lastRun)` from `@/lib/copy-single-run-as-plain-text` (toast "Run copied to clipboard" comes from the lib), then closes the palette. Entry added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0215-command-palette-copy-last-run-to-clipboard.md` documents the decision.
+
+**Files created**
+
+- `.cursor/adr/0215-command-palette-copy-last-run-to-clipboard.md` — ADR for this feature.
+
+**Files touched**
+
+- `src/components/shared/CommandPalette.tsx` — import `copySingleRunAsPlainTextToClipboard`; `handleCopyLastRun`; action entry "Copy last run to clipboard" (Copy icon, after "Copy run history to clipboard"); useMemo dependency array.
+- `src/data/keyboard-shortcuts.ts` — one entry in Command palette group: "Copy last run to clipboard".
+- `.cursor/worker/night-shift-plan.md` — this entry, checklist, and Outcome.
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Command palette — Download app info as JSON)
+
+### Chosen Feature
+
+**Command palette: Download app info as JSON** — The Configuration page offers "Copy app info", "Download as Markdown", "Copy as Markdown", "Copy as JSON", and "Download as JSON". The command palette already has "Copy app info" and "Download app info" (Markdown). Keyboard-first users had no way to download app info as JSON from ⌘K. Adding a palette action that calls `downloadAppInfoAsJson({ version, theme })` lets users export the same JSON file (app-info-{timestamp}.json) from the palette. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx**: Import `downloadAppInfoAsJson` from `@/lib/download-app-info-json`. Add `handleDownloadAppInfoJson`: resolve version via `getAppVersion()`, theme from effective theme (same as handleDownloadAppInfo), call `downloadAppInfoAsJson({ version, theme })` (shows toast), then close palette. Add action entry after "Download app info" with label "Download app info as JSON" and FileJson icon.
+- **keyboard-shortcuts.ts**: Add one entry in the Command palette group: "Download app info as JSON".
+- **ADR** `.cursor/adr/0214-command-palette-download-app-info-json.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0214-command-palette-download-app-info-json.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import downloadAppInfoAsJson, handler, one action entry (FileJson already imported).
+- `src/data/keyboard-shortcuts.ts` — one shortcut description in Command palette group.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add handler and action in CommandPalette.tsx (import downloadAppInfoAsJson, handleDownloadAppInfoJson, action entry).
+- [x] Add "Download app info as JSON" to keyboard-shortcuts.ts Command palette group.
+- [x] Add ADR .cursor/adr/0214-command-palette-download-app-info-json.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette action **"Download app info as JSON"** exports app info (version, theme, mode, data folder) as a JSON file from ⌘K. Same payload as Configuration page "Download as JSON": `app-info-{timestamp}.json` with `{ exportedAt, version, theme, mode, dataFolder }`. Implemented in `CommandPalette.tsx` via `handleDownloadAppInfoJson`: resolves version with `getAppVersion()`, theme from `effectiveTheme`, calls `downloadAppInfoAsJson({ version, theme })` from `@/lib/download-app-info-json` (shows "App info exported as JSON" toast), then closes the palette. Entry added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0214-command-palette-download-app-info-json.md` documents the decision.
+
+**Files created**
+
+- `.cursor/adr/0214-command-palette-download-app-info-json.md` — ADR for this feature.
+
+**Files touched**
+
+- `src/components/shared/CommandPalette.tsx` — import `downloadAppInfoAsJson`; `handleDownloadAppInfoJson`; action entry "Download app info as JSON" (FileJson icon, after "Download app info"); useMemo dependency array.
+- `src/data/keyboard-shortcuts.ts` — one entry in Command palette group: "Download app info as JSON".
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Command palette — Copy keyboard shortcuts as JSON)
+
+### Chosen Feature
+
+**Command palette: Copy keyboard shortcuts as JSON** — The Shortcuts help dialog (Shift+?) offers Copy as Markdown and Copy as JSON. The command palette has "Copy keyboard shortcuts" (Markdown) and Download as Markdown/JSON/CSV. Keyboard-first users had no way to copy keyboard shortcuts as JSON from ⌘K. Adding a palette action that calls `copyKeyboardShortcutsAsJsonToClipboard()` lets users paste the same JSON payload to clipboard from the palette. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx**: Import `copyKeyboardShortcutsAsJsonToClipboard` from `@/lib/export-keyboard-shortcuts`. Add `handleCopyKeyboardShortcutsJson`: await `copyKeyboardShortcutsAsJsonToClipboard()` (toast from lib), then close palette. Add action entry after "Copy keyboard shortcuts" with label "Copy keyboard shortcuts as JSON" and FileJson icon.
+- **keyboard-shortcuts.ts**: Add one entry in the Command palette group: "Copy keyboard shortcuts as JSON".
+- **ADR** `.cursor/adr/0213-command-palette-copy-keyboard-shortcuts-json.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0213-command-palette-copy-keyboard-shortcuts-json.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import copyKeyboardShortcutsAsJsonToClipboard, handler, one action entry (FileJson already imported).
+- `src/data/keyboard-shortcuts.ts` — one shortcut description in Command palette group.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add handler and action in CommandPalette.tsx (import copyKeyboardShortcutsAsJsonToClipboard, handleCopyKeyboardShortcutsJson, action entry).
+- [x] Add "Copy keyboard shortcuts as JSON" to keyboard-shortcuts.ts Command palette group.
+- [x] Add ADR .cursor/adr/0213-command-palette-copy-keyboard-shortcuts-json.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette action **"Copy keyboard shortcuts as JSON"** copies the keyboard shortcuts list as JSON to the clipboard from ⌘K (same payload as Shortcuts dialog "Copy as JSON": `{ exportedAt, groups }`). Implemented in `CommandPalette.tsx` via `handleCopyKeyboardShortcutsJson`: calls `copyKeyboardShortcutsAsJsonToClipboard()` from `@/lib/export-keyboard-shortcuts` (toast "Keyboard shortcuts copied as JSON" or "Failed to copy to clipboard"), then closes the palette. Entry added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0213-command-palette-copy-keyboard-shortcuts-json.md` documents the decision.
+
+**Files created**
+
+- `.cursor/adr/0213-command-palette-copy-keyboard-shortcuts-json.md` — ADR for this feature.
+
+**Files touched**
+
+- `src/components/shared/CommandPalette.tsx` — import `copyKeyboardShortcutsAsJsonToClipboard`; `handleCopyKeyboardShortcutsJson`; action entry "Copy keyboard shortcuts as JSON" (FileJson icon, after "Copy keyboard shortcuts"); useMemo dependency array.
+- `src/data/keyboard-shortcuts.ts` — one entry in Command palette group: "Copy keyboard shortcuts as JSON".
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Command palette — Download keyboard shortcuts as JSON)
+
+### Chosen Feature
+
+**Command palette: Download keyboard shortcuts as JSON** — The Shortcuts help dialog (Shift+?) offers Download as Markdown, JSON, and CSV. The command palette already has "Download keyboard shortcuts" (Markdown) and "Download keyboard shortcuts as CSV". Keyboard-first users had no way to download keyboard shortcuts as JSON from ⌘K. Adding a palette action that calls `downloadKeyboardShortcutsAsJson()` lets users export the same JSON file (keyboard-shortcuts-{timestamp}.json) from the palette. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx**: Import `downloadKeyboardShortcutsAsJson` from `@/lib/export-keyboard-shortcuts`. Add `handleDownloadKeyboardShortcutsJson`: call `downloadKeyboardShortcutsAsJson()` (shows toast), then close palette. Add action entry after "Download keyboard shortcuts" with label "Download keyboard shortcuts as JSON" and FileJson icon.
+- **keyboard-shortcuts.ts**: Add one entry in the Command palette group: "Download keyboard shortcuts as JSON".
+- **ADR** `.cursor/adr/0212-command-palette-download-keyboard-shortcuts-json.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0212-command-palette-download-keyboard-shortcuts-json.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import downloadKeyboardShortcutsAsJson, handler, one action entry (FileJson already imported).
+- `src/data/keyboard-shortcuts.ts` — one shortcut description in Command palette group.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add handler and action in CommandPalette.tsx (import downloadKeyboardShortcutsAsJson, handleDownloadKeyboardShortcutsJson, action entry).
+- [x] Add "Download keyboard shortcuts as JSON" to keyboard-shortcuts.ts Command palette group.
+- [x] Add ADR .cursor/adr/0212-command-palette-download-keyboard-shortcuts-json.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette action **"Download keyboard shortcuts as JSON"** exports the keyboard shortcuts list as a JSON file from ⌘K (same format as Shortcuts dialog "Download as JSON": `keyboard-shortcuts-{timestamp}.json` with `{ exportedAt, groups }`). Implemented in `CommandPalette.tsx` via `handleDownloadKeyboardShortcutsJson`: calls `downloadKeyboardShortcutsAsJson()` from `@/lib/export-keyboard-shortcuts` (shows "Keyboard shortcuts exported as JSON" toast), then closes the palette. Entry added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0212-command-palette-download-keyboard-shortcuts-json.md` documents the decision.
+
+**Files created**
+
+- `.cursor/adr/0212-command-palette-download-keyboard-shortcuts-json.md` — ADR for this feature.
+
+**Files touched**
+
+- `src/components/shared/CommandPalette.tsx` — import `downloadKeyboardShortcutsAsJson`; `handleDownloadKeyboardShortcutsJson`; action entry "Download keyboard shortcuts as JSON" (FileJson icon, after "Download keyboard shortcuts", before "Download keyboard shortcuts as CSV"); useMemo dependency array.
+- `src/data/keyboard-shortcuts.ts` — one entry in Command palette group: "Download keyboard shortcuts as JSON".
+- `.cursor/worker/night-shift-plan.md` — this entry, checklist, and Outcome.
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Command palette — Download keyboard shortcuts as CSV)
+
+### Chosen Feature
+
+**Command palette: Download keyboard shortcuts as CSV** — The Shortcuts help dialog (Shift+?) offers Download as Markdown, JSON, and CSV. The command palette already has "Copy keyboard shortcuts" and "Download keyboard shortcuts" (Markdown). Keyboard-first users had no way to download keyboard shortcuts as CSV from ⌘K. Adding a palette action that calls `downloadKeyboardShortcutsAsCsv()` lets users export the same CSV file (keyboard-shortcuts-{timestamp}.csv) from the palette. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx**: Import `downloadKeyboardShortcutsAsCsv` from `@/lib/export-keyboard-shortcuts`. Add `handleDownloadKeyboardShortcutsCsv`: call `downloadKeyboardShortcutsAsCsv()` (shows toast), then close palette. Add action entry after "Download keyboard shortcuts" with label "Download keyboard shortcuts as CSV" and FileSpreadsheet icon.
+- **keyboard-shortcuts.ts**: Add one entry in the Command palette group: "Download keyboard shortcuts as CSV".
+- **ADR** `.cursor/adr/0211-command-palette-download-keyboard-shortcuts-csv.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0211-command-palette-download-keyboard-shortcuts-csv.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import downloadKeyboardShortcutsAsCsv, handler, one action entry (FileSpreadsheet already imported).
+- `src/data/keyboard-shortcuts.ts` — one shortcut description in Command palette group.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add handler and action in CommandPalette.tsx (import downloadKeyboardShortcutsAsCsv, handleDownloadKeyboardShortcutsCsv, action entry).
+- [x] Add "Download keyboard shortcuts as CSV" to keyboard-shortcuts.ts Command palette group.
+- [x] Add ADR .cursor/adr/0211-command-palette-download-keyboard-shortcuts-csv.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette action **"Download keyboard shortcuts as CSV"** was already implemented in code (downloadKeyboardShortcutsAsCsv in CommandPalette, keyboard-shortcuts.ts entry, ADR 0211). This plan entry is marked complete; no code changes in this run.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Command palette — Download run history as CSV)
+
+### Chosen Feature
+
+**Command palette: Download run history as CSV** — The Run tab offers "Download all" (plain), "Download as JSON", "Download as CSV", and "Download as Markdown". The command palette already has "Download run history", "Download run history as JSON", and "Download run history as Markdown". Keyboard-first users had no way to download run history as CSV from ⌘K. Adding a palette action that calls `downloadAllRunHistoryCsv(terminalOutputHistory)` lets users export the same CSV file (run-history-{timestamp}.csv) from the palette. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx**: Import `downloadAllRunHistoryCsv` from `@/lib/download-all-run-history-csv`. Add `handleDownloadRunHistoryCsv`: call `downloadAllRunHistoryCsv(terminalOutputHistory)` (shows toast), then close palette. Add action entry after "Download run history as Markdown" with label "Download run history as CSV" and FileSpreadsheet icon.
+- **keyboard-shortcuts.ts**: Add one entry in the Command palette group: "Download run history as CSV".
+- **ADR** `.cursor/adr/0210-command-palette-download-run-history-csv.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0210-command-palette-download-run-history-csv.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import downloadAllRunHistoryCsv, FileSpreadsheet icon, handler, one action entry.
+- `src/data/keyboard-shortcuts.ts` — one shortcut description in Command palette group.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add handler and action in CommandPalette.tsx (import downloadAllRunHistoryCsv, handleDownloadRunHistoryCsv, action entry).
+- [x] Add "Download run history as CSV" to keyboard-shortcuts.ts Command palette group.
+- [x] Add ADR .cursor/adr/0210-command-palette-download-run-history-csv.md.
+- [x] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette action **"Download run history as CSV"** exports the full run history as a CSV file (`run-history-{timestamp}.csv`, columns: timestamp, label, slot, exit_code, duration, output) from ⌘K. Implemented in `CommandPalette.tsx` via `handleDownloadRunHistoryCsv`: calls `downloadAllRunHistoryCsv(terminalOutputHistory)` from `@/lib/download-all-run-history-csv` (shows "No history to export" or "History exported as CSV" toast), then closes the palette. Entry added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0210-command-palette-download-run-history-csv.md` documents the decision.
+
+**Files created**
+
+- `.cursor/adr/0210-command-palette-download-run-history-csv.md` — ADR for this feature.
+
+**Files touched**
+
+- `src/components/shared/CommandPalette.tsx` — import `downloadAllRunHistoryCsv`, `FileSpreadsheet`; `handleDownloadRunHistoryCsv`; action entry "Download run history as CSV" (after "Download run history as Markdown"); useMemo dependency array.
+- `src/data/keyboard-shortcuts.ts` — one entry in Command palette group.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Command palette — Download run history as Markdown)
+
+### Chosen Feature
+
+**Command palette: Download run history as Markdown** — The Run tab offers "Download all" (plain), "Download as JSON", "Download as CSV", and "Download as Markdown". The command palette already has "Download run history" (plain) and "Download run history as JSON". Keyboard-first users had no way to download run history as Markdown from ⌘K. Adding a palette action that calls `downloadAllRunHistoryMarkdown(terminalOutputHistory)` lets users export the same Markdown file (run-history-{timestamp}.md) from the palette. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx**: Import `downloadAllRunHistoryMarkdown` from `@/lib/download-all-run-history-md`. Add `handleDownloadRunHistoryMarkdown`: call `downloadAllRunHistoryMarkdown(terminalOutputHistory)` (shows toast), then close palette. Add action entry after "Download run history as JSON" with label "Download run history as Markdown" and FileText icon.
+- **keyboard-shortcuts.ts**: Add one entry in the Command palette group: "Download run history as Markdown".
+- **ADR** `.cursor/adr/0209-command-palette-download-run-history-markdown.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0209-command-palette-download-run-history-markdown.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import downloadAllRunHistoryMarkdown, FileText icon, handler, one action entry.
+- `src/data/keyboard-shortcuts.ts` — one shortcut description in Command palette group.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add handler and action in CommandPalette.tsx (import downloadAllRunHistoryMarkdown, handleDownloadRunHistoryMarkdown, action entry).
+- [x] Add "Download run history as Markdown" to keyboard-shortcuts.ts Command palette group.
+- [x] Add ADR .cursor/adr/0209-command-palette-download-run-history-markdown.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette action **"Download run history as Markdown"** exports the full run history as a Markdown file from ⌘K (same format as Run tab "Download as Markdown": `run-history-{timestamp}.md` with `# Run history`, export info, and per-run `## Run: label` sections with metadata and fenced output). Implemented in `CommandPalette.tsx` via `handleDownloadRunHistoryMarkdown`: reads `terminalOutputHistory` from `useRunStore`, calls `downloadAllRunHistoryMarkdown(terminalOutputHistory)` from `@/lib/download-all-run-history-md` (shows "No history to export" or "History exported as Markdown" toast), then closes the palette. Entry added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0209-command-palette-download-run-history-markdown.md` documents the decision. Also added missing import for `downloadAllRunHistoryJson` and `FileJson` in CommandPalette so the JSON action has explicit imports.
+
+**Files created**
+
+- `.cursor/adr/0209-command-palette-download-run-history-markdown.md` — ADR for this feature.
+
+**Files touched**
+
+- `src/components/shared/CommandPalette.tsx` — import `downloadAllRunHistoryJson`, `downloadAllRunHistoryMarkdown`, `FileJson`, `FileText`; `handleDownloadRunHistoryMarkdown`; action entry "Download run history as Markdown" (FileText icon, after "Download run history as JSON").
+- `src/data/keyboard-shortcuts.ts` — one entry in Command palette group: "Download run history as Markdown".
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Command palette — Download run history as JSON)
+
+### Chosen Feature
+
+**Command palette: Download run history as JSON** — The Run tab offers "Download all" (plain text), "Download as JSON", "Download as CSV", and "Download as Markdown". The command palette already has "Download run history" (plain) and "Copy run history to clipboard" (plain). Keyboard-first users had no way to download run history as JSON from ⌘K. Adding a palette action that calls `downloadAllRunHistoryJson(terminalOutputHistory)` lets users export the same JSON format (run-history-{timestamp}.json) from the palette. Real, additive UX that extends existing run-history export and would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx**: Import `downloadAllRunHistoryJson` from `@/lib/download-all-run-history-json`. Add `handleDownloadRunHistoryJson`: call `downloadAllRunHistoryJson(terminalOutputHistory)` (shows toast), then close palette. Add action entry after "Download run history" with label "Download run history as JSON" and FileJson icon.
+- **keyboard-shortcuts.ts**: Add one entry in the Command palette group: "Download run history as JSON".
+- **ADR** `.cursor/adr/0208-command-palette-download-run-history-json.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0208-command-palette-download-run-history-json.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import downloadAllRunHistoryJson, FileJson icon, handler, one action entry.
+- `src/data/keyboard-shortcuts.ts` — one shortcut description in Command palette group.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add handler and action in CommandPalette.tsx (import downloadAllRunHistoryJson, handleDownloadRunHistoryJson, action entry).
+- [x] Add "Download run history as JSON" to keyboard-shortcuts.ts Command palette group.
+- [x] Add ADR .cursor/adr/0208-command-palette-download-run-history-json.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette action **"Download run history as JSON"** exports the full run history as a JSON file from ⌘K (same format as Run tab "Download as JSON": `run-history-{timestamp}.json` with `{ exportedAt, entries }`). Implemented in `CommandPalette.tsx` via `handleDownloadRunHistoryJson`: reads `terminalOutputHistory` from `useRunStore`, calls `downloadAllRunHistoryJson(terminalOutputHistory)` from `@/lib/download-all-run-history-json` (shows "No history to export" or "History exported as JSON" toast), then closes the palette. Entry added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0208-command-palette-download-run-history-json.md` documents the decision.
+
+**Files created**
+
+- `.cursor/adr/0208-command-palette-download-run-history-json.md` — ADR for this feature (0207-command-palette-download-run-history-json.md exists and is marked superseded by 0208).
+
+**Files touched**
+
+- `src/components/shared/CommandPalette.tsx` — import `downloadAllRunHistoryJson`, `FileJson` icon, `handleDownloadRunHistoryJson`, action entry "Download run history as JSON" (after "Download run history").
+- `src/data/keyboard-shortcuts.ts` — one entry in Command palette group.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Command palette — Download keyboard shortcuts)
+
+### Chosen Feature
+
+**Command palette: Download keyboard shortcuts** — The Command palette has "Copy keyboard shortcuts" (ADR 0200), which copies the shortcuts list as Markdown. The Shortcuts help dialog (Shift+?) offers Download as Markdown, JSON, and CSV. Keyboard-first users had no way to download the shortcuts as a file from ⌘K without opening the dialog or Configuration. Adding a palette action that calls `downloadKeyboardShortcutsAsMarkdown()` lets users export the same Markdown file (keyboard-shortcuts-{timestamp}.md) from the palette. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx**: Import `downloadKeyboardShortcutsAsMarkdown` from `@/lib/export-keyboard-shortcuts`. Add `handleDownloadKeyboardShortcuts`: call `downloadKeyboardShortcutsAsMarkdown()` (shows toast), then close palette. Add action entry after "Copy keyboard shortcuts" with label "Download keyboard shortcuts" and Download icon.
+- **keyboard-shortcuts.ts**: Add one entry in the Command palette group: "Download keyboard shortcuts".
+- **ADR** `.cursor/adr/0207-command-palette-download-keyboard-shortcuts.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0207-command-palette-download-keyboard-shortcuts.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import downloadKeyboardShortcutsAsMarkdown, handler, one action entry.
+- `src/data/keyboard-shortcuts.ts` — one shortcut description in Command palette group.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add handler and action in CommandPalette.tsx (import downloadKeyboardShortcutsAsMarkdown, handleDownloadKeyboardShortcuts, action entry).
+- [x] Add "Download keyboard shortcuts" to keyboard-shortcuts.ts Command palette group.
+- [x] Add ADR .cursor/adr/0207-command-palette-download-keyboard-shortcuts.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette action **"Download keyboard shortcuts"** exports the keyboard shortcuts list as a Markdown file (`keyboard-shortcuts-{timestamp}.md`) from ⌘K. Implemented in `CommandPalette.tsx` via `handleDownloadKeyboardShortcuts`: calls `downloadKeyboardShortcutsAsMarkdown()` from `@/lib/export-keyboard-shortcuts` (shows "Keyboard shortcuts exported as Markdown" toast), then closes the palette. Entry added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0207-command-palette-download-keyboard-shortcuts.md` documents the decision.
+
+**Files created**
+
+- `.cursor/adr/0207-command-palette-download-keyboard-shortcuts.md` — ADR for this feature.
+
+**Files touched**
+
+- `src/components/shared/CommandPalette.tsx` — import `downloadKeyboardShortcutsAsMarkdown`, `handleDownloadKeyboardShortcuts`, action entry "Download keyboard shortcuts" (Download icon, after "Copy keyboard shortcuts").
+- `src/data/keyboard-shortcuts.ts` — one entry in Command palette group.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Command palette — Download app info)
+
+### Chosen Feature
+
+**Command palette: Download app info** — The Configuration page has "Copy app info" (plain text), "Download as Markdown", and "Copy as Markdown". The command palette already has "Copy app info" but no way to download app info as a file from ⌘K. Adding a palette action that calls `downloadAppInfoAsMarkdown({ version, theme })` lets keyboard-first users export app info as Markdown (same content as Configuration "Download as Markdown") without opening Configuration. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx**: Already has `effectiveTheme` and uses `getAppVersion()` in `handleCopyAppInfo`. Add `handleDownloadAppInfo`: get version via `getAppVersion()`, call `downloadAppInfoAsMarkdown({ version, theme: effectiveTheme })` from `@/lib/download-app-info-md` (shows toast), then close palette. Add action entry after "Copy app info" with label "Download app info" and Download icon.
+- **keyboard-shortcuts.ts**: Add one entry in the Command palette group: "Download app info".
+- **ADR** `.cursor/adr/0206-command-palette-download-app-info.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0206-command-palette-download-app-info.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import downloadAppInfoAsMarkdown, handler, one action entry.
+- `src/data/keyboard-shortcuts.ts` — one shortcut description in Command palette group.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add handler and action in CommandPalette.tsx (import downloadAppInfoAsMarkdown, handleDownloadAppInfo, action entry).
+- [x] Add "Download app info" to keyboard-shortcuts.ts Command palette group.
+- [x] Add ADR .cursor/adr/0206-command-palette-download-app-info.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette action **"Download app info"** exports app info (version, theme, mode, data folder) as a Markdown file from ⌘K. Implemented in `CommandPalette.tsx` via `handleDownloadAppInfo`: gets version from `getAppVersion()`, calls `downloadAppInfoAsMarkdown({ version, theme: effectiveTheme })` from `@/lib/download-app-info-md` (same content as Configuration "Download as Markdown", shows "App info exported as Markdown" toast), then closes the palette. Entry added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0206-command-palette-download-app-info.md` documents the decision.
+
+**Files created**
+
+- `.cursor/adr/0206-command-palette-download-app-info.md` — ADR for this feature.
+
+**Files touched**
+
+- `src/components/shared/CommandPalette.tsx` — import `downloadAppInfoAsMarkdown`, `handleDownloadAppInfo`, action entry "Download app info" (Download icon, after "Copy app info").
+- `src/data/keyboard-shortcuts.ts` — one entry in Command palette group.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Command palette — Download run history)
+
+Implemented the **Command palette: Download run history** feature (see full section below). Checklist completed except **Run npm run verify** (run locally). No new code beyond handler + action in CommandPalette; ADR 0205 created; keyboard-shortcuts already had the entry.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Complete Copy single run as plain text — ADR 0204)
+
+### Chosen Feature
+
+**Complete Run history — Copy single run as plain text** — The lib (`copy-single-run-as-plain-text.ts`) and UI (Copy plain in row, Copy as plain text in dialog) were already in place. This run added the missing **ADR 0204** and confirmed the plan checklist/Outcome for that feature.
+
+### Approach
+
+- Create **ADR 0204** `.cursor/adr/0204-run-history-copy-single-run-as-plain-text.md` documenting the decision.
+- No code changes; ProjectRunTab already had both buttons and the import. The existing "Copy single run as plain text" plan entry already had checklist and Outcome filled; verify step was checked.
+
+### Files to Create
+
+- `.cursor/adr/0204-run-history-copy-single-run-as-plain-text.md` — ADR for the feature.
+
+### Files to Touch (minimise)
+
+- None (plan updated in place for the Copy single run entry previously).
+
+### Checklist
+
+- [x] Create ADR 0204.
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was done** — ADR **0204-run-history-copy-single-run-as-plain-text.md** was created, documenting the Run history "Copy single run as plain text" feature (lib, run row "Copy plain", expanded dialog "Copy as plain text"). The feature was already implemented; this run completed the documentation. **Run `npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Command palette — Download run history)
+
+### Chosen Feature
+
+**Command palette: Download run history** — The Run tab has "Download all" (plain-text file) and the command palette already has "Copy run history to clipboard". Keyboard-first users had no way to download the full run history as a file without opening the Run tab. Adding a palette action that calls `downloadAllRunHistory(terminalOutputHistory)` lets users export run history (same dataset and format as "Download all") from ⌘K. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx**: Already has `terminalOutputHistory` from `useRunStore`. Add `handleDownloadRunHistory`: call `downloadAllRunHistory(terminalOutputHistory)` from `@/lib/download-all-run-history` (shows toast), then close palette. Add action entry after "Copy run history to clipboard" with label "Download run history" and Download icon.
+- **keyboard-shortcuts.ts**: Add one entry in the Command palette group: "Download run history".
+- **ADR** `.cursor/adr/0205-command-palette-download-run-history.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0205-command-palette-download-run-history.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import downloadAllRunHistory, handler, one action entry.
+- `src/data/keyboard-shortcuts.ts` — one shortcut description in Command palette group.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add handler and action in CommandPalette.tsx (import downloadAllRunHistory, handleDownloadRunHistory, action entry).
+- [x] Add "Download run history" to keyboard-shortcuts.ts Command palette group.
+- [x] Add ADR .cursor/adr/0205-command-palette-download-run-history.md.
+- [x] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette action **"Download run history"** exports the full run history as a plain-text file (same format as the Run tab "Download all": `run-history-{timestamp}.txt`). Implemented in `CommandPalette.tsx` via `handleDownloadRunHistory`: reads `terminalOutputHistory` from `useRunStore`, calls `downloadAllRunHistory(terminalOutputHistory)` from `@/lib/download-all-run-history` (shows "No history to export" or "History exported" toast), then closes the palette. Entry added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0205-command-palette-download-run-history.md` documents the decision.
+
+**Files created**
+
+- `.cursor/adr/0205-command-palette-download-run-history.md` — ADR for this feature.
+
+**Files touched**
+
+- `src/components/shared/CommandPalette.tsx` — import `downloadAllRunHistory`, `Download` icon, `handleDownloadRunHistory`, action entry "Download run history" (after "Copy run history to clipboard").
+- `src/data/keyboard-shortcuts.ts` — one entry in Command palette group.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Run history — Copy single run as plain text)
+
+### Chosen Feature
+
+**Run history: Copy single run as plain text** — The Run tab already has "Copy all" (plain text) for the full history and per-run Copy as Markdown/JSON/CSV. There was no way to copy a single run's output as plain text (same format as "Copy all": header line + output). Adding a small lib and "Copy plain" / "Copy as plain text" in the run row and expanded dialog gives consistent copy behaviour and would show up in a changelog.
+
+### Approach
+
+- **New** `src/lib/copy-single-run-as-plain-text.ts`: Format one `TerminalOutputHistoryEntry` with the same header+output format as `copy-all-run-history.ts`, copy to clipboard, show toast. Export `copySingleRunAsPlainTextToClipboard(entry)`.
+- **ProjectRunTab.tsx**: Import the new fn. In the run row actions add a "Copy plain" button (after Copy MD). In the expanded run dialog add "Copy as plain text" button (after Copy as Markdown). Minimise touches; follow existing Copy MD/JSON/CSV pattern.
+- **ADR** `.cursor/adr/0204-run-history-copy-single-run-as-plain-text.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/copy-single-run-as-plain-text.ts` — format one run, copy to clipboard, toast.
+- `.cursor/adr/0204-run-history-copy-single-run-as-plain-text.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/TabAndContentSections/ProjectRunTab.tsx` — import, "Copy plain" in row, "Copy as plain text" in dialog.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create `src/lib/copy-single-run-as-plain-text.ts` and ADR 0204.
+- [x] Add "Copy plain" button in run row and "Copy as plain text" in expanded dialog in ProjectRunTab.
+- [x] Run `npm run verify` and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Run history now supports copying a **single run as plain text**. Same format as "Copy all" (header line `=== Run: label | timestamp | exit N ===` plus output). New lib `src/lib/copy-single-run-as-plain-text.ts` exports `copySingleRunAsPlainTextToClipboard(entry)`; it formats one entry, copies to clipboard, and shows success/error toast. In **ProjectRunTab**: run row actions include a "Copy plain" button (after Copy MD); the expanded run dialog includes a "Copy as plain text" button (after Copy as Markdown). ADR `.cursor/adr/0204-run-history-copy-single-run-as-plain-text.md` documents the decision.
+
+**Files created**
+
+- `src/lib/copy-single-run-as-plain-text.ts` — format one run, copy to clipboard, toast.
+- `.cursor/adr/0204-run-history-copy-single-run-as-plain-text.md` — ADR for this feature.
+
+**Files touched**
+
+- `src/components/molecules/TabAndContentSections/ProjectRunTab.tsx` — import `copySingleRunAsPlainTextToClipboard`, "Copy plain" in run row, "Copy as plain text" in expanded dialog.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Versioning tab — "/" to focus filter for Current project files)
+
+### Chosen Feature
+
+**Versioning tab: "/" to focus filter for Current project files** — The Versioning (Git) tab has a "Current project files" section that lists all files under the project root (ADR 0201). There is no filter input; users must scroll to find a path. Adding a filter input and the same "/" keyboard shortcut used on Design, Architecture, and Run tabs lets users focus the filter and narrow the list by path substring. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **project-tab-focus-filter-shortcut.ts**: Extend `ProjectTabSlug` to include `"git"` so the shared hook works for the Versioning tab.
+- **New** `src/lib/project-versioning-focus-filter-shortcut.ts`: Hook that calls `useProjectTabFocusFilterShortcut(inputRef, "git")`.
+- **ProjectGitTab.tsx**: Add state `projectFilesFilterQuery`, ref for filter input, call `useProjectVersioningFocusFilterShortcut(ref)`. In the "Current project files" section add an Input (placeholder "Filter file paths…"); filter `allProjectFiles` by case-insensitive substring before rendering the list.
+- **keyboard-shortcuts.ts**: Add "/ (Versioning tab)", description "Focus filter" in the Help group.
+- **ADR** `.cursor/adr/0203-versioning-tab-focus-filter-shortcut.md`. Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/project-versioning-focus-filter-shortcut.ts` — Hook for "/" on Versioning tab.
+- `.cursor/adr/0203-versioning-tab-focus-filter-shortcut.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/lib/project-tab-focus-filter-shortcut.ts` — add `"git"` to `ProjectTabSlug`.
+- `src/components/molecules/TabAndContentSections/ProjectGitTab.tsx` — filter state, input, ref, hook, filtered list.
+- `src/data/keyboard-shortcuts.ts` — one shortcut entry in Help group.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Extend ProjectTabSlug with "git" and add project-versioning-focus-filter-shortcut.ts.
+- [x] Add filter input + "/" shortcut in ProjectGitTab for Current project files.
+- [x] Add "/ (Versioning tab)" to keyboard-shortcuts.ts Help group.
+- [x] Add ADR .cursor/adr/0203-versioning-tab-focus-filter-shortcut.md.
+- [ ] Run `npm run verify` and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Versioning (Git) tab **"/" to focus filter for Current project files**: The "Current project files" section now has a filter input (placeholder "Filter file paths…"). Pressing "/" when on the Versioning tab focuses that input; the list is filtered by case-insensitive path substring. Implemented via `src/lib/project-versioning-focus-filter-shortcut.ts` (hook calling `useProjectTabFocusFilterShortcut(inputRef, "git")`), state and ref in `ProjectGitTab.tsx`, filtered list with "N of M files" when a filter is active, and empty state when no paths match. `ProjectTabSlug` already included `"git"`. Entry added in `src/data/keyboard-shortcuts.ts` (Help group). ADR `.cursor/adr/0203-versioning-tab-focus-filter-shortcut.md` documents the decision.
+
+**Files created**
+
+- `src/lib/project-versioning-focus-filter-shortcut.ts` — Hook for "/" on Versioning tab.
+- `.cursor/adr/0203-versioning-tab-focus-filter-shortcut.md` — ADR for this feature.
+
+**Files touched**
+
+- `src/components/molecules/TabAndContentSections/ProjectGitTab.tsx` — filter state, input, ref, hook, filtered list (already present; hook and wiring verified).
+- `src/data/keyboard-shortcuts.ts` — "/ (Versioning tab)" in Help group (already present).
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Command palette — Copy run history to clipboard)
+
+### Chosen Feature
+
+**Command palette: "Copy run history to clipboard"** — The Run tab History section has "Copy all" (plain text) and Copy as Markdown/JSON/CSV. Keyboard-first users had no way to copy run history from anywhere without opening the Run tab. Adding a palette action that calls `copyAllRunHistoryToClipboard(terminalOutputHistory)` from the store lets users copy the full run history (same dataset as "Clear run history") from ⌘K. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx**: Read `terminalOutputHistory` from `useRunStore`. Add `handleCopyRunHistory`: call `copyAllRunHistoryToClipboard(terminalOutputHistory)` from `@/lib/copy-all-run-history` (already shows toast), then close palette. Add action entry after "Copy keyboard shortcuts" with label "Copy run history to clipboard" and Copy icon.
+- **keyboard-shortcuts.ts**: Add one entry in the Command palette group: "Copy run history to clipboard".
+- **ADR** `.cursor/adr/0202-command-palette-copy-run-history-to-clipboard.md`. Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0202-command-palette-copy-run-history-to-clipboard.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import copyAllRunHistoryToClipboard, read terminalOutputHistory, handler, one action entry.
+- `src/data/keyboard-shortcuts.ts` — one shortcut description in Command palette group.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add handler and action in CommandPalette.tsx (import copyAllRunHistoryToClipboard, handleCopyRunHistory, action entry).
+- [x] Add "Copy run history to clipboard" to keyboard-shortcuts.ts Command palette group.
+- [x] Add ADR `.cursor/adr/0202-command-palette-copy-run-history-to-clipboard.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette action **"Copy run history to clipboard"** copies the full run history (plain text, same format as the Run tab's "Copy all") to the clipboard. Implemented in `CommandPalette.tsx` via `handleCopyRunHistory`: reads `terminalOutputHistory` from `useRunStore`, calls `copyAllRunHistoryToClipboard(terminalOutputHistory)` from `@/lib/copy-all-run-history` (which shows success or "No history to copy" toast), then closes the palette. Entry added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0202-command-palette-copy-run-history-to-clipboard.md` documents the decision.
+
+**Files created**
+
+- `.cursor/adr/0202-command-palette-copy-run-history-to-clipboard.md` — ADR for this feature.
+
+**Files touched**
+
+- `src/components/shared/CommandPalette.tsx` — import `copyAllRunHistoryToClipboard`, `terminalOutputHistory` from store, `handleCopyRunHistory`, action entry "Copy run history to clipboard" (Copy icon).
+- `src/data/keyboard-shortcuts.ts` — one entry in Command palette group.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+**Developer note**
+
+- Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Debugging — Worker tab Mark done/Redo/Archive in built app)
+
+### Chosen Feature
+
+**Debugging: Worker tab ticket actions in built Tauri app** — In the built (production) Tauri app, the Worker tab’s Kanban “Mark done”, “Redo”, and “Archive” actions use `fetch` to `/api/data/projects/.../tickets` and `/api/data/projects/.../kanban-state`. Those requests hit the asset origin and can trigger the same “The string did not match the expected pattern” URL parse error as in ADR 0200 (Fast development). Fix: use Tauri commands when `isTauri` for update ticket, delete ticket, and set kanban state so the built app works without fetch to relative API paths.
+
+### Approach
+
+- **Reproduce**: Built app → Project → Worker tab → Mark done / Redo / Archive on a ticket → fetch to `/api/...` → URL parse error possible.
+- **Isolate**: `ProjectRunTab.tsx` `handleMarkDone`, `handleRedo`, `handleArchive` use fetch unconditionally (no `isTauri` branch).
+- **Fix**: (1) Backend: add `db::update_plan_ticket` and `db::delete_plan_ticket` in `db.rs`; add Tauri commands `update_plan_ticket` and `delete_plan_ticket` in `lib.rs` and register them. (2) Frontend: in `ProjectRunTab.tsx`, when `isTauri` use `invoke("update_plan_ticket", …)` / `invoke("delete_plan_ticket", …)` and existing `invoke("set_plan_kanban_state", …)`; when not Tauri keep existing fetch. Follow ADR 0200 pattern.
+- **ADR** `.cursor/adr/0201-worker-tab-ticket-actions-use-tauri-commands.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0201-worker-tab-ticket-actions-use-tauri-commands.md` — ADR for this fix.
+
+### Files to Touch (minimise)
+
+- `src-tauri/src/db.rs` — add `update_plan_ticket`, `delete_plan_ticket`.
+- `src-tauri/src/lib.rs` — add commands `update_plan_ticket`, `delete_plan_ticket`, register in handler.
+- `src/components/molecules/TabAndContentSections/ProjectRunTab.tsx` — branch on `isTauri` in handleMarkDone, handleRedo, handleArchive.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add `update_plan_ticket` and `delete_plan_ticket` in db.rs; add and register Tauri commands in lib.rs.
+- [x] In ProjectRunTab use invoke when isTauri in handleMarkDone, handleRedo, handleArchive.
+- [x] Add ADR `.cursor/adr/0201-worker-tab-ticket-actions-use-tauri-commands.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — In the built Tauri app, the Worker tab’s Kanban actions **Mark done**, **Redo**, and **Archive** no longer use `fetch` to `/api/data/projects/.../tickets` or `.../kanban-state`. When `isTauri` is true they use Tauri commands: `update_plan_ticket` (Mark done / Redo) and `delete_plan_ticket` + `set_plan_kanban_state` (Archive). This avoids the asset-origin URL parse error ("The string did not match the expected pattern") in production.
+
+**Files created**
+
+- `.cursor/adr/0201-worker-tab-ticket-actions-use-tauri-commands.md` — ADR for this fix.
+
+**Files touched**
+
+- `src-tauri/src/db.rs` — added `update_plan_ticket`, `delete_plan_ticket`.
+- `src-tauri/src/lib.rs` — added commands `update_plan_ticket`, `delete_plan_ticket` and registered them.
+- `src/components/molecules/TabAndContentSections/ProjectRunTab.tsx` — `handleMarkDone`, `handleRedo`, `handleArchive` branch on `isTauri` and use `invoke` when true.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass. In the built app, open a project → Worker tab → use Mark done, Redo, or Archive on a ticket; they should succeed without URL errors.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Test phase — run-history-preferences unit tests)
+
+### Chosen Feature
+
+**Test phase: Unit tests for run-history-preferences** — The module `src/lib/run-history-preferences.ts` persists run history sort and filter preferences in localStorage (sort order, exit status, date range, slot, filter query) and exposes `getRunHistoryPreferences()` and `setRunHistoryPreferences()`. It has no tests. Adding Vitest unit tests with a mocked `localStorage` ensures validation, defaults, and partial updates are documented and protected against regressions. Real, additive test coverage that fits the project's existing `src/lib/__tests__/` pattern.
+
+### Approach
+
+- **New `src/lib/__tests__/run-history-preferences.test.ts`**: Mock `window`/`localStorage` (or use jsdom which provides localStorage). Test: (1) `getRunHistoryPreferences()` returns defaults when no storage or empty; (2) returns defaults when `window` is undefined (SSR guard); (3) returns validated preferences when storage has valid JSON (each field); (4) invalid or unknown values for sortOrder/exitStatusFilter/dateRangeFilter/slotFilter fall back to defaults; (5) filterQuery is trimmed and capped at RUN_HISTORY_FILTER_QUERY_MAX_LEN; (6) `setRunHistoryPreferences(partial)` merges partial onto current and writes valid keys; (7) DEFAULT_RUN_HISTORY_PREFERENCES matches expected shape. Follow existing patterns (describe/it, beforeEach to clear localStorage).
+- **ADR** `.cursor/adr/0199-test-run-history-preferences.md` — Document the decision to add unit tests for this module.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/__tests__/run-history-preferences.test.ts` — Unit tests for getRunHistoryPreferences, setRunHistoryPreferences, defaults, validation.
+- `.cursor/adr/0199-test-run-history-preferences.md` — ADR for test coverage.
+
+### Files to Touch (minimise)
+
+- `.cursor/worker/night-shift-plan.md` — This entry and Outcome.
+
+### Checklist
+
+- [x] Create `src/lib/__tests__/run-history-preferences.test.ts` with localStorage mock and validation/default tests.
+- [x] Add ADR `.cursor/adr/0199-test-run-history-preferences.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built**
+
+- **Test phase: Unit tests for run-history-preferences** — Added `src/lib/__tests__/run-history-preferences.test.ts` with Vitest tests using a mock `localStorage` attached to `globalThis.window` in `beforeEach`. Tests cover: (1) `DEFAULT_RUN_HISTORY_PREFERENCES` and `RUN_HISTORY_FILTER_QUERY_MAX_LEN`; (2) `getRunHistoryPreferences()` returns defaults when storage is empty, key missing, invalid JSON, or JSON `null`; (3) returns validated preferences when storage has valid JSON; (4) invalid sortOrder/exitStatusFilter/dateRangeFilter/slotFilter fall back to defaults; (5) filterQuery is trimmed and capped at max length; (6) `setRunHistoryPreferences(partial)` merges partial onto current, ignores invalid enum values, and normalizes/caps filterQuery; (7) when `window` is undefined (SSR guard), get returns defaults and set does not throw.
+
+**Files created**
+
+- `src/lib/__tests__/run-history-preferences.test.ts` — Unit tests for `getRunHistoryPreferences`, `setRunHistoryPreferences`, defaults, and validation.
+- `.cursor/adr/0199-test-run-history-preferences.md` — ADR for adding test coverage for this module.
+
+**Files touched**
+
+- `.cursor/worker/night-shift-plan.md` — This entry and Outcome.
+
+**Developer note**
+
+- Run **`npm run verify`** locally to confirm tests, build, and lint pass. Run only these tests: `npx vitest run src/lib/__tests__/run-history-preferences.test.ts`.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Command palette — Open first project's .cursor folder)
+
+### Chosen Feature
+
+**Command palette: Open first project's .cursor folder in file manager** — The palette already has "Open first project in file manager" (repo root) and the project header has "Open .cursor folder". Keyboard-first users had no way to open the first active project's `.cursor` folder from the palette. Adding a palette action that reuses `openProjectCursorFolderInFileManager(activeProjects[0])` gives the same capability from ⌘K. Real, additive UX that fits existing patterns (ADR 0193).
+
+### Approach
+
+- **CommandPalette.tsx**: Add `handleOpenFirstProjectCursorFolder` (resolve first active project, call `openProjectCursorFolderInFileManager(proj.repoPath)` from `@/lib/open-project-cursor-folder`). Same guards as "Open first project in file manager" (no active project → toast + navigate to /projects; project not found → toast). Add action entry after "Open first project in file manager" with label "Open first project's .cursor folder" and an appropriate icon (e.g. FolderCog or FolderCode).
+- **ADR** `.cursor/adr/0199-command-palette-open-first-project-cursor-folder.md` — Document the decision.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0199-command-palette-open-first-project-cursor-folder.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import, handler, one action entry.
+- `src/data/keyboard-shortcuts.ts` — add entry for shortcuts help dialog.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add handler and action in CommandPalette.tsx (import openProjectCursorFolderInFileManager, handleOpenFirstProjectCursorFolder, action entry).
+- [x] Add ADR `.cursor/adr/0199-command-palette-open-first-project-cursor-folder.md`.
+- [ ] Run `npm run verify` and fix any failures.
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette action **"Open first project's .cursor folder"** opens the first active project's `.cursor` directory in the system file manager. Implemented in `CommandPalette.tsx` via `handleOpenFirstProjectCursorFolder` (resolves first active project, calls `openProjectCursorFolderInFileManager` from `@/lib/open-project-cursor-folder`). Same guards as "Open first project in file manager". Entry added to `src/data/keyboard-shortcuts.ts` so it appears in the Keyboard shortcuts help dialog. ADR `.cursor/adr/0199-command-palette-open-first-project-cursor-folder.md` documents the decision. Run `npm run verify` locally to confirm.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Command palette — Copy keyboard shortcuts)
+
+### Chosen Feature
+
+**Command palette: "Copy keyboard shortcuts"** — The app has "Keyboard shortcuts" in the palette (opens the help dialog) and Configuration offers export/download of shortcuts as Markdown/JSON/CSV. Keyboard-first users had no way to copy the shortcuts list to the clipboard from anywhere. Adding a palette action that calls `copyKeyboardShortcutsAsMarkdownToClipboard()` from `@/lib/export-keyboard-shortcuts` lets users paste the list into docs or tickets without opening the dialog or Configuration. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx**: Add `handleCopyKeyboardShortcuts`: call `copyKeyboardShortcutsAsMarkdownToClipboard()` (async), then close palette. The export lib already shows a success toast. Add action entry near other copy actions (e.g. after "Copy data directory path") with label "Copy keyboard shortcuts" and Copy icon.
+- **keyboard-shortcuts.ts**: Add one entry in the Command palette group: "Copy keyboard shortcuts".
+- **ADR** `.cursor/adr/0200-command-palette-copy-keyboard-shortcuts.md`. Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0200-command-palette-copy-keyboard-shortcuts.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import, handler, one action entry.
+- `src/data/keyboard-shortcuts.ts` — one shortcut description in Command palette group.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add handler and action in CommandPalette.tsx (import copyKeyboardShortcutsAsMarkdownToClipboard, handleCopyKeyboardShortcuts, action entry).
+- [x] Add "Copy keyboard shortcuts" to keyboard-shortcuts.ts Command palette group.
+- [x] Add ADR `.cursor/adr/0200-command-palette-copy-keyboard-shortcuts.md`.
+- [ ] Run `npm run verify` and fix any failures.
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette action **"Copy keyboard shortcuts"** copies the keyboard shortcuts list as Markdown to the clipboard. Implemented in `CommandPalette.tsx` via `handleCopyKeyboardShortcuts` calling `copyKeyboardShortcutsAsMarkdownToClipboard()` from `@/lib/export-keyboard-shortcuts`; palette closes after the copy. Entry added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0200-command-palette-copy-keyboard-shortcuts.md` documents the decision. Run `npm run verify` locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Test phase — format-relative-time unit tests)
+
+### Chosen Feature
+
+**Test phase: Unit tests for format-relative-time** — The module `src/lib/format-relative-time.ts` provides `formatRelativeTime(ts)` for human-readable relative time ("just now", "X min ago", "X h ago", "1 day ago", "X days ago") used in "Last refreshed" and similar UI. It currently has no tests. Adding Vitest unit tests with `vi.useFakeTimers` ensures boundaries and wording are documented and protected against regressions. Real, additive test coverage that fits the project's existing `src/lib/__tests__/` pattern.
+
+### Approach
+
+- **New `src/lib/__tests__/format-relative-time.test.ts`**: Use `vi.useFakeTimers({ now: <fixed ms> })` so "just now", "min ago", "h ago", "day(s) ago" are deterministic. Test: (1) "just now" for diff < 60s; (2) "X min ago" for diff in [1 min, 1 h); (3) "X h ago" for diff in [1 h, 1 day); (4) "1 day ago" vs "X days ago"; (5) future ts (diff max 0) yields "just now". Follow existing patterns (describe/it, clear assertions).
+- **ADR** `.cursor/adr/0198-test-format-relative-time.md` — Document the decision to add unit tests for this module.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/__tests__/format-relative-time.test.ts` — Unit tests for formatRelativeTime.
+- `.cursor/adr/0198-test-format-relative-time.md` — ADR for test coverage.
+
+### Files to Touch (minimise)
+
+- `.cursor/worker/night-shift-plan.md` — This entry and Outcome.
+
+### Checklist
+
+- [x] Create `src/lib/__tests__/format-relative-time.test.ts` with fake timers and boundary tests.
+- [x] Add ADR `.cursor/adr/0198-test-format-relative-time.md`.
+- [ ] Run `npm run verify` and fix any failures.
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built**
+
+- **Test phase: Unit tests for format-relative-time** — Added `src/lib/__tests__/format-relative-time.test.ts` with Vitest tests using `vi.useFakeTimers({ now: 1000000000000 })` for deterministic relative-time boundaries. Tests cover: (1) "just now" for diff zero, under 1 minute, and for future timestamps (diff clamped to 0). (2) "X min ago" for diff in [1 min, 1 h) and boundary at 60s. (3) "X h ago" for diff in [1 h, 1 day) and boundary at 60 min. (4) "1 day ago" and "X days ago" and boundary at 24 h. (5) Correct boundaries between just now / min / h / day.
+
+**Files created**
+
+- `src/lib/__tests__/format-relative-time.test.ts` — Unit tests for `formatRelativeTime(ts)`.
+- `.cursor/adr/0198-test-format-relative-time.md` — ADR for adding test coverage for this module.
+
+**Files touched**
+
+- `.cursor/worker/night-shift-plan.md` — This entry and Outcome.
+
+**Developer note**
+
+- Run **`npm run verify`** locally to confirm tests, build, and lint pass. Run only these tests: `npx vitest run src/lib/__tests__/format-relative-time.test.ts`.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Test phase — run-history-date-groups unit tests; already implemented)
+
+### Chosen Feature
+
+**Test phase: Unit tests for run-history-date-groups** — The run history date grouping module (`src/lib/run-history-date-groups.ts`) provides `getRunHistoryDateGroupKey`, `groupRunHistoryByDate`, `getRunHistoryDateGroupOrder`, and `getRunHistoryDateGroupTitle` for the Run tab History table (Today, Yesterday, Last 7 days, Older). It currently has no tests. Adding Vitest unit tests with deterministic timestamps (via `vi.useFakeTimers`) ensures grouping and title behaviour are documented and protected against regressions. Real, additive test coverage that fits the project's existing `src/lib/__tests__/` pattern.
+
+### Approach
+
+- **New `src/lib/__tests__/run-history-date-groups.test.ts`**: Use `vi.useFakeTimers({ now: <fixed date> })` so "today" / "yesterday" / "last7" / "older" are deterministic. Test: (1) `getRunHistoryDateGroupKey(ts)` returns "today", "yesterday", "last7", "older" for timestamps in each range. (2) `groupRunHistoryByDate(entries)` buckets entries correctly and preserves order within groups. (3) `getRunHistoryDateGroupOrder()` returns the expected ordered keys. (4) `getRunHistoryDateGroupTitle(key)` returns a string containing the group label (e.g. "Today", "Yesterday") and reasonable date info. (5) Invalid or non-finite timestamps fall into "older". Follow existing patterns (describe/it, clear assertions).
+- **ADR** `.cursor/adr/0197-test-run-history-date-groups.md` — Document the decision to add unit tests for this module.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/__tests__/run-history-date-groups.test.ts` — Unit tests for run-history-date-groups.
+- `.cursor/adr/0197-test-run-history-date-groups.md` — ADR for test coverage.
+
+### Files to Touch (minimise)
+
+- `.cursor/worker/night-shift-plan.md` — This entry and Outcome.
+
+### Checklist
+
+- [x] Create `src/lib/__tests__/run-history-date-groups.test.ts` with date-group key, grouping, order, and title tests.
+- [x] Add ADR `.cursor/adr/0197-test-run-history-date-groups.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built**
+
+- **Test phase: Unit tests for run-history-date-groups** — Added `src/lib/__tests__/run-history-date-groups.test.ts` with Vitest tests using `vi.useFakeTimers({ now: noon 2026-02-18 })` for deterministic date boundaries. Tests cover: (1) `getRunHistoryDateGroupKey(ts)` returns "today", "yesterday", "last7", "older" for timestamps in each range and "older" for non-finite/invalid. (2) `groupRunHistoryByDate(entries)` buckets entries correctly, preserves order within groups, and puts invalid timestamps into "older". (3) `getRunHistoryDateGroupOrder()` returns `["today", "yesterday", "last7", "older"]`. (4) `getRunHistoryDateGroupTitle(key)` returns a string containing the group label and date info. (5) `RUN_HISTORY_DATE_GROUP_LABELS` has expected labels.
+
+**Files created**
+
+- `src/lib/__tests__/run-history-date-groups.test.ts` — Unit tests for run-history-date-groups.
+- `.cursor/adr/0197-test-run-history-date-groups.md` — ADR for adding test coverage for this module.
+
+**Files touched**
+
+- `.cursor/worker/night-shift-plan.md` — This entry and Outcome.
+
+**Developer note**
+
+- Run **`npm run verify`** locally to confirm tests, build, and lint pass. Run only these tests: `npx vitest run src/lib/__tests__/run-history-date-groups.test.ts`.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Test phase — api-projects unit tests)
+
+### Chosen Feature
+
+**Test phase: Unit tests for api-projects** — The projects API module (`src/lib/api-projects.ts`) provides dual-mode behaviour (Tauri invoke vs fetch) via `tauriOrFetch` and exports such as `getProjectResolved`, `listProjects`, `createProject`, `updateProject`, `deleteProject`, `getProjectExport`. It currently has no tests. Adding Vitest unit tests with mocked `@/lib/tauri` and `fetch` ensures both code paths and error handling are covered and prevents regressions. Real, additive test coverage that fits the project's existing `src/lib/__tests__/` pattern.
+
+### Approach
+
+- **New `src/lib/__tests__/api-projects.test.ts`**: Mock `@/lib/tauri` (`invoke`, `isTauri`). Test: (1) When `isTauri` is true, each tauriOrFetch-backed function calls `invoke` with the correct command/args and returns the mocked value. (2) When `isTauri` is false and `fetch` returns ok, functions return parsed JSON. (3) When `fetch` returns !res.ok, functions throw with appropriate message. (4) When `invoke` rejects, error is propagated. Cover at least `getProjectResolved`, `listProjects`, `createProject`, `updateProject`, `deleteProject`, `getProjectExport`; optionally `getFullProjectExport`. Use `vi.mock("@/lib/tauri")` and global `fetch` mock; follow patterns from `api-dashboard-metrics.test.ts`.
+- **ADR** `.cursor/adr/0197-test-api-projects.md` — Document the decision to add unit tests for this module.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/__tests__/api-projects.test.ts` — Unit tests for api-projects dual-mode functions.
+- `.cursor/adr/0197-test-api-projects.md` — ADR for test coverage.
+
+### Files to Touch (minimise)
+
+- `.cursor/worker/night-shift-plan.md` — This entry and Outcome.
+
+### Checklist
+
+- [x] Create `src/lib/__tests__/api-projects.test.ts` with Tauri and fetch branches and error cases.
+- [x] Add ADR `.cursor/adr/0197-test-api-projects.md`.
+- [ ] Run `npm run verify` and fix any failures.
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Unit tests for the api-projects module: `src/lib/__tests__/api-projects.test.ts` covers `getProjectResolved`, `listProjects`, `createProject`, `updateProject`, `deleteProject`, `getProjectExport`, and `getFullProjectExport`. For each, Tauri branch (invoke + return), fetch-ok branch (fetch + parsed JSON or string), fetch-!ok (throws with error message), and invoke-reject (error propagated) are tested. ADR `.cursor/adr/0197-test-api-projects.md` documents the decision. Run `npm run verify` locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Refactor — Dashboard metrics API module)
+
+### Chosen Feature
+
+**Refactor: Single module for dashboard metrics API** — Dashboard metrics were fetched with the same dual-mode logic in both `DashboardOverview.tsx` and `DashboardMetricsCards.tsx`. Extracted `getDashboardMetrics()` in `src/lib/api-dashboard-metrics.ts` and use it from both components. Behaviour unchanged; one place for the dashboard-metrics contract.
+
+### Outcome
+
+**What was built** — `src/lib/api-dashboard-metrics.ts` exports `getDashboardMetrics(): Promise<DashboardMetrics>` (Tauri: `invoke("get_dashboard_metrics", {})`; browser: GET `/api/data/dashboard-metrics`). `DashboardOverview.tsx` and `DashboardMetricsCards.tsx` use it instead of local `fetchMetrics`. **Files created:** `src/lib/api-dashboard-metrics.ts`; `.cursor/adr/0194-refactor-api-dashboard-metrics.md`. **Files touched:** `DashboardOverview.tsx`, `DashboardMetricsCards.tsx`, `.cursor/worker/night-shift-plan.md`. Run `npm run verify` locally. No functional change.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Test phase — api-dashboard-metrics unit tests)
+
+### Chosen Feature
+
+**Test phase: Unit tests for api-dashboard-metrics** — The dashboard metrics API module (`src/lib/api-dashboard-metrics.ts`) provides `getDashboardMetrics()` with dual-mode behaviour (Tauri invoke vs fetch). It currently has no tests. Adding Vitest unit tests with mocked `@/lib/tauri` and `fetch` ensures both code paths and error handling are covered and prevents regressions. Real, additive test coverage that fits the project's existing `src/lib/__tests__/` pattern.
+
+### Approach
+
+- **New `src/lib/__tests__/api-dashboard-metrics.test.ts`**: Mock `@/lib/tauri` (`invoke`, `isTauri`). Test: (1) When `isTauri` is true, `invoke("get_dashboard_metrics", {})` is called and returns mocked `DashboardMetrics`. (2) When `isTauri` is false and `fetch` returns ok, `getDashboardMetrics()` returns parsed JSON. (3) When `fetch` returns !res.ok, `getDashboardMetrics()` throws with response text. (4) When `invoke` rejects, the error is propagated. Use `vi.mock("@/lib/tauri")` and global `fetch` mock; follow patterns from `copy-to-clipboard.test.ts` (vi, beforeEach).
+- **ADR** `.cursor/adr/0196-test-api-dashboard-metrics.md` — Document the decision to add unit tests for this module.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/__tests__/api-dashboard-metrics.test.ts` — Unit tests for `getDashboardMetrics()`.
+- `.cursor/adr/0196-test-api-dashboard-metrics.md` — ADR for test coverage.
+
+### Files to Touch (minimise)
+
+- `.cursor/worker/night-shift-plan.md` — This entry and Outcome.
+
+### Checklist
+
+- [x] Create `src/lib/__tests__/api-dashboard-metrics.test.ts` with Tauri and fetch branches and error cases.
+- [x] Add ADR `.cursor/adr/0196-test-api-dashboard-metrics.md`.
+- [ ] Run `npm run verify` and fix any failures.
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built**
+
+- **Test phase: Unit tests for api-dashboard-metrics** — Added `src/lib/__tests__/api-dashboard-metrics.test.ts` with four test cases: (1) Tauri branch — when `isTauri` is true, `invoke("get_dashboard_metrics", {})` is called and returns mocked `DashboardMetrics`. (2) Fetch branch (ok) — when `isTauri` is false and `fetch` returns ok, `getDashboardMetrics()` returns parsed JSON. (3) Fetch branch (!ok) — when response is not ok, throws with response text. (4) Tauri error — when `invoke` rejects, error is propagated. Tests mock `@/lib/tauri` (invoke, isTauri) and global `fetch`; follow existing patterns (vi.mock, beforeEach/afterEach).
+
+**Files created**
+
+- `src/lib/__tests__/api-dashboard-metrics.test.ts` — Unit tests for `getDashboardMetrics()`.
+- `.cursor/adr/0196-test-api-dashboard-metrics.md` — ADR for adding test coverage for this module.
+
+**Files touched**
+
+- `.cursor/worker/night-shift-plan.md` — This entry and Outcome.
+
+**Developer note**
+
+- Run **`npm run verify`** locally to confirm tests, build, and lint pass. Run only these tests: `npx vitest run src/lib/__tests__/api-dashboard-metrics.test.ts`.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Refactor — Unify page-level "/" focus-filter hooks)
+
+### Chosen Feature
+
+**Refactor: Unify page-level "/" focus-filter hooks** — Five hooks (`useDashboardFocusFilterShortcut`, `useProjectsFocusFilterShortcut`, `usePromptsFocusFilterShortcut`, `useIdeasFocusFilterShortcut`, `useTechnologiesFocusFilterShortcut`) duplicate the same logic: on a given pathname, "/" focuses an input unless in input/textarea/select. Extract a shared `usePageFocusFilterShortcut(inputRef, pathname)` and have the five hooks delegate to it. Behaviour unchanged; reduces duplication and keeps one place for path + keydown logic. (Project-tab and shortcuts-help hooks stay separate — they use tab/searchParams or dialog open state.)
+
+### Approach
+
+- **New `src/lib/page-focus-filter-shortcut.ts`**: Implement `usePageFocusFilterShortcut(inputRef, pathname: string)` with shared pathname/keydown logic (pathname from `usePathname()`, match exact path; "/" focuses input unless in INPUT/TEXTAREA/SELECT).
+- **dashboard-focus-filter-shortcut.ts**: Call and re-export via `usePageFocusFilterShortcut(inputRef, "/")`.
+- **projects-focus-filter-shortcut.ts**: Same with `"/projects"`.
+- **prompts-focus-filter-shortcut.ts**: Same with `"/prompts"`.
+- **ideas-focus-filter-shortcut.ts**: Same with `"/ideas"`.
+- **technologies-focus-filter-shortcut.ts**: Same with `"/technologies"`.
+- **ADR** `.cursor/adr/0195-refactor-unify-page-focus-filter-hooks.md`. Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/page-focus-filter-shortcut.ts` — shared hook `usePageFocusFilterShortcut(inputRef, pathname)`.
+- `.cursor/adr/0195-refactor-unify-page-focus-filter-hooks.md` — ADR for this refactor.
+
+### Files to Touch (minimise)
+
+- `src/lib/dashboard-focus-filter-shortcut.ts` — delegate to shared hook with `"/"`.
+- `src/lib/projects-focus-filter-shortcut.ts` — delegate to shared hook with `"/projects"`.
+- `src/lib/prompts-focus-filter-shortcut.ts` — delegate to shared hook with `"/prompts"`.
+- `src/lib/ideas-focus-filter-shortcut.ts` — delegate to shared hook with `"/ideas"`.
+- `src/lib/technologies-focus-filter-shortcut.ts` — delegate to shared hook with `"/technologies"`.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create `src/lib/page-focus-filter-shortcut.ts` with `usePageFocusFilterShortcut(inputRef, pathname)`.
+- [x] Refactor dashboard, projects, prompts, ideas, technologies focus-filter hooks to use it.
+- [x] Add ADR `.cursor/adr/0195-refactor-unify-page-focus-filter-hooks.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built**
+
+- **Refactor: Unify page-level "/" focus-filter hooks** — Five hooks (Dashboard, Projects, Prompts, Ideas, Technologies) previously duplicated the same pathname + "/" keydown logic. A shared `usePageFocusFilterShortcut(inputRef, pathnameMatch)` was added in `src/lib/page-focus-filter-shortcut.ts`. Each of the five hooks now delegates to it with the appropriate path ("/", "/projects", "/prompts", "/ideas", "/technologies"). Public API and behaviour are unchanged; project-tab and shortcuts-help focus filters are unchanged.
+
+**Files created**
+
+- `src/lib/page-focus-filter-shortcut.ts` — shared hook `usePageFocusFilterShortcut(inputRef, pathnameMatch)`.
+- `.cursor/adr/0195-refactor-unify-page-focus-filter-hooks.md` — ADR for this refactor.
+
+**Files touched**
+
+- `src/lib/dashboard-focus-filter-shortcut.ts` — delegates to `usePageFocusFilterShortcut(inputRef, "/")`.
+- `src/lib/projects-focus-filter-shortcut.ts` — delegates to `usePageFocusFilterShortcut(inputRef, "/projects")`.
+- `src/lib/prompts-focus-filter-shortcut.ts` — delegates to `usePageFocusFilterShortcut(inputRef, "/prompts")`.
+- `src/lib/ideas-focus-filter-shortcut.ts` — delegates to `usePageFocusFilterShortcut(inputRef, "/ideas")`.
+- `src/lib/technologies-focus-filter-shortcut.ts` — delegates to `usePageFocusFilterShortcut(inputRef, "/technologies")`.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+**Developer note**
+
+- Run **`npm run verify`** locally to confirm tests, build, and lint pass. No call-site changes; all existing imports of the five hooks remain valid.
 
 ---
 
@@ -900,7 +2511,7 @@ _(To be filled after implementation.)_
 - [x] Add formatKeyboardShortcutsAsCsv, downloadKeyboardShortcutsAsCsv, copyKeyboardShortcutsAsCsvToClipboard in export-keyboard-shortcuts.ts.
 - [x] Add "Copy as CSV" and "Download as CSV" buttons in ShortcutsHelpDialog footer.
 - [x] Add ADR .cursor/adr/0178-keyboard-shortcuts-download-and-copy-as-csv.md.
-- [ ] Run npm run verify and fix any failures.
+- [ ] Run npm run verify and fix any failures (run locally).
 - [x] Update this plan with Outcome section.
 
 ### Outcome

@@ -62,17 +62,19 @@ import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 import { downloadRunOutput } from "@/lib/download-run-output";
 import { downloadRunAsJson, copyRunAsJsonToClipboard } from "@/lib/download-run-as-json";
 import { downloadRunAsMarkdown, copyRunAsMarkdownToClipboard } from "@/lib/download-run-as-md";
+import { copySingleRunAsPlainTextToClipboard } from "@/lib/copy-single-run-as-plain-text";
 import { downloadRunAsCsv, copyRunAsCsvToClipboard } from "@/lib/download-run-as-csv";
 import { copyAllRunHistoryToClipboard } from "@/lib/copy-all-run-history";
 import { downloadAllRunHistory } from "@/lib/download-all-run-history";
 import { downloadAllRunHistoryCsv, copyAllRunHistoryCsvToClipboard } from "@/lib/download-all-run-history-csv";
 import { downloadAllRunHistoryJson, copyAllRunHistoryJsonToClipboard } from "@/lib/download-all-run-history-json";
 import { downloadAllRunHistoryMarkdown, copyAllRunHistoryMarkdownToClipboard } from "@/lib/download-all-run-history-md";
-import { formatTimestampShort, formatTimestampFull } from "@/lib/format-timestamp";
-import { formatRelativeTime } from "@/lib/format-relative-time";
+import { RelativeTimeWithTooltip } from "@/components/atoms/displays/RelativeTimeWithTooltip";
 import { getRunHistoryPreferences, setRunHistoryPreferences, DEFAULT_RUN_HISTORY_PREFERENCES, RUN_HISTORY_FILTER_QUERY_MAX_LEN, RUN_HISTORY_PREFERENCES_RESTORED_EVENT } from "@/lib/run-history-preferences";
 import { groupRunHistoryByDate, RUN_HISTORY_DATE_GROUP_LABELS, getRunHistoryDateGroupOrder, getRunHistoryDateGroupTitle } from "@/lib/run-history-date-groups";
 import { useRunHistoryFocusFilterShortcut } from "@/lib/run-history-focus-filter-shortcut";
+import { filterRunHistoryByQuery } from "@/lib/run-history-filter";
+import { computeRunHistoryStats, formatRunHistoryStatsToolbar } from "@/lib/run-history-stats";
 import { StatusPill } from "@/components/shared/DisplayPrimitives";
 import { TerminalSlot } from "@/components/shared/TerminalSlot";
 import { KanbanTicketCard } from "@/components/molecules/Kanban/KanbanTicketCard";
@@ -636,8 +638,8 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
       let inProgressIds: string[];
       if (isTauri) {
         const [ticketsList, kanbanState] = await Promise.all([
-          invoke<TicketRow[]>("get_project_tickets", { projectIdArg: { projectId } }),
-          invoke<{ inProgressIds: string[] }>("get_project_kanban_state", { projectIdArg: { projectId } }),
+          invoke<TicketRow[]>("get_project_tickets", { projectId }),
+          invoke<{ inProgressIds: string[] }>("get_project_kanban_state", { projectId }),
         ]);
         apiTickets = ticketsList ?? [];
         inProgressIds = kanbanState?.inProgressIds ?? [];
@@ -690,12 +692,21 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
     async (ticketId: string) => {
       if (!kanbanData) return;
       try {
-        const res = await fetch(`/api/data/projects/${projectId}/tickets/${ticketId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ done: true, status: "Done" }),
-        });
-        if (!res.ok) throw new Error((await res.json()).error || "Failed to update");
+        if (isTauri) {
+          await invoke("update_plan_ticket", {
+            project_id: projectId,
+            ticket_id: ticketId,
+            done: true,
+            status: "Done",
+          });
+        } else {
+          const res = await fetch(`/api/data/projects/${projectId}/tickets/${ticketId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ done: true, status: "Done" }),
+          });
+          if (!res.ok) throw new Error((await res.json()).error || "Failed to update");
+        }
         const inProgressIds = kanbanData.columns.in_progress?.items.map((t) => t.id) ?? [];
         const updatedTickets = kanbanData.tickets.map((t) =>
           t.id === ticketId ? { ...t, done: true, status: "Done" as const } : t
@@ -706,19 +717,28 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
         toast.error(e instanceof Error ? e.message : String(e));
       }
     },
-    [projectId, kanbanData]
+    [projectId, kanbanData, isTauri]
   );
 
   const handleRedo = useCallback(
     async (ticketId: string) => {
       if (!kanbanData) return;
       try {
-        const res = await fetch(`/api/data/projects/${projectId}/tickets/${ticketId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ done: false, status: "Todo" }),
-        });
-        if (!res.ok) throw new Error((await res.json()).error || "Failed to update");
+        if (isTauri) {
+          await invoke("update_plan_ticket", {
+            project_id: projectId,
+            ticket_id: ticketId,
+            done: false,
+            status: "Todo",
+          });
+        } else {
+          const res = await fetch(`/api/data/projects/${projectId}/tickets/${ticketId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ done: false, status: "Todo" }),
+          });
+          if (!res.ok) throw new Error((await res.json()).error || "Failed to update");
+        }
         const inProgressIds = kanbanData.columns.in_progress?.items.map((t) => t.id) ?? [];
         const updatedTickets = kanbanData.tickets.map((t) =>
           t.id === ticketId ? { ...t, done: false, status: "Todo" as const } : t
@@ -729,7 +749,7 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
         toast.error(e instanceof Error ? e.message : String(e));
       }
     },
-    [projectId, kanbanData]
+    [projectId, kanbanData, isTauri]
   );
 
   const handleArchive = useCallback(
@@ -738,14 +758,19 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
       const ticket = kanbanData.tickets.find((t) => t.id === ticketId);
       if (!ticket) return;
       try {
-        const res = await fetch(`/api/data/projects/${projectId}/tickets/${ticketId}`, { method: "DELETE" });
-        if (!res.ok) throw new Error((await res.json()).error || "Failed to delete");
         const inProgressIds = (kanbanData.columns.in_progress?.items.map((t) => t.id) ?? []).filter((id) => id !== ticketId);
-        await fetch(`/api/data/projects/${projectId}/kanban-state`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ inProgressIds }),
-        });
+        if (isTauri) {
+          await invoke("delete_plan_ticket", { project_id: projectId, ticket_id: ticketId });
+          await invoke("set_plan_kanban_state", { project_id: projectId, in_progress_ids: inProgressIds });
+        } else {
+          const res = await fetch(`/api/data/projects/${projectId}/tickets/${ticketId}`, { method: "DELETE" });
+          if (!res.ok) throw new Error((await res.json()).error || "Failed to delete");
+          await fetch(`/api/data/projects/${projectId}/kanban-state`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ inProgressIds }),
+          });
+        }
         const updatedTickets = kanbanData.tickets.filter((t) => t.id !== ticketId);
         setKanbanData(applyInProgressState({ ...kanbanData, tickets: updatedTickets }, inProgressIds));
         toast.success(`Ticket #${ticket.number} archived.`);
@@ -753,7 +778,7 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
         toast.error(e instanceof Error ? e.message : String(e));
       }
     },
-    [projectId, kanbanData]
+    [projectId, kanbanData, isTauri]
   );
 
   const runImplementAllForTickets = useRunStore((s) => s.runImplementAllForTickets);
@@ -1001,9 +1026,7 @@ function WorkerHistorySection() {
     slotFilter !== DEFAULT_RUN_HISTORY_PREFERENCES.slotFilter ||
     filterQuery !== DEFAULT_RUN_HISTORY_PREFERENCES.filterQuery;
   const filteredHistory = useMemo(() => {
-    const byLabel = !trimmedQuery
-      ? history
-      : history.filter((h) => h.label.toLowerCase().includes(trimmedQuery));
+    const byLabel = filterRunHistoryByQuery(history, filterQuery);
     let byStatus = byLabel;
     if (exitStatusFilter === "success") byStatus = byLabel.filter((h) => h.exitCode === 0);
     else if (exitStatusFilter === "failed") byStatus = byLabel.filter((h) => h.exitCode !== undefined && h.exitCode !== 0);
@@ -1023,7 +1046,7 @@ function WorkerHistorySection() {
     if (slotFilter === "all") return byDate;
     const slotNum = Number(slotFilter) as 1 | 2 | 3;
     return byDate.filter((h) => h.slot === slotNum);
-  }, [history, trimmedQuery, exitStatusFilter, dateRangeFilter, slotFilter]);
+  }, [history, filterQuery, exitStatusFilter, dateRangeFilter, slotFilter]);
   const displayHistory = useMemo(() => {
     if (sortOrder === "oldest") return [...filteredHistory].reverse();
     if (sortOrder === "shortest") {
@@ -1043,25 +1066,9 @@ function WorkerHistorySection() {
     return filteredHistory;
   }, [filteredHistory, sortOrder]);
   const groupedByDate = useMemo(() => groupRunHistoryByDate(displayHistory), [displayHistory]);
+  const historyStats = useMemo(() => computeRunHistoryStats(displayHistory), [displayHistory]);
+  const historyStatsToolbarText = formatRunHistoryStatsToolbar(historyStats);
   const entry = expandedId ? history.find((e) => e.id === expandedId) : null;
-
-  const formatTimeWithRelative = (iso: string) => {
-    const absolute = formatTimestampShort(iso);
-    try {
-      const ms = new Date(iso).getTime();
-      if (!Number.isFinite(ms)) return absolute;
-      return (
-        <>
-          {absolute}
-          <span className="text-muted-foreground/80 font-normal ml-1">
-            {" "}({formatRelativeTime(ms)})
-          </span>
-        </>
-      );
-    } catch {
-      return absolute;
-    }
-  };
 
   return (
     <div className="rounded-2xl surface-card border border-border/50 overflow-hidden bg-gradient-to-r from-slate-500/[0.04] to-zinc-500/[0.04]">
@@ -1192,7 +1199,7 @@ function WorkerHistorySection() {
                 <Input
                   ref={filterInputRef}
                   type="text"
-                  placeholder="Filter by label…"
+                  placeholder="Filter by label or output…"
                   value={filterQuery}
                   onChange={(e) => setFilterQuery(e.target.value)}
                   className="pl-8 h-8 text-xs"
@@ -1300,6 +1307,11 @@ function WorkerHistorySection() {
                   Showing {filteredHistory.length} of {history.length} runs
                 </span>
               )}
+              {historyStatsToolbarText && (
+                <span className="text-xs text-muted-foreground whitespace-nowrap" title={historyStatsToolbarText}>
+                  {historyStatsToolbarText}
+                </span>
+              )}
             </div>
             {filteredHistory.length > 0 ? (
             <div className="rounded-lg border border-border/40 overflow-hidden">
@@ -1331,8 +1343,8 @@ function WorkerHistorySection() {
                         const hasMore = h.output.trim().length > OUTPUT_PREVIEW_LEN;
                         return (
                     <TableRow key={h.id} className="group">
-                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap font-mono" title={formatTimestampFull(h.timestamp)}>
-                        {formatTimeWithRelative(h.timestamp)}
+                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap font-mono">
+                        <RelativeTimeWithTooltip timestamp={h.timestamp} className="font-mono" />
                       </TableCell>
                       <TableCell className="text-xs font-medium truncate max-w-[200px]" title={h.label}>
                         {h.label}
@@ -1422,6 +1434,17 @@ function WorkerHistorySection() {
                           >
                             <FileText className="size-3" />
                             Copy MD
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs gap-1 opacity-70 group-hover:opacity-100"
+                            onClick={() => copySingleRunAsPlainTextToClipboard(h)}
+                            title="Copy run as plain text (same format as Copy all)"
+                            aria-label="Copy run as plain text to clipboard"
+                          >
+                            <Copy className="size-3" />
+                            Copy plain
                           </Button>
                           <Button
                             variant="ghost"
@@ -1582,6 +1605,17 @@ function WorkerHistorySection() {
                 >
                   <FileText className="size-3.5" />
                   Copy as Markdown
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => copySingleRunAsPlainTextToClipboard(entry)}
+                  title="Copy as plain text (same format as Copy all)"
+                  aria-label="Copy run as plain text to clipboard"
+                >
+                  <Copy className="size-3.5" />
+                  Copy as plain text
                 </Button>
                 <Button
                   variant="outline"
@@ -1898,7 +1932,7 @@ function WorkerFastDevelopmentSection({
 
       let milestoneId: number;
       if (isTauri) {
-        const mils = await invoke<{ id: number; name: string }[]>("get_project_milestones", { projectIdArg: { projectId } });
+        const mils = await invoke<{ id: number; name: string }[]>("get_project_milestones", { projectId });
         const general = mils?.find((m) => m.name === "General Development");
         milestoneId = general?.id ?? mils?.[0]?.id;
       } else {
@@ -1914,26 +1948,40 @@ function WorkerFastDevelopmentSection({
         return;
       }
 
-      const createRes = await fetch(`/api/data/projects/${projectId}/tickets`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      let newTicket: { id: string; number: number; title: string; milestone_id?: number };
+      if (isTauri) {
+        newTicket = await invoke<{ id: string; number: number; title: string; milestone_id?: number }>("create_plan_ticket", {
+          project_id: projectId,
           title,
           description: fullPrompt,
           priority: "P1",
           feature_name: "Fast development",
           milestone_id: milestoneId,
-        }),
-      });
-      if (!createRes.ok) {
-        const err = await createRes.json();
-        throw new Error((err as { error?: string }).error ?? "Failed to create ticket");
+          idea_id: null,
+          agents: null,
+        });
+      } else {
+        const createRes = await fetch(`/api/data/projects/${projectId}/tickets`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title,
+            description: fullPrompt,
+            priority: "P1",
+            feature_name: "Fast development",
+            milestone_id: milestoneId,
+          }),
+        });
+        if (!createRes.ok) {
+          const err = await createRes.json();
+          throw new Error((err as { error?: string }).error ?? "Failed to create ticket");
+        }
+        newTicket = (await createRes.json()) as { id: string; number: number; title: string; milestone_id?: number };
       }
-      const newTicket = (await createRes.json()) as { id: string; number: number; title: string; milestone_id?: number };
 
       let inProgressIds: string[];
       if (isTauri) {
-        const state = await invoke<{ inProgressIds: string[] }>("get_project_kanban_state", { projectIdArg: { projectId } });
+        const state = await invoke<{ inProgressIds: string[] }>("get_project_kanban_state", { projectId });
         inProgressIds = state?.inProgressIds ?? [];
       } else {
         const stateRes = await fetch(`/api/data/projects/${projectId}/kanban-state`);
@@ -1942,12 +1990,16 @@ function WorkerFastDevelopmentSection({
         inProgressIds = state.inProgressIds ?? [];
       }
       inProgressIds = [...inProgressIds.filter((id) => id !== newTicket.id), newTicket.id];
-      const patchRes = await fetch(`/api/data/projects/${projectId}/kanban-state`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ inProgressIds }),
-      });
-      if (!patchRes.ok) throw new Error("Failed to add ticket to queue");
+      if (isTauri) {
+        await invoke("set_plan_kanban_state", { project_id: projectId, in_progress_ids: inProgressIds });
+      } else {
+        const patchRes = await fetch(`/api/data/projects/${projectId}/kanban-state`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ inProgressIds }),
+        });
+        if (!patchRes.ok) throw new Error("Failed to add ticket to queue");
+      }
 
       await onTicketCreated();
 

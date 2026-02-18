@@ -561,6 +561,51 @@ pub fn create_plan_ticket(
     }))
 }
 
+/// Update a plan ticket's done and status (for Worker tab Mark done/Redo; avoids fetch in Tauri).
+pub fn update_plan_ticket(
+    conn: &Connection,
+    project_id: &str,
+    ticket_id: &str,
+    done: bool,
+    status: &str,
+) -> Result<(), String> {
+    let project_id = project_id.trim();
+    let ticket_id = ticket_id.trim();
+    let status = match status {
+        "Done" | "Todo" => status,
+        _ => return Err("status must be 'Done' or 'Todo'".to_string()),
+    };
+    let done_int = if done { 1 } else { 0 };
+    let now = chrono::Utc::now().to_rfc3339();
+    let updated = conn
+        .execute(
+            "UPDATE plan_tickets SET done = ?1, status = ?2, updated_at = ?3 WHERE id = ?4 AND project_id = ?5",
+            rusqlite::params![done_int, status, &now, ticket_id, project_id],
+        )
+        .map_err(|e| e.to_string())?;
+    if updated == 0 {
+        return Err("Ticket not found".to_string());
+    }
+    Ok(())
+}
+
+/// Delete a plan ticket (for Worker tab Archive; avoids fetch in Tauri).
+pub fn delete_plan_ticket(
+    conn: &Connection,
+    project_id: &str,
+    ticket_id: &str,
+) -> Result<(), String> {
+    let project_id = project_id.trim();
+    let ticket_id = ticket_id.trim();
+    let updated = conn
+        .execute("DELETE FROM plan_tickets WHERE id = ?1 AND project_id = ?2", rusqlite::params![ticket_id, project_id])
+        .map_err(|e| e.to_string())?;
+    if updated == 0 {
+        return Err("Ticket not found".to_string());
+    }
+    Ok(())
+}
+
 trait IfEmpty {
     fn if_empty<'a>(&'a self, default: &'a str) -> &'a str;
 }

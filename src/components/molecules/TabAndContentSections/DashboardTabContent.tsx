@@ -7,8 +7,7 @@ import { useRunState } from "@/store/run-store";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { formatRelativeTime } from "@/lib/format-relative-time";
-import { formatTimestampFull } from "@/lib/format-timestamp";
+import { RelativeTimeWithTooltip } from "@/components/atoms/displays/RelativeTimeWithTooltip";
 
 const classes = getClasses("TabAndContentSections/DashboardTabContent.tsx");
 
@@ -32,11 +31,8 @@ export function DashboardTabContent() {
     <div className={classes[0]}>
       <div className="flex flex-wrap items-center justify-end gap-2 mb-3">
         {lastRefreshedAt != null && (
-          <span
-            className="text-xs text-muted-foreground mr-2 self-center"
-            title={formatTimestampFull(new Date(lastRefreshedAt).toISOString())}
-          >
-            Last refreshed: {formatRelativeTime(lastRefreshedAt)}
+          <span className="text-xs text-muted-foreground mr-2 self-center">
+            Last refreshed: <RelativeTimeWithTooltip timestamp={lastRefreshedAt} />
           </span>
         )}
         <Button

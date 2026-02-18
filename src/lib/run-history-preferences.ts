@@ -8,7 +8,7 @@ const STORAGE_KEY = "kwcode-run-history-preferences";
 /** Custom event name dispatched when run history preferences are restored to defaults (e.g. from Command palette). ProjectRunTab listens to sync its local state. */
 export const RUN_HISTORY_PREFERENCES_RESTORED_EVENT = "kwcode-run-history-preferences-restored";
 
-/** Max length of persisted "Filter by label" search text. */
+/** Max length of persisted "Filter by label or output" search text. */
 export const RUN_HISTORY_FILTER_QUERY_MAX_LEN = 500;
 const FILTER_QUERY_MAX_LEN = RUN_HISTORY_FILTER_QUERY_MAX_LEN;
 
@@ -45,7 +45,7 @@ export interface RunHistoryPreferences {
   exitStatusFilter: StoredExitStatusFilter;
   dateRangeFilter: StoredDateRangeFilter;
   slotFilter: StoredSlotFilter;
-  /** Persisted "Filter by label" search text; trimmed and capped at FILTER_QUERY_MAX_LEN. */
+  /** Persisted "Filter by label or output" search text; trimmed and capped at FILTER_QUERY_MAX_LEN. */
   filterQuery: string;
 }
 

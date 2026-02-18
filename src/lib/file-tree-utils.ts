@@ -76,3 +76,56 @@ export function sortNode(node: CursorTreeNode): void {
     node.children.forEach(sortNode);
   }
 }
+
+/**
+ * Build a single root folder whose children are the top-level nodes of a tree
+ * built from relative file paths (e.g. ["src/app/page.tsx", "src/lib/utils.ts"]).
+ * Use root.children to render the tree; root itself is not rendered.
+ */
+export function buildTreeFromRelativePaths(paths: string[]): CursorTreeFolder {
+  const root: CursorTreeFolder = {
+    type: "folder",
+    name: "",
+    path: "",
+    children: [],
+  };
+
+  function ensureFolder(parent: CursorTreeFolder, segment: string): CursorTreeFolder {
+    let child = parent.children.find(
+      (c): c is CursorTreeFolder => c.type === "folder" && c.name === segment
+    );
+    if (!child) {
+      const folderPath = parent.path ? `${parent.path}/${segment}` : segment;
+      child = { type: "folder", name: segment, path: folderPath, children: [] };
+      parent.children.push(child);
+    }
+    return child;
+  }
+
+  for (const rel of paths) {
+    const trimmed = rel.trim();
+    if (!trimmed) continue;
+    const segments = trimmed.split("/").filter(Boolean);
+    if (segments.length === 1) {
+      root.children.push({
+        type: "file",
+        name: segments[0],
+        path: segments[0],
+      });
+    } else {
+      let parent: CursorTreeFolder = root;
+      for (let i = 0; i < segments.length - 1; i++) {
+        parent = ensureFolder(parent, segments[i]);
+      }
+      const filePath = segments.join("/");
+      parent.children.push({
+        type: "file",
+        name: segments[segments.length - 1],
+        path: filePath,
+      });
+    }
+  }
+
+  sortNode(root);
+  return root;
+}

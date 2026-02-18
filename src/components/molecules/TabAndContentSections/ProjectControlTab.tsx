@@ -55,7 +55,7 @@ export function ProjectControlTab({ projectId, refreshKey = 0 }: ProjectControlT
         // #region agent log
         invoke("frontend_debug_log", { location: "ProjectControlTab.tsx:load", message: "Control: about to invoke get_implementation_log_entries", data: { projectId } }).catch(() => {});
         // #endregion
-        const raw = await invoke<{ id: number; project_id: string; run_id: string; ticket_number: number; ticket_title: string; milestone_id: number | null; idea_id: number | null; completed_at: string; files_changed: string; summary: string; created_at: string; status: string }[]>("get_implementation_log_entries", { projectIdArg: { projectId } });
+        const raw = await invoke<{ id: number; project_id: string; run_id: string; ticket_number: number; ticket_title: string; milestone_id: number | null; idea_id: number | null; completed_at: string; files_changed: string; summary: string; created_at: string; status: string }[]>("get_implementation_log_entries", { projectId });
         list = raw.map((r) => ({
           id: r.id,
           project_id: r.project_id,
@@ -87,8 +87,8 @@ export function ProjectControlTab({ projectId, refreshKey = 0 }: ProjectControlT
       let ideaList: { id: number; title: string }[] = [];
       if (isTauri) {
         const [mils, ideas] = await Promise.all([
-          invoke<{ id: number; name: string; slug?: string }[]>("get_project_milestones", { projectIdArg: { projectId } }),
-          invoke<{ id: number; title: string }[]>("get_ideas_list", { projectIdArgOptional: { projectId } }),
+          invoke<{ id: number; name: string; slug?: string }[]>("get_project_milestones", { projectId }),
+          invoke<{ id: number; title: string }[]>("get_ideas_list", { projectId }),
         ]);
         milList = mils ?? [];
         ideaList = ideas ?? [];

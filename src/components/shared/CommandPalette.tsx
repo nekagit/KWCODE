@@ -13,17 +13,36 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, MessageSquare, Folders, Folder, FolderOpen, FolderPlus, FolderSearch, Lightbulb, Cpu, LayoutGrid, Settings, Moon, Sun, Keyboard, Loader2, RefreshCw, RotateCw, X, Activity, BookOpen, Printer, ChevronUp, ChevronDown, Focus, ClipboardList, Copy, HardDrive, Trash2, Square, Code2, Terminal, RotateCcw, PanelLeft, TestTube2, ExternalLink, Flag, FolderGit2, ListTodo, Palette, Building2 } from "lucide-react";
+import { LayoutDashboard, MessageSquare, Folders, Folder, FolderOpen, FolderPlus, FolderSearch, FolderCog, Lightbulb, Cpu, LayoutGrid, Settings, Moon, Sun, Keyboard, Loader2, RefreshCw, RotateCw, X, Activity, BookOpen, Printer, ChevronUp, ChevronDown, Focus, ClipboardList, Copy, HardDrive, Trash2, Square, Code2, Terminal, RotateCcw, PanelLeft, TestTube2, ExternalLink, Flag, FolderGit2, ListTodo, Palette, Building2, Download, FileSpreadsheet, FileText } from "lucide-react";
+import { default as FileJson } from "lucide-react/dist/esm/icons/file-json";
 import { useQuickActions } from "@/context/quick-actions-context";
 import { useUITheme } from "@/context/ui-theme";
 import { isValidUIThemeId } from "@/data/ui-theme-templates";
 import { getApiHealth } from "@/lib/api-health";
 import { getAppVersion } from "@/lib/app-version";
 import { copyAppInfoToClipboard } from "@/lib/copy-app-info";
+import { downloadAppInfoAsMarkdown, copyAppInfoAsMarkdownToClipboard } from "@/lib/download-app-info-md";
+import { downloadAppInfoAsJson, copyAppInfoAsJsonToClipboard } from "@/lib/download-app-info-json";
 import { copyAppDataFolderPath } from "@/lib/copy-app-data-folder-path";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 import { openAppDataFolderInFileManager } from "@/lib/open-app-data-folder";
+import { downloadDocumentationInfoAsMarkdown, copyDocumentationInfoAsMarkdownToClipboard } from "@/lib/download-documentation-info-md";
+import { downloadDocumentationInfoAsJson, copyDocumentationInfoAsJsonToClipboard } from "@/lib/download-documentation-info-json";
+import { fetchIdeas } from "@/lib/fetch-ideas";
+import { fetchTechStack } from "@/lib/fetch-tech-stack";
+import { downloadMyIdeasAsMarkdown, copyAllMyIdeasMarkdownToClipboard } from "@/lib/download-my-ideas-md";
+import { downloadMyIdeasAsJson, copyMyIdeasAsJsonToClipboard } from "@/lib/download-my-ideas";
+import { copyAllPromptsAsMarkdownToClipboard, downloadAllPromptsAsMarkdown } from "@/lib/download-all-prompts-md";
+import {
+  downloadTechStackAsMarkdown,
+  downloadTechStack,
+  copyTechStackAsMarkdownToClipboard,
+} from "@/lib/download-tech-stack";
+import { copyTechStackToClipboard } from "@/lib/copy-tech-stack";
+import { downloadProjectsListAsJson, copyProjectsListAsJsonToClipboard } from "@/lib/download-projects-list-json";
+import { downloadProjectsListAsCsv, copyProjectsListAsCsvToClipboard } from "@/lib/download-projects-list-csv";
 import { openDocumentationFolderInFileManager } from "@/lib/open-documentation-folder";
+import { openProjectCursorFolderInFileManager } from "@/lib/open-project-cursor-folder";
 import { openProjectFolderInFileManager } from "@/lib/open-project-folder";
 import { openProjectInEditor } from "@/lib/open-project-in-editor";
 import { openProjectInSystemTerminal } from "@/lib/open-project-in-terminal";
@@ -32,6 +51,13 @@ import { isTauri } from "@/lib/tauri";
 import { getRecentProjectIds } from "@/lib/recent-projects";
 import { setRunHistoryPreferences, DEFAULT_RUN_HISTORY_PREFERENCES, RUN_HISTORY_PREFERENCES_RESTORED_EVENT } from "@/lib/run-history-preferences";
 import { dispatchSidebarToggle } from "@/lib/sidebar-toggle-event";
+import { copyAllRunHistoryToClipboard } from "@/lib/copy-all-run-history";
+import { copySingleRunAsPlainTextToClipboard } from "@/lib/copy-single-run-as-plain-text";
+import { downloadAllRunHistory } from "@/lib/download-all-run-history";
+import { downloadAllRunHistoryJson } from "@/lib/download-all-run-history-json";
+import { downloadAllRunHistoryCsv } from "@/lib/download-all-run-history-csv";
+import { downloadAllRunHistoryMarkdown } from "@/lib/download-all-run-history-md";
+import { copyKeyboardShortcutsAsMarkdownToClipboard, copyKeyboardShortcutsAsJsonToClipboard, downloadKeyboardShortcutsAsMarkdown, downloadKeyboardShortcutsAsJson, downloadKeyboardShortcutsAsCsv } from "@/lib/export-keyboard-shortcuts";
 import { getAppRepositoryUrl } from "@/lib/app-repository";
 import type { Project } from "@/types/project";
 import { useRunStore } from "@/store/run-store";
@@ -69,11 +95,13 @@ export function CommandPalette() {
   const refreshData = useRunStore((s) => s.refreshData);
   const clearTerminalOutputHistory = useRunStore((s) => s.clearTerminalOutputHistory);
   const removeTerminalOutputFromHistory = useRunStore((s) => s.removeTerminalOutputFromHistory);
+  const terminalOutputHistory = useRunStore((s) => s.terminalOutputHistory);
   const terminalOutputHistoryLength = useRunStore((s) => s.terminalOutputHistory.length);
   const firstRunId = useRunStore((s) => s.terminalOutputHistory[0]?.id);
   const stopAllImplementAll = useRunStore((s) => s.stopAllImplementAll);
   const runningRuns = useRunStore((s) => s.runningRuns);
   const activeProjects = useRunStore((s) => s.activeProjects);
+  const prompts = useRunStore((s) => s.prompts);
   const effectiveTheme = isValidUIThemeId(uiTheme) ? uiTheme : "light";
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -268,10 +296,180 @@ export function CommandPalette() {
     if (ok) closePalette();
   }, [closePalette, effectiveTheme]);
 
+  const handleDownloadAppInfo = useCallback(async () => {
+    const version = await getAppVersion().catch(() => "—");
+    await downloadAppInfoAsMarkdown({ version, theme: effectiveTheme });
+    closePalette();
+  }, [closePalette, effectiveTheme]);
+
+  const handleDownloadAppInfoJson = useCallback(async () => {
+    const version = await getAppVersion().catch(() => "—");
+    await downloadAppInfoAsJson({ version, theme: effectiveTheme });
+    closePalette();
+  }, [closePalette, effectiveTheme]);
+
+  const handleCopyAppInfoAsMarkdown = useCallback(async () => {
+    const version = await getAppVersion().catch(() => "—");
+    await copyAppInfoAsMarkdownToClipboard({ version, theme: effectiveTheme });
+    closePalette();
+  }, [closePalette, effectiveTheme]);
+
+  const handleCopyAppInfoAsJson = useCallback(async () => {
+    const version = await getAppVersion().catch(() => "—");
+    await copyAppInfoAsJsonToClipboard({ version, theme: effectiveTheme });
+    closePalette();
+  }, [closePalette, effectiveTheme]);
+
   const handleOpenDocumentationFolder = useCallback(async () => {
     await openDocumentationFolderInFileManager();
     closePalette();
   }, [closePalette]);
+
+  const handleDownloadDocumentationInfo = useCallback(() => {
+    downloadDocumentationInfoAsMarkdown();
+    closePalette();
+  }, [closePalette]);
+
+  const handleDownloadDocumentationInfoJson = useCallback(() => {
+    downloadDocumentationInfoAsJson();
+    closePalette();
+  }, [closePalette]);
+
+  const handleCopyDocumentationInfo = useCallback(async () => {
+    await copyDocumentationInfoAsMarkdownToClipboard();
+    closePalette();
+  }, [closePalette]);
+
+  const handleCopyDocumentationInfoJson = useCallback(async () => {
+    await copyDocumentationInfoAsJsonToClipboard();
+    closePalette();
+  }, [closePalette]);
+
+  const handleDownloadIdeas = useCallback(async () => {
+    const ideas = await fetchIdeas();
+    downloadMyIdeasAsMarkdown(ideas);
+    closePalette();
+  }, [closePalette]);
+
+  const handleDownloadIdeasJson = useCallback(async () => {
+    const ideas = await fetchIdeas();
+    downloadMyIdeasAsJson(ideas);
+    closePalette();
+  }, [closePalette]);
+
+  const handleCopyIdeas = useCallback(async () => {
+    const ideas = await fetchIdeas();
+    const ok = await copyAllMyIdeasMarkdownToClipboard(ideas);
+    if (ok) toast.success("Ideas copied as Markdown");
+    closePalette();
+  }, [closePalette]);
+
+  const handleCopyIdeasJson = useCallback(async () => {
+    const ideas = await fetchIdeas();
+    await copyMyIdeasAsJsonToClipboard(ideas);
+    closePalette();
+  }, [closePalette]);
+
+  const handleDownloadTechStack = useCallback(async () => {
+    const data = await fetchTechStack();
+    if (data == null) {
+      closePalette();
+      return;
+    }
+    downloadTechStackAsMarkdown(data);
+    closePalette();
+  }, [closePalette]);
+
+  const handleDownloadTechStackJson = useCallback(async () => {
+    const data = await fetchTechStack();
+    if (data == null) {
+      closePalette();
+      return;
+    }
+    downloadTechStack(data);
+    closePalette();
+  }, [closePalette]);
+
+  const handleCopyTechStack = useCallback(async () => {
+    const data = await fetchTechStack();
+    if (data == null) {
+      closePalette();
+      return;
+    }
+    const ok = await copyTechStackAsMarkdownToClipboard(data);
+    if (ok) toast.success("Tech stack copied as Markdown");
+    closePalette();
+  }, [closePalette]);
+
+  const handleCopyTechStackJson = useCallback(async () => {
+    const data = await fetchTechStack();
+    if (data == null) {
+      closePalette();
+      return;
+    }
+    const ok = await copyTechStackToClipboard(data);
+    if (ok) toast.success("Tech stack copied as JSON");
+    closePalette();
+  }, [closePalette]);
+
+  const handleDownloadProjectsListJson = useCallback(async () => {
+    try {
+      const list = await listProjects();
+      downloadProjectsListAsJson(list ?? []);
+      closePalette();
+    } catch {
+      toast.error("Failed to load projects");
+      closePalette();
+    }
+  }, [closePalette]);
+
+  const handleCopyProjectsListJson = useCallback(async () => {
+    try {
+      const list = await listProjects();
+      await copyProjectsListAsJsonToClipboard(list ?? []);
+      closePalette();
+    } catch {
+      toast.error("Failed to load projects");
+      closePalette();
+    }
+  }, [closePalette]);
+
+  const handleDownloadProjectsListCsv = useCallback(async () => {
+    try {
+      const list = await listProjects();
+      downloadProjectsListAsCsv(list ?? []);
+      closePalette();
+    } catch {
+      toast.error("Failed to load projects");
+      closePalette();
+    }
+  }, [closePalette]);
+
+  const handleCopyProjectsListCsv = useCallback(async () => {
+    try {
+      const list = await listProjects();
+      await copyProjectsListAsCsvToClipboard(list ?? []);
+      closePalette();
+    } catch {
+      toast.error("Failed to load projects");
+      closePalette();
+    }
+  }, [closePalette]);
+
+  const promptsForExport = useMemo(
+    () => prompts.map((p) => ({ id: p.id, title: p.title, content: p.content })),
+    [prompts]
+  );
+
+  const handleCopyPrompts = useCallback(async () => {
+    await copyAllPromptsAsMarkdownToClipboard(promptsForExport);
+    closePalette();
+  }, [promptsForExport, closePalette]);
+
+  const handleDownloadPrompts = useCallback(() => {
+    downloadAllPromptsAsMarkdown(promptsForExport);
+    closePalette();
+  }, [promptsForExport, closePalette]);
 
   const handleOpenAppDataFolder = useCallback(async () => {
     await openAppDataFolderInFileManager();
@@ -379,6 +577,24 @@ export function CommandPalette() {
     closePalette();
   }, [activeProjects, projects, router, closePalette]);
 
+  const handleOpenFirstProjectCursorFolder = useCallback(async () => {
+    if (!activeProjects.length) {
+      toast.info("Select a project first");
+      router.push("/projects");
+      closePalette();
+      return;
+    }
+    const list = projects ?? (await listProjects().catch(() => []));
+    const proj = list?.find((p) => p.repoPath === activeProjects[0]);
+    if (!proj) {
+      toast.info("Open a project first");
+      closePalette();
+      return;
+    }
+    await openProjectCursorFolderInFileManager(proj.repoPath);
+    closePalette();
+  }, [activeProjects, projects, router, closePalette]);
+
   const handleStopAllRuns = useCallback(async () => {
     if (runningRuns.length === 0) {
       toast.info("No runs in progress");
@@ -406,6 +622,66 @@ export function CommandPalette() {
     closePalette();
   }, [setTheme, closePalette]);
 
+  const handleCopyKeyboardShortcuts = useCallback(async () => {
+    await copyKeyboardShortcutsAsMarkdownToClipboard();
+    closePalette();
+  }, [closePalette]);
+
+  const handleCopyKeyboardShortcutsJson = useCallback(async () => {
+    await copyKeyboardShortcutsAsJsonToClipboard();
+    closePalette();
+  }, [closePalette]);
+
+  const handleDownloadKeyboardShortcuts = useCallback(() => {
+    downloadKeyboardShortcutsAsMarkdown();
+    closePalette();
+  }, [closePalette]);
+
+  const handleDownloadKeyboardShortcutsJson = useCallback(() => {
+    downloadKeyboardShortcutsAsJson();
+    closePalette();
+  }, [closePalette]);
+
+  const handleDownloadKeyboardShortcutsCsv = useCallback(() => {
+    downloadKeyboardShortcutsAsCsv();
+    closePalette();
+  }, [closePalette]);
+
+  const handleCopyRunHistory = useCallback(() => {
+    copyAllRunHistoryToClipboard(terminalOutputHistory);
+    closePalette();
+  }, [terminalOutputHistory, closePalette]);
+
+  const handleCopyLastRun = useCallback(() => {
+    const lastRun = terminalOutputHistory[0];
+    if (lastRun) {
+      copySingleRunAsPlainTextToClipboard(lastRun);
+    } else {
+      toast.info("No run history to copy");
+    }
+    closePalette();
+  }, [terminalOutputHistory, closePalette]);
+
+  const handleDownloadRunHistory = useCallback(() => {
+    downloadAllRunHistory(terminalOutputHistory);
+    closePalette();
+  }, [terminalOutputHistory, closePalette]);
+
+  const handleDownloadRunHistoryJson = useCallback(() => {
+    downloadAllRunHistoryJson(terminalOutputHistory);
+    closePalette();
+  }, [terminalOutputHistory, closePalette]);
+
+  const handleDownloadRunHistoryMarkdown = useCallback(() => {
+    downloadAllRunHistoryMarkdown(terminalOutputHistory);
+    closePalette();
+  }, [terminalOutputHistory, closePalette]);
+
+  const handleDownloadRunHistoryCsv = useCallback(() => {
+    downloadAllRunHistoryCsv(terminalOutputHistory);
+    closePalette();
+  }, [terminalOutputHistory, closePalette]);
+
   const actionEntries: CommandPaletteEntry[] = useMemo(() => {
     const entries: CommandPaletteEntry[] = [
       { label: "Refresh data", icon: RefreshCw, onSelect: handleRefreshData },
@@ -421,6 +697,7 @@ export function CommandPalette() {
       { label: "Open first project in Cursor", icon: Code2, onSelect: handleOpenFirstProjectInCursor },
       { label: "Open first project in Terminal", icon: Terminal, onSelect: handleOpenFirstProjectInTerminal },
       { label: "Open first project in file manager", icon: Folder, onSelect: handleOpenFirstProjectInFileManager },
+      { label: "Open first project's .cursor folder", icon: FolderCog, onSelect: handleOpenFirstProjectCursorFolder },
       { label: "Stop all runs", icon: Square, onSelect: handleStopAllRuns },
       { label: "Clear run history", icon: Trash2, onSelect: handleClearRunHistory },
       { label: "Remove last run from history", icon: Trash2, onSelect: handleRemoveLastRun },
@@ -429,10 +706,43 @@ export function CommandPalette() {
       { label: "Switch to dark mode", icon: Moon, onSelect: handleSwitchToDarkMode },
       { label: "Keyboard shortcuts", icon: Keyboard, onSelect: openShortcutsModal },
       { label: "Copy app info", icon: ClipboardList, onSelect: handleCopyAppInfo },
+      { label: "Copy app info as Markdown", icon: FileText, onSelect: handleCopyAppInfoAsMarkdown },
+      { label: "Copy app info as JSON", icon: FileJson, onSelect: handleCopyAppInfoAsJson },
+      { label: "Download app info", icon: Download, onSelect: handleDownloadAppInfo },
+      { label: "Download app info as JSON", icon: FileJson, onSelect: handleDownloadAppInfoJson },
       { label: "Copy first project path", icon: Copy, onSelect: handleCopyFirstProjectPath },
       { label: "Copy data directory path", icon: Copy, onSelect: handleCopyDataDirectoryPath },
+      { label: "Copy keyboard shortcuts", icon: Copy, onSelect: handleCopyKeyboardShortcuts },
+      { label: "Copy keyboard shortcuts as JSON", icon: FileJson, onSelect: handleCopyKeyboardShortcutsJson },
+      { label: "Download keyboard shortcuts", icon: Download, onSelect: handleDownloadKeyboardShortcuts },
+      { label: "Download keyboard shortcuts as JSON", icon: FileJson, onSelect: handleDownloadKeyboardShortcutsJson },
+      { label: "Download keyboard shortcuts as CSV", icon: FileSpreadsheet, onSelect: handleDownloadKeyboardShortcutsCsv },
+      { label: "Copy run history to clipboard", icon: Copy, onSelect: handleCopyRunHistory },
+      { label: "Copy last run to clipboard", icon: Copy, onSelect: handleCopyLastRun },
+      { label: "Download run history", icon: Download, onSelect: handleDownloadRunHistory },
+      { label: "Download run history as JSON", icon: FileJson, onSelect: handleDownloadRunHistoryJson },
+      { label: "Download run history as Markdown", icon: FileText, onSelect: handleDownloadRunHistoryMarkdown },
+      { label: "Download run history as CSV", icon: FileSpreadsheet, onSelect: handleDownloadRunHistoryCsv },
       { label: "Open data folder", icon: HardDrive, onSelect: handleOpenAppDataFolder },
       { label: "Open documentation folder", icon: FolderOpen, onSelect: handleOpenDocumentationFolder },
+      { label: "Download documentation info", icon: Download, onSelect: handleDownloadDocumentationInfo },
+      { label: "Download documentation info as JSON", icon: FileJson, onSelect: handleDownloadDocumentationInfoJson },
+      { label: "Copy documentation info", icon: Copy, onSelect: handleCopyDocumentationInfo },
+      { label: "Copy documentation info as JSON", icon: FileJson, onSelect: handleCopyDocumentationInfoJson },
+      { label: "Copy prompts", icon: Copy, onSelect: handleCopyPrompts },
+      { label: "Download prompts", icon: Download, onSelect: handleDownloadPrompts },
+      { label: "Download ideas", icon: Download, onSelect: handleDownloadIdeas },
+      { label: "Download ideas as JSON", icon: FileJson, onSelect: handleDownloadIdeasJson },
+      { label: "Copy ideas", icon: Copy, onSelect: handleCopyIdeas },
+      { label: "Copy ideas as JSON", icon: FileJson, onSelect: handleCopyIdeasJson },
+      { label: "Download tech stack", icon: Download, onSelect: handleDownloadTechStack },
+      { label: "Download tech stack as JSON", icon: FileJson, onSelect: handleDownloadTechStackJson },
+      { label: "Copy tech stack", icon: Copy, onSelect: handleCopyTechStack },
+      { label: "Copy tech stack as JSON", icon: FileJson, onSelect: handleCopyTechStackJson },
+      { label: "Download projects list as JSON", icon: FileJson, onSelect: handleDownloadProjectsListJson },
+      { label: "Copy projects list as JSON", icon: FileJson, onSelect: handleCopyProjectsListJson },
+      { label: "Download projects list as CSV", icon: FileSpreadsheet, onSelect: handleDownloadProjectsListCsv },
+      { label: "Copy projects list as CSV", icon: FileSpreadsheet, onSelect: handleCopyProjectsListCsv },
       { label: "Discover folders", icon: FolderSearch, onSelect: () => { router.push("/projects?discover=1"); closePalette(); } },
       { label: "Print current page", icon: Printer, onSelect: () => { window.print(); closePalette(); } },
       { label: "Toggle sidebar", icon: PanelLeft, onSelect: () => { dispatchSidebarToggle(); closePalette(); } },
@@ -459,7 +769,7 @@ export function CommandPalette() {
       });
     }
     return entries;
-  }, [handleRefreshData, goToRun, goToTesting, goToMilestones, goToVersioning, goToPlanner, goToDesign, goToArchitecture, goToFirstProject, closePalette, openShortcutsModal, handleClearRunHistory, handleRemoveLastRun, handleRestoreRunHistoryFilters, handleSwitchToLightMode, handleSwitchToDarkMode, handleOpenFirstProjectInCursor, handleOpenFirstProjectInTerminal, handleOpenFirstProjectInFileManager, handleStopAllRuns, handleCheckApiHealth, handleCopyAppInfo, handleCopyFirstProjectPath, handleCopyDataDirectoryPath, handleOpenAppDataFolder, handleOpenDocumentationFolder]);
+  }, [handleRefreshData, goToRun, goToTesting, goToMilestones, goToVersioning, goToPlanner, goToDesign, goToArchitecture, goToFirstProject, closePalette, openShortcutsModal, handleClearRunHistory, handleRemoveLastRun, handleRestoreRunHistoryFilters, handleSwitchToLightMode, handleSwitchToDarkMode, handleOpenFirstProjectInCursor, handleOpenFirstProjectInTerminal, handleOpenFirstProjectInFileManager, handleOpenFirstProjectCursorFolder, handleStopAllRuns, handleCheckApiHealth, handleCopyAppInfo, handleCopyAppInfoAsMarkdown, handleCopyAppInfoAsJson, handleDownloadAppInfo, handleDownloadAppInfoJson, handleCopyFirstProjectPath, handleCopyDataDirectoryPath, handleCopyKeyboardShortcuts, handleCopyKeyboardShortcutsJson, handleDownloadKeyboardShortcuts, handleDownloadKeyboardShortcutsJson, handleDownloadKeyboardShortcutsCsv, handleCopyRunHistory, handleCopyLastRun, handleDownloadRunHistory, handleDownloadRunHistoryJson, handleDownloadRunHistoryMarkdown, handleDownloadRunHistoryCsv, handleOpenAppDataFolder, handleOpenDocumentationFolder, handleDownloadDocumentationInfo, handleDownloadDocumentationInfoJson, handleCopyDocumentationInfo, handleCopyDocumentationInfoJson, handleCopyPrompts, handleDownloadPrompts, handleDownloadIdeas, handleDownloadIdeasJson, handleCopyIdeas, handleCopyIdeasJson, handleDownloadTechStack, handleDownloadTechStackJson, handleCopyTechStack, handleCopyTechStackJson, handleDownloadProjectsListJson, handleCopyProjectsListJson, handleDownloadProjectsListCsv, handleCopyProjectsListCsv]);
   const projectEntries: CommandPaletteEntry[] = useMemo(() => {
     if (!projects || projects.length === 0) return [];
     const recentIds = getRecentProjectIds();

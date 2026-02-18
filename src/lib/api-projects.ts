@@ -267,6 +267,38 @@ export async function listProjectFiles(
   return json.files;
 }
 
+const DEFAULT_MAX_RECURSIVE_FILES = 3000;
+
+/**
+ * Recursively list all file paths under a project root (directories are traversed, only file paths returned).
+ * Respects maxFiles to avoid freezing on very large repos.
+ */
+export async function listAllProjectFilePaths(
+  projectId: string,
+  repoPath: string,
+  options?: { maxFiles?: number }
+): Promise<string[]> {
+  const maxFiles = options?.maxFiles ?? DEFAULT_MAX_RECURSIVE_FILES;
+  const paths: string[] = [];
+
+  async function walk(relativePath: string): Promise<void> {
+    if (paths.length >= maxFiles) return;
+    const entries = await listProjectFiles(projectId, relativePath, repoPath);
+    for (const e of entries) {
+      const fullRelative = relativePath ? `${relativePath}/${e.name}` : e.name;
+      if (e.isDirectory) {
+        await walk(fullRelative);
+      } else {
+        paths.push(fullRelative);
+      }
+      if (paths.length >= maxFiles) return;
+    }
+  }
+
+  await walk("");
+  return paths.sort((a, b) => a.localeCompare(b));
+}
+
 /**
  * Initializes a project: in Tauri (desktop), unzips project_template.zip into the project root
  * so you get the full Next.js starter. In browser, copies the init template into .cursor.

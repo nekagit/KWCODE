@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw, GitBranch, FolderGit2, GitPullRequest, GitCommit, Upload, Copy, FileText } from "lucide-react";
@@ -8,6 +8,7 @@ import { invoke, isTauri } from "@/lib/tauri";
 import { toast } from "sonner";
 import type { Project } from "@/types/project";
 import type { GitInfo } from "@/types/git";
+import type { CursorTreeNode, CursorTreeFolder } from "@/types/file-tree";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -19,6 +20,11 @@ import { getClasses } from "@/components/molecules/tailwind-molecules";
 import { cn } from "@/lib/utils";
 import { copyChangedFilesListToClipboard, downloadChangedFilesAsMarkdown } from "@/lib/export-versioning-changed-files";
 import { safeNameForFile } from "@/lib/download-helpers";
+import { listAllProjectFilePaths } from "@/lib/api-projects";
+import { buildTreeFromRelativePaths } from "@/lib/file-tree-utils";
+import { FolderTreeItem } from "@/components/molecules/Navigation/FolderTreeItem";
+import { FileTreeItem } from "@/components/molecules/Navigation/FileTreeItem";
+import { useProjectVersioningFocusFilterShortcut } from "@/lib/project-versioning-focus-filter-shortcut";
 const classes = getClasses("TabAndContentSections/ProjectGitTab.tsx");
 
 interface ProjectGitTabProps {
@@ -64,10 +70,64 @@ export function ProjectGitTab({ project, projectId }: ProjectGitTabProps) {
   const [actionLoading, setActionLoading] = useState<GitAction>(null);
   const [commitDialogOpen, setCommitDialogOpen] = useState(false);
   const [commitMessage, setCommitMessage] = useState("");
+  const [allProjectFiles, setAllProjectFiles] = useState<string[] | null>(null);
+  const [allProjectFilesLoading, setAllProjectFilesLoading] = useState(false);
+  const [allProjectFilesError, setAllProjectFilesError] = useState<string | null>(null);
+  const [projectFilesFilterQuery, setProjectFilesFilterQuery] = useState("");
+  /** Paths of expanded folders in the current project files tree (macOS-style). */
+  const [projectFilesExpanded, setProjectFilesExpanded] = useState<Set<string>>(new Set());
 
   const repoPath = project.repoPath?.trim() ?? "";
 
   const cancelledRef = useRef(false);
+  const cancelledAllFilesRef = useRef(false);
+  const versioningFilterInputRef = useRef<HTMLInputElement>(null);
+
+  useProjectVersioningFocusFilterShortcut(versioningFilterInputRef);
+
+  const { filteredPaths, fileTreeRoot } = useMemo(() => {
+    if (!allProjectFiles) return { filteredPaths: [] as string[], fileTreeRoot: null as CursorTreeFolder | null };
+    const q = projectFilesFilterQuery.trim().toLowerCase();
+    const filtered = q ? allProjectFiles.filter((p) => p.toLowerCase().includes(q)) : allProjectFiles;
+    const root = filtered.length > 0 ? buildTreeFromRelativePaths(filtered) : null;
+    return { filteredPaths: filtered, fileTreeRoot: root };
+  }, [allProjectFiles, projectFilesFilterQuery]);
+
+  const toggleProjectFilesExpanded = useCallback((path: string) => {
+    setProjectFilesExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
+      return next;
+    });
+  }, []);
+
+  function renderProjectFileNode(node: CursorTreeNode, depth: number): React.ReactNode {
+    if (node.type === "folder") {
+      const isExpanded = projectFilesExpanded.has(node.path);
+      return (
+        <div key={node.path}>
+          <FolderTreeItem
+            nodeName={node.name}
+            nodePath={node.path}
+            isExpanded={isExpanded}
+            depth={depth}
+            onToggle={toggleProjectFilesExpanded}
+          />
+          {isExpanded && node.children.map((child) => renderProjectFileNode(child, depth + 1))}
+        </div>
+      );
+    }
+    return (
+      <FileTreeItem
+        key={node.path}
+        nodeName={node.name}
+        nodePath={node.path}
+        depth={depth}
+        showAddToSpec={false}
+      />
+    );
+  }
 
   const fetchGitInfo = useCallback(async (getIsCancelled?: () => boolean) => {
     if (!project.repoPath?.trim()) {
@@ -105,6 +165,33 @@ export function ProjectGitTab({ project, projectId }: ProjectGitTabProps) {
       cancelledRef.current = true;
     };
   }, [fetchGitInfo]);
+
+  const fetchAllProjectFiles = useCallback(async () => {
+    if (!repoPath || !projectId) return;
+    cancelledAllFilesRef.current = false;
+    setAllProjectFilesLoading(true);
+    setAllProjectFilesError(null);
+    try {
+      const paths = await listAllProjectFilePaths(projectId, repoPath);
+      if (cancelledAllFilesRef.current) return;
+      setAllProjectFiles(paths);
+    } catch (e) {
+      if (!cancelledAllFilesRef.current) {
+        setAllProjectFilesError(e instanceof Error ? e.message : String(e));
+        setAllProjectFiles(null);
+      }
+    } finally {
+      if (!cancelledAllFilesRef.current) setAllProjectFilesLoading(false);
+    }
+  }, [projectId, repoPath]);
+
+  useEffect(() => {
+    if (!repoPath || !projectId) return;
+    fetchAllProjectFiles();
+    return () => {
+      cancelledAllFilesRef.current = true;
+    };
+  }, [fetchAllProjectFiles, projectId, repoPath]);
 
   const handlePull = useCallback(async () => {
     if (!repoPath) return;
@@ -419,6 +506,76 @@ export function ProjectGitTab({ project, projectId }: ProjectGitTabProps) {
                 No changed files
               </div>
             )}
+          </Card>
+        </div>
+
+        {/* All current project files — very tall section */}
+        <div className="rounded-xl border border-border/40 bg-card/50 backdrop-blur-sm overflow-hidden">
+          <Card className="border-0 shadow-none bg-transparent p-4 md:p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+              <h3 className="text-base font-semibold text-foreground">Current project files</h3>
+              {allProjectFiles && (
+                <span className="text-sm text-muted-foreground">
+                  {allProjectFiles.length} file{allProjectFiles.length !== 1 ? "s" : ""}
+                </span>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void fetchAllProjectFiles()}
+                disabled={allProjectFilesLoading}
+              >
+                {allProjectFilesLoading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3.5 w-3.5" />
+                )}
+                <span className="ml-1.5">Refresh</span>
+              </Button>
+            </div>
+            {allProjectFiles && allProjectFiles.length > 0 && (
+              <div className="mb-3">
+                <Input
+                  ref={versioningFilterInputRef}
+                  type="text"
+                  placeholder="Filter file paths…"
+                  value={projectFilesFilterQuery}
+                  onChange={(e) => setProjectFilesFilterQuery(e.target.value)}
+                  className="h-9 font-mono text-sm"
+                />
+              </div>
+            )}
+            {allProjectFilesError && (
+              <p className="text-sm text-destructive mb-3">{allProjectFilesError}</p>
+            )}
+            {allProjectFilesLoading && allProjectFiles === null ? (
+              <div className="flex items-center justify-center min-h-[60vh] rounded-md border border-border/60 bg-muted/20">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : allProjectFiles && allProjectFiles.length > 0 ? (
+              <>
+                {projectFilesFilterQuery.trim() && (
+                  <p className="text-sm text-muted-foreground mb-2">
+                    {filteredPaths.length} of {allProjectFiles.length} file{allProjectFiles.length !== 1 ? "s" : ""}
+                  </p>
+                )}
+                {fileTreeRoot && fileTreeRoot.children.length > 0 ? (
+                  <ScrollArea className="min-h-[65vh] max-h-[75vh] h-[65vh] rounded-md border border-border/60 bg-muted/20">
+                    <div className="p-3 space-y-0.5 font-mono text-xs">
+                      {fileTreeRoot.children.map((node) => renderProjectFileNode(node, 0))}
+                    </div>
+                  </ScrollArea>
+                ) : (
+                  <div className="min-h-[65vh] flex items-center justify-center rounded-md border border-dashed border-border/60 bg-muted/10 text-muted-foreground text-sm">
+                    No files match the filter
+                  </div>
+                )}
+              </>
+            ) : allProjectFiles && allProjectFiles.length === 0 ? (
+              <div className="min-h-[65vh] flex items-center justify-center rounded-md border border-dashed border-border/60 bg-muted/10 text-muted-foreground text-sm">
+                No files in project root
+              </div>
+            ) : null}
           </Card>
         </div>
 
