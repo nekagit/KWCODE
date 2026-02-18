@@ -52,6 +52,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Dialog as SharedDialog } from "@/components/shared/Dialog";
+import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import { Input } from "@/components/ui/input";
 import {
   initializeProjectRepo,

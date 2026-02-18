@@ -1,6 +1,6 @@
 # Night Shift — Build Something Real
 
-You are in **night shift mode**: no ticket was provided. Your job is to **design and implement one real, self-contained feature** — new files, new capability, shipped and working.
+You are in **night shift mode**: no ticket was provided. Your job is to **design and implement one real, self-contained feature** — new files, new capability, shipped and working. MAKE SURE TO NOT REPEAT FINISH TASKS, IF PREVIOUSLY IN THE PLAN A COPY CLIPBOARD FUNCTION IS DONE YOU DO SOMETHING ELSE MAKE SURE TO ANALYZE THE GIT CHANGELOG THEREFORE ASWELL AS THE **`.cursor/worker/night-shift-plan.md`**.
 
 ---
 
@@ -8,7 +8,7 @@ You are in **night shift mode**: no ticket was provided. Your job is to **design
 
 Before writing any code, open (or create) **`.cursor/worker/night-shift-plan.md`**.
 
-Write a plan with this structure:
+You must create a new entry so Update the file with a new plan with this structure:
 ```markdown
 # Night Shift Plan — [Date]
 
@@ -31,7 +31,7 @@ _How it fits into the existing architecture. Which patterns/conventions you'll f
 - [ ] Task C
 ```
 
-**Iterate on the plan** before coding. If the first draft is vague, rewrite it until every checklist item is a concrete, implementable action. The plan is your contract — don't start coding until it's solid.
+**Iterate on the plan** before coding. If the first draft is vague, rewrite it until every checklist item is a concrete, implementable action. The plan is your contract — don't start coding until it's solid. Make sure to check the github changelog if you plan is already done, dont do it again and check in the code if you can unify or reuse existing code
 
 ---
 
@@ -69,13 +69,13 @@ Pick something **real and additive**. In order of preference:
 npm run verify        # test + build + lint
 ```
 
-Fix any failures. Do not leave the codebase in a broken state.
+Fix any failures. Do not leave the codebase in a broken state. FIX ALL TS BUILD ERRORS
 
 ---
 
 ## Step 5 — Wrap Up
 
-Update `.cursor/worker/night-shift-plan.md` with a brief **Outcome** section:
+YOU MUST Update `.cursor/worker/night-shift-plan.md` with a brief **Outcome** section:
 ```markdown
 ## Outcome
 _What was built, which files were created, what a developer needs to know to use it._
