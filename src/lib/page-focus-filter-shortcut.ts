@@ -2,10 +2,12 @@
 
 import { useEffect, type RefObject } from "react";
 import { usePathname } from "next/navigation";
+import { FOCUS_FILTER_EVENT } from "@/lib/focus-filter-event";
 
 /**
  * On a page with the given pathname, pressing "/" focuses the given input
  * unless focus is already in an input, textarea, or select.
+ * Also listens for FOCUS_FILTER_EVENT (from command palette "Focus filter") and focuses when pathname matches.
  * Uses the Next.js app router pathname. Shared implementation for Dashboard,
  * Projects, Prompts, Ideas, and Technologies pages.
  */
@@ -29,7 +31,15 @@ export function usePageFocusFilterShortcut(
       el.focus();
     };
 
+    const onFocusFilterEvent = () => {
+      inputRef.current?.focus();
+    };
+
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    window.addEventListener(FOCUS_FILTER_EVENT, onFocusFilterEvent);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener(FOCUS_FILTER_EVENT, onFocusFilterEvent);
+    };
   }, [pathname, pathnameMatch, inputRef]);
 }

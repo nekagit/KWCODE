@@ -7,7 +7,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { invoke, isTauri } from "@/lib/tauri";
+import { invoke, isTauri, projectIdArgPayload } from "@/lib/tauri";
+import {
+  fetchImplementationLogEntries,
+  type ImplementationLogEntry,
+} from "@/lib/fetch-implementation-log";
+import { fetchProjectMilestones } from "@/lib/fetch-project-milestones";
 import {
   Accordion,
   AccordionContent,
@@ -17,21 +22,6 @@ import {
 
 type LogEntryStatus = "pending" | "accepted" | "declined";
 
-type LogEntry = {
-  id: number;
-  project_id: string;
-  run_id: string;
-  ticket_number: number;
-  ticket_title: string;
-  milestone_id?: number;
-  idea_id?: number;
-  completed_at: string;
-  files_changed: { path: string; status: string }[];
-  summary: string;
-  created_at: string;
-  status?: string;
-};
-
 interface ProjectControlTabProps {
   projectId: string;
   /** When this changes, the tab reloads implementation log (e.g. after a run completes). */
@@ -39,7 +29,7 @@ interface ProjectControlTabProps {
 }
 
 export function ProjectControlTab({ projectId, refreshKey = 0 }: ProjectControlTabProps) {
-  const [entries, setEntries] = useState<LogEntry[]>([]);
+  const [entries, setEntries] = useState<ImplementationLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [milestones, setMilestones] = useState<Record<number, string>>({});
@@ -50,56 +40,20 @@ export function ProjectControlTab({ projectId, refreshKey = 0 }: ProjectControlT
     setLoading(true);
     setError(null);
     try {
-      let list: LogEntry[];
       if (isTauri) {
         // #region agent log
         invoke("frontend_debug_log", { location: "ProjectControlTab.tsx:load", message: "Control: about to invoke get_implementation_log_entries", data: { projectId } }).catch(() => {});
         // #endregion
-        const raw = await invoke<{ id: number; project_id: string; run_id: string; ticket_number: number; ticket_title: string; milestone_id: number | null; idea_id: number | null; completed_at: string; files_changed: string; summary: string; created_at: string; status: string }[]>("get_implementation_log_entries", { projectId });
-        list = raw.map((r) => ({
-          id: r.id,
-          project_id: r.project_id,
-          run_id: r.run_id,
-          ticket_number: r.ticket_number,
-          ticket_title: r.ticket_title,
-          milestone_id: r.milestone_id ?? undefined,
-          idea_id: r.idea_id ?? undefined,
-          completed_at: r.completed_at,
-          files_changed: (() => {
-            try {
-              return JSON.parse(r.files_changed || "[]") as { path: string; status: string }[];
-            } catch {
-              return [];
-            }
-          })(),
-          summary: r.summary,
-          created_at: r.created_at,
-          status: r.status,
-        }));
-      } else {
-        const logRes = await fetch(`/api/data/projects/${projectId}/implementation-log`);
-        if (!logRes.ok) throw new Error("Failed to load implementation log");
-        list = (await logRes.json()) as LogEntry[];
       }
+      const list = await fetchImplementationLogEntries(projectId);
       setEntries(list);
 
-      let milList: { id: number; name: string }[] = [];
-      let ideaList: { id: number; title: string }[] = [];
-      if (isTauri) {
-        const [mils, ideas] = await Promise.all([
-          invoke<{ id: number; name: string; slug?: string }[]>("get_project_milestones", { projectId }),
-          invoke<{ id: number; title: string }[]>("get_ideas_list", { projectId }),
-        ]);
-        milList = mils ?? [];
-        ideaList = ideas ?? [];
-      } else {
-        const [milRes, ideasRes] = await Promise.all([
-          fetch(`/api/data/projects/${projectId}/milestones`),
-          fetch(`/api/data/ideas`),
-        ]);
-        milList = milRes.ok ? ((await milRes.json()) as { id: number; name: string }[]) : [];
-        ideaList = ideasRes.ok ? ((await ideasRes.json()) as { id: number; title: string }[]) : [];
-      }
+      const [milList, ideaList] = await Promise.all([
+        fetchProjectMilestones(projectId),
+        isTauri
+          ? invoke<{ id: number; title: string }[]>("get_ideas_list", projectIdArgPayload(projectId)).then((ideas) => ideas ?? [])
+          : fetch(`/api/data/ideas`).then((res) => (res.ok ? res.json() as Promise<{ id: number; title: string }[]> : [])),
+      ]);
       const milMap: Record<number, string> = {};
       milList.forEach((m) => { milMap[m.id] = m.name; });
       const ideaMap: Record<number, string> = {};
@@ -174,7 +128,7 @@ export function ProjectControlTab({ projectId, refreshKey = 0 }: ProjectControlT
   const pendingEntries = entries.filter((e) => e.status !== "accepted");
   const acceptedEntries = entries.filter((e) => e.status === "accepted");
 
-  const renderEntryCard = (entry: LogEntry, showAcceptDecline: boolean) => (
+  const renderEntryCard = (entry: ImplementationLogEntry, showAcceptDecline: boolean) => (
     <div
       key={entry.id}
       className="surface-card rounded-xl border border-border/50 p-4 space-y-3"

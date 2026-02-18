@@ -2866,6 +2866,70 @@ fn get_ideas_folder_path() -> Result<String, String> {
     Ok(path.to_string_lossy().to_string())
 }
 
+/// Opens the app repo's .cursor/7. planner folder (or .cursor if that subfolder is missing) in the system file manager.
+#[tauri::command]
+fn open_planner_folder() -> Result<(), String> {
+    let root = project_root()?;
+    let planner_dir = root.join(".cursor").join("7. planner");
+    let cursor_dir = root.join(".cursor");
+    let to_open = if planner_dir.is_dir() {
+        planner_dir
+    } else if cursor_dir.is_dir() {
+        cursor_dir
+    } else {
+        return Err("Planner folder (.cursor/7. planner or .cursor) not found.".to_string());
+    };
+    open_dir_in_file_manager(&to_open)
+}
+
+/// Returns the app repo's .cursor/7. planner folder path (or .cursor if that subfolder is missing). Used for copy-to-clipboard.
+#[tauri::command]
+fn get_planner_folder_path() -> Result<String, String> {
+    let root = project_root()?;
+    let planner_dir = root.join(".cursor").join("7. planner");
+    let cursor_dir = root.join(".cursor");
+    let path = if planner_dir.is_dir() {
+        planner_dir
+    } else if cursor_dir.is_dir() {
+        cursor_dir
+    } else {
+        return Err("Planner folder (.cursor/7. planner or .cursor) not found.".to_string());
+    };
+    Ok(path.to_string_lossy().to_string())
+}
+
+/// Opens the app repo's .cursor/milestones folder (or .cursor if that subfolder is missing) in the system file manager.
+#[tauri::command]
+fn open_milestones_folder() -> Result<(), String> {
+    let root = project_root()?;
+    let milestones_dir = root.join(".cursor").join("milestones");
+    let cursor_dir = root.join(".cursor");
+    let to_open = if milestones_dir.is_dir() {
+        milestones_dir
+    } else if cursor_dir.is_dir() {
+        cursor_dir
+    } else {
+        return Err("Milestones folder (.cursor/milestones or .cursor) not found.".to_string());
+    };
+    open_dir_in_file_manager(&to_open)
+}
+
+/// Returns the app repo's .cursor/milestones folder path (or .cursor if that subfolder is missing). Used for copy-to-clipboard.
+#[tauri::command]
+fn get_milestones_folder_path() -> Result<String, String> {
+    let root = project_root()?;
+    let milestones_dir = root.join(".cursor").join("milestones");
+    let cursor_dir = root.join(".cursor");
+    let path = if milestones_dir.is_dir() {
+        milestones_dir
+    } else if cursor_dir.is_dir() {
+        cursor_dir
+    } else {
+        return Err("Milestones folder (.cursor/milestones or .cursor) not found.".to_string());
+    };
+    Ok(path.to_string_lossy().to_string())
+}
+
 #[tauri::command]
 async fn run_implement_all(
     app: AppHandle,
@@ -3281,6 +3345,10 @@ pub fn run() {
             get_technologies_folder_path,
             open_ideas_folder,
             get_ideas_folder_path,
+            open_planner_folder,
+            get_planner_folder_path,
+            open_milestones_folder,
+            get_milestones_folder_path,
             list_running_runs,
             stop_run,
             stop_script,

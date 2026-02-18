@@ -3,6 +3,8 @@
  * Previously duplicated across ProjectTicketsTab.tsx and ProjectRunTab.tsx.
  */
 
+import type { RunInfo } from "@/types/run";
+
 /** Check whether a run is an Implement All, Ticket, Analyze doc, Debug, Fast dev, or Night shift run (shown in terminal slots). */
 export const isImplementAllRun = (r: { label: string }) =>
     r.label === "Implement All" ||
@@ -40,4 +42,21 @@ export function formatDurationMs(ms: number | undefined): string {
     const sec = Math.floor(ms / 1000) % 60;
     const min = Math.floor(ms / 60_000);
     return `${min}:${sec.toString().padStart(2, "0")}`;
+}
+
+/**
+ * Next free terminal slot (1–3) or null if all occupied.
+ * Only considers running Implement All–style runs (Ticket, Implement All, Fast dev, etc.) when determining occupied slots.
+ */
+export function getNextFreeSlotOrNull(runningRuns: RunInfo[]): 1 | 2 | 3 | null {
+    const occupied = new Set<1 | 2 | 3>();
+    for (const r of runningRuns) {
+        if (r.status !== "running") continue;
+        if (!isImplementAllRun(r)) continue;
+        if (r.slot === 1 || r.slot === 2 || r.slot === 3) occupied.add(r.slot);
+    }
+    for (const slot of [1, 2, 3] as const) {
+        if (!occupied.has(slot)) return slot;
+    }
+    return null;
 }

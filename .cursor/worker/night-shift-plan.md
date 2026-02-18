@@ -2,6 +2,4432 @@
 
 ---
 
+## Night Shift Plan — 2025-02-18 (This run: Loading screen — Print button)
+
+### Chosen Feature
+
+**Loading screen: Print button** — The app supports printing via ⌘P and the command palette ("Print current page"). The Dashboard, Documentation, Technologies, Configuration, Projects list, Ideas, Prompts page, and Run tab have an inline Print button. The Loading screen page (moon/stars full-page view with version and repository URL in the footer) has Copy version and Copy repository URL but no Print action. Adding a **Print** button in the footer row gives parity: users can print the Loading screen from the UI without opening the palette or using ⌘P. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **LoadingScreenPageContent.tsx:** Add `Printer` to the lucide-react import. In the footer (`footer` with version and repo URL), add a **Print** button in the same flex row (e.g. before or after the version/repo block): ghost, size sm, same dark-theme styling as the existing footer buttons; onClick `window.print()`; `aria-label="Print current page"`, `title="Print loading screen (⌘P)"`. No new lib; same pattern as other page Print buttons.
+- **ADR:** `.cursor/adr/0310-loading-screen-print-button.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0310-loading-screen-print-button.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/organisms/LoadingScreenPageContent.tsx` — add Printer import and Print button in footer.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [ ] Add Printer to lucide-react imports in LoadingScreenPageContent.
+- [ ] Add Print button in Loading screen footer (same row as version/repo).
+- [ ] Create ADR `.cursor/adr/0310-loading-screen-print-button.md`.
+- [ ] Run `npm run verify` and fix any failures.
+- [ ] Update this plan with Outcome section.
+
+### Outcome
+
+_(To be filled after implementation.)_
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Run tab — Print button)
+
+### Chosen Feature
+
+**Run tab: Print button** — The app supports printing via ⌘P and the command palette ("Print current page"). The Dashboard, Documentation, Technologies, Configuration, Projects list, Ideas, and Prompts pages have an inline Print button. The Run tab (project Worker tab) has a History toolbar with Copy last run, Download, Remove last run, Copy summary, stats JSON/CSV, Copy all, etc., but no Print action. Adding a **Print** button at the start of that toolbar gives parity: users can print the run history view from the Run tab without opening the palette or using ⌘P. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **ProjectRunTab.tsx:** Add `Printer` to the lucide-react import. In the History section toolbar (the `flex items-center gap-2` div when `history.length > 0`), add a **Print** button at the start (before "Copy last run"): variant ghost, size sm, Printer icon; onClick `window.print()`; `aria-label="Print current page"`, `title="Print run tab (⌘P)"`. Same pattern as other page Print buttons; no new lib.
+- **ADR:** `.cursor/adr/0309-run-tab-print-button.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0309-run-tab-print-button.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/TabAndContentSections/ProjectRunTab.tsx` — add Printer import and Print button at start of History toolbar.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add Printer to lucide-react imports in ProjectRunTab.
+- [x] Add Print button at start of Run tab History toolbar (before Copy last run).
+- [x] Create ADR `.cursor/adr/0309-run-tab-print-button.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Run tab History toolbar already had a Print button at the start (before "Copy last run"). Implementation was completed in a prior run. Clicking it calls `window.print()`. ADR 0309 documents the feature.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Prompts page — Print button)
+
+### Chosen Feature
+
+**Prompts page: Print button** — The app supports printing via ⌘P and the command palette ("Print current page"). The Dashboard (ADR 0300), Documentation (0305), Technologies (0306), Configuration (0307), Projects list (0307), and Ideas page have an inline Print button. The Prompts page has a Card header with action buttons and Refresh but no Print action. Adding a **Print** button in that header row gives parity: users can print the Prompts page from the UI without opening the palette or using ⌘P. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **PromptRecordsPageContent.tsx:** Add `Printer` to the lucide-react import. In the CardHeader action row (the `flex items-center gap-2` div that contains PromptRecordActionButtons and Refresh), add a **Print** button before Refresh: outline, size sm, Printer icon; onClick `window.print()`; `aria-label="Print current page"`, `title="Print prompts page (⌘P)"`. No new lib; same pattern as Configuration and other content pages.
+- **ADR:** `.cursor/adr/0309-prompts-print-button.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0309-prompts-print-button.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/organisms/PromptRecordsPageContent.tsx` — add Printer import and Print button in CardHeader action row (before Refresh).
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add Printer to imports in PromptRecordsPageContent.
+- [x] Add Print button in Prompts page CardHeader action row (before Refresh).
+- [x] Create ADR `.cursor/adr/0309-prompts-print-button.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Prompts page CardHeader action row now has a **Print** button after the action buttons and before "Refresh". Clicking it calls `window.print()`, opening the browser's print dialog (same behaviour as ⌘P and the command palette "Print current page"). The button uses the Printer icon, outline/sm styling to match the Refresh button, and `aria-label="Print current page"` / `title="Print prompts page (⌘P)"` for accessibility and shortcut discoverability. This gives parity with the Dashboard (ADR 0300), Documentation (0305), Technologies (0306), Configuration (0307), Projects list (0307), and Ideas page Print buttons.
+
+**Files created:** `.cursor/adr/0309-prompts-print-button.md`
+
+**Files touched:** `src/components/organisms/PromptRecordsPageContent.tsx` (added `Printer` icon import and Print button in CardHeader action row before Refresh), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Ideas page — Print button)
+
+### Chosen Feature
+
+**Ideas page: Print button** — The app supports printing via ⌘P and the command palette ("Print current page"). The Dashboard (ADR 0300), Documentation (0305), Technologies (0306), Projects list (0307), and Configuration pages have an inline Print button. The Ideas page has a toolbar with Export (JSON, CSV, Markdown, Copy), folder actions, and Refresh but no Print action. Adding a **Print** button at the start of the Export row gives parity: users can print the Ideas page from the UI without opening the palette or using ⌘P. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **IdeasPageContent.tsx:** Add `Printer` to the lucide-react import. In the toolbar row that contains Export (the `flex flex-wrap items-center gap-3 border-t border-border/50 pt-4` div), add a **Print** button at the start (before the Export group): outline, size sm, Printer icon; onClick `window.print()`; `aria-label="Print current page"`, `title="Print ideas page (⌘P)"`. No new lib; same pattern as other content pages.
+- **ADR:** `.cursor/adr/0308-ideas-print-button.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0308-ideas-print-button.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/organisms/IdeasPageContent.tsx` — add Printer import and Print button at start of Export toolbar row.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add Printer to imports in IdeasPageContent.
+- [x] Add Print button at start of Ideas page Export toolbar row (before Export JSON).
+- [x] Create ADR `.cursor/adr/0308-ideas-print-button.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Ideas page Export toolbar row now has a **Print** button at the start (before "Export JSON"). Clicking it calls `window.print()`, opening the browser's print dialog (same behaviour as ⌘P and the command palette "Print current page"). The button uses the Printer icon, outline/sm styling to match the other toolbar buttons, and `aria-label="Print current page"` / `title="Print ideas page (⌘P)"` for accessibility and shortcut discoverability. This gives parity with the Dashboard (ADR 0300), Documentation (0305), Technologies (0306), Projects list (0307), and Configuration Print buttons.
+
+**Files created:** `.cursor/adr/0308-ideas-print-button.md`
+
+**Files touched:** `src/components/organisms/IdeasPageContent.tsx` (added `Printer` icon import and Print button at start of Export toolbar row), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Configuration page — Print button)
+
+### Chosen Feature
+
+**Configuration page: Print button** — The app supports printing via ⌘P and the command palette ("Print current page"). The Dashboard (ADR 0300), Documentation (ADR 0305), and Technologies (ADR 0306) pages have an inline Print button; the Configuration page had a top row with only "Refresh" and no Print action. Adding a **Print** button next to Refresh gives parity: users can print the Configuration page (theme, data paths, version, API health) from the UI without opening the palette or using ⌘P. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **ConfigurationPageContent.tsx:** Add `Printer` to the lucide-react import. In the top flex row (same row as "Refresh"), add a **Print** button before Refresh: outline, size sm, Printer icon; onClick `window.print()`; `aria-label="Print current page"`, `title="Print configuration page (⌘P)"`. No new lib; same pattern as Dashboard, Documentation, Technologies.
+- **ADR:** `.cursor/adr/0307-configuration-print-button.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0307-configuration-print-button.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/organisms/ConfigurationPageContent.tsx` — add Printer import and Print button in top toolbar row.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add Printer to imports in ConfigurationPageContent.
+- [x] Add Print button in Configuration page top row (before Refresh).
+- [x] Create ADR `.cursor/adr/0307-configuration-print-button.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Configuration page top toolbar row now has a **Print** button before "Refresh". Clicking it calls `window.print()`, opening the browser's print dialog (same behaviour as ⌘P and the command palette "Print current page"). The button uses the Printer icon, outline/sm styling to match the Refresh button, and `aria-label="Print current page"` / `title="Print configuration page (⌘P)"` for accessibility and shortcut discoverability. This gives parity with the Dashboard, Documentation, and Technologies Print buttons.
+
+**Files created:** `.cursor/adr/0307-configuration-print-button.md`
+
+**Files touched:** `src/components/organisms/ConfigurationPageContent.tsx` (added `Printer` icon import and Print button in top row before Refresh), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Projects list page — Print button)
+
+### Chosen Feature
+
+**Projects list page: Print button** — The app supports printing via ⌘P and the command palette ("Print current page"). The Dashboard (ADR 0300), Documentation (ADR 0305), and Technologies (ADR 0306) pages each have an inline Print button. The Projects list page has an Export toolbar (JSON, CSV, Markdown, Copy, Restore defaults) but no Print action. Adding a **Print** button at the start of that row gives parity: users can print the projects list from the UI without opening the palette or using ⌘P. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **ProjectsListPageContent.tsx:** Add `Printer` to the lucide-react import. In the toolbar row (same `flex flex-wrap items-center gap-3 mb-4` as filter and Export), add a **Print** button at the start of the row (before the filter input): outline, size sm, Printer icon; onClick `window.print()`; `aria-label="Print current page"`, `title="Print projects list (⌘P)"`. No new lib; same pattern as Dashboard, Documentation, and Technologies.
+- **ADR:** `.cursor/adr/0307-projects-list-print-button.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0307-projects-list-print-button.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/organisms/ProjectsListPageContent.tsx` — add Printer import and Print button at start of toolbar row.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add Printer to imports in ProjectsListPageContent.
+- [x] Add Print button at start of Projects list toolbar row (before filter).
+- [x] Create ADR `.cursor/adr/0307-projects-list-print-button.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Projects list page toolbar now has a **Print** button at the start of the row (before the filter input). Clicking it calls `window.print()`, opening the browser's print dialog (same behaviour as ⌘P and the command palette "Print current page"). The button uses the Printer icon, outline/sm styling to match the other toolbar buttons, and `aria-label="Print current page"` / `title="Print projects list (⌘P)"` for accessibility and shortcut discoverability. This gives parity with the Dashboard (ADR 0300), Documentation (ADR 0305), and Technologies (ADR 0306) Print buttons.
+
+**Files created:** `.cursor/adr/0307-projects-list-print-button.md`
+
+**Files touched:** `src/components/organisms/ProjectsListPageContent.tsx` (added `Printer` icon import and Print button at start of toolbar row), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Technologies page — Print button)
+
+### Chosen Feature
+
+**Technologies page: Print button** — The app supports printing via ⌘P and the command palette ("Print current page"). The Dashboard (ADR 0300) and Documentation page (ADR 0305) both have an inline Print button in their toolbars. The Technologies page has a toolbar with Copy path, Open folder, and Refresh but no Print action. Adding a **Print** button at the start of that row gives parity: users can print the Technologies page from the UI without opening the palette or using ⌘P. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **TechnologiesPageContent.tsx:** Add `Printer` to the lucide-react import. In the top toolbar row (`mb-3 flex justify-end gap-2`), add a **Print** button at the start: outline, size sm, Printer icon; onClick `window.print()`; `aria-label="Print current page"`, `title="Print technologies page (⌘P)"`. No new lib; same pattern as Dashboard and Documentation.
+- **ADR:** `.cursor/adr/0306-technologies-print-button.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0306-technologies-print-button.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/organisms/TechnologiesPageContent.tsx` — add Printer import and Print button at start of toolbar row.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add Printer to imports in TechnologiesPageContent.
+- [x] Add Print button at start of Technologies page toolbar row.
+- [x] Create ADR `.cursor/adr/0306-technologies-print-button.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Technologies page toolbar now has a **Print** button at the start of the row (before "Copy path"). Clicking it calls `window.print()`, opening the browser's print dialog (same behaviour as ⌘P and the command palette "Print current page"). The button uses the Printer icon, outline/sm styling to match the other toolbar buttons, and `aria-label="Print current page"` / `title="Print technologies page (⌘P)"` for accessibility and shortcut discoverability. This gives parity with the Dashboard (ADR 0300) and Documentation (ADR 0305) Print buttons.
+
+**Files created:** `.cursor/adr/0306-technologies-print-button.md`
+
+**Files touched:** `src/components/organisms/TechnologiesPageContent.tsx` (added `Printer` icon import and Print button at start of toolbar row), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Documentation page — Print button)
+
+### Chosen Feature
+
+**Documentation page: Print button** — The app supports printing via ⌘P and the command palette ("Print current page"). The Dashboard has a Print button in its Export metrics toolbar (ADR 0300). The Documentation page has a toolbar with Open folder, Copy path, Download/Copy as Markdown/JSON and Refresh but no visible Print action. Adding a **Print** button to that toolbar gives users a one-click way to print the documentation page from the UI, matching Dashboard behaviour. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **DocumentationPageContent.tsx:** Add `Printer` to the lucide-react import. In the button row (same flex wrap as Open folder, Copy path, etc.), add a **Print** button at the start of the row: outline, size sm, Printer icon; onClick call `window.print()`; `aria-label="Print current page"` and `title="Print documentation page (⌘P)"`. No new lib; same pattern as Dashboard.
+- **ADR:** `.cursor/adr/0305-documentation-print-button.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0305-documentation-print-button.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/organisms/DocumentationPageContent.tsx` — add Printer import and Print button at start of toolbar row.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add Printer to imports in DocumentationPageContent.
+- [x] Add Print button at start of Documentation page toolbar row.
+- [x] Create ADR `.cursor/adr/0305-documentation-print-button.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Documentation page toolbar now has a **Print** button at the start of the row (before "Open documentation folder"). Clicking it calls `window.print()`, opening the browser's print dialog (same behaviour as ⌘P and the command palette "Print current page"). The button uses the Printer icon, outline/sm styling to match the other toolbar buttons, and `aria-label="Print current page"` / `title="Print documentation page (⌘P)"` for accessibility and shortcut discoverability.
+
+**Files created:** `.cursor/adr/0305-documentation-print-button.md`
+
+**Files touched:** `src/components/organisms/DocumentationPageContent.tsx` (added `Printer` icon import and Print button at start of toolbar row), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Command palette — Copy app repository URL)
+
+### Chosen Feature
+
+**Command palette: Copy app repository URL** — The Configuration page and Loading screen both have a "Copy repository URL" button when `NEXT_PUBLIC_APP_REPOSITORY_URL` is set; the command palette only has "View source" (opens the repo in the browser). Adding a **Copy repository URL** action to the palette when the app repo URL is set gives parity: users can copy the app repository URL from anywhere via ⌘K without opening Configuration or Loading screen. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx:** When `repoUrl` is set (same block that adds "View source"), add a second entry **"Copy repository URL"** with Copy icon. On select: call `copyTextToClipboard(repoUrl)`, show toast "Repository URL copied to clipboard", close palette. Reuse existing `copyTextToClipboard` and toast; no new lib.
+- **ADR:** `.cursor/adr/0304-command-palette-copy-app-repository-url.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0304-command-palette-copy-app-repository-url.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — add "Copy repository URL" action when repoUrl is set.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add "Copy repository URL" palette entry (Copy icon) when getAppRepositoryUrl() is set; onSelect: copyTextToClipboard(repoUrl), toast, closePalette.
+- [x] Create ADR `.cursor/adr/0304-command-palette-copy-app-repository-url.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — When `NEXT_PUBLIC_APP_REPOSITORY_URL` is set, the command palette (⌘K / Ctrl+K) now shows **Copy repository URL** (Copy icon) before **View source**. Selecting it copies the app repository URL to the clipboard, shows a success or error toast, and closes the palette. This gives parity with the Configuration page and Loading screen so users can copy the app repo URL from anywhere without opening those pages.
+
+**Files created:** `.cursor/adr/0304-command-palette-copy-app-repository-url.md`
+
+**Files touched:** `src/components/shared/CommandPalette.tsx` (added "Copy repository URL" entry when `getAppRepositoryUrl()` is set; reuses `copyTextToClipboard` and toast), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Project detail — Copy project path button)
+
+### Chosen Feature
+
+**Project detail page: Copy project path button** — When viewing a project at `/projects/[id]`, users can copy the project's repo path from the Dashboard (project card) or the command palette ("Copy first project path"), but there is no inline action on the project detail page itself. Adding a **Copy path** button next to the repo path in the project header gives parity: users can copy the current project's path without leaving the page. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **ProjectDetailsPageContent.tsx:** In the metadata row where `project.repoPath` is shown (MetadataBadge), add a small "Copy path" button (ghost, sm, Copy icon). On click: copy `project.repoPath` to clipboard via `copyTextToClipboard` from `@/lib/copy-to-clipboard`, toast success/error. Only show when `project.repoPath` is set. Add `Copy` icon import from lucide-react.
+- **ADR:** `.cursor/adr/0303-project-detail-copy-path-button.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0303-project-detail-copy-path-button.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/organisms/ProjectDetailsPageContent.tsx` — add Copy icon, copyTextToClipboard import, and Copy path button next to repo path badge.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add Copy icon and copyTextToClipboard import in ProjectDetailsPageContent.
+- [x] Add "Copy path" button next to repo path in project header (when project.repoPath is set).
+- [x] Create ADR `.cursor/adr/0303-project-detail-copy-path-button.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The project detail page header (when viewing a project at `/projects/[id]`) now has a **Copy path** button next to the repo path metadata badge. The button is shown only when the project has a repo path set. Clicking it copies the project's repo path to the clipboard using `copyTextToClipboard` and shows a success or error toast. This gives parity with the Dashboard project card "Copy path" and the command palette "Copy first project path" so users can copy the current project's path without leaving the page.
+
+**Files created:** `.cursor/adr/0303-project-detail-copy-path-button.md`
+
+**Files touched:** `src/components/organisms/ProjectDetailsPageContent.tsx` (added `Copy` icon and `copyTextToClipboard` import, added "Copy path" button next to repo path badge), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Run tab — Copy run history stats summary button)
+
+### Chosen Feature
+
+**Run tab: Copy run history stats summary button** — The Run tab History toolbar has Download/Copy stats as JSON and Download/Copy stats as CSV, and the Dashboard Run History card and command palette both offer "Copy run history stats summary" (human-readable stats text). The Run tab had no inline way to copy that summary. Adding a **Copy summary** button to the Run tab History toolbar gives parity: users can copy the stats summary from the Run tab without opening the palette or going to the Dashboard. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **ProjectRunTab.tsx:** Import `copyRunHistoryStatsSummaryToClipboard` from `@/lib/copy-run-history-stats-summary`. In the History toolbar (same row as "Download stats as JSON", "Copy stats as JSON", etc.), add a **Copy summary** button before the JSON/CSV stats buttons: ghost, sm, Copy icon; calls `copyRunHistoryStatsSummaryToClipboard(displayHistory)`; disabled when `displayHistory.length === 0`; title/aria-label for accessibility. Reuses existing lib; no new backend.
+- **ADR:** `.cursor/adr/0302-run-tab-copy-stats-summary-button.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0302-run-tab-copy-stats-summary-button.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/TabAndContentSections/ProjectRunTab.tsx` — add import and Copy summary button in History toolbar.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add import for copyRunHistoryStatsSummaryToClipboard in ProjectRunTab.
+- [x] Add "Copy summary" button to Run tab History toolbar (before stats JSON/CSV buttons).
+- [x] Create ADR `.cursor/adr/0302-run-tab-copy-stats-summary-button.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Run tab History toolbar now has a **Copy summary** button, placed after "Remove last run" and before "Download stats as JSON". Clicking it copies the run history stats summary (human-readable aggregate: runs count, passed, failed, total duration) to the clipboard, using the same logic as the Dashboard Run History card and the command palette "Copy run history stats summary" action. The button is disabled when there is no run history and uses ghost/sm styling and Copy icon to match the other toolbar buttons.
+
+**Files created:** `.cursor/adr/0302-run-tab-copy-stats-summary-button.md`
+
+**Files touched:** `src/components/molecules/TabAndContentSections/ProjectRunTab.tsx` (import `copyRunHistoryStatsSummaryToClipboard` from `@/lib/copy-run-history-stats-summary`, added "Copy summary" button in History toolbar), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Remove last run — Confirmation dialog)
+
+### Chosen Feature
+
+**Confirm before "Remove last run"** — The Run tab and the command palette both offer "Remove last run from history", which deletes the most recent run entry immediately with no confirmation. "Clear run history" already uses a confirmation dialog in both places. Adding a confirmation step before removing the last run prevents accidental data loss and aligns behaviour with other destructive run-history actions. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx:** Add state `removeLastRunConfirmOpen`. Change `handleRemoveLastRun` to open the confirmation dialog when there is a run to remove (instead of removing immediately). Add a second dialog "Remove last run from history?" with body "The most recent run will be removed. This cannot be undone." and Cancel / Remove buttons. On confirm, call `removeTerminalOutputFromHistory(firstRunId)`, close dialog, toast, same as current success path.
+- **ProjectRunTab.tsx:** Add local state `removeLastRunConfirmOpen`. When "Remove last run" is clicked, set open to true instead of calling `removeTerminalOutputFromHistory` directly. Render a Dialog (same pattern as "Clear run history?" in that file) with title "Remove last run from history?", body "The most recent run will be removed. This cannot be undone.", Cancel and Remove (destructive) buttons. On confirm, call `removeTerminalOutputFromHistory(lastRun.id)`, close dialog, toast.
+- **ADR:** `.cursor/adr/0301-remove-last-run-confirmation.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0301-remove-last-run-confirmation.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — add remove-last-run confirmation state, dialog, and handler.
+- `src/components/molecules/TabAndContentSections/ProjectRunTab.tsx` — add remove-last-run confirmation state and dialog.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add confirmation dialog for "Remove last run" in CommandPalette.
+- [x] Add confirmation dialog for "Remove last run" in ProjectRunTab.
+- [x] Create ADR `.cursor/adr/0301-remove-last-run-confirmation.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — "Remove last run from history" now asks for confirmation in both places. **Command palette:** Already had confirmation (state `removeLastRunConfirmOpen`, dialog "Remove last run from history?" with Cancel/Remove). **Run tab:** Added the same pattern: state `removeLastRunConfirmOpen`, "Remove last run" button opens the dialog instead of removing immediately; dialog title "Remove last run from history?", body "The most recent run will be removed. This cannot be undone.", Cancel and Remove (destructive). On confirm, `removeTerminalOutputFromHistory(lastRun.id)` is called, dialog closes, success toast. This aligns behaviour with "Clear run history" and reduces accidental data loss.
+
+**Files created:** `.cursor/adr/0301-remove-last-run-confirmation.md`
+
+**Files touched:** `src/components/molecules/TabAndContentSections/ProjectRunTab.tsx` (added `removeLastRunConfirmOpen` state, dialog, and wired "Remove last run" button to open dialog; confirm handler uses `lastRun`), `.cursor/worker/night-shift-plan.md` (this checklist and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Dashboard — Print button)
+
+### Chosen Feature
+
+**Dashboard: Print button** — The app supports printing the current page via ⌘P / Ctrl+P and via the command palette ("Print current page"). The Dashboard has an Overview section with metrics and an "Export metrics" toolbar (Copy/Download as JSON, CSV, Markdown) but no visible **Print** action. Adding a **Print** button to that toolbar gives users who don't use keyboard shortcuts a one-click way to print the dashboard from the UI. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **DashboardOverview.tsx:** In the "Export metrics" row (same flex wrap as Copy/Download buttons), add a **Print** button: outline, size sm, Printer icon. On click call `window.print()`. Place it at the start of the row (before "Copy as JSON") so Print is visually grouped as a primary action. Use `aria-label="Print current page"` and `title="Print dashboard (⌘P)"`.
+- **ADR:** `.cursor/adr/0300-dashboard-print-button.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0300-dashboard-print-button.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` — add Print button and Printer icon import.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add Print button to Dashboard Overview "Export metrics" toolbar.
+- [x] Create ADR `.cursor/adr/0300-dashboard-print-button.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Dashboard Overview "Export metrics" toolbar now has a **Print** button at the start of the row. On click it calls `window.print()`, opening the browser’s print dialog (same behavior as ⌘P and the command palette "Print current page"). The button uses the Printer icon, outline/sm styling to match the other toolbar buttons, and `aria-label="Print current page"` / `title="Print dashboard (⌘P)"` for accessibility and shortcut discoverability.
+
+**Files created:** `.cursor/adr/0300-dashboard-print-button.md`
+
+**Files touched:** `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` (added `Printer` icon import and Print button in the Export metrics row), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Global shortcut — Go to Shortcuts)
+
+### Chosen Feature
+
+**Global keyboard shortcut: Go to Shortcuts** — The app has a Shortcuts page at `/shortcuts` (ADR 0276) and the command palette lists "Shortcuts" in NAV_ENTRIES (ADR 0285). Other top-level destinations have global shortcuts (e.g. Go to Run ⌘⇧W, Go to Design ⌘⇧X, Go to Architecture ⌘⇧A). There was no global shortcut to jump to the Shortcuts page; users had to open the palette (⌘K) or use the sidebar. Adding **⌘⇧S (Mac) / Ctrl+Alt+S (Windows/Linux)** to navigate to `/shortcuts` gives parity and would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx:** Add `goToShortcuts` callback: `router.push("/shortcuts")`. Add a "Go to Shortcuts" action in the palette entries (after "Go to Control") that calls `goToShortcuts` and closes the palette. Add a global keydown listener: when palette is not open and focus not in INPUT/TEXTAREA/SELECT, **⌘⇧S (Mac) / Ctrl+Alt+S (Windows/Linux)** calls `goToShortcuts()`. Same guard pattern as other "Go to" shortcuts.
+- **keyboard-shortcuts.ts:** Add one Help-group entry: "Go to Shortcuts" with keys "⌘⇧S / Ctrl+Alt+S", after "Go to Documentation".
+- **ADR:** `.cursor/adr/0298-global-shortcut-go-to-shortcuts.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0298-global-shortcut-go-to-shortcuts.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — add goToShortcuts, palette action, global keybinding.
+- `src/data/keyboard-shortcuts.ts` — add Help group entry for Go to Shortcuts.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add goToShortcuts callback and "Go to Shortcuts" palette action in CommandPalette.
+- [x] Add global keydown listener for ⌘⇧S / Ctrl+Alt+S in CommandPalette.
+- [x] Add "Go to Shortcuts" entry in keyboard-shortcuts.ts (Help group).
+- [x] Create ADR `.cursor/adr/0298-global-shortcut-go-to-shortcuts.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — A global keyboard shortcut **Go to Shortcuts** was added: **⌘⇧S (Mac) / Ctrl+Alt+S (Windows/Linux)**. From anywhere in the app (when the command palette is closed and focus is not in an input/textarea/select), this navigates to the Shortcuts page (`/shortcuts`). The command palette now includes a "Go to Shortcuts" action (Keyboard icon) that does the same navigation. The shortcuts help dialog (Shift+?) lists "Go to Shortcuts" with the new key binding in the Help group.
+
+**Files created:** `.cursor/adr/0298-global-shortcut-go-to-shortcuts.md`
+
+**Files touched:** `src/components/shared/CommandPalette.tsx` (added `goToShortcuts` callback, "Go to Shortcuts" palette entry, and global keydown listener for ⌘⇧S / Ctrl+Alt+S), `src/data/keyboard-shortcuts.ts` (one Help-group entry: "Go to Shortcuts" with keys ⌘⇧S / Ctrl+Alt+S), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Configuration page — Check API health button)
+
+### Chosen Feature
+
+**Configuration page: Check API health button** — In browser mode the Configuration page shows API health status (OK/Unavailable) from initial load but has no way to re-check without opening the command palette. Adding a **Check API health** button next to the status that calls `getApiHealth()`, updates the displayed status, and shows a toast gives users on the Configuration page the same capability as the palette. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **ConfigurationPageContent:** Add a button "Check API health" (RefreshCw icon) next to the API health status row. On click: call `getApiHealth()`, set `apiHealthOk` from result, show success toast (with version if present) or error toast. Only show when `!isTauri` (same as the status). Use outline, sm; match existing footer button styling.
+- **ADR:** `.cursor/adr/0299-configuration-check-api-health-button.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0299-configuration-check-api-health-button.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/organisms/ConfigurationPageContent.tsx` — add Check API health button and handler.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add "Check API health" button to Configuration page (browser mode only).
+- [x] Add ADR `.cursor/adr/0299-configuration-check-api-health-button.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Configuration page now has a **Check API health** button when running in browser mode (`!isTauri`). The button appears in the version/source row next to the API health status (OK/Unavailable). On click it calls `getApiHealth()`, updates the displayed status, shows a success toast (with version if present) or error toast, and displays a loading state (spinning RefreshCw) while the request is in progress. Users can re-check API health from the Configuration page without opening the command palette.
+
+**Files created:** `.cursor/adr/0299-configuration-check-api-health-button.md`
+
+**Files touched:** `src/components/organisms/ConfigurationPageContent.tsx` (added `apiHealthChecking` state, `handleCheckApiHealth` callback, and "Check API health" button with loading state in the browser-only block), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Project Milestones tab — Open project's milestones folder)
+
+### Chosen Feature
+
+**Project Milestones tab: Open project's milestones folder in file manager** — The project detail Milestones tab shows milestones and has Export JSON / Copy JSON / Export CSV etc., and the command palette has "Open milestones folder in file manager" (app repo's .cursor/milestones). There was no way to open the **current project's** `.cursor/milestones` folder from the Milestones tab. Adding an **Open folder** button lets users open the project's milestones folder in the file manager from the tab (e.g. to add or edit milestone files) without using ⌘K. Real, additive UX; reuses existing Tauri `open_path_in_file_manager`.
+
+### Approach
+
+- **New lib** `src/lib/open-project-milestones-folder.ts`: `openProjectMilestonesFolderInFileManager(repoPath: string | undefined)` — build path `repoPath/.cursor/milestones`, invoke `open_path_in_file_manager` with that path; isTauri check and toasts (same pattern as `open-project-folder.ts`).
+- **ProjectMilestonesTab:** Use `useRunStore((s) => s.isTauriEnv)`. When `project.repoPath` and `isTauriEnv === true`, add an "Open folder" button (FolderOpen icon, outline, sm) in (1) the "Milestones files" SectionCard header when shown, and (2) the toolbar row with Export JSON / Copy JSON so it appears when milestones exist. Single handler calling `openProjectMilestonesFolderInFileManager(project.repoPath)`.
+- **ADR:** `.cursor/adr/0298-project-milestones-tab-open-folder.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `src/lib/open-project-milestones-folder.ts` — open project's .cursor/milestones in file manager.
+- `.cursor/adr/0298-project-milestones-tab-open-folder.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/TabAndContentSections/ProjectMilestonesTab.tsx` — add Open folder button(s) and import.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create `src/lib/open-project-milestones-folder.ts`.
+- [x] Add "Open folder" button(s) to ProjectMilestonesTab (Milestones files card + toolbar when milestones exist).
+- [x] Add ADR `.cursor/adr/0298-project-milestones-tab-open-folder.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The project detail Milestones tab now has an **Open folder** button that opens the current project's `.cursor/milestones` folder in the system file manager. The button appears (1) in the "Milestones files" SectionCard header when the card is shown and (2) in the toolbar row with Export JSON / Copy JSON when there are milestones. It is shown only when `isTauriEnv === true` and `project.repoPath` is set. Uses the existing Tauri command `open_path_in_file_manager`; no new backend. If the folder does not exist, the backend returns an error and a toast is shown.
+
+**Files created:** `src/lib/open-project-milestones-folder.ts` (`openProjectMilestonesFolderInFileManager(repoPath)`), `.cursor/adr/0298-project-milestones-tab-open-folder.md`
+
+**Files touched:** `src/components/molecules/TabAndContentSections/ProjectMilestonesTab.tsx` (imports `useRunStore`, `openProjectMilestonesFolderInFileManager`, `FolderOpen`; added "Open folder" in Milestones files card header and in toolbar), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Database tab — Copy database file path)
+
+### Chosen Feature
+
+**Database tab (Dashboard): Copy database file path** — The Dashboard Database tab (DB Data card) has "Open data folder" and "Copy path" (data directory). The command palette has "Copy database file path" (exact path to `app.db`). There was no way to copy the **database file path** from the Database tab itself. Adding a **Copy database file path** button next to the existing "Copy path" lets users copy the full path to `app.db` from the Database tab for backup, external SQLite viewers, or support without opening the command palette. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **DatabaseDataTabContent:** Import `copyDatabaseFilePath` from `@/lib/copy-database-file-path`. In the toolbar row with "Open data folder" and "Copy path", add a button "Copy database file path" (Copy icon) that calls `copyDatabaseFilePath()`. Show only when `isTauriEnv === true` (same as existing lib behaviour: toast in browser). Same variant/size as "Copy path" (outline, sm).
+- **ADR:** `.cursor/adr/0297-database-tab-copy-database-file-path.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0297-database-tab-copy-database-file-path.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/TabAndContentSections/DatabaseDataTabContent.tsx` — add Copy database file path button and import.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add "Copy database file path" button to DatabaseDataTabContent (Tauri only).
+- [x] Add ADR `.cursor/adr/0297-database-tab-copy-database-file-path.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Dashboard Database tab (DB Data card) now has a **Copy database file path** button next to "Open data folder" and "Copy path". When running in Tauri, the button copies the full path to the SQLite database file (e.g. `…/data/app.db`) to the clipboard and shows a success toast; the button is only shown when `isTauriEnv === true` (browser mode continues to rely on the command palette action, which shows an info toast). Users can copy the app.db path directly from the Database tab for backup, external SQLite viewers, or support.
+
+**Files created:** `.cursor/adr/0297-database-tab-copy-database-file-path.md`
+
+**Files touched:** `src/components/molecules/TabAndContentSections/DatabaseDataTabContent.tsx` (import `copyDatabaseFilePath`, added "Copy database file path" button when Tauri), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Loading screen — Copy repository URL)
+
+### Chosen Feature
+
+**Loading screen: Copy repository URL** — The Loading screen shows app version (with Copy version) and a "View source" link that opens the app repository URL in the browser. There was no way to copy the repository URL to the clipboard from the Loading screen. The Configuration page already has a "Copy repository URL" button (ADR 0295). Adding the same **Copy repository URL** action on the Loading screen gives parity: users on the Loading page can paste the repo URL without opening the link. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **LoadingScreenPageContent:** When `repoUrl` is set, add a ghost/sm button "Copy repository URL" next to "View source" that calls `copyTextToClipboard(repoUrl)` and shows a success toast. Use Copy icon, `aria-label="Copy repository URL to clipboard"`, `title="Copy repository URL"`. Reuse the same footer styling as the existing Copy version button (white/60, hover, border).
+- **ADR:** `.cursor/adr/0297-loading-screen-copy-repository-url.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0297-loading-screen-copy-repository-url.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/organisms/LoadingScreenPageContent.tsx` — add Copy repository URL button when repoUrl is set.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add "Copy repository URL" button to Loading screen footer next to View source.
+- [x] Add ADR `.cursor/adr/0297-loading-screen-copy-repository-url.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Loading screen now has a **Copy repository URL** button when the app repository URL is set (`NEXT_PUBLIC_APP_REPOSITORY_URL`). The button appears in the footer next to "View source", uses the Copy icon and the same ghost styling as "Copy version" (white/60, hover, border). On click it copies the URL to the clipboard and shows a success toast. This gives parity with the Configuration page (ADR 0295) so users can paste the repo URL from either screen without opening the link.
+
+**Files created:** `.cursor/adr/0297-loading-screen-copy-repository-url.md`
+
+**Files touched:** `src/components/organisms/LoadingScreenPageContent.tsx` (added `handleCopyRepositoryUrl`, Copy button next to View source when `repoUrl` is set), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Configuration page — Copy app repository URL)
+
+### Chosen Feature
+
+**Configuration page: Copy app repository URL** — The Configuration page shows app version (with Copy version) and a "View source" button that opens the app repository URL in the browser. There was no way to copy the repository URL to the clipboard from the Configuration page. Adding a **Copy repository URL** button next to "View source" lets users paste the repo URL into docs, issues, or elsewhere without opening the link. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **ConfigurationPageContent:** When `repoUrl` is set, add a ghost/sm button "Copy repository URL" next to "View source" that calls `copyTextToClipboard(repoUrl)` and shows a success toast. Use Copy icon, `aria-label="Copy repository URL to clipboard"`, `title="Copy repository URL"`. Same styling as the existing Copy version button.
+- **ADR:** `.cursor/adr/0295-configuration-copy-repository-url.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0295-configuration-copy-repository-url.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/organisms/ConfigurationPageContent.tsx` — add Copy repository URL button when repoUrl is set.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add "Copy repository URL" button to Configuration page next to View source.
+- [x] Add ADR `.cursor/adr/0295-configuration-copy-repository-url.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Configuration page now has a **Copy repository URL** button when the app repository URL is set (`NEXT_PUBLIC_APP_REPOSITORY_URL`). The button appears next to "View source" in the version/source row, uses the Copy icon and ghost styling (same as "Copy version"), and on click copies the URL to the clipboard and shows a success toast. Users can paste the repo URL into documentation, issues, or chat without opening the link.
+
+**Files created:** `.cursor/adr/0295-configuration-copy-repository-url.md`
+
+**Files touched:** `src/components/organisms/ConfigurationPageContent.tsx` (Copy repository URL button with `copyTextToClipboard(repoUrl)` and toast), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Command palette — Open first project's remote in browser)
+
+### Chosen Feature
+
+**Command palette: Open first project's remote in browser** — The app has "View source" (opens the app repo) and the project Git tab shows remotes from `get_git_info`, but there is no way to open the **first active project's** Git remote (e.g. GitHub/GitLab URL) in the browser from the command palette. Adding **Open first project's remote in browser** lets users jump to the project's repo in one action from ⌘K without opening the project or Git tab. Real, additive capability; reuses existing Tauri `get_git_info` (remotes); no new copy/clipboard.
+
+### Approach
+
+- **New lib** `src/lib/parse-first-remote-url.ts`: `parseFirstRemoteUrl(remotes: string): string | null` — parse `git remote -v` output (e.g. "origin  https://github.com/user/repo (fetch)\n...") and return the first URL (split first line by whitespace, take first token matching http(s)://).
+- **CommandPalette:** Import `invoke`, `GitInfo`, `parseFirstRemoteUrl`, and `toast`. Add `handleOpenFirstProjectRemoteInBrowser`: get first active project path from store; in browser mode toast "Available in desktop app"; in Tauri invoke `get_git_info(projectPath)`, then `url = parseFirstRemoteUrl(info.remotes)`; if no project or no URL toast and return; else `window.open(url, '_blank', 'noopener,noreferrer')`, toast.success, closePalette. Add one action entry "Open first project's remote in browser" (ExternalLink icon) near other first-project actions.
+- **keyboard-shortcuts.ts:** Add one Command palette entry: "Open first project's remote in browser".
+- **ADR:** `.cursor/adr/0296-command-palette-open-first-project-remote.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `src/lib/parse-first-remote-url.ts` — parse first URL from `git remote -v` output.
+- `.cursor/adr/0296-command-palette-open-first-project-remote.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import lib + invoke + GitInfo, add handler and one action entry.
+- `src/data/keyboard-shortcuts.ts` — add one Command palette entry.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create `src/lib/parse-first-remote-url.ts`.
+- [x] Add handler and "Open first project's remote in browser" action in CommandPalette.
+- [x] Add keyboard-shortcuts.ts entry.
+- [x] Add ADR `.cursor/adr/0296-command-palette-open-first-project-remote.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The command palette (⌘K) now has an **Open first project's remote in browser** action. When at least one project is selected and the app is running in Tauri, selecting this action fetches the first project's Git remotes via `get_git_info`, parses the first URL from the `git remote -v` output, and opens it in the default browser in a new tab. If no project is selected, the user is prompted and sent to /projects. In browser (non-Tauri) mode, a toast explains the action is available in the desktop app. If the project has no remote URL, a toast is shown. No new Tauri commands; reuses existing `get_git_info`.
+
+**Files created:** `src/lib/parse-first-remote-url.ts` (`parseFirstRemoteUrl(remotes)`), `.cursor/adr/0296-command-palette-open-first-project-remote.md`
+
+**Files touched:** `src/components/shared/CommandPalette.tsx` (imports `invoke`, `parseFirstRemoteUrl`, `GitInfo`; added `handleOpenFirstProjectRemoteInBrowser` and one action entry "Open first project's remote in browser" with ExternalLink icon; dependency array updated), `src/data/keyboard-shortcuts.ts` (one Command palette entry), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Dashboard Run History card — Restore defaults button)
+
+### Chosen Feature
+
+**Dashboard Run History card: Restore run history filters** — The Run tab has an inline "Restore defaults" button for run history sort/filter preferences, and the command palette has "Restore run history filters". The Dashboard Run History card shows stats and Copy/Download actions but no way to restore those preferences. Adding a **Restore defaults** button to the Dashboard Run history card lets users reset run history filters from the Dashboard without opening ⌘K or the Run tab. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **RunHistoryStatsCard:** Import `setRunHistoryPreferences`, `DEFAULT_RUN_HISTORY_PREFERENCES`, `RUN_HISTORY_PREFERENCES_RESTORED_EVENT` from `@/lib/run-history-preferences`, and `toast` from sonner. Add a button "Restore defaults" (icon `RotateCcw`) that calls `setRunHistoryPreferences(DEFAULT_RUN_HISTORY_PREFERENCES)`, `window.dispatchEvent(new CustomEvent(RUN_HISTORY_PREFERENCES_RESTORED_EVENT))`, and `toast.success("Run history filters restored to defaults.")`. Same behaviour as Command palette handler; Run tab listens for the event and syncs when user navigates there.
+- **ADR:** `.cursor/adr/0295-dashboard-run-history-card-restore-defaults.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0295-dashboard-run-history-card-restore-defaults.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/DashboardsAndViews/RunHistoryStatsCard.tsx` — add Restore defaults button and imports.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add "Restore defaults" button to RunHistoryStatsCard (set prefs, dispatch event, toast).
+- [x] Add ADR `.cursor/adr/0295-dashboard-run-history-card-restore-defaults.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Dashboard Run History card now has a **Restore defaults** button. Clicking it restores run history sort and filter preferences to defaults (same as the command palette "Restore run history filters" and the Run tab "Restore defaults" button), dispatches the existing `RUN_HISTORY_PREFERENCES_RESTORED_EVENT` so the Run tab stays in sync when the user navigates there, and shows a success toast.
+
+**Files created:** `.cursor/adr/0295-dashboard-run-history-card-restore-defaults.md`
+
+**Files touched:** `src/components/molecules/DashboardsAndViews/RunHistoryStatsCard.tsx` (imports for `setRunHistoryPreferences`, `DEFAULT_RUN_HISTORY_PREFERENCES`, `RUN_HISTORY_PREFERENCES_RESTORED_EVENT`, `toast`, `RotateCcw`; `handleRestoreDefaults`; "Restore defaults" button before "Copy summary"), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Command palette — Copy app version)
+
+### Chosen Feature
+
+**Command palette: Copy app version** — The Loading screen and Configuration page have a "Copy version" button that copies the app version string (e.g. "v0.1.0") to the clipboard. The command palette has "Copy app info" (full block), "Copy app info as Markdown", and "Copy app info as JSON", but no action that copies only the version string. Adding **Copy app version** to the command palette lets keyboard-first users paste the version for bug reports or support without opening Configuration or Loading. Real, additive capability that would show up in a changelog.
+
+### Approach
+
+- **New lib** `src/lib/copy-app-version.ts`: `copyAppVersionToClipboard()` — call `getAppVersion()`, format as `v${version}`, `copyTextToClipboard(text)`, return `Promise<boolean>`. No toast inside lib; caller (Command palette) shows toast and closes.
+- **CommandPalette:** Import `copyAppVersionToClipboard`, add `handleCopyAppVersion`: call lib, toast success/error, close palette. Add one action entry "Copy app version" (Copy icon) next to other app-info actions.
+- **keyboard-shortcuts.ts:** Add one Command palette entry: "Copy app version".
+- **ADR:** `.cursor/adr/0294-command-palette-copy-app-version.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `src/lib/copy-app-version.ts` — copy app version string to clipboard.
+- `.cursor/adr/0294-command-palette-copy-app-version.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import lib, add handler and one action entry.
+- `src/data/keyboard-shortcuts.ts` — add one Command palette entry.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create `src/lib/copy-app-version.ts`.
+- [x] Add handler and "Copy app version" action in CommandPalette.
+- [x] Add keyboard-shortcuts.ts entry.
+- [x] Add ADR `.cursor/adr/0294-command-palette-copy-app-version.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The command palette (⌘K) now has a **Copy app version** action. Users can open the palette and select "Copy app version" to copy the app version string (e.g. "v0.1.0") to the clipboard, with success or error toast; the palette closes on success. This gives keyboard-first users a quick way to paste the version for bug reports or support without opening Configuration or Loading.
+
+**Files created:** `src/lib/copy-app-version.ts` (`copyAppVersionToClipboard()`), `.cursor/adr/0294-command-palette-copy-app-version.md`
+
+**Files touched:** `src/components/shared/CommandPalette.tsx` (import `copyAppVersionToClipboard`, `handleCopyAppVersion` with toast, one action entry "Copy app version" with Copy icon, dependency array), `src/data/keyboard-shortcuts.ts` (one Command palette entry: "Copy app version"), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Sidebar Versioning nav item)
+
+### Chosen Feature
+
+**Sidebar Versioning nav item** — The app has a /versioning redirect page, Dashboard Versioning link, and command palette "Go to Versioning" (⌘⇧U). The sidebar has Run, Testing, and Planner in the Work section but no Versioning. Adding **Versioning** to the sidebar (Work section) gives one-click access from the nav and aligns sidebar with Dashboard and command palette. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **SidebarNavigation:** Add Versioning to `workNavItems`: href="/versioning", label "Versioning", icon `FolderGit2` (same as Dashboard). Place after Planner so order is: … Planner, Versioning, Design, Architecture. Import `FolderGit2` from lucide-react.
+- **ADR:** `.cursor/adr/0293-sidebar-versioning-nav.md` (same pattern as ADR 0268 sidebar Run/Testing, ADR 0280 Shortcuts).
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0293-sidebar-versioning-nav.md` — ADR for sidebar Versioning nav.
+
+### Files to Touch (minimise)
+
+- `src/components/organisms/SidebarNavigation.tsx` — add FolderGit2 import; add Versioning to workNavItems after Planner.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add Versioning to SidebarNavigation workNavItems (FolderGit2, after Planner).
+- [x] Add ADR `.cursor/adr/0293-sidebar-versioning-nav.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The sidebar **Work** section now includes **Versioning**. Users can click "Versioning" in the sidebar (icon FolderGit2, href /versioning) to hit the existing redirect page and land on the first active project's Git tab, or get a toast and redirect to /projects when no project is selected. Sidebar navigation is aligned with the Dashboard entity links and command palette "Go to Versioning" (⌘⇧U).
+
+**Files created:** `.cursor/adr/0293-sidebar-versioning-nav.md`
+
+**Files touched:** `src/components/organisms/SidebarNavigation.tsx` (import `FolderGit2`, Versioning nav item after Planner in workNavItems), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Versioning redirect page and Dashboard link)
+
+### Chosen Feature
+
+**Versioning redirect page and Dashboard link** — The app has redirect pages for Run (/run), Testing (/testing), Planner (/planner), and Database (/database), but no /versioning route. "Go to Versioning" (⌘⇧U) and the command palette navigate directly to the first project's Git tab. Adding a **/versioning** redirect page and a **Versioning** entity link on the Dashboard gives a bookmarkable URL and consistent UX with Run, Testing, and Planner. Real, additive capability that would show up in a changelog.
+
+### Approach
+
+- **New page** `src/app/versioning/page.tsx`: redirect to first active project's Versioning (git) tab (`/projects/:id?tab=git`), or to /projects with toast when no project; same pattern as run/testing/planner pages.
+- **CommandPalette:** Change `goToVersioning` to `router.push("/versioning")` so the redirect logic lives in the page (consistent with goToPlanner).
+- **DashboardOverview:** Add Versioning to entityLinks: href="/versioning", label="Versioning", icon=FolderGit2, color (e.g. amber).
+- **page-title-context:** Add "/versioning": "Versioning" to PATHNAME_TITLE_MAP.
+- **ADR:** `.cursor/adr/0292-versioning-redirect-page.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `src/app/versioning/page.tsx` — redirect page.
+- `.cursor/adr/0292-versioning-redirect-page.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — goToVersioning: router.push("/versioning").
+- `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` — add Versioning to entityLinks; add FolderGit2 to imports.
+- `src/context/page-title-context.tsx` — add /versioning to PATHNAME_TITLE_MAP.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create `src/app/versioning/page.tsx`.
+- [x] Update CommandPalette goToVersioning to router.push("/versioning").
+- [x] Add Versioning to Dashboard entityLinks and page title map.
+- [x] Add ADR `.cursor/adr/0292-versioning-redirect-page.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Versioning now has a dedicated redirect page and Dashboard link. Users can open **/versioning** (bookmark, link, or via ⌘⇧U / "Go to Versioning" in the command palette) to be redirected to the first active project's Versioning (Git) tab; when no project is selected, they are sent to /projects with a toast. The Dashboard entity links include **Versioning** (icon FolderGit2, href /versioning) alongside Run, Testing, Planner, and Database. The document title shows "Versioning" during the redirect.
+
+**Files created:** `src/app/versioning/page.tsx`, `.cursor/adr/0292-versioning-redirect-page.md`
+
+**Files touched:** `src/components/shared/CommandPalette.tsx` (goToVersioning now does `router.push("/versioning")`), `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` (FolderGit2 import, Versioning in entityLinks), `src/context/page-title-context.tsx` (PATHNAME_TITLE_MAP "/versioning": "Versioning"), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Run tab — Remove last run button)
+
+### Chosen Feature
+
+**Run tab: Inline "Remove last run" button** — The command palette already has "Remove last run from history" (ADR 0244). The Run tab History section has a toolbar with "Copy last run" and "Download last run" but no inline way to remove the most recent run. Adding a **Remove last run** button next to those actions lets users clear the latest run from the History list without opening ⌘K. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **ProjectRunTab:** In the History toolbar (where Copy last run / Download last run live), add a button "Remove last run" that calls `removeTerminalOutputFromHistory(lastRun.id)` and shows a success toast. Reuse existing `removeTerminalOutputFromHistory` from run store and `lastRun` computed value. Use Trash2 icon (already imported). Button disabled when `!lastRun`.
+- **ADR:** `.cursor/adr/0291-run-tab-remove-last-run-button.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0291-run-tab-remove-last-run-button.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/TabAndContentSections/ProjectRunTab.tsx` — add "Remove last run" button in History toolbar after "Download last run".
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add "Remove last run" button to ProjectRunTab History toolbar.
+- [x] Add ADR `.cursor/adr/0291-run-tab-remove-last-run-button.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Run tab History section toolbar now includes a **Remove last run** button, placed after "Download last run". Clicking it removes the chronologically most recent run from history (same as the command palette action "Remove last run from history") and shows a success toast. The button is disabled when there is no run history. Uses existing `removeTerminalOutputFromHistory` from the run store and the existing `lastRun` value; no new lib or store logic.
+
+**Files created:** `.cursor/adr/0291-run-tab-remove-last-run-button.md`
+
+**Files touched:** `src/components/molecules/TabAndContentSections/ProjectRunTab.tsx` (one new button with Trash2 icon in the History toolbar), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Command palette — First project tech stack export)
+
+### Chosen Feature
+
+**Command palette: Download/Copy first project tech stack (JSON, Markdown, CSV)** — The app already has "Download tech stack", "Copy tech stack", and CSV/MD/JSON variants that operate on the **app** tech stack (Technologies page data). There is no way to export the **first active project's** tech stack (that project's `.cursor/technologies/tech-stack.json`) from the command palette. Adding Download/Copy first project tech stack as JSON, Markdown, and CSV aligns with other "first project" exports (tickets, milestones, designs, architectures, implementation log) and gives a real, additive capability for the changelog.
+
+### Approach
+
+- **New lib** `src/lib/fetch-tech-stack-for-project.ts`: `fetchTechStackForProject(projectPath: string)` — Tauri: `invoke("read_file_text_under_root", { root: projectPath, path: ".cursor/technologies/tech-stack.json" })`, parse JSON to `TechStackExport`; browser: toast "Available in desktop app", return null. Reuse type from `@/lib/download-tech-stack`.
+- **Command palette:** Resolve first active project path (`activeProjects[0]`), call `fetchTechStackForProject(path)`, then existing `downloadTechStackAsMarkdown`, `copyTechStackAsMarkdownToClipboard`, and same for JSON and CSV. Six handlers + six action entries (after existing first project milestones entries). Empty selection or null data → toast.
+- **keyboard-shortcuts.ts:** Add six Command palette entries for first project tech stack (Download/Copy as JSON, MD, CSV).
+- **ADR:** `.cursor/adr/0291-command-palette-first-project-tech-stack-export.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `src/lib/fetch-tech-stack-for-project.ts` — fetch tech stack for a project path (Tauri-only).
+- `.cursor/adr/0291-command-palette-first-project-tech-stack-export.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import fetchTechStackForProject and existing download/copy tech stack helpers, add six handlers, six action entries, deps.
+- `src/data/keyboard-shortcuts.ts` — add six Command palette entries.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create `src/lib/fetch-tech-stack-for-project.ts`.
+- [x] Add Command palette handlers and entries (Download/Copy first project tech stack as JSON, MD, CSV).
+- [x] Add keyboard-shortcuts.ts entries.
+- [x] Add ADR `.cursor/adr/0291-command-palette-first-project-tech-stack-export.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The command palette now has six actions for exporting the **first active project's** tech stack: **Download first project tech stack as JSON**, **Copy first project tech stack as JSON**, **Download first project tech stack as Markdown**, **Copy first project tech stack as Markdown**, **Download first project tech stack as CSV**, **Copy first project tech stack as CSV**. They read that project's `.cursor/technologies/tech-stack.json` via Tauri `read_file_text_under_root` and use the existing tech stack download/copy helpers. In browser mode a toast explains the feature is available in the desktop app. Empty project selection or missing file shows an appropriate toast.
+
+**Files created:** `src/lib/fetch-tech-stack-for-project.ts` (`fetchTechStackForProject`), `.cursor/adr/0291-command-palette-first-project-tech-stack-export.md`
+
+**Files touched:** `src/components/shared/CommandPalette.tsx` (import `fetchTechStackForProject`, six handlers, six action entries, dependency array), `src/data/keyboard-shortcuts.ts` (six Command palette entries), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Dashboard metrics — Export as Markdown)
+
+### Chosen Feature
+
+**Dashboard metrics: Export as Markdown** — The Dashboard shows metrics (tickets, prompts, designs, active/all projects count) and already supports exporting them as JSON and CSV. There was no Markdown export. Adding **Download dashboard metrics as Markdown** and **Copy dashboard metrics as Markdown** gives a human-readable snapshot (table) for documentation and sharing. Real, additive capability that would show up in a changelog.
+
+### Approach
+
+- **New lib** `src/lib/download-dashboard-metrics-md.ts`: build Markdown (title, exportedAt, table Metric | Value); `dashboardMetricsToMarkdown(metrics)`, `downloadDashboardMetricsAsMarkdown()`, `copyDashboardMetricsAsMarkdownToClipboard()`; reuse `getDashboardMetrics`, `filenameTimestamp`, `triggerFileDownload`, `copyTextToClipboard`; toast on success/error.
+- **DashboardOverview:** Add "Copy as Markdown" and "Download as Markdown" buttons in the Export metrics row (after CSV).
+- **Command palette:** Add "Copy dashboard metrics as Markdown" and "Download dashboard metrics as Markdown" (handlers + entries after dashboard CSV).
+- **keyboard-shortcuts.ts:** Add two Command palette entries.
+- **ADR:** `.cursor/adr/0290-dashboard-metrics-export-markdown.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `src/lib/download-dashboard-metrics-md.ts` — build MD, download, copy.
+- `.cursor/adr/0290-dashboard-metrics-export-markdown.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` — import lib and FileText, add two Export toolbar buttons.
+- `src/components/shared/CommandPalette.tsx` — import lib, add two handlers, two action entries, deps.
+- `src/data/keyboard-shortcuts.ts` — add two Command palette entries.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create `src/lib/download-dashboard-metrics-md.ts`.
+- [x] Add Command palette handlers and entries for Copy/Download dashboard metrics as Markdown.
+- [x] Add keyboard-shortcuts.ts entries.
+- [x] Add Export toolbar buttons (Copy/Download as Markdown) to DashboardOverview.
+- [x] Add ADR `.cursor/adr/0290-dashboard-metrics-export-markdown.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Dashboard metrics can now be exported as **Markdown**. Users can download a `.md` file or copy the same content to the clipboard from (1) the Dashboard Export metrics toolbar (buttons "Copy as Markdown" and "Download as Markdown") and (2) the command palette ("Copy dashboard metrics as Markdown", "Download dashboard metrics as Markdown"). The Markdown includes a title, export timestamp, and a table with columns Metric and Value (tickets count, prompts count, designs count, active projects count, all projects count).
+
+**Files created:** `src/lib/download-dashboard-metrics-md.ts` (`dashboardMetricsToMarkdown`, `downloadDashboardMetricsAsMarkdown`, `copyDashboardMetricsAsMarkdownToClipboard`), `.cursor/adr/0290-dashboard-metrics-export-markdown.md`
+
+**Files touched:** `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` (import MD lib and FileText, two Export toolbar buttons), `src/components/shared/CommandPalette.tsx` (import, two handlers, two action entries, dependency array), `src/data/keyboard-shortcuts.ts` (two Command palette entries), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Command palette — Copy keyboard shortcuts as CSV)
+
+### Chosen Feature
+
+**Command palette: Copy keyboard shortcuts as CSV** — The app already has "Copy keyboard shortcuts" (Markdown) and "Copy keyboard shortcuts as JSON" in the command palette, and "Download keyboard shortcuts as CSV". There is no **Copy keyboard shortcuts as CSV** action from ⌘K. Adding it gives parity with Copy-as-Markdown and Copy-as-JSON so keyboard-first users can paste the shortcuts list as CSV without opening the Shortcuts dialog. Real, additive capability that would show up in a changelog.
+
+### Approach
+
+- **Reuse** `src/lib/export-keyboard-shortcuts.ts`: `copyKeyboardShortcutsAsCsvToClipboard()` already exists.
+- **Command palette:** Add handler `handleCopyKeyboardShortcutsCsv` that calls `copyKeyboardShortcutsAsCsvToClipboard()` and closes the palette. Add one action entry "Copy keyboard shortcuts as CSV" (FileSpreadsheet icon) after "Copy keyboard shortcuts as JSON".
+- **keyboard-shortcuts.ts:** Add one Command palette entry: "Copy keyboard shortcuts as CSV".
+- **ADR:** `.cursor/adr/0290-command-palette-copy-keyboard-shortcuts-csv.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0290-command-palette-copy-keyboard-shortcuts-csv.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — add import for copyKeyboardShortcutsAsCsvToClipboard, handler, one action entry.
+- `src/data/keyboard-shortcuts.ts` — add one Command palette entry.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add Command palette handler and entry "Copy keyboard shortcuts as CSV".
+- [x] Add keyboard-shortcuts.ts entry.
+- [x] Add ADR `.cursor/adr/0290-command-palette-copy-keyboard-shortcuts-csv.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The command palette now includes **Copy keyboard shortcuts as CSV**. Users can open ⌘K and select "Copy keyboard shortcuts as CSV" to copy the keyboard shortcuts list in CSV format (same format as "Download keyboard shortcuts as CSV") to the clipboard, with success/error toast. Parity with existing "Copy keyboard shortcuts" (Markdown) and "Copy keyboard shortcuts as JSON".
+
+**Files created:** `.cursor/adr/0290-command-palette-copy-keyboard-shortcuts-csv.md`
+
+**Files touched:** `src/components/shared/CommandPalette.tsx` (import `copyKeyboardShortcutsAsCsvToClipboard`, handler `handleCopyKeyboardShortcutsCsv`, one action entry with FileSpreadsheet icon, dependency array), `src/data/keyboard-shortcuts.ts` (one Command palette entry: "Copy keyboard shortcuts as CSV"), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Projects list — Export as Markdown)
+
+### Chosen Feature
+
+**Projects list: Export as Markdown** — The Projects list page and command palette already support exporting the projects list as JSON and CSV. There is no Markdown export. Adding **Download projects list as Markdown** and **Copy projects list as Markdown** gives a human-readable list (e.g. table with name, id, path, description, counts) for docs and sharing. Real, additive capability that would show up in a changelog.
+
+### Approach
+
+- **New lib** `src/lib/download-projects-list-md.ts`: build Markdown (title, exportedAt, count, table: name, id, repo path, description, prompt/ticket/idea counts); `downloadProjectsListAsMarkdown(projects)` and `copyProjectsListAsMarkdownToClipboard(projects)`; reuse `filenameTimestamp`, `triggerFileDownload`, `copyTextToClipboard`; toast on empty/error/success.
+- **Command palette:** Add "Download projects list as Markdown" and "Copy projects list as Markdown" (handlers + entries after existing projects list JSON/CSV).
+- **keyboard-shortcuts.ts:** Add two Command palette entries for projects list Markdown.
+- **ProjectsListPageContent:** Add "Download as Markdown" and "Copy as Markdown" buttons in the Export toolbar (after CSV, same style as JSON/CSV).
+- **ADR:** `.cursor/adr/0287-projects-list-export-markdown.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `src/lib/download-projects-list-md.ts` — build MD, download, copy.
+- `.cursor/adr/0287-projects-list-export-markdown.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import lib, add handlers and two action entries (after projects list CSV).
+- `src/data/keyboard-shortcuts.ts` — add two entries for projects list Markdown.
+- `src/components/organisms/ProjectsListPageContent.tsx` — add Download/Copy as Markdown buttons in Export row.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create `src/lib/download-projects-list-md.ts`.
+- [x] Add Command palette handlers and entries "Download projects list as Markdown", "Copy projects list as Markdown".
+- [x] Add keyboard-shortcuts.ts entries.
+- [x] Add Export toolbar buttons (Download/Copy as Markdown) to ProjectsListPageContent.
+- [x] Add ADR `.cursor/adr/0287-projects-list-export-markdown.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Projects list can now be exported as **Markdown**. Users can download a `.md` file or copy the same content to the clipboard from (1) the Projects list page Export toolbar (buttons "MD" and "Copy MD") and (2) the command palette ("Download projects list as Markdown", "Copy projects list as Markdown"). The Markdown includes a title, export timestamp, count, and a table with columns: Name, ID, Repo path, Description, Prompts, Tickets, Ideas. Pipe characters in cell content are escaped for valid tables.
+
+**Files created:** `src/lib/download-projects-list-md.ts` (`projectsListToMarkdown`, `downloadProjectsListAsMarkdown`, `copyProjectsListAsMarkdownToClipboard`), `.cursor/adr/0287-projects-list-export-markdown.md`
+
+**Files touched:** `src/components/shared/CommandPalette.tsx` (import, two handlers, two action entries, dependency array), `src/data/keyboard-shortcuts.ts` (two Command palette entries), `src/components/organisms/ProjectsListPageContent.tsx` (import, FileText icon, two Export toolbar buttons), `.cursor/worker/night-shift-plan.md` (checklist, Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Command palette — Active projects as CSV)
+
+### Chosen Feature
+
+**Command palette: Copy/Download active projects as CSV** — The app already has "Copy active projects as JSON" and "Download active projects as JSON" (ADR 0283). There is no CSV export for the current active-project set. Adding **Copy active projects as CSV** and **Download active projects as CSV** gives a spreadsheet-friendly format (e.g. path, name per row) for the same selection, aligning with other exports (dashboard metrics, run history stats, first-project tickets/milestones). Real, additive capability that would show up in a changelog.
+
+### Approach
+
+- **Extend** `src/lib/active-projects-export.ts`: add `buildActiveProjectsCsv(payload)` (header: path,name; one row per project using optional projects array or path-only), `copyActiveProjectsAsCsvToClipboard(paths, projects?)`, `downloadActiveProjectsAsCsv(paths, projects?)`. Reuse `escapeCsvField` from `@/lib/csv-helpers`, `filenameTimestamp`, `triggerFileDownload`, `copyTextToClipboard`; toast on empty / success.
+- **Command palette:** Add handlers `handleCopyActiveProjectsCsv`, `handleDownloadActiveProjectsCsv` and two action entries after the existing active projects JSON entries.
+- **keyboard-shortcuts.ts:** Add "Copy active projects as CSV" and "Download active projects as CSV" under Command palette group.
+- **ADR:** `.cursor/adr/0288-command-palette-active-projects-csv.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0288-command-palette-active-projects-csv.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/lib/active-projects-export.ts` — add CSV build, copy, download.
+- `src/components/shared/CommandPalette.tsx` — import CSV helpers, add two handlers, two action entries.
+- `src/data/keyboard-shortcuts.ts` — add two Command palette entries.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add CSV build/copy/download to active-projects-export.ts.
+- [x] Add Command palette handlers and entries for Copy/Download active projects as CSV.
+- [x] Add keyboard-shortcuts.ts entries.
+- [x] Add ADR .cursor/adr/0288-command-palette-active-projects-csv.md.
+- [ ] Run npm run verify and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette now has **Copy active projects as CSV** and **Download active projects as CSV**. They export the current active-project set (same data as the existing JSON export) as a CSV with header `path,name` and one row per project; when the project list is available, the name column is populated. Empty selection shows an info toast. Implemented in `src/lib/active-projects-export.ts` with `buildActiveProjectsCsv`, `copyActiveProjectsAsCsvToClipboard`, and `downloadActiveProjectsAsCsv`, reusing `escapeCsvField` from csv-helpers and existing download/clipboard helpers.
+
+**Files created:** `.cursor/adr/0288-command-palette-active-projects-csv.md`
+
+**Files touched:** `src/lib/active-projects-export.ts` (CSV build + copy + download), `src/components/shared/CommandPalette.tsx` (import, two handlers, two action entries, dependency array), `src/data/keyboard-shortcuts.ts` (two Command palette entries), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Command palette — Go to first project Planner)
+
+### Chosen Feature
+
+**Command palette: Go to first project Planner** — The app has "Go to first project Ideas", "Go to first project Documentation", "Go to first project Frontend", "Go to first project Backend", and "Go to first project Milestones" in the command palette, but no way to jump directly to the first project's **Planner** tab (tickets/Kanban). Adding **Go to first project Planner** lets keyboard-first users open the Planner (tab=todo) for the first active project from ⌘K without opening the project and switching tabs. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx:** Add `goToFirstProjectPlanner` callback (same pattern as `goToFirstProjectMilestones`): resolve first active project, then `router.push(\`/projects/${proj.id}?tab=todo\`)`. Add one action entry "Go to first project Planner" (ListTodo icon), after "Go to first project Milestones", before "Go to first project". Close palette on select.
+- **keyboard-shortcuts.ts:** Add one Command palette entry: "Go to first project Planner".
+- **ADR:** `.cursor/adr/0287-command-palette-go-to-first-project-planner.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0287-command-palette-go-to-first-project-planner.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — add goToFirstProjectPlanner handler and one action entry.
+- `src/data/keyboard-shortcuts.ts` — add one Command palette entry.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add goToFirstProjectPlanner handler and "Go to first project Planner" entry in CommandPalette.tsx.
+- [x] Add keyboard-shortcuts.ts entry for Go to first project Planner.
+- [x] Add ADR `.cursor/adr/0287-command-palette-go-to-first-project-planner.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The command palette now includes **Go to first project Planner**. Users can open ⌘K and select "Go to first project Planner" to navigate to the first active project's Planner tab (tickets/Kanban, `?tab=todo`) without opening the project and switching tabs. Aligns with existing "Go to first project Ideas/Milestones/…" entries.
+
+**Files created:** `.cursor/adr/0287-command-palette-go-to-first-project-planner.md`
+
+**Files touched:** `src/components/shared/CommandPalette.tsx` (added `goToFirstProjectPlanner` callback, one action entry with ListTodo icon, and dependency in useMemo), `src/data/keyboard-shortcuts.ts` (one Command palette entry: "Go to first project Planner"), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Command palette — Copy database file path)
+
+### Chosen Feature
+
+**Command palette: Copy database file path** — The app already has "Copy data directory path" (folder where app.db lives) and "Open data folder". There is no way to copy the **exact path to the SQLite database file** (e.g. `…/data/app.db`). Adding **Copy database file path** to the command palette helps support, backup scripts, and opening the DB in an external SQLite viewer. Real, additive capability that would show up in a changelog.
+
+### Approach
+
+- **New lib** `src/lib/copy-database-file-path.ts`: invoke `get_data_dir`, append `"/app.db"`, copy via `copyTextToClipboard`; Tauri-only (toast in browser); reuse pattern from `copy-app-data-folder-path.ts`.
+- **Command palette:** Add handler and one action entry "Copy database file path" (Copy icon), after "Copy data directory path".
+- **keyboard-shortcuts.ts:** Add one entry for the new action.
+- **ADR:** `.cursor/adr/0286-command-palette-copy-database-file-path.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `src/lib/copy-database-file-path.ts` — get data dir, build DB path, copy to clipboard.
+- `.cursor/adr/0286-command-palette-copy-database-file-path.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import lib, add handler, one action entry (after Copy data directory path).
+- `src/data/keyboard-shortcuts.ts` — add one Command palette entry.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create `src/lib/copy-database-file-path.ts`.
+- [x] Add Command palette handler and entry "Copy database file path".
+- [x] Add keyboard-shortcuts.ts entry.
+- [x] Add ADR `.cursor/adr/0286-command-palette-copy-database-file-path.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette now has **Copy database file path**. It copies the full path to the SQLite database file (e.g. `…/data/app.db`) to the clipboard. Tauri only; in browser a toast explains the action is available in the desktop app. Uses existing `get_data_dir`; no new Tauri command.
+
+**Files created:** `src/lib/copy-database-file-path.ts` (copyDatabaseFilePath), `.cursor/adr/0286-command-palette-copy-database-file-path.md`
+
+**Files touched:** Command palette and keyboard-shortcuts already had the handler and entry from a prior run; this run added the lib and ADR. `.cursor/worker/night-shift-plan.md` (ADR number 0286, checklist, Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Loading screen — Copy app version)
+
+### Chosen Feature
+
+**Loading screen — Copy app version to clipboard** — The Loading screen page (`/loading-screen`) shows the app version in the footer (e.g. "v0.1.0") but there is no way to copy it. Users reporting bugs or documenting their environment had to retype the version. Adding a **Copy version** button next to the version text lets them copy the version string (e.g. "v0.1.0") to the clipboard in one click. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **LoadingScreenPageContent.tsx:** In the footer, next to the version span, add a small ghost/outline button "Copy version" that calls `copyTextToClipboard(version === "—" ? "—" : `v${version}`)` from `@/lib/copy-to-clipboard`, with success toast. Use Copy icon from Lucide; style to match the footer (e.g. outline, sm, low emphasis so it doesn't overpower the screen). Only show the button when version is not null.
+- **ADR:** `.cursor/adr/0286-loading-screen-copy-version.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0286-loading-screen-copy-version.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/organisms/LoadingScreenPageContent.tsx` — add Copy version button in footer, import copyTextToClipboard and toast.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add Copy version button to Loading screen footer (copy version string, toast).
+- [x] Add ADR `.cursor/adr/0286-loading-screen-copy-version.md`.
+- [ ] Run `npm run verify` and fix any failures.
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Loading screen page (`/loading-screen`) footer now has a **Copy version** button next to the app version text. When the version is loaded (e.g. "v0.1.0"), clicking the button copies that string to the clipboard and shows a success toast; the button is hidden when version is unavailable ("—"). The button uses a ghost/outline style that fits the dark footer. Reuses `copyTextToClipboard` from `@/lib/copy-to-clipboard` and Sonner toasts.
+
+**Files created:** `.cursor/adr/0286-loading-screen-copy-version.md`
+
+**Files touched:** `src/components/organisms/LoadingScreenPageContent.tsx` (Copy icon, copyTextToClipboard, toast, Button; handleCopyVersion; footer Copy version button), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Command palette — Shortcuts as nav entry)
+
+### Chosen Feature
+
+**Command palette: Shortcuts as navigation entry** — The app has a `/shortcuts` redirect page (ADR 0276) and the sidebar includes Shortcuts in the System section (ADR 0280). The command palette has "Keyboard shortcuts" (opens the modal) and NAV_ENTRIES includes Configuration and Loading but not Shortcuts. Adding **Shortcuts** to NAV_ENTRIES lets users open ⌘K and select "Shortcuts" to navigate to `/shortcuts` (bookmarkable URL), aligning the palette nav list with the sidebar and with Run, Testing, Planner, Design, Architecture. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx:** Add to NAV_ENTRIES: `{ href: "/shortcuts", label: "Shortcuts", icon: Keyboard }` after Configuration, before Loading (sidebar order). Keyboard is already imported.
+- **ADR:** `.cursor/adr/0285-command-palette-shortcuts-nav-entry.md`.
+- **keyboard-shortcuts.ts:** Add one entry under Command palette group: "Go to Shortcuts" (or "Shortcuts" nav).
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0285-command-palette-shortcuts-nav-entry.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — add Shortcuts to NAV_ENTRIES (one line).
+- `src/data/keyboard-shortcuts.ts` — add one Command palette description for Shortcuts nav.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add Shortcuts to NAV_ENTRIES in CommandPalette.tsx (after Configuration, before Loading).
+- [x] Add ADR `.cursor/adr/0285-command-palette-shortcuts-nav-entry.md`.
+- [x] Add keyboard-shortcuts.ts entry for Shortcuts nav.
+- [ ] Run `npm run verify` and fix any failures.
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The command palette navigation list (NAV_ENTRIES) now includes **Shortcuts**. Users can open ⌘K and select "Shortcuts" to navigate to `/shortcuts` (redirect to Dashboard with keyboard shortcuts modal), aligning the palette nav with the sidebar (Configuration, Shortcuts, Loading). The "Keyboard shortcuts" action still opens the modal directly; the new nav entry provides a bookmarkable destination from the palette.
+
+**Files created:** `.cursor/adr/0285-command-palette-shortcuts-nav-entry.md`
+
+**Files touched:** `src/components/shared/CommandPalette.tsx` (one NAV_ENTRIES entry: `{ href: "/shortcuts", label: "Shortcuts", icon: Keyboard }`), `src/data/keyboard-shortcuts.ts` (one Command palette description: "Go to Shortcuts"), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Dashboard overview — metrics export toolbar)
+
+### Chosen Feature
+
+**Dashboard overview — metrics export toolbar** — The app already exports dashboard metrics (tickets_count, prompts_count, designs_count, active_projects_count, all_projects_count) via the command palette (Copy/Download as JSON and CSV). The Dashboard overview hero shows these stats but has no inline export actions. Adding a compact toolbar with Copy/Download as JSON and Copy/Download as CSV on the Dashboard gives users a one-click export from the overview without opening the command palette, matching the pattern of RunHistoryStatsCard which has inline export buttons. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **DashboardOverview.tsx:** In the hero strip (Overview section), add a row of four buttons: Copy as JSON, Download as JSON, Copy as CSV, Download as CSV. Reuse existing libs: `copyDashboardMetricsToClipboard`, `downloadDashboardMetricsAsJson` from `@/lib/copy-dashboard-metrics` and `@/lib/download-dashboard-metrics-json`, and `copyDashboardMetricsAsCsvToClipboard`, `downloadDashboardMetricsAsCsv` from `@/lib/download-dashboard-metrics-csv`. Use same button style as RunHistoryStatsCard (outline, sm, with FileJson/FileSpreadsheet icons). Place toolbar in the hero next to or below the stat items.
+- **ADR:** `.cursor/adr/0284-dashboard-overview-metrics-export-toolbar.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0284-dashboard-overview-metrics-export-toolbar.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` — import export libs, add export toolbar (four buttons) in the hero section.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add metrics export toolbar (Copy/Download JSON + CSV) to DashboardOverview hero.
+- [x] Add ADR `.cursor/adr/0284-dashboard-overview-metrics-export-toolbar.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Dashboard overview hero section now has an **Export metrics** toolbar with four buttons: **Copy as JSON**, **Download as JSON**, **Copy as CSV**, and **Download as CSV**. Users can export dashboard metrics (tickets_count, prompts_count, designs_count, active_projects_count, all_projects_count) from the Dashboard in one click without opening the command palette. The toolbar reuses existing libs (`copy-dashboard-metrics`, `download-dashboard-metrics-json`, `download-dashboard-metrics-csv`) and follows the same pattern as the Run history stats card export buttons on the same page.
+
+**Files created:** `.cursor/adr/0284-dashboard-overview-metrics-export-toolbar.md`
+
+**Files touched:** `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` (Export metrics toolbar was present; duplicate imports for copy/download dashboard metrics were removed), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Dashboard metrics as CSV export)
+
+### Chosen Feature
+
+**Dashboard metrics as CSV export** — The app already has "Copy dashboard metrics as JSON" and "Download dashboard metrics as JSON" in the command palette. There is no CSV export for dashboard metrics (tickets_count, prompts_count, designs_count, active_projects_count, all_projects_count). Adding download and copy dashboard metrics as CSV gives a single-row CSV suitable for spreadsheets and aligns with other metrics/CSV exports (e.g. run history stats). Real, additive feature that would show up in a changelog.
+
+### Approach
+
+- **New lib** `src/lib/download-dashboard-metrics-csv.ts`: fetch metrics via `getDashboardMetrics`, build single-row CSV with header (exportedAt, tickets_count, prompts_count, designs_count, active_projects_count, all_projects_count) using `escapeCsvField` from csv-helpers; `downloadDashboardMetricsAsCsv()` and `copyDashboardMetricsAsCsvToClipboard()`; reuse `filenameTimestamp`, `downloadBlob`, `copyTextToClipboard`; toast on error/success.
+- **Command palette:** Add "Download dashboard metrics as CSV" and "Copy dashboard metrics as CSV" (handlers + entries after dashboard metrics JSON).
+- **keyboard-shortcuts.ts:** Add the two command-palette descriptions.
+- **ADR:** `.cursor/adr/0283-dashboard-metrics-csv-export.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome section.
+
+### Files to Create
+
+- `src/lib/download-dashboard-metrics-csv.ts` — build CSV, download, copy.
+- `.cursor/adr/0283-dashboard-metrics-csv-export.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import lib, add handlers and two action entries (after dashboard metrics JSON).
+- `src/data/keyboard-shortcuts.ts` — add two entries for dashboard metrics CSV.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create `src/lib/download-dashboard-metrics-csv.ts` (build CSV, download, copy).
+- [x] Add Command palette handlers and entries for Download/Copy dashboard metrics as CSV.
+- [x] Add two entries in keyboard-shortcuts.ts.
+- [x] Add ADR `.cursor/adr/0283-dashboard-metrics-csv-export.md`.
+- [ ] Run `npm run verify` and fix any failures.
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Dashboard metrics can now be exported as CSV from the command palette. Two new actions: **Copy dashboard metrics as CSV** and **Download dashboard metrics as CSV**. Both fetch metrics via `getDashboardMetrics()`, build a single-row CSV (columns: exportedAt, tickets_count, prompts_count, designs_count, active_projects_count, all_projects_count), then copy to clipboard or trigger file download (`dashboard-metrics-{timestamp}.csv`). Aligns with existing dashboard metrics JSON export and run history stats CSV pattern.
+
+**Files created:** `src/lib/download-dashboard-metrics-csv.ts` (buildDashboardMetricsCsv, downloadDashboardMetricsAsCsv, copyDashboardMetricsAsCsvToClipboard), `.cursor/adr/0283-dashboard-metrics-csv-export.md`
+
+**Files touched:** `src/components/shared/CommandPalette.tsx` (import, two handlers, two palette entries after dashboard metrics JSON), `src/data/keyboard-shortcuts.ts` (added Copy/Download dashboard metrics as JSON and as CSV so all four are documented), `.cursor/worker/night-shift-plan.md` (this entry and Outcome)
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Command palette — Copy/Download active projects as JSON)
+
+### Chosen Feature
+
+**Command palette: Copy active projects as JSON and Download active projects as JSON** — The app has "Copy projects list as JSON" (full list) and "Copy first project path" but no way to export the **currently selected (active) projects** as JSON. Adding Copy and Download for the active-project set gives users a shareable snapshot of their current selection (paths and optional names), useful for scripts or documentation. Real, additive capability that would show up in a changelog.
+
+### Approach
+
+- **New lib:** `src/lib/active-projects-export.ts` — build payload from `activePaths` + optional project list for names; `copyActiveProjectsAsJsonToClipboard(paths, projects?)` and `downloadActiveProjectsAsJson(paths, projects?)`. Reuse `copyTextToClipboard`, `triggerFileDownload`, `filenameTimestamp` from existing libs.
+- **CommandPalette:** Add handlers that read `activeProjects` and project list from store, call copy/download; add two action entries.
+- **keyboard-shortcuts.ts:** Add the two actions to the Command palette group.
+- **ADR:** `.cursor/adr/0283-command-palette-copy-download-active-projects-json.md`.
+- Run `npm run verify` and fix any failures.
+- Update this plan with Outcome section.
+
+### Files to Create
+
+- `src/lib/active-projects-export.ts` — build payload, copy to clipboard, download as JSON.
+- `.cursor/adr/0283-command-palette-copy-download-active-projects-json.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import lib, add handlers and two action entries.
+- `src/data/keyboard-shortcuts.ts` — add two entries for the new actions.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create `src/lib/active-projects-export.ts` (payload, copy, download).
+- [x] Add CommandPalette handlers and action entries for Copy/Download active projects as JSON.
+- [x] Add entries in keyboard-shortcuts.ts for the two actions.
+- [x] Add ADR `.cursor/adr/0283-command-palette-copy-download-active-projects-json.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette now has **Copy active projects as JSON** and **Download active projects as JSON**. Both operate on the currently selected (active) project paths from the store; when the project list is available, the exported JSON includes path and name for each. Empty selection shows an info toast. Download uses filename `active-projects-{YYYY-MM-DD-HHmm}.json`.
+
+**Files created:** `src/lib/active-projects-export.ts` (buildActiveProjectsPayload, copyActiveProjectsAsJsonToClipboard, downloadActiveProjectsAsJson), `.cursor/adr/0283-command-palette-copy-download-active-projects-json.md`
+
+**Files touched:** `src/components/shared/CommandPalette.tsx` (import, handleCopyActiveProjectsJson, handleDownloadActiveProjectsJson, two action entries and deps), `src/data/keyboard-shortcuts.ts` (two Command palette entries), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Run history stats as CSV export)
+
+### Chosen Feature
+
+**Run history stats as CSV export** — The app already exports run history stats as JSON (download and copy) and full run history as CSV. There is no CSV export for the **aggregate stats** (total runs, success count, fail count, total duration, summary). Adding download and copy run history stats as CSV gives a single-row CSV suitable for spreadsheets and aligns with other stats/CSV exports. Real, additive feature that would show up in a changelog.
+
+### Approach
+
+- **New lib** `src/lib/download-run-history-stats-csv.ts`: build CSV (header + one data row) from `computeRunHistoryStats` + `formatRunHistoryStatsSummary`, reusing `escapeCsvField` from csv-helpers; `downloadRunHistoryStatsAsCsv` and `copyRunHistoryStatsAsCsvToClipboard`; empty history → toast and return.
+- **Command palette:** Add "Download run history stats as CSV" and "Copy run history stats as CSV" (handlers + entries in run section after stats JSON).
+- **RunHistoryStatsCard:** Add "Download stats as CSV" and "Copy stats as CSV" buttons.
+- **ProjectRunTab:** Add "Download stats as CSV" and "Copy stats as CSV" to History toolbar.
+- **keyboard-shortcuts.ts:** Add the two command-palette descriptions.
+- **ADR:** `.cursor/adr/0283-run-history-stats-csv-export.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome.
+
+### Files to Create
+
+- `src/lib/download-run-history-stats-csv.ts` — build CSV, download, copy.
+- `.cursor/adr/0283-run-history-stats-csv-export.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import + handlers + two palette entries.
+- `src/components/molecules/DashboardsAndViews/RunHistoryStatsCard.tsx` — two buttons.
+- `src/components/molecules/TabAndContentSections/ProjectRunTab.tsx` — two toolbar buttons.
+- `src/data/keyboard-shortcuts.ts` — two shortcut descriptions.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create `src/lib/download-run-history-stats-csv.ts` (buildRunHistoryStatsCsv, download, copy).
+- [x] Add Command palette actions and handlers for stats CSV.
+- [x] Add Download/Copy stats as CSV to RunHistoryStatsCard.
+- [x] Add Download/Copy stats as CSV to ProjectRunTab History toolbar.
+- [x] Add two entries to keyboard-shortcuts.ts.
+- [x] Add ADR `.cursor/adr/0283-run-history-stats-csv-export.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Run history **stats** (aggregate: total runs, success count, fail count, total duration, summary) can now be exported as CSV in addition to JSON. Users can download a file `run-history-stats-{timestamp}.csv` or copy the same single-row CSV to the clipboard from: (1) Command palette (⌘K — "Download run history stats as CSV" / "Copy run history stats as CSV"), (2) Dashboard Run history card ("Download stats as CSV" / "Copy stats as CSV" buttons), and (3) Run tab History toolbar ("Download stats as CSV" / "Copy stats as CSV" buttons). CSV columns: exportedAt, totalRuns, successCount, failCount, totalDurationMs, summary. Empty history shows a toast and no file/copy.
+
+**Files created:** `src/lib/download-run-history-stats-csv.ts`, `.cursor/adr/0283-run-history-stats-csv-export.md`
+
+**Files touched:** `src/components/shared/CommandPalette.tsx` (import, handlers, two palette entries, deps), `src/components/molecules/DashboardsAndViews/RunHistoryStatsCard.tsx` (import, two buttons), `src/components/molecules/TabAndContentSections/ProjectRunTab.tsx` (import, two toolbar buttons), `src/data/keyboard-shortcuts.ts` (two descriptions), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Sidebar — Design, Architecture, Planner nav items)
+
+### Chosen Feature
+
+**Sidebar: Design, Architecture, Planner nav items** — The app has redirect pages `/design`, `/architecture`, `/planner` (ADRs 0277, 0278) and Dashboard entity links; the command palette NAV_ENTRIES include them. The sidebar Work section had only Projects, Prompts, Run, and Testing. Adding **Design**, **Architecture**, and **Planner** to the sidebar Work section gives one-click access from the nav and makes these sections discoverable without the command palette or Dashboard. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **SidebarNavigation.tsx:** Add `Palette`, `Building2`, `ListTodo` to Lucide imports and add to `workNavItems` after Testing: Planner (`/planner`), Design (`/design`), Architecture (`/architecture`), reusing existing redirect routes.
+- **ADR:** `.cursor/adr/0282-sidebar-design-architecture-planner-nav.md`.
+- Run `npm run verify` and fix any failures.
+- Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0282-sidebar-design-architecture-planner-nav.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/organisms/SidebarNavigation.tsx` — add Palette, Building2, ListTodo imports and Design, Architecture, Planner to workNavItems.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add Palette, Building2, ListTodo imports and Design, Architecture, Planner to workNavItems in SidebarNavigation.tsx.
+- [x] Add ADR `.cursor/adr/0282-sidebar-design-architecture-planner-nav.md`.
+- [ ] Run `npm run verify` and fix any failures.
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The sidebar **Work** section now includes **Planner**, **Design**, and **Architecture** after Run and Testing. Each links to `/planner`, `/design`, or `/architecture` (existing redirect pages). Users can open these sections from the sidebar in one click; active state follows the current pathname. No new routes; existing redirect pages are reused.
+
+**Files created:** `.cursor/adr/0282-sidebar-design-architecture-planner-nav.md`
+
+**Files touched:** `src/components/organisms/SidebarNavigation.tsx` (added `ListTodo`, `Palette`, `Building2` to Lucide imports and three entries to `workNavItems`: Planner, Design, Architecture), `.cursor/worker/night-shift-plan.md` (this entry and Outcome)
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Command palette — Design, Architecture, Planner as nav entries)
+
+### Chosen Feature
+
+**Command palette: Design, Architecture, and Planner as navigation entries** — The palette's NAV_ENTRIES includes Run, Testing, Database, Documentation, Loading but not Design, Architecture, or Planner. The app has redirect pages at `/design`, `/architecture`, `/planner` and "Go to Design/Architecture/Planner" actions; adding Design, Architecture, and Planner to NAV_ENTRIES lets users open ⌘K and select these destinations from the nav list like Run and Testing. Real, additive UX consistency that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx:** Add to NAV_ENTRIES after Testing: Planner (`/planner`, ListTodo), Design (`/design`, Palette), Architecture (`/architecture`, Building2). Icons are already imported.
+- **ADR:** `.cursor/adr/0281-command-palette-design-architecture-planner-nav-entries.md`.
+- Run `npm run verify` and fix any failures.
+- Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0281-command-palette-design-architecture-planner-nav-entries.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — add Planner, Design, Architecture to NAV_ENTRIES.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add Planner, Design, Architecture to NAV_ENTRIES in CommandPalette.tsx (after Testing).
+- [x] Add ADR `.cursor/adr/0281-command-palette-design-architecture-planner-nav-entries.md`.
+- [ ] Run `npm run verify` and fix any failures.
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The command palette navigation list (NAV_ENTRIES) now includes **Planner**, **Design**, and **Architecture**. After opening ⌘K, users can select these from the nav list (same as Run and Testing); selecting one navigates to `/planner`, `/design`, or `/architecture` (existing redirect pages). The "Go to Planner", "Go to Design", and "Go to Architecture" actions remain for search-based use.
+
+**Files created:** `.cursor/adr/0281-command-palette-design-architecture-planner-nav-entries.md`
+
+**Files touched:** `src/components/shared/CommandPalette.tsx` (added three entries to NAV_ENTRIES after Testing: Planner, Design, Architecture), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Sidebar — Shortcuts nav item)
+
+### Chosen Feature
+
+**Sidebar: Shortcuts nav item** — Run, Testing, and Database have sidebar nav items (ADRs 0268, 0271); the app has a `/shortcuts` redirect (ADR 0276) and the Dashboard has a Shortcuts button that opens the keyboard shortcuts modal. The sidebar has no direct link to Shortcuts. Adding **Shortcuts** to the sidebar (System section, with Configuration and Loading) gives one-click access to the shortcuts help via `/shortcuts` and aligns with Run/Testing/Database. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **SidebarNavigation.tsx:** Add `Keyboard` to Lucide imports and add to `bottomNavItems`: `{ href: "/shortcuts", label: "Shortcuts", icon: Keyboard, iconClassName: c["14"] }` (e.g. after Configuration, before Loading). Reuse existing `/shortcuts` redirect; no new routes.
+- **ADR:** `.cursor/adr/0280-sidebar-shortcuts-nav.md`.
+- Run `npm run verify` and fix any failures.
+- Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0280-sidebar-shortcuts-nav.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/organisms/SidebarNavigation.tsx` — add Keyboard import and Shortcuts to bottomNavItems.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add Keyboard import and Shortcuts to bottomNavItems in SidebarNavigation.tsx.
+- [x] Add ADR `.cursor/adr/0280-sidebar-shortcuts-nav.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The **Shortcuts** nav item was added to the sidebar in the System section. Clicking it navigates to `/shortcuts`, which redirects to `/?openShortcuts=1` and opens the keyboard shortcuts help modal (existing behaviour). Users can now reach the shortcuts help from the sidebar in one click, alongside Configuration and Loading. No new routes; the existing `/shortcuts` redirect page is reused.
+
+**Files created:** `.cursor/adr/0280-sidebar-shortcuts-nav.md`
+
+**Files touched:** `src/components/organisms/SidebarNavigation.tsx` (added `Keyboard` to Lucide imports and `{ href: "/shortcuts", label: "Shortcuts", icon: Keyboard, iconClassName: c["14"] }` to `bottomNavItems`, between Configuration and Loading), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Dashboard — Planner in entity links row)
+
+### Chosen Feature
+
+**Dashboard: Planner in entity links row** — The Dashboard entity links row includes Run and Testing (ADR 0275) but not **Planner**. The app has a dedicated `/planner` redirect (ADR 0277) and "Go to Planner" (⌘⇧J) in the command palette; adding **Planner** to the Dashboard entity links gives one-click access from the Dashboard and aligns the Run/Testing/Planner work trio. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **DashboardOverview.tsx:** Add `ListTodo` to imports and add to `entityLinks` after Testing: `{ href: "/planner", label: "Planner", icon: ListTodo, color: "text-blue-600 dark:text-blue-400" }` (blue matches Planner tab in project detail).
+- **ADR:** `.cursor/adr/0279-dashboard-planner-entity-link.md`.
+- Run `npm run verify` and fix any failures.
+- Update this plan with Outcome section.
+
+### Files to Create
+
+- `.cursor/adr/0279-dashboard-planner-entity-link.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` — add ListTodo import and Planner to entityLinks.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add ListTodo import and Planner to entityLinks in DashboardOverview.tsx (after Testing).
+- [x] Add ADR `.cursor/adr/0279-dashboard-planner-entity-link.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Dashboard entity links row now includes **Planner** so users can open the Planner (redirect to first active project's todo tab) with one click. In `DashboardOverview.tsx`, `ListTodo` was added to the lucide-react imports and `entityLinks` includes `{ href: "/planner", label: "Planner", icon: ListTodo, color: "text-blue-600 dark:text-blue-400" }` after Testing. This matches the Run/Testing/Planner trio used in the project tabs and command palette (⌘⇧J Go to Planner).
+
+**Files created:** `.cursor/adr/0279-dashboard-planner-entity-link.md`
+
+**Files touched:** `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` (added `ListTodo` import and Planner entry to `entityLinks`), `.cursor/worker/night-shift-plan.md` (this entry and Outcome)
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Design and Architecture redirect pages /design, /architecture)
+
+### Chosen Feature
+
+**Design and Architecture redirect pages at /design and /architecture** — Run, Testing, Database, Shortcuts, and Planner have dedicated top-level redirect routes. The command palette has "Go to Design" (⌘⇧D) and "Go to Architecture" (⌘⇧A) that navigate to the first active project's Control tab with #design or #architecture; there is no bookmarkable URL. Adding **/design** and **/architecture** that redirect to the first active project's project tab with the corresponding hash (or to /projects with toast when none selected) gives consistent, shareable URLs and centralises logic in one place. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **New pages:** `src/app/design/page.tsx` and `src/app/architecture/page.tsx` — client components that redirect to first active project's Control tab with #design or #architecture (same pattern as `/run` and `/planner`), or to `/projects` with toast.
+- **page-title-context:** Add `/design` → "Design" and `/architecture` → "Architecture" to `PATHNAME_TITLE_MAP`.
+- **CommandPalette:** Simplify `goToDesign` to `router.push("/design")` and `goToArchitecture` to `router.push("/architecture")` so the redirect pages own the logic.
+- **Dashboard:** Add Design and Architecture to `entityLinks` in DashboardOverview (e.g. after Prompts) pointing to `/design` and `/architecture`.
+- **ADR:** `.cursor/adr/0278-design-architecture-redirect-pages.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/app/design/page.tsx` — redirect to first project's Control tab #design or /projects.
+- `src/app/architecture/page.tsx` — redirect to first project's Control tab #architecture or /projects.
+- `.cursor/adr/0278-design-architecture-redirect-pages.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/context/page-title-context.tsx` — add `/design` and `/architecture` to `PATHNAME_TITLE_MAP`.
+- `src/components/shared/CommandPalette.tsx` — `goToDesign` → `router.push("/design")`, `goToArchitecture` → `router.push("/architecture")`.
+- `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` — add Design and Architecture to `entityLinks`.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create `src/app/design/page.tsx` redirecting to first project's #design or /projects.
+- [x] Create `src/app/architecture/page.tsx` redirecting to first project's #architecture or /projects.
+- [x] Add `/design` and `/architecture` to PATHNAME_TITLE_MAP in page-title-context.tsx.
+- [x] Simplify goToDesign and goToArchitecture in CommandPalette to router.push("/design") and router.push("/architecture").
+- [x] Add Design and Architecture to entityLinks in DashboardOverview.tsx.
+- [x] Add ADR `.cursor/adr/0278-design-architecture-redirect-pages.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Dedicated **Design** and **Architecture** redirect pages at `/design` and `/architecture` that redirect to the first active project's Control tab with `#design` or `#architecture` on mount (`/projects/{id}?tab=project#design` or `#architecture`), or to `/projects` with a toast when no project is selected (same pattern as `/run` and `/planner`). The command palette "Go to Design" (⌘⇧D) and "Go to Architecture" (⌘⇧A) use `router.push("/design")` and `router.push("/architecture")`; the Dashboard entity links row includes Design and Architecture pointing to these URLs. PATHNAME_TITLE_MAP includes `/design` → "Design" and `/architecture` → "Architecture" for the document title during redirect.
+
+**Files created:** `src/app/design/page.tsx`, `src/app/architecture/page.tsx`, `.cursor/adr/0278-design-architecture-redirect-pages.md`
+
+**Files touched:** `src/context/page-title-context.tsx` (added `/design` and `/architecture` to PATHNAME_TITLE_MAP). CommandPalette and DashboardOverview already had the simplified handlers and entity links from a prior change; this run added the two redirect pages and the ADR.
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Planner redirect page /planner)
+
+### Chosen Feature
+
+**Planner redirect page at /planner** — Run, Testing, Database, and Shortcuts have dedicated top-level routes (`/run`, `/testing`, `/database`, `/shortcuts`). "Go to Planner" (⌘⇧J) and the command palette open the first active project's Planner (todo) tab via in-palette logic; there is no bookmarkable URL. Adding **/planner** that redirects to the first active project's todo tab (or `/projects` with toast when none selected) gives a consistent, shareable URL and lets the command palette and global shortcut delegate to one place. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **New page:** `src/app/planner/page.tsx` — client component that redirects to first active project's Planner tab (`/projects/{id}?tab=todo`) or to `/projects` with toast (same pattern as `/run` and `/testing`).
+- **page-title-context:** Add `/planner` → "Planner" to `PATHNAME_TITLE_MAP`.
+- **CommandPalette:** Simplify `goToPlanner` to `router.push("/planner")` so the redirect page owns the logic.
+- **ADR:** `.cursor/adr/0277-planner-redirect-page.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/app/planner/page.tsx` — redirect to first project's todo tab or /projects with toast.
+- `.cursor/adr/0277-planner-redirect-page.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/context/page-title-context.tsx` — add `/planner` to `PATHNAME_TITLE_MAP`.
+- `src/components/shared/CommandPalette.tsx` — `goToPlanner` → `router.push("/planner")`.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create `src/app/planner/page.tsx` redirecting to first project todo tab or /projects.
+- [x] Add `/planner` to PATHNAME_TITLE_MAP in page-title-context.tsx.
+- [x] Simplify goToPlanner in CommandPalette to router.push("/planner").
+- [x] Add ADR `.cursor/adr/0277-planner-redirect-page.md`.
+- [ ] Run `npm run verify` and fix any failures.
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — A dedicated **Planner redirect page** at `/planner` that redirects to the first active project's Planner (todo) tab (`/projects/{id}?tab=todo`) on mount, or to `/projects` with a toast when no project is selected. The command palette "Go to Planner" and the global shortcut ⌘⇧J / Ctrl+Alt+J now use `router.push("/planner")`, so the redirect page is the single source of truth. PATHNAME_TITLE_MAP includes `/planner` → "Planner" for the document title during redirect.
+
+**Files created:** `src/app/planner/page.tsx`, `.cursor/adr/0277-planner-redirect-page.md`
+
+**Files touched:** `src/context/page-title-context.tsx` (added `/planner` to PATHNAME_TITLE_MAP), `src/components/shared/CommandPalette.tsx` (goToPlanner simplified to `router.push("/planner")`), `.cursor/worker/night-shift-plan.md` (this entry and Outcome)
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Shortcuts redirect page /shortcuts)
+
+### Chosen Feature
+
+**Shortcuts redirect page at /shortcuts** — Run, Testing, and Database have dedicated top-level routes (`/run`, `/testing`, `/database`). The keyboard shortcuts help is only openable via Shift+?, the Dashboard/Configuration "Shortcuts" button, or the command palette; there is no bookmarkable URL. Adding **/shortcuts** that redirects to `/?openShortcuts=1` and opening the Shortcuts modal when that param is present gives a consistent, shareable URL. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **New page:** `src/app/shortcuts/page.tsx` — client component that redirects to `/?openShortcuts=1` on mount (same pattern as `/database`).
+- **QuickActionsProvider:** When `useSearchParams().get('openShortcuts') === '1'`, open shortcuts modal and `window.history.replaceState` to remove the query so refresh does not reopen the modal.
+- **page-title-context:** Add `/shortcuts` → "Shortcuts" to `PATHNAME_TITLE_MAP`.
+- **ADR:** `.cursor/adr/0276-shortcuts-redirect-page.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/app/shortcuts/page.tsx` — redirect to `/?openShortcuts=1`.
+- `.cursor/adr/0276-shortcuts-redirect-page.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/context/quick-actions-context.tsx` — read `openShortcuts=1` from URL, open shortcuts modal, clear param.
+- `src/context/page-title-context.tsx` — add `/shortcuts` to `PATHNAME_TITLE_MAP`.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create `src/app/shortcuts/page.tsx` redirecting to `/?openShortcuts=1`.
+- [x] In QuickActionsProvider: when URL has `openShortcuts=1`, open shortcuts modal and replaceState to clear param.
+- [x] Add `/shortcuts` to PATHNAME_TITLE_MAP in page-title-context.tsx.
+- [x] Add ADR `.cursor/adr/0276-shortcuts-redirect-page.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — A dedicated **Shortcuts redirect page** at `/shortcuts` that redirects to `/?openShortcuts=1` on mount. When the app loads with that query, `OpenShortcutsFromQuery` (inside QuickActionsProvider, wrapped in Suspense) opens the keyboard shortcuts modal and clears the param via `history.replaceState` so a refresh does not reopen the modal. The document title shows "Shortcuts" during redirect via `PATHNAME_TITLE_MAP` in page-title-context.
+
+**Files created:** `src/app/shortcuts/page.tsx`, `.cursor/adr/0276-shortcuts-redirect-page.md`
+
+**Files touched:** `src/context/quick-actions-context.tsx` (added `OpenShortcutsFromQuery` using `useSearchParams` and `useQuickActions`, rendered inside Provider with Suspense; opens shortcuts when `openShortcuts=1` and clears URL), `src/context/page-title-context.tsx` (added `/shortcuts` → "Shortcuts" to PATHNAME_TITLE_MAP), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Dashboard — Testing in entity links row)
+
+### Chosen Feature
+
+**Dashboard: Testing in entity links row** — The Dashboard entity links row includes Run, Documentation, Database, Configuration, Loading but not **Testing**. The sidebar and command palette have "Go to Testing" (⌘⇧Y); adding **Testing** to the Dashboard entity links row (after Run) gives one-click access from the Dashboard and matches the Run/Testing pair elsewhere. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **DashboardOverview.tsx:** Add to `entityLinks` array after Run: `{ href: "/testing", label: "Testing", icon: TestTube2, color: "text-rose-600 dark:text-rose-400" }`. TestTube2 is already imported.
+- **ADR:** `.cursor/adr/0275-dashboard-testing-entity-link.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0275-dashboard-testing-entity-link.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` — add Testing to entityLinks after Run.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add Testing to entityLinks in DashboardOverview.tsx (after Run).
+- [x] Add ADR .cursor/adr/0275-dashboard-testing-entity-link.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Dashboard entity links row now includes **Testing** so users can open the Testing page with one click. In `DashboardOverview.tsx`, `entityLinks` includes `{ href: "/testing", label: "Testing", icon: TestTube2, color: "text-rose-600 dark:text-rose-400" }` after Run. This matches the Run/Testing pair used in the sidebar and command palette (⌘⇧Y Go to Testing).
+
+**Files created:** `.cursor/adr/0275-dashboard-testing-entity-link.md`
+
+**Files touched:** `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx`, `.cursor/worker/night-shift-plan.md`
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Database redirect page /database)
+
+### Chosen Feature
+
+**Database redirect page at /database** — Run and Testing have dedicated redirect pages (`/run`, `/testing`). The Database view lives only at `/?tab=all`; there is no canonical `/database` URL. Adding a **/database** redirect page that redirects to `/?tab=all` gives a consistent top-level route, allows bookmarking and sharing `/database`, and lets the sidebar/command palette/dashboard point to `/database`. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **New page:** `src/app/database/page.tsx` — client component that `useEffect` + `router.replace("/?tab=all")` on mount.
+- **SidebarNavigation.tsx:** Change Database nav item `href` to `"/database"`; keep active when pathname `/database` or (pathname `/` and tab `all`).
+- **CommandPalette.tsx:** NAV_ENTRIES Database href → `"/database"`; Go to Database shortcut → `router.push("/database")`.
+- **DashboardOverview.tsx:** Database entity link href → `"/database"`.
+- **ADR:** `.cursor/adr/0274-database-redirect-page.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/app/database/page.tsx` — redirect to `/?tab=all`.
+- `.cursor/adr/0274-database-redirect-page.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/organisms/SidebarNavigation.tsx` — Database href → `/database`; active state when pathname `/database` or home tab=all.
+- `src/components/shared/CommandPalette.tsx` — NAV_ENTRIES Database href and goDatabase handler → `/database`.
+- `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` — Database entity link → `/database`.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create `src/app/database/page.tsx` redirecting to `/?tab=all`.
+- [x] Update SidebarNavigation: Database href `/database`, active when pathname `/database` or (pathname `/` and tab `all`).
+- [x] Update CommandPalette: Database nav href and goDatabase handler to `/database`.
+- [x] Update DashboardOverview: Database entity link to `/database`.
+- [x] Add ADR `.cursor/adr/0274-database-redirect-page.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — A dedicated **Database redirect page** at `/database` that redirects to `/?tab=all` on mount, matching the pattern of `/run` and `/testing`. All Database entry points now use the canonical URL `/database`: sidebar (Tools), command palette (NAV_ENTRIES and ⌘⇧G Go to Database), and Dashboard entity link. The sidebar Database item stays active when pathname is `/database` or when on home with `tab=all`. The page title context was updated so `/database` shows "Database" during the redirect.
+
+**Files created:** `src/app/database/page.tsx`, `.cursor/adr/0274-database-redirect-page.md`
+
+**Files touched:** `src/components/organisms/SidebarNavigation.tsx` (Database href → `/database`; active logic for `/database` or home tab=all), `src/components/shared/CommandPalette.tsx` (NAV_ENTRIES Database href and goDatabase handler → `/database`), `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` (Database entity link → `/database`), `src/context/page-title-context.tsx` (PATHNAME_TITLE_MAP `/database` → "Database"), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Global shortcut — Focus filter)
+
+### Chosen Feature
+
+**Global keyboard shortcut for Focus filter** — The command palette has a "Focus filter" action (ADR 0254) that dispatches `FOCUS_FILTER_EVENT` so the current page's filter input is focused; the shortcuts help also documents "/" (Dashboard), "/ (Projects page)", etc. for focus filter when already on that page. There was no **global** shortcut to trigger focus filter from anywhere. Adding **⌘⇧/ (Mac) / Ctrl+Alt+/ (Windows/Linux)** lets keyboard-first users focus the current page's filter without opening the palette or being on the page first. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx:** Add one `useEffect` keydown listener (same pattern as Go to Design/Architecture): when palette not open and focus not in INPUT/TEXTAREA/SELECT, on Mac metaKey+shiftKey+key "/", on Windows/Linux ctrlKey+altKey+key "/", call `dispatchFocusFilterEvent()` and preventDefault.
+- **keyboard-shortcuts.ts:** Add one entry in the Help group: "Focus filter (global)" with keys "⌘⇧/ / Ctrl+Alt+/" (place after "Focus main content").
+- **ADR:** `.cursor/adr/0273-global-shortcut-focus-filter.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0273-global-shortcut-focus-filter.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — add useEffect for global Focus filter (⌘⇧/ / Ctrl+Alt+/).
+- `src/data/keyboard-shortcuts.ts` — add Focus filter (global) entry in Help group.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add global shortcut ⌘⇧/ / Ctrl+Alt+/ for Focus filter in CommandPalette.tsx.
+- [x] Add "Focus filter (global)" to keyboard-shortcuts.ts Help group.
+- [x] Add ADR .cursor/adr/0273-global-shortcut-focus-filter.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — A global keyboard shortcut **⌘⇧/ (Mac) / Ctrl+Alt+/ (Windows/Linux)** now triggers "Focus filter" from anywhere. Pressing it dispatches `FOCUS_FILTER_EVENT`; any active page or tab that has a filter and listens for this event (Dashboard, Projects, Prompts, Ideas, Technologies, Run, Design, Architecture, Versioning tabs, Shortcuts dialog) will focus its filter input. Users no longer need to open the command palette or first be on the page and press "/".
+
+**Files created:** `.cursor/adr/0273-global-shortcut-focus-filter.md`
+
+**Files touched:** `src/components/shared/CommandPalette.tsx` (new `useEffect` keydown listener for ⌘⇧/ and Ctrl+Alt+/ calling `dispatchFocusFilterEvent()`), `src/data/keyboard-shortcuts.ts` (new Help group entry "Focus filter (global)" with keys "⌘⇧/ / Ctrl+Alt+/"), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Dashboard — Database in entity links row)
+
+### Chosen Feature
+
+**Dashboard: Database in entity links row** — The Dashboard showed entity quick links (Projects, Ideas, Technologies, Prompts, Run, Documentation, Configuration, Loading) and a **separate** Database link below the row. Moving **Database** into the entity links row (after Documentation) unifies all one-click destinations in one row and matches the sidebar order (Tools: Ideas, Technologies, Documentation, Database). Real, additive UX consistency that would show up in a changelog.
+
+### Approach
+
+- **DashboardOverview.tsx:** Add to `entityLinks` array: `{ href: "/?tab=all", label: "Database", icon: LayoutGrid, color: "text-slate-600 dark:text-slate-400" }` after Documentation. Remove the standalone Database `<Link>` that followed the map.
+- **ADR:** `.cursor/adr/0272-dashboard-database-entity-link.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0272-dashboard-database-entity-link.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` — add Database to entityLinks; remove standalone Database Link.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add Database to entityLinks in DashboardOverview.tsx (after Documentation); remove standalone Database Link.
+- [x] Add ADR .cursor/adr/0272-dashboard-database-entity-link.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Database is now in the Dashboard entity links row. In `DashboardOverview.tsx`, `entityLinks` includes `{ href: "/?tab=all", label: "Database", icon: LayoutGrid, color: "text-slate-600 dark:text-slate-400" }` after Documentation; the standalone Database link below the row was removed. All one-click destinations (Projects, Ideas, Technologies, Prompts, Run, Documentation, Database, Configuration, Loading) appear in a single row, matching the sidebar Tools order for Database.
+
+**Files created:** `.cursor/adr/0272-dashboard-database-entity-link.md`
+
+**Files touched:** `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx`, `.cursor/worker/night-shift-plan.md`
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Global shortcuts — Go to Design, Go to Architecture)
+
+### Chosen Feature
+
+**Global keyboard shortcuts for Go to Design and Go to Architecture** — The command palette already has "Go to Design" and "Go to Architecture" actions that navigate to the first active project's Design and Architecture sections. Run, Testing, Milestones, Versioning, Planner, and Control all have dedicated global shortcuts (⌘⇧W, ⌘⇧Y, ⌘⇧V, ⌘⇧U, ⌘⇧J, ⌘⇧C); Design and Architecture did not. Adding **⌘⇧X / Ctrl+Alt+X** for Go to Design and **⌘⇧A / Ctrl+Alt+A** for Go to Architecture gives users the same one-key navigation to Design and Architecture as for other project tabs. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx:** Add two `useEffect` keydown listeners (same pattern as Go to Run, Go to Testing): (1) Go to Design — Mac: metaKey+shiftKey+key "X", Windows/Linux: ctrlKey+altKey+key "x"; call existing `goToDesign()`. (2) Go to Architecture — Mac: metaKey+shiftKey+key "A", Windows/Linux: ctrlKey+altKey+key "a"; call existing `goToArchitecture()`. Same guards: skip when palette `open`, skip when focus in INPUT/TEXTAREA/SELECT.
+- **keyboard-shortcuts.ts:** Add two entries in the Help group (after Go to Control): "Go to Design" with keys "⌘⇧X / Ctrl+Alt+X", "Go to Architecture" with keys "⌘⇧A / Ctrl+Alt+A".
+- **ADR:** `.cursor/adr/0272-global-shortcuts-go-to-design-architecture.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0272-global-shortcuts-go-to-design-architecture.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — add two useEffects for goToDesign (⌘⇧X / Ctrl+Alt+X) and goToArchitecture (⌘⇧A / Ctrl+Alt+A).
+- `src/data/keyboard-shortcuts.ts` — add Go to Design and Go to Architecture entries in Help group.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add Go to Design global shortcut (⌘⇧X / Ctrl+Alt+X) in CommandPalette.tsx.
+- [x] Add Go to Architecture global shortcut (⌘⇧A / Ctrl+Alt+A) in CommandPalette.tsx.
+- [x] Add Go to Design and Go to Architecture to keyboard-shortcuts.ts Help group.
+- [x] Add ADR .cursor/adr/0272-global-shortcuts-go-to-design-architecture.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Two new global keyboard shortcuts were added so users can jump to the first active project's Design and Architecture sections without opening the command palette:
+
+- **Go to Design:** ⌘⇧X (Mac) / Ctrl+Alt+X (Windows/Linux) — navigates to `/projects/{id}?tab=project#design` for the first active project; if none selected, shows toast and redirects to Projects.
+- **Go to Architecture:** ⌘⇧A (Mac) / Ctrl+Alt+A (Windows/Linux) — navigates to `/projects/{id}?tab=project#architecture` for the first active project; same fallback behaviour.
+
+**Files created:** `.cursor/adr/0272-global-shortcuts-go-to-design-architecture.md`
+
+**Files touched:** `src/components/shared/CommandPalette.tsx` (two new `useEffect` keydown listeners calling existing `goToDesign()` and `goToArchitecture()`), `src/data/keyboard-shortcuts.ts` (two new entries in the Help group), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Command palette — Dashboard metrics Copy/Download as JSON)
+
+### Chosen Feature
+
+**Command palette: Copy and Download dashboard metrics as JSON** — The Dashboard shows metrics (tickets, prompts, designs, active/all projects) via `getDashboardMetrics()`, but there is no way to export them. Adding **Copy dashboard metrics as JSON** and **Download dashboard metrics as JSON** to the command palette gives users a quick way to snapshot overview counts for sharing or backup. Real, additive capability that would show up in a changelog.
+
+### Approach
+
+- **New lib modules:** `src/lib/copy-dashboard-metrics.ts` (copy metrics as pretty-printed JSON to clipboard) and `src/lib/download-dashboard-metrics-json.ts` (download file `dashboard-metrics-{timestamp}.json` using `filenameTimestamp` + `triggerFileDownload` from `download-helpers`). Both call `getDashboardMetrics()` from `api-dashboard-metrics`; include `exportedAt` in payload for traceability.
+- **CommandPalette.tsx:** Import the two libs; add handlers that call them and close the palette; add two action entries (e.g. after app info JSON entries): "Copy dashboard metrics as JSON", "Download dashboard metrics as JSON".
+- **ADR:** `.cursor/adr/0272-command-palette-dashboard-metrics-json.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/copy-dashboard-metrics.ts` — copy dashboard metrics as JSON to clipboard.
+- `src/lib/download-dashboard-metrics-json.ts` — download dashboard metrics as JSON file.
+- `.cursor/adr/0272-command-palette-dashboard-metrics-json.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import libs; add handlers and two action entries.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create src/lib/copy-dashboard-metrics.ts.
+- [x] Create src/lib/download-dashboard-metrics-json.ts.
+- [x] Add command palette handlers and entries for Copy/Download dashboard metrics as JSON.
+- [x] Add ADR .cursor/adr/0272-command-palette-dashboard-metrics-json.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Users can export dashboard metrics (tickets, prompts, designs, active/all projects count) from the command palette. Two new actions: **Copy dashboard metrics as JSON** and **Download dashboard metrics as JSON**. Both use `getDashboardMetrics()`; the payload includes all metric fields plus `exportedAt` (ISO timestamp). Copy writes pretty-printed JSON to the clipboard; Download saves a file `dashboard-metrics-{timestamp}.json` via `download-helpers`.
+
+**Files created:** `src/lib/copy-dashboard-metrics.ts` (buildDashboardMetricsJsonPayload, copyDashboardMetricsToClipboard), `src/lib/download-dashboard-metrics-json.ts` (downloadDashboardMetricsAsJson), `.cursor/adr/0272-command-palette-dashboard-metrics-json.md`.
+
+**Files touched:** `src/components/shared/CommandPalette.tsx` (imports for copy-dashboard-metrics and download-dashboard-metrics-json; handleCopyDashboardMetricsJson and handleDownloadDashboardMetricsJson; two action entries after app info JSON; dependency array updated), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Sidebar Database nav item)
+
+### Chosen Feature
+
+**Sidebar: Database nav item** — The command palette has "Go to Database" (⌘⇧G) and the Dashboard has a Database entity link to `/?tab=all`. The sidebar has no direct link to the Database view; users must click Dashboard then switch to the "all" tab or use the command palette. Adding **Database** to the sidebar (Tools section) with `href="/?tab=all"` and active state when `tab=all` gives one-click access to the Database view from the nav, consistent with Run and Testing. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **SidebarNavigation.tsx:** Add `LayoutGrid` to Lucide imports. Add one item to `toolsNavItems`: `{ href: "/?tab=all", label: "Database", icon: LayoutGrid, tab: "all", iconClassName: c["14"] }` so the sidebar highlights it when pathname is "/" and tab is "all". Place after Documentation so order is Ideas, Technologies, Documentation, Database.
+- **ADR:** `.cursor/adr/0271-sidebar-database-nav.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0271-sidebar-database-nav.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/organisms/SidebarNavigation.tsx` — add LayoutGrid; add Database to toolsNavItems with tab "all".
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add Database nav item to SidebarNavigation.tsx (Tools section, /?tab=all, tab=all).
+- [x] Add ADR .cursor/adr/0271-sidebar-database-nav.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The sidebar **Tools** section now includes a **Database** nav item. It links to `/?tab=all` (the Database / “all data” tab on the home page) and uses the `LayoutGrid` icon. The item is highlighted when the user is on the Database tab (pathname "/" and `tab=all`). Order in Tools is: Ideas, Technologies, Documentation, Database. This matches the command palette “Go to Database” and the Dashboard Database link.
+
+**Files created:** `.cursor/adr/0271-sidebar-database-nav.md`
+
+**Files touched:** `src/components/organisms/SidebarNavigation.tsx` (added `LayoutGrid` import; added Database entry to `toolsNavItems` with `href: "/?tab=all"`, `tab: "all"`, `iconClassName: c["14"]`), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Command palette — Run and Testing nav entries)
+
+### Chosen Feature
+
+**Command palette: Run and Testing as navigation entries** — The sidebar already has Run and Testing in the Work section (linking to /run and /testing). The command palette has "Go to Run" and "Go to Testing" as actions (redirect to first project's tab) but does not list **Run** and **Testing** in its navigation list (NAV_ENTRIES). Adding them so the palette shows the same top-level destinations as the sidebar; users can open the palette and select "Run" or "Testing" to go to the redirect pages. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx:** Add two entries to `NAV_ENTRIES`: `{ href: "/run", label: "Run", icon: Activity }` and `{ href: "/testing", label: "Testing", icon: TestTube2 }`. Place after Prompts to match sidebar order (Projects, Prompts, Run, Testing). Icons Activity and TestTube2 are already imported.
+- **ADR:** `.cursor/adr/0270-command-palette-run-testing-nav.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0270-command-palette-run-testing-nav.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — add Run and Testing to NAV_ENTRIES.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add Run and Testing to NAV_ENTRIES in CommandPalette.tsx (after Prompts).
+- [x] Add ADR .cursor/adr/0270-command-palette-run-testing-nav.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The command palette's navigation list (`NAV_ENTRIES`) now includes **Run** and **Testing** as direct navigation targets, after Prompts and before Database. Selecting "Run" or "Testing" navigates to `/run` or `/testing` (the existing redirect pages). This aligns the palette with the sidebar (Work section: Projects, Prompts, Run, Testing). "Go to Run" and "Go to Testing" actions remain unchanged and still redirect to the first active project's Worker/Testing tab.
+
+**Files created:** `.cursor/adr/0270-command-palette-run-testing-nav.md`
+
+**Files touched:** `src/components/shared/CommandPalette.tsx` (added Run and Testing to `NAV_ENTRIES`), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Dashboard — Shortcuts quick link)
+
+### Chosen Feature
+
+**Dashboard: Shortcuts quick link** — The Dashboard shows entity quick links (Projects, Ideas, Technologies, Prompts, Run, Testing, Documentation, Configuration, Loading) and a Database link. The keyboard shortcuts help dialog (Shift+?) is available via Configuration and the command palette (⌘K) but has no one-click link from the Dashboard. Adding a **Shortcuts** quick link that opens the shortcuts help modal gives users direct access to the shortcut reference from the overview without using Shift+?, Configuration, or the command palette. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **DashboardOverview.tsx:** Import `useQuickActions` from `@/context/quick-actions-context` and `Keyboard` from `lucide-react`. Add a "Shortcuts" button in the entity links row (after the Testing button) that calls `openShortcutsModal()` on click. Same visual style as the Testing button (ghost, rounded-xl border, card-style). Use a distinct color (e.g. `text-slate-600 dark:text-slate-400`) so it is recognizable.
+- **ADR:** `.cursor/adr/0269-dashboard-shortcuts-quick-link.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0269-dashboard-shortcuts-quick-link.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` — add useQuickActions, Keyboard icon, Shortcuts button.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add Shortcuts button to Dashboard entity links (openShortcutsModal + Keyboard icon).
+- [x] Add ADR .cursor/adr/0269-dashboard-shortcuts-quick-link.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Dashboard entity quick links row now includes a **Shortcuts** button (Keyboard icon, slate color) placed after the Testing button. Clicking it opens the keyboard shortcuts help dialog (same modal as Configuration → "Keyboard shortcuts" and command palette → "Keyboard shortcuts"). Users can open the shortcut reference from the overview with one click without using Shift+?, Configuration, or ⌘K.
+
+**Files created:** `.cursor/adr/0269-dashboard-shortcuts-quick-link.md`
+
+**Files touched:** `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` (added `useQuickActions`, `Keyboard` import; `openShortcutsModal`; Shortcuts button after Testing), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Dashboard Run history card — Download/Copy as CSV)
+
+### Chosen Feature
+
+**Dashboard Run history card: Download and Copy run history as CSV** — The Run tab and command palette already offer "Download run history as CSV" and "Copy run history as CSV". The Dashboard Run history card (`RunHistoryStatsCard`) has Copy summary and Download/Copy stats as JSON, but no way to export the **full run history as CSV** from the overview. Adding **Download run history as CSV** and **Copy run history as CSV** to the card gives users the same CSV export from the Dashboard without opening the Run tab or command palette. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **RunHistoryStatsCard.tsx:** Import `downloadAllRunHistoryCsv` and `copyAllRunHistoryCsvToClipboard` from `@/lib/download-all-run-history-csv`. Add two buttons (e.g. "Download as CSV", "Copy as CSV") next to the existing Copy summary / JSON buttons, using the same `entries` prop, disabled when `entries.length === 0`. Use FileSpreadsheet icon; same outline/sm style. Reuse existing lib; no new files in lib.
+- **ADR:** `.cursor/adr/0267-dashboard-run-history-card-csv.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0267-dashboard-run-history-card-csv.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/DashboardsAndViews/RunHistoryStatsCard.tsx` — import CSV lib; add Download as CSV and Copy as CSV buttons.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add Download run history as CSV and Copy run history as CSV buttons to RunHistoryStatsCard.
+- [x] Add ADR .cursor/adr/0267-dashboard-run-history-card-csv.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Dashboard Run history card (`RunHistoryStatsCard`) now has **"Download as CSV"** and **"Copy as CSV"** buttons alongside the existing Copy summary and JSON buttons. Both use `downloadAllRunHistoryCsv(entries)` and `copyAllRunHistoryCsvToClipboard(entries)` from `@/lib/download-all-run-history-csv`, so the full run history (timestamp, label, slot, exit_code, duration, output) can be exported as CSV from the Dashboard without opening the Run tab or command palette. Buttons are disabled when there is no run history. Layout: same flex wrap row as existing buttons; FileSpreadsheet icon for CSV.
+
+**Files created:** `.cursor/adr/0267-dashboard-run-history-card-csv.md`
+
+**Files touched:** `src/components/molecules/DashboardsAndViews/RunHistoryStatsCard.tsx` (import from download-all-run-history-csv; added FileSpreadsheet; two new buttons), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Sidebar Run and Testing nav items)
+
+### Chosen Feature
+
+**Sidebar: Run and Testing nav items** — The Dashboard and command palette offer one-click access to Run (/run) and Testing (/testing) via redirect pages. The sidebar currently has no direct links to Run or Testing; users must use the Dashboard buttons, command palette, or keyboard shortcuts. Adding **Run** and **Testing** to the sidebar (Work section) gives consistent navigation from the sidebar to the same redirect pages. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **SidebarNavigation.tsx:** Add `Activity` and `TestTube2` to Lucide imports. Add two items to `workNavItems`: `{ href: "/run", label: "Run", icon: Activity }` and `{ href: "/testing", label: "Testing", icon: TestTube2 }`. Place after Prompts so order is Projects, Prompts, Run, Testing. Use existing `NavLinkItem`; `/run` and `/testing` are existing redirect routes.
+- **ADR:** `.cursor/adr/0268-sidebar-run-testing-nav.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0268-sidebar-run-testing-nav.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/organisms/SidebarNavigation.tsx` — add Activity, TestTube2; add Run and Testing to workNavItems.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [ ] Add Run and Testing nav items to SidebarNavigation.tsx (Work section).
+- [ ] Add ADR .cursor/adr/0268-sidebar-run-testing-nav.md.
+- [ ] Run npm run verify and fix any failures.
+- [ ] Update this plan with Outcome section.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: /testing redirect page)
+
+### Chosen Feature
+
+**Testing redirect page at /testing** — Add a dedicated `/testing` route that redirects to the first active project's Testing tab (or to /projects with a toast when no project is selected). Mirrors the existing /run redirect behaviour; gives users a shareable URL and aligns with the command palette "Go to Testing" and Dashboard Testing button. Real, additive feature that would show up in a changelog.
+
+### Approach
+
+- **New route:** `src/app/testing/page.tsx` — client component that on mount reads `activeProjects` from the run store, resolves the first project via `listProjects()`, then redirects to `/projects/${id}?tab=testing` or to `/projects` with toast. Same logic as CommandPalette `goToTesting` and Dashboard Testing button.
+- **ADR:** `.cursor/adr/0266-testing-redirect-page.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/app/testing/page.tsx` — redirect page component.
+- `.cursor/adr/0266-testing-redirect-page.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create src/app/testing/page.tsx with redirect logic (useRunState, listProjects, router.replace).
+- [x] Add ADR .cursor/adr/0266-testing-redirect-page.md.
+- [x] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — A dedicated `/testing` route now exists. Visiting `/testing` redirects to the first active project's Testing tab, or to `/projects` with a toast "Select a project first" / "Open a project first" when no project is selected or when the project list cannot be resolved. Behaviour matches the command palette "Go to Testing" and the Dashboard Testing button. The page shows "Redirecting to Testing…" briefly while resolving.
+
+**Files created:** `src/app/testing/page.tsx` (client redirect page), `.cursor/adr/0266-testing-redirect-page.md`.
+
+**Files touched:** `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: /run redirect page)
+
+### Chosen Feature
+
+**Run redirect page at /run** — The Dashboard entity links and the Run history card ("View Run") link to `/run`, but no route existed, so the link would 404. The command palette "Go to Run" already navigates to the first active project's Worker tab. Adding a **dedicated /run page** that redirects to the first active project's Run (Worker) tab—or to /projects with a toast when no project is selected—makes the Dashboard and Run card links work and aligns behaviour with the command palette. Real, additive fix that would show up in a changelog.
+
+### Approach
+
+- **New route:** `src/app/run/page.tsx` — client component that on mount reads `activeProjects` from the run store, resolves the first project via `listProjects()`, then redirects to `/projects/${id}?tab=worker` or to `/projects` with toast "Select a project first". Same logic as CommandPalette `goToRun`.
+- **ADR:** `.cursor/adr/0265-run-redirect-page.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/app/run/page.tsx` — redirect page component.
+- `.cursor/adr/0265-run-redirect-page.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create src/app/run/page.tsx with redirect logic (useRunState, listProjects, router.replace).
+- [x] Add ADR .cursor/adr/0265-run-redirect-page.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — A dedicated `/run` route now exists. Visiting `/run` (e.g. from the Dashboard "Run" entity link or the Run history card "View Run" link) redirects to the first active project's Worker (Run) tab, or to `/projects` with a toast "Select a project first" / "Open a project first" when no project is selected or when the project list cannot be resolved. Behaviour matches the command palette "Go to Run" action. The page shows "Redirecting to Run…" briefly while resolving.
+
+**Files created:** `src/app/run/page.tsx` (client redirect page), `.cursor/adr/0265-run-redirect-page.md`.
+
+**Files touched:** `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Dashboard — Testing quick link in entity links)
+
+### Chosen Feature
+
+**Dashboard: Testing quick link in entity links** — The Dashboard shows entity quick links for Projects, Ideas, Technologies, Prompts, Run, Documentation, Configuration, and Loading. "Go to Testing" (⌘⇧Y) and the command palette navigate to the first active project's Testing tab; there is no global /testing page. Adding a **Testing** quick link on the Dashboard that does the same (navigate to first project's Testing tab, or prompt to select a project) gives users one-click access from the overview. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **DashboardOverview.tsx:** Add `TestTube2` to the Lucide import. Add a Testing entry in the entity links row: same visual style as other links but as a button with `onClick` that resolves the first active project (from `useRunStore` activeProjects and `projects`/`listProjects`) and navigates to `/projects/${id}?tab=testing`, or toasts "Select a project first" and pushes to `/projects` if none active. Place after Run so order is Projects, Ideas, Technologies, Prompts, Run, **Testing**, Documentation, Configuration, Loading, Database.
+- **ADR:** `.cursor/adr/0264-dashboard-testing-quick-link.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0264-dashboard-testing-quick-link.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` — add TestTube2; add activeProjects from store; add Testing button + goToTesting handler.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add TestTube2 import and Testing button (goToTesting) in DashboardOverview.tsx.
+- [x] Add ADR .cursor/adr/0264-dashboard-testing-quick-link.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Dashboard (home overview) entity links row now includes a **Testing** quick link (TestTube2 icon, emerald accent) placed after Run. Clicking it navigates to the first active project's Testing tab (`/projects/${id}?tab=testing`). If no project is active or the project cannot be resolved, the user sees a toast ("Select a project first" or "Open a project first") and is redirected to `/projects`. Behaviour matches the command palette "Go to Testing" and ⌘⇧Y.
+
+**Files created:** `.cursor/adr/0264-dashboard-testing-quick-link.md`
+
+**Files touched:** `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` (added `TestTube2` and `useCallback` imports; `activeProjects` from run store; `goToTesting` handler; Testing button after Run in the entity links row), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Dashboard — Loading quick link in entity links)
+
+### Chosen Feature
+
+**Dashboard: Loading quick link in entity links** — The Dashboard shows entity quick links for Projects, Ideas, Technologies, Prompts, Run, Documentation, and Configuration. The Loading page (/loading-screen) is a first-class section (sidebar, ⌘⇧L, command palette) but had no one-click link from the Dashboard. Adding a **Loading** quick link gives users direct access to the loading screen from the overview without using the sidebar or command palette. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **DashboardOverview.tsx:** Add `Moon` to the Lucide import (used for Loading elsewhere); add one entry to `entityLinks`: `{ href: "/loading-screen", label: "Loading", icon: Moon, color: "text-indigo-600 dark:text-indigo-400" }`. Place after Configuration so the order is Projects, Ideas, Technologies, Prompts, Run, Documentation, Configuration, Loading.
+- **ADR:** `.cursor/adr/0264-dashboard-loading-quick-link.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0264-dashboard-loading-quick-link.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` — add Moon import; add Loading to entityLinks.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add Moon import and Loading entry to entityLinks in DashboardOverview.tsx.
+- [x] Add ADR .cursor/adr/0264-dashboard-loading-quick-link.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Dashboard (home overview) now shows a **Loading** quick link in the entity links row, alongside Projects, Ideas, Technologies, Prompts, Run, Documentation, and Configuration. Clicking it navigates to `/loading-screen`. The link uses the Moon icon and indigo accent (`text-indigo-600 dark:text-indigo-400`). Order: Projects, Ideas, Technologies, Prompts, Run, Documentation, Configuration, Loading.
+
+**Files created:** `.cursor/adr/0264-dashboard-loading-quick-link.md`
+
+**Files touched:** `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` (added `Moon` to Lucide import; added Loading entry to `entityLinks`), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Dashboard — Configuration quick link in entity links)
+
+### Chosen Feature
+
+**Dashboard: Configuration quick link in entity links** — The Dashboard shows entity quick links for Projects, Ideas, Technologies, Prompts, Run, and Documentation. The Configuration page is a first-class section (sidebar, ⌘⇧O, command palette) but had no one-click link from the Dashboard. Adding a **Configuration** quick link gives users direct access to the Configuration page from the overview without using the sidebar or command palette. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **DashboardOverview.tsx:** Add `Settings` to the Lucide import; add one entry to `entityLinks`: `{ href: "/configuration", label: "Configuration", icon: Settings, color: "text-green-600 dark:text-green-400" }`. Place after Documentation so the order is Projects, Ideas, Technologies, Prompts, Run, Documentation, Configuration.
+- **ADR:** `.cursor/adr/0263-dashboard-configuration-quick-link.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0263-dashboard-configuration-quick-link.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` — add Settings import; add Configuration to entityLinks.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add Settings import and Configuration entry to entityLinks in DashboardOverview.tsx.
+- [x] Add ADR .cursor/adr/0263-dashboard-configuration-quick-link.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Dashboard (home overview) now shows a **Configuration** quick link in the entity links row, alongside Projects, Ideas, Technologies, Prompts, Run, and Documentation. Clicking it navigates to `/configuration`. The link uses the Settings icon and green accent (`text-green-600 dark:text-green-400`). Order: Projects, Ideas, Technologies, Prompts, Run, Documentation, Configuration.
+
+**Files created:** `.cursor/adr/0263-dashboard-configuration-quick-link.md` (and `.cursor/adr/0262-dashboard-configuration-quick-link.md` updated to reference 0263).
+
+**Files touched:** `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` (added `Settings` to Lucide import; added Configuration entry to `entityLinks`), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Dashboard — Run history card Download/Copy stats as JSON)
+
+### Chosen Feature
+
+**Dashboard Run history card: Download and Copy stats as JSON** — The Run tab History toolbar and the command palette already offer "Download run history stats as JSON" and "Copy run history stats as JSON". The Dashboard Run history card (`RunHistoryStatsCard`) only has a "Copy summary" (plain text) button. Adding **Download stats as JSON** and **Copy stats as JSON** to the Dashboard card gives users the same structured export from the overview without opening the Run tab or command palette. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **RunHistoryStatsCard.tsx:** Import `downloadRunHistoryStatsAsJson` and `copyRunHistoryStatsAsJsonToClipboard` from `@/lib/download-run-history-stats-json`. Add two buttons next to the existing "Copy summary" button: "Download stats as JSON" and "Copy stats as JSON", using the same `entries` prop, disabled when `entries.length === 0`. Use FileJson icon; same outline/sm style as "Copy summary". Layout: keep "Copy summary" and add the two new buttons in a small row so the card stays compact.
+- **ADR:** `.cursor/adr/0263-dashboard-run-history-card-stats-json.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0263-dashboard-run-history-card-stats-json.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/DashboardsAndViews/RunHistoryStatsCard.tsx` — import download/copy stats JSON lib; add two toolbar buttons.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add Download stats as JSON and Copy stats as JSON buttons to RunHistoryStatsCard.
+- [x] Add ADR .cursor/adr/0263-dashboard-run-history-card-stats-json.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Dashboard Run history card (`RunHistoryStatsCard`) now has **"Download stats as JSON"** and **"Copy stats as JSON"** buttons next to the existing "Copy summary" button. Both use `downloadRunHistoryStatsAsJson(entries)` and `copyRunHistoryStatsAsJsonToClipboard(entries)` from `@/lib/download-run-history-stats-json`, so the same structured stats (totalRuns, successCount, failCount, totalDurationMs, summary) can be exported from the Dashboard without opening the Run tab or command palette. Buttons are disabled when there is no run history. Layout: flex row with gap so all three buttons sit in one row and wrap on small screens.
+
+**Files created:** `.cursor/adr/0263-dashboard-run-history-card-stats-json.md`
+
+**Files touched:** `src/components/molecules/DashboardsAndViews/RunHistoryStatsCard.tsx` (import from download-run-history-stats-json; added FileJson icon; two new buttons in a flex row), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Dashboard — Copy path on project cards)
+
+### Chosen Feature
+
+**Dashboard: Copy path on project cards** — The Projects list page uses `ProjectCard` with a "Copy path" button; the project detail header also has "Copy path". The Dashboard shows project cards (inline `ProjectCard` in `DashboardOverview.tsx`) that only navigate on click and have no copy action. Adding a **Copy path** button to each Dashboard project card lets users copy a project's repo path from the overview without opening the project or the Projects list. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **DashboardOverview.tsx:** In the inline `ProjectCard`, add a small "Copy path" button (Copy icon, ghost/sm) that calls `copyTextToClipboard(project.repoPath)` from `@/lib/copy-to-clipboard` and toasts on success/fail. Place it in the card header or content so it doesn't trigger card navigation (use `e.preventDefault()` / `e.stopPropagation()` on click). When `!project.repoPath`, show toast "No project path set" or disable the button. Reuse the same pattern as `ProjectCard` in `CardsAndDisplay/ProjectCard.tsx` (Copy icon, aria-label "Copy project path to clipboard", title "Copy path").
+- **ADR:** `.cursor/adr/0262-dashboard-project-card-copy-path.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0262-dashboard-project-card-copy-path.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` — add Copy icon and Copy path button to ProjectCard; import copyTextToClipboard.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add Copy path button to Dashboard ProjectCard (copyTextToClipboard, stopPropagation).
+- [x] Add ADR .cursor/adr/0262-dashboard-project-card-copy-path.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Dashboard (home overview) project cards now have a **Copy path** button (Copy icon) in the card header next to the arrow. Clicking it copies the project's `repoPath` to the clipboard via `copyTextToClipboard` from `@/lib/copy-to-clipboard`; the click uses `preventDefault` and `stopPropagation` so the card does not navigate. When there is no path, a toast "No project path set" is shown. Matches the pattern of the Projects list `ProjectCard` (aria-label "Copy project path to clipboard", title "Copy path").
+
+**Files created:** `.cursor/adr/0262-dashboard-project-card-copy-path.md`
+
+**Files touched:** `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` (Copy icon import; `copyTextToClipboard` import; Copy path Button in ProjectCard header), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Run tab — Download and Copy run history stats as JSON in History toolbar)
+
+### Chosen Feature
+
+**Run tab: Download and Copy run history stats as JSON in History toolbar** — The command palette already has "Download run history stats as JSON" and "Copy run history stats as JSON". The Run tab History section has a toolbar with Copy last run, Download last run, Copy all, Download all, etc., and shows aggregate stats (e.g. "38 passed, 4 failed · 2h 15m total") but no one-click export of those stats as JSON from the Run page. Adding **Download stats as JSON** and **Copy stats as JSON** buttons to the Run tab History toolbar gives users the same stats export without opening the command palette. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **ProjectRunTab.tsx (History section):** Import `downloadRunHistoryStatsAsJson` and `copyRunHistoryStatsAsJsonToClipboard` from `@/lib/download-run-history-stats-json`. Add two toolbar buttons after "Download last run" and before "Copy all": "Download stats as JSON" and "Copy stats as JSON", each calling the lib with `displayHistory` (so stats match the visible/filtered list). Both disabled when `displayHistory.length === 0`. Use FileJson icon; same button style as existing toolbar buttons.
+- **ADR:** `.cursor/adr/0261-run-tab-stats-json-toolbar.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0261-run-tab-stats-json-toolbar.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/TabAndContentSections/ProjectRunTab.tsx` — import; two toolbar buttons in History section.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add import and two toolbar buttons (Download stats as JSON, Copy stats as JSON) in ProjectRunTab History section.
+- [x] Add ADR .cursor/adr/0261-run-tab-stats-json-toolbar.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Run tab History section toolbar now has **"Download stats as JSON"** and **"Copy stats as JSON"** buttons (after "Download last run", before "Copy all"). Both use the existing `downloadRunHistoryStatsAsJson` and `copyRunHistoryStatsAsJsonToClipboard` from `@/lib/download-run-history-stats-json` with **displayHistory** so the exported stats match the visible/filtered list. Buttons are disabled when there are no runs. Same styling as other History toolbar buttons (ghost, sm, FileJson icon).
+
+**Files created:** `.cursor/adr/0261-run-tab-stats-json-toolbar.md`
+
+**Files touched:** `src/components/molecules/TabAndContentSections/ProjectRunTab.tsx` (import from download-run-history-stats-json; two toolbar buttons), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Dashboard — Documentation quick link in entity links)
+
+### Chosen Feature
+
+**Dashboard: Documentation quick link in entity links** — The Dashboard shows entity quick links for Projects, Ideas, Technologies, Prompts, and Run. The Documentation page is a first-class section (sidebar, ⌘⇧D, command palette) but has no one-click link from the Dashboard. Adding a **Documentation** quick link to the Dashboard entity links gives users direct access to the Documentation page from the overview without using the sidebar or command palette. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **DashboardOverview.tsx:** Add `BookOpen` to the Lucide import (used for Documentation elsewhere); add one entry to `entityLinks`: `{ href: "/documentation", label: "Documentation", icon: BookOpen, color: "text-sky-600 dark:text-sky-400" }`. Place after Run so the order is Projects, Ideas, Technologies, Prompts, Run, Documentation.
+- **ADR:** `.cursor/adr/0260-dashboard-documentation-quick-link.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0260-dashboard-documentation-quick-link.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` — add BookOpen import; add Documentation to entityLinks.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add BookOpen import and Documentation entry to entityLinks in DashboardOverview.tsx.
+- [x] Add ADR .cursor/adr/0260-dashboard-documentation-quick-link.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Dashboard (home overview) now shows a **Documentation** quick link in the entity links row, alongside Projects, Ideas, Technologies, Prompts, and Run. Clicking it navigates to `/documentation`. The link uses the BookOpen icon and sky accent (`text-sky-600 dark:text-sky-400`) for consistency with documentation/setup sections.
+
+**Files created:** `.cursor/adr/0260-dashboard-documentation-quick-link.md`
+
+**Files touched:** `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` (added `BookOpen` to Lucide import; added Documentation entry to `entityLinks`), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Command palette — Download and copy run history stats as JSON)
+
+### Chosen Feature
+
+**Command palette: Download and copy run history stats as JSON** — The app already has "Copy run history stats summary" (plain text) and full run history as JSON/MD/CSV. There was no way to export the **aggregate stats** (totalRuns, successCount, failCount, totalDurationMs, summary) as a JSON file or as JSON to the clipboard for reporting or tooling. Adding "Download run history stats as JSON" and "Copy run history stats as JSON" gives users structured stats export from ⌘K. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **New lib** `src/lib/download-run-history-stats-json.ts`: Build JSON payload with `exportedAt`, `totalRuns`, `successCount`, `failCount`, `totalDurationMs`, `summary` (one-line text from `formatRunHistoryStatsSummary`). Export `buildRunHistoryStatsJsonPayload(entries)`, `downloadRunHistoryStatsAsJson(entries)`, `copyRunHistoryStatsAsJsonToClipboard(entries)`. Use `computeRunHistoryStats` and `formatRunHistoryStatsSummary` from `@/lib/run-history-stats`; `filenameTimestamp` and `triggerFileDownload` from `@/lib/download-helpers`; `copyTextToClipboard` from `@/lib/copy-to-clipboard`. Empty entries → toast "No run history" and return.
+- **CommandPalette.tsx:** Import the new lib; add `handleDownloadRunHistoryStatsJson` and `handleCopyRunHistoryStatsJson`; add two action entries (e.g. FileJson icon) after "Copy run history stats summary".
+- **keyboard-shortcuts.ts:** Add "Download run history stats as JSON" and "Copy run history stats as JSON" in the Command palette group.
+- **ADR:** `.cursor/adr/0259-command-palette-download-copy-run-history-stats-json.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/download-run-history-stats-json.ts` — build payload, download, copy to clipboard for run history stats.
+- `.cursor/adr/0259-command-palette-download-copy-run-history-stats-json.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import, two handlers, two action entries, useMemo deps.
+- `src/data/keyboard-shortcuts.ts` — two Command palette entries.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create src/lib/download-run-history-stats-json.ts (buildRunHistoryStatsJsonPayload, downloadRunHistoryStatsAsJson, copyRunHistoryStatsAsJsonToClipboard).
+- [x] Add handleDownloadRunHistoryStatsJson and handleCopyRunHistoryStatsJson in CommandPalette; add two action entries.
+- [x] Add "Download run history stats as JSON" and "Copy run history stats as JSON" in keyboard-shortcuts.ts (Command palette group).
+- [x] Add ADR .cursor/adr/0259-command-palette-download-copy-run-history-stats-json.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette actions **"Download run history stats as JSON"** and **"Copy run history stats as JSON"** let users export run history aggregate stats (totalRuns, successCount, failCount, totalDurationMs, summary) as structured JSON from ⌘K—either as a file (`run-history-stats-{timestamp}.json`) or to the clipboard. **New module** `src/lib/download-run-history-stats-json.ts` exports `buildRunHistoryStatsJsonPayload(entries)`, `downloadRunHistoryStatsAsJson(entries)`, and `copyRunHistoryStatsAsJsonToClipboard(entries)`; uses `computeRunHistoryStats` and `formatRunHistoryStatsSummary` from `@/lib/run-history-stats`. **CommandPalette.tsx:** Import from download-run-history-stats-json; added `handleDownloadRunHistoryStatsJson` and `handleCopyRunHistoryStatsJson`; two action entries (FileJson icon). **keyboard-shortcuts.ts:** Two Command palette group entries. ADR `.cursor/adr/0259-command-palette-download-copy-run-history-stats-json.md` documents the decision.
+
+**Files created:** `src/lib/download-run-history-stats-json.ts`, `.cursor/adr/0259-command-palette-download-copy-run-history-stats-json.md`
+
+**Files touched:** `CommandPalette.tsx` (import, two handlers, two action entries, useMemo deps), `keyboard-shortcuts.ts` (two Command palette entries), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Dashboard — Run quick link in entity links)
+
+### Chosen Feature
+
+**Dashboard: Run quick link in entity links** — The Dashboard shows entity quick links for Projects, Ideas, Technologies, and Prompts, plus a "Database" link. The Run page is a first-class section (sidebar, ⌘⇧W, command palette) but had no one-click link from the Dashboard. Adding a **Run** quick link to the Dashboard entity links gives users direct access to the Run page from the overview without using the sidebar or command palette. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **DashboardOverview.tsx:** Add `Terminal` to the Lucide import; add one entry to `entityLinks`: `{ href: "/run", label: "Run", icon: Terminal, color: "text-orange-600 dark:text-orange-400" }`. Place it after Prompts so the order is Projects, Ideas, Technologies, Prompts, Run (consistent with app emphasis on run/worker flow).
+- **ADR:** `.cursor/adr/0258-dashboard-run-quick-link.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0258-dashboard-run-quick-link.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` — add Terminal import; add Run to entityLinks.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add Terminal import and Run entry to entityLinks in DashboardOverview.tsx.
+- [x] Add ADR .cursor/adr/0258-dashboard-run-quick-link.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Dashboard (home overview) now shows a **Run** quick link in the entity links row, alongside Projects, Ideas, Technologies, and Prompts. Clicking it navigates to `/run`. The link uses the Terminal icon and orange accent (`text-orange-600 dark:text-orange-400`) for consistency with the Run section.
+
+**Files created:** `.cursor/adr/0258-dashboard-run-quick-link.md`
+
+**Files touched:** `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` (added `Terminal` to Lucide import; added Run entry to `entityLinks`), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Run tab — Copy last run and Download last run in History toolbar)
+
+### Chosen Feature
+
+**Run tab: Copy last run and Download last run in History toolbar** — The command palette (⌘K) already has "Copy last run to clipboard" and "Download last run as file". The Run tab History section has bulk actions (Copy all, Download all, CSV, JSON, Markdown) but no one-click "last run" actions in the toolbar. Adding **Copy last run** and **Download last run** buttons to the Run tab History toolbar gives users the same actions from the Run page without opening the command palette. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **ProjectRunTab.tsx (History section):** Compute "last run" as the chronologically most recent entry from `history` (same semantics as command palette). Add two toolbar buttons: "Copy last run" (calls `copySingleRunAsPlainTextToClipboard(lastRun)`) and "Download last run" (calls `downloadSingleRunAsPlainText(lastRun)` from `@/lib/download-single-run-as-plain-text`). Both disabled when there is no run history. Place them at the start of the History toolbar row (before "Copy all") so "last run" actions are prominent.
+- **ADR:** `.cursor/adr/0257-run-tab-last-run-toolbar-actions.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0257-run-tab-last-run-toolbar-actions.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/TabAndContentSections/ProjectRunTab.tsx` — import downloadSingleRunAsPlainText; compute lastRun; add Copy last run and Download last run buttons in History toolbar.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Compute lastRun in Run tab History section; add Copy last run and Download last run buttons.
+- [x] Add ADR .cursor/adr/0257-run-tab-last-run-toolbar-actions.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Run tab History section toolbar now has **"Copy last run"** and **"Download last run"** buttons at the start of the row (before "Copy all"). "Last run" is the chronologically most recent entry from run history (same semantics as the command palette). Both buttons use existing libs: `copySingleRunAsPlainTextToClipboard` and `downloadSingleRunAsPlainText`; they are disabled when there is no history.
+
+**Files created:** `.cursor/adr/0257-run-tab-last-run-toolbar-actions.md`
+
+**Files touched:** `src/components/molecules/TabAndContentSections/ProjectRunTab.tsx` (import `downloadSingleRunAsPlainText`; `lastRun` useMemo; two new toolbar buttons), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Previous: Command palette — Copy run history as JSON, Markdown, CSV)
+
+### Chosen Feature
+
+**Command palette: Copy run history as JSON, Markdown, and CSV** — The Run tab already offers "Copy as JSON", "Copy as Markdown", and "Copy as CSV" for the full run history; the command palette had "Copy run history to clipboard" (plain text) and "Copy run history stats summary" but not the format-specific copy actions. Adding these three actions to the palette gives keyboard-first users parity with the Run tab and lets them copy run history in structured formats from ⌘K without opening the Run tab. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **Reuse existing libs:** `copyAllRunHistoryJsonToClipboard`, `copyAllRunHistoryMarkdownToClipboard`, `copyAllRunHistoryCsvToClipboard` from `@/lib/download-all-run-history-json`, `@/lib/download-all-run-history-md`, `@/lib/download-all-run-history-csv`. No new lib code.
+- **CommandPalette.tsx:** Import the three copy functions; add `handleCopyRunHistoryJson`, `handleCopyRunHistoryMarkdown`, `handleCopyRunHistoryCsv` (each calls the lib with `terminalOutputHistory`, then `closePalette()`). Add three action entries after "Copy run history stats summary" (FileJson, FileText, FileSpreadsheet icons). Add the three handlers to the action entries useMemo dependency array.
+- **keyboard-shortcuts.ts:** Add "Copy run history as JSON", "Copy run history as Markdown", "Copy run history as CSV" in the Command palette group.
+- **ADR:** `.cursor/adr/0256-command-palette-copy-run-history-json-md-csv.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0256-command-palette-copy-run-history-json-md-csv.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — imports, three handlers, three action entries, useMemo deps.
+- `src/data/keyboard-shortcuts.ts` — three Command palette entries.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add imports and handleCopyRunHistoryJson / handleCopyRunHistoryMarkdown / handleCopyRunHistoryCsv in CommandPalette; add three action entries.
+- [x] Add "Copy run history as JSON", "Copy run history as Markdown", "Copy run history as CSV" in keyboard-shortcuts.ts (Command palette group).
+- [x] Add ADR .cursor/adr/0256-command-palette-copy-run-history-json-md-csv.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette actions **"Copy run history as JSON"**, **"Copy run history as Markdown"**, and **"Copy run history as CSV"** let users copy the full run history in those formats from ⌘K without opening the Run tab. Existing libs `copyAllRunHistoryJsonToClipboard`, `copyAllRunHistoryMarkdownToClipboard`, and `copyAllRunHistoryCsvToClipboard` are used. **CommandPalette.tsx:** Added imports from download-all-run-history-json, download-all-run-history-csv, download-all-run-history-md; added `handleCopyRunHistoryJson`, `handleCopyRunHistoryMarkdown`, `handleCopyRunHistoryCsv`; three action entries (FileJson, FileText, FileSpreadsheet). **keyboard-shortcuts.ts:** Three Command palette group entries. ADR `.cursor/adr/0256-command-palette-copy-run-history-json-md-csv.md` documents the decision.
+
+**Files created:** `.cursor/adr/0256-command-palette-copy-run-history-json-md-csv.md`
+
+**Files touched:** `CommandPalette.tsx` (imports, three handlers, three action entries, useMemo deps), `keyboard-shortcuts.ts` (three Command palette entries), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Dashboard — Run history stats card)
+
+### Chosen Feature
+
+**Dashboard: Run history stats card** — The app has run history stats (total runs, passed, failed, total duration) in the Run tab toolbar and in the command palette via "Copy run history stats summary". The Dashboard shows projects, tickets, prompts, designs but has no run history visibility. Adding a **Run history stats card** on the Dashboard gives users an at-a-glance view of recent run activity and a one-click "Copy summary" without opening the Run tab or the command palette. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **New component** `src/components/molecules/DashboardsAndViews/RunHistoryStatsCard.tsx`: Card with title "Run history", summary text from `computeRunHistoryStats` + `formatRunHistoryStatsSummary` (from `@/lib/run-history-stats`), and a "Copy summary" button that calls `copyRunHistoryStatsSummaryToClipboard(entries)` from `@/lib/copy-run-history-stats-summary`. Props: `entries: TerminalOutputHistoryEntry[]`. Use Card, CardHeader, CardContent from shadcn; Activity or History icon; Button for copy. When `entries.length === 0`, show "No runs" and disable or hide Copy button.
+- **DashboardOverview.tsx:** Import `useRunStore` and read `terminalOutputHistory`; import RunHistoryStatsCard; render the card after the entity quick links and before the Projects section (so it is visible but does not change the hero strip).
+- **ADR:** `.cursor/adr/0255-dashboard-run-history-stats-card.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/components/molecules/DashboardsAndViews/RunHistoryStatsCard.tsx` — Run history stats card component.
+- `.cursor/adr/0255-dashboard-run-history-stats-card.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` — import useRunStore, terminalOutputHistory, RunHistoryStatsCard; render card.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create RunHistoryStatsCard.tsx (Card, summary text, Copy summary button; empty state).
+- [x] Integrate RunHistoryStatsCard into DashboardOverview (store + render card).
+- [x] Add ADR .cursor/adr/0255-dashboard-run-history-stats-card.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Dashboard (home overview) now shows a **Run history stats card** between the entity quick links and the Projects section. The card displays the same aggregate summary as the Run tab (e.g. "42 runs, 38 passed, 4 failed, 2h 15m total") using `computeRunHistoryStats` and `formatRunHistoryStatsSummary` from `@/lib/run-history-stats`. It includes a "Copy summary" button that calls `copyRunHistoryStatsSummaryToClipboard(entries)` and a "View Run" link to the Run page. When there are no runs, the card shows "No runs" and the Copy button is disabled.
+
+**Files created:** `src/components/molecules/DashboardsAndViews/RunHistoryStatsCard.tsx`, `.cursor/adr/0255-dashboard-run-history-stats-card.md`
+
+**Files touched:** `DashboardOverview.tsx` (import `useRunStore`, `RunHistoryStatsCard`; subscribe to `terminalOutputHistory`; render `RunHistoryStatsCard` in layout), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Command palette — Focus filter)
+
+### Chosen Feature
+
+**Command palette: Focus filter** — The app documents "/ (Dashboard)", "/ (Projects page)", etc. as "Focus filter" in the keyboard shortcuts help. There was no way to trigger "focus the current page's filter" from the command palette (⌘K). Adding a single palette action that dispatches a custom event lets keyboard-first users type "focus filter" in ⌘K and focus the filter input on Dashboard, Projects, Prompts, Ideas, Technologies, Run tab, Design/Architecture/Versioning tabs, or Shortcuts dialog when open. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **New lib** `src/lib/focus-filter-event.ts`: Export event name `FOCUS_FILTER_EVENT` and `dispatchFocusFilterEvent()`. SSR-safe (no-op when `typeof window === 'undefined'`).
+- **Existing focus-filter hooks** listen for the event and focus their input when the current page/tab matches: `usePageFocusFilterShortcut` (pathname), `useProjectTabFocusFilterShortcut` (pathname + tab), `useShortcutsHelpFocusFilterShortcut` (when dialog open). No new hooks; add one effect per existing hook to listen for the event.
+- **CommandPalette.tsx:** Import `dispatchFocusFilterEvent`; add action "Focus filter" (Focus or Search icon) that closes palette and calls `dispatchFocusFilterEvent()`.
+- **keyboard-shortcuts.ts:** Add "Focus filter" in Command palette group.
+- **ADR:** `.cursor/adr/0254-command-palette-focus-filter.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/focus-filter-event.ts` — event name and dispatch helper.
+- `.cursor/adr/0254-command-palette-focus-filter.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/lib/page-focus-filter-shortcut.ts` — listen for FOCUS_FILTER_EVENT when pathname matches; focus inputRef.
+- `src/lib/project-tab-focus-filter-shortcut.ts` — listen for FOCUS_FILTER_EVENT when tab matches; focus inputRef.
+- `src/lib/shortcuts-help-focus-filter-shortcut.ts` — when dialog open, listen for event and focus inputRef.
+- `src/components/shared/CommandPalette.tsx` — import, handler, one action entry, useMemo deps.
+- `src/data/keyboard-shortcuts.ts` — one Command palette entry.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create src/lib/focus-filter-event.ts (FOCUS_FILTER_EVENT, dispatchFocusFilterEvent).
+- [x] Add event listener in page-focus-filter-shortcut.ts.
+- [x] Add event listener in project-tab-focus-filter-shortcut.ts.
+- [x] Add event listener in shortcuts-help-focus-filter-shortcut.ts.
+- [x] Add "Focus filter" action in CommandPalette and keyboard-shortcuts.ts.
+- [x] Add ADR .cursor/adr/0254-command-palette-focus-filter.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette action **"Focus filter"** lets users focus the current page's filter input from ⌘K. A custom event `kwcode-focus-filter` is dispatched; existing focus-filter hooks (Dashboard, Projects, Prompts, Ideas, Technologies, Run/Design/Architecture/Versioning tabs, Shortcuts dialog) listen for it and focus their input when the page/tab matches. **New module** `src/lib/focus-filter-event.ts` exports `FOCUS_FILTER_EVENT` and `dispatchFocusFilterEvent()`. **Hooks updated:** `page-focus-filter-shortcut.ts`, `project-tab-focus-filter-shortcut.ts`, `shortcuts-help-focus-filter-shortcut.ts` each add an effect to listen for the event and focus their ref. **CommandPalette:** "Focus filter" action with Search icon; **keyboard-shortcuts.ts:** one Command palette group entry. ADR `.cursor/adr/0254-command-palette-focus-filter.md` documents the decision.
+
+**Files created:** `src/lib/focus-filter-event.ts`, `.cursor/adr/0254-command-palette-focus-filter.md`
+
+**Files touched:** `src/lib/page-focus-filter-shortcut.ts`, `src/lib/project-tab-focus-filter-shortcut.ts`, `src/lib/shortcuts-help-focus-filter-shortcut.ts`, `CommandPalette.tsx` (Search icon; import; "Focus filter" action), `keyboard-shortcuts.ts` (one entry), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Command palette — Go to first project Milestones)
+
+### Chosen Feature
+
+**Command palette: Go to first project Milestones** — The app has "Go to first project" and "Go to first project X" for Ideas, Documentation, Frontend, Backend, and global "Go to Milestones" (dashboard). The **Milestones** tab on the project detail page had no ⌘K shortcut; users could not jump to the first active project's Milestones tab from the command palette. Adding "Go to first project Milestones" completes parity for that tab. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx:** Add `goToFirstProjectMilestones` (same pattern as `goToFirstProjectDocumentation`: resolve first active project, then `router.push(\`/projects/${proj.id}?tab=milestones\`)`). Add one action entry with Flag icon. No new global shortcut (palette-only).
+- **keyboard-shortcuts.ts:** Add "Go to first project Milestones" in the Command palette group only.
+- **ADR:** `.cursor/adr/0253-command-palette-go-to-first-project-milestones.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0253-command-palette-go-to-first-project-milestones.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — add goToFirstProjectMilestones, one action entry, useMemo deps.
+- `src/data/keyboard-shortcuts.ts` — one Command palette entry.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add goToFirstProjectMilestones in CommandPalette and "Go to first project Milestones" action entry.
+- [x] Add "Go to first project Milestones" in keyboard-shortcuts.ts (Command palette group).
+- [x] Add ADR .cursor/adr/0253-command-palette-go-to-first-project-milestones.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette action **"Go to first project Milestones"** lets users jump to the first active project's Milestones tab (`/projects/{id}?tab=milestones`) from ⌘K. **CommandPalette.tsx:** Added `goToFirstProjectMilestones` callback (same pattern as goToFirstProjectDocumentation); one action entry with Flag icon. **keyboard-shortcuts.ts:** One Command palette group entry. ADR `.cursor/adr/0253-command-palette-go-to-first-project-milestones.md` documents the decision.
+
+**Files created:** `.cursor/adr/0253-command-palette-go-to-first-project-milestones.md`
+
+**Files touched:** `CommandPalette.tsx` (goToFirstProjectMilestones callback; "Go to first project Milestones" action; useMemo deps), `keyboard-shortcuts.ts` (one Command palette entry), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Tech stack export as CSV)
+
+### Chosen Feature
+
+**Tech stack export as CSV** — The app already exports tech stack as Markdown and JSON (command palette and Technologies page). Ideas, prompts, projects list, and run history support CSV. Adding Download/Copy tech stack as CSV gives parity and a spreadsheet-friendly format (category, technology, description). Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **New lib** `src/lib/download-tech-stack-csv.ts`: Export `buildTechStackCsv(data)`, `downloadTechStackAsCsv(data)`, `copyTechStackAsCsvToClipboard(data)`. Rows: category (Frontend/Backend/Tooling), technology, description. Use `escapeCsvField` from csv-helpers, `filenameTimestamp` and `triggerFileDownload`/downloadBlob from download-helpers, toast on empty/success/fail. Same patterns as `download-projects-list-csv.ts` and `download-tech-stack.ts`.
+- **CommandPalette.tsx:** Import the new lib; add `handleDownloadTechStackCsv` and `handleCopyTechStackCsv`; add two action entries after existing tech stack JSON entries.
+- **keyboard-shortcuts.ts:** Add "Download tech stack as CSV" and "Copy tech stack as CSV" in the Command palette group.
+- **TechnologiesPageContent.tsx:** Import the new lib; add "Download as CSV" and "Copy as CSV" buttons next to existing Markdown/JSON buttons in the Tech stack section.
+- **ADR:** `.cursor/adr/0252-tech-stack-export-csv.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/download-tech-stack-csv.ts` — build CSV, download, copy to clipboard for tech stack.
+- `.cursor/adr/0252-tech-stack-export-csv.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import, two handlers, two action entries, useMemo deps.
+- `src/components/organisms/TechnologiesPageContent.tsx` — import, two buttons (Download as CSV, Copy as CSV).
+- `src/data/keyboard-shortcuts.ts` — two Command palette entries.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create src/lib/download-tech-stack-csv.ts (buildTechStackCsv, downloadTechStackAsCsv, copyTechStackAsCsvToClipboard).
+- [x] Add handleDownloadTechStackCsv and handleCopyTechStackCsv in CommandPalette; add two action entries.
+- [x] Add "Download tech stack as CSV" and "Copy tech stack as CSV" in keyboard-shortcuts.ts (Command palette group).
+- [x] Add Download as CSV and Copy as CSV buttons in TechnologiesPageContent (Tech stack section).
+- [x] Add ADR .cursor/adr/0252-tech-stack-export-csv.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Users can export or copy the tech stack as CSV in two places: (1) Command palette (⌘K): "Download tech stack as CSV" and "Copy tech stack as CSV"; (2) Technologies page: "Download as CSV" and "Copy as CSV" buttons in the Tech stack section next to existing Markdown/JSON. New module `src/lib/download-tech-stack-csv.ts` exports `buildTechStackCsv(data)`, `downloadTechStackAsCsv(data)`, and `copyTechStackAsCsvToClipboard(data)`. CSV format: header `category,technology,description`; one row per technology with Frontend, Backend, or Tooling as category. **CommandPalette.tsx:** Import from download-tech-stack-csv; added handleDownloadTechStackCsv and handleCopyTechStackCsv; two action entries with FileSpreadsheet icon. **keyboard-shortcuts.ts:** Two Command palette group entries. **TechnologiesPageContent.tsx:** Import from download-tech-stack-csv; two buttons (Download as CSV, Copy as CSV). ADR `.cursor/adr/0252-tech-stack-export-csv.md` documents the decision.
+
+**Files created:** `src/lib/download-tech-stack-csv.ts`, `.cursor/adr/0252-tech-stack-export-csv.md`
+
+**Files touched:** `CommandPalette.tsx` (import, two handlers, two action entries, useMemo deps), `TechnologiesPageContent.tsx` (import, two buttons), `keyboard-shortcuts.ts` (two Command palette entries), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Command palette — Go to first project Frontend and Backend)
+
+### Chosen Feature
+
+**Command palette: Go to first project Frontend and Go to first project Backend** — The app has "Go to first project" and many "Go to first project X" for Worker, Testing, Milestones, Versioning, Planner, Design, Architecture, Control, Ideas, and Documentation. The **Frontend** and **Backend** tabs on the project detail page had no equivalent; users could not jump to them via ⌘K. Adding these two actions completes the set of project-tab quick navigations. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx:** Add `goToFirstProjectFrontend` and `goToFirstProjectBackend` (same pattern as `goToFirstProjectDocumentation`: resolve first active project, then `router.push` with `?tab=frontend` / `?tab=backend`). Add two action entries with Monitor and Server icons. No new global shortcuts (palette-only).
+- **keyboard-shortcuts.ts:** Add "Go to first project Frontend" and "Go to first project Backend" in the Command palette group only.
+- **ADR:** `.cursor/adr/0251-command-palette-go-to-first-project-frontend-backend.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0251-command-palette-go-to-first-project-frontend-backend.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — add goToFirstProjectFrontend, goToFirstProjectBackend, two action entries, useMemo deps.
+- `src/data/keyboard-shortcuts.ts` — two Command palette entries.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add goToFirstProjectFrontend and goToFirstProjectBackend in CommandPalette; add two action entries.
+- [x] Add "Go to first project Frontend" and "Go to first project Backend" in keyboard-shortcuts.ts (Command palette group).
+- [x] Add ADR .cursor/adr/0251-command-palette-go-to-first-project-frontend-backend.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette actions **"Go to first project Frontend"** and **"Go to first project Backend"** let users jump to the first active project's Frontend tab (`/projects/{id}?tab=frontend`) and Backend tab (`/projects/{id}?tab=backend`) from ⌘K. **CommandPalette.tsx:** Added `goToFirstProjectFrontend` and `goToFirstProjectBackend` callbacks (same pattern as goToFirstProjectDocumentation); two action entries with Monitor and Server icons. **keyboard-shortcuts.ts:** Two Command palette group entries. ADR `.cursor/adr/0251-command-palette-go-to-first-project-frontend-backend.md` documents the decision.
+
+**Files created:** `.cursor/adr/0251-command-palette-go-to-first-project-frontend-backend.md`
+
+**Files touched:** `CommandPalette.tsx` (Monitor, Server imports; goToFirstProjectFrontend, goToFirstProjectBackend; two action entries; useMemo deps), `keyboard-shortcuts.ts` (two Command palette entries), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Command palette — Copy current page URL)
+
+### Chosen Feature
+
+**Command palette: Copy current page URL** — The app has many copy actions (app info, run history, ideas, folder paths, etc.) but no way to copy the **current page URL** (path + query + hash) to the clipboard from ⌘K. Adding this lets users share deep links (e.g. to a project tab or documentation) or paste the URL elsewhere. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **New lib** `src/lib/copy-current-page-url.ts`: Export `copyCurrentPageUrlToClipboard()`. In browser: build full URL from `window.location` (origin + pathname + search + hash), call `copyTextToClipboard`, toast on success/fail. SSR-safe (no-op or return false when `typeof window === 'undefined'`).
+- **CommandPalette.tsx:** Import the lib; add handler that calls it and closes palette. Add one action entry "Copy current page URL" with Link icon.
+- **keyboard-shortcuts.ts:** Add one entry in Command palette group: "Copy current page URL".
+- **ADR:** `.cursor/adr/0252-command-palette-copy-current-page-url.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/copy-current-page-url.ts` — copy full current page URL to clipboard.
+- `.cursor/adr/0252-command-palette-copy-current-page-url.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import, handler, one action entry, useMemo deps.
+- `src/data/keyboard-shortcuts.ts` — one Command palette entry.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create src/lib/copy-current-page-url.ts.
+- [x] Add handler and "Copy current page URL" action in CommandPalette; add entry in keyboard-shortcuts.ts.
+- [x] Add ADR .cursor/adr/0252-command-palette-copy-current-page-url.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette action **"Copy current page URL"** lets users copy the full current page URL (origin + pathname + search + hash) to the clipboard from ⌘K, with success/error toast from the existing copy helper. **New module** `src/lib/copy-current-page-url.ts` exports `getCurrentPageUrl()` and `copyCurrentPageUrlToClipboard()`; SSR-safe when `window` is undefined. **CommandPalette:** import, `handleCopyCurrentPageUrl`, one action entry with Link icon. **keyboard-shortcuts.ts:** one Command palette group entry. ADR `.cursor/adr/0252-command-palette-copy-current-page-url.md` documents the decision.
+
+**Files created:** `src/lib/copy-current-page-url.ts`, `.cursor/adr/0252-command-palette-copy-current-page-url.md`
+
+**Files touched:** `CommandPalette.tsx` (Link icon; import; handler; one action entry; useMemo dep), `keyboard-shortcuts.ts` (one Command palette entry), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Command palette — Go to first project Documentation)
+
+### Chosen Feature
+
+**Command palette: Go to first project Documentation** — The app had "Go to Run", "Go to Testing", "Go to Milestones", "Go to Versioning", "Go to Planner", "Go to Design", "Go to Architecture", "Go to Control", and "Go to first project Ideas" but no way to jump to the first active project's **Documentation** tab from ⌘K (⌘⇧D goes to global /documentation). Adding "Go to first project Documentation" gives parity. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx:** Add `goToFirstProjectDocumentation` callback (same pattern as goToFirstProjectIdeas); add action entry "Go to first project Documentation" with FileText icon. No new global shortcut (palette-only).
+- **keyboard-shortcuts.ts:** Add "Go to first project Documentation" in the Command palette group only.
+- **ADR:** `.cursor/adr/0250-command-palette-go-to-first-project-documentation.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0250-command-palette-go-to-first-project-documentation.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — add goToFirstProjectDocumentation, one action entry, useMemo deps.
+- `src/data/keyboard-shortcuts.ts` — one Command palette entry.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add goToFirstProjectDocumentation in CommandPalette and "Go to first project Documentation" action entry.
+- [x] Add "Go to first project Documentation" in keyboard-shortcuts.ts (Command palette group).
+- [x] Add ADR .cursor/adr/0250-command-palette-go-to-first-project-documentation.md.
+- [ ] Run npm run verify and fix any failures.
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette action **"Go to first project Documentation"** lets users jump to the first active project's Documentation tab (`/projects/{id}?tab=documentation`) from ⌘K. **CommandPalette.tsx:** Added `goToFirstProjectDocumentation` callback; "Go to first project Documentation" action with FileText icon. **keyboard-shortcuts.ts:** One Command palette group entry. ADR `.cursor/adr/0250-command-palette-go-to-first-project-documentation.md` documents the decision. **Files created:** `.cursor/adr/0250-command-palette-go-to-first-project-documentation.md`. **Files touched:** `CommandPalette.tsx`, `keyboard-shortcuts.ts`, `night-shift-plan.md`. Run **`npm run verify`** locally to confirm.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Command palette — Copy run history stats summary)
+
+### Chosen Feature
+
+**Command palette: Copy run history stats summary** — The app has "Copy run history to clipboard" (full content) and "Copy last run to clipboard". There was no way to copy only the **aggregate stats** (e.g. "42 runs, 38 passed, 4 failed, 2h 15m total") from ⌘K. The Run tab already uses `run-history-stats.ts` for the toolbar summary. Adding a single palette action that computes stats from `terminalOutputHistory`, formats via `formatRunHistoryStatsSummary`, and copies to clipboard gives users a one-paste summary for reports or chat. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **New lib** `src/lib/copy-run-history-stats-summary.ts`: Export `copyRunHistoryStatsSummaryToClipboard(entries: TerminalOutputHistoryEntry[])`. Use `computeRunHistoryStats` and `formatRunHistoryStatsSummary` from `@/lib/run-history-stats`, then `copyTextToClipboard` from `@/lib/copy-to-clipboard`. Toast on empty ("No run history"), success, or fail.
+- **CommandPalette.tsx:** Import the new lib; add `handleCopyRunHistoryStatsSummary` (get `terminalOutputHistory`, call lib, close palette). Add one action entry after "Copy run history to clipboard": "Copy run history stats summary".
+- **keyboard-shortcuts.ts:** Add one entry in the Command palette group: "Copy run history stats summary".
+- **ADR:** `.cursor/adr/0249-command-palette-copy-run-history-stats-summary.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/copy-run-history-stats-summary.ts` — copy stats summary (runs, passed, failed, total duration) to clipboard.
+- `.cursor/adr/0249-command-palette-copy-run-history-stats-summary.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import, handleCopyRunHistoryStatsSummary, one action entry, useMemo deps.
+- `src/data/keyboard-shortcuts.ts` — one Command palette entry.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create src/lib/copy-run-history-stats-summary.ts.
+- [x] Add handleCopyRunHistoryStatsSummary and "Copy run history stats summary" in CommandPalette and keyboard-shortcuts.ts.
+- [x] Add ADR .cursor/adr/0249-command-palette-copy-run-history-stats-summary.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette action **"Copy run history stats summary"** lets users copy the aggregate run stats (e.g. "42 runs, 38 passed, 4 failed, 2h 15m total") to the clipboard from ⌘K. New module `src/lib/copy-run-history-stats-summary.ts` exports `copyRunHistoryStatsSummaryToClipboard(entries)`: uses `computeRunHistoryStats` and `formatRunHistoryStatsSummary` from `@/lib/run-history-stats`, then `copyTextToClipboard`; shows "No run history" toast when entries are empty. **CommandPalette:** imports the lib, adds `handleCopyRunHistoryStatsSummary`, and one action entry after "Copy run history to clipboard". **keyboard-shortcuts.ts:** one Command palette group entry added. ADR `.cursor/adr/0249-command-palette-copy-run-history-stats-summary.md` documents the decision.
+
+**Files created:** `src/lib/copy-run-history-stats-summary.ts`, `.cursor/adr/0249-command-palette-copy-run-history-stats-summary.md`
+
+**Files touched:** `CommandPalette.tsx` (import, handler, one action entry, useMemo dep), `keyboard-shortcuts.ts` (one Command palette entry), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Command palette — Go to first project Ideas)
+
+### Chosen Feature
+
+**Command palette: Go to first project Ideas** — The app has "Go to Run", "Go to Testing", "Go to Milestones", "Go to Versioning", "Go to Planner", "Go to Design", "Go to Architecture", and "Go to Control" that navigate to the first active project's corresponding tab. The **Ideas** tab on the project detail page had no equivalent; users could not jump to it via ⌘K. Adding "Go to first project Ideas" completes the set of project-tab quick navigations for the Ideas tab. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx:** Add `goToFirstProjectIdeas` callback (same pattern as goToControl/goToPlanner: resolve first active project, then `router.push(\`/projects/${proj.id}?tab=ideas\`)`). Add action entry "Go to first project Ideas" with Lightbulb icon. No new global shortcut (palette-only) to avoid shortcut proliferation.
+- **keyboard-shortcuts.ts:** Add "Go to first project Ideas" in the Command palette group only.
+- **ADR:** `.cursor/adr/0248-command-palette-go-to-first-project-ideas.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0248-command-palette-go-to-first-project-ideas.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — add goToFirstProjectIdeas, one action entry, useMemo deps.
+- `src/data/keyboard-shortcuts.ts` — one Command palette entry.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add goToFirstProjectIdeas in CommandPalette and "Go to first project Ideas" action entry.
+- [x] Add "Go to first project Ideas" in keyboard-shortcuts.ts (Command palette group).
+- [x] Add ADR .cursor/adr/0248-command-palette-go-to-first-project-ideas.md.
+- [ ] Run npm run verify and fix any failures.
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette action **"Go to first project Ideas"** lets users jump to the first active project's Ideas tab (`/projects/{id}?tab=ideas`) from ⌘K. **CommandPalette.tsx:** Added `goToFirstProjectIdeas` callback (same pattern as goToControl: resolve first active project, then navigate); "Go to first project Ideas" action with Lightbulb icon; no new global shortcut. **keyboard-shortcuts.ts:** One Command palette group entry. ADR `.cursor/adr/0248-command-palette-go-to-first-project-ideas.md` documents the decision. **Files created:** `.cursor/adr/0248-command-palette-go-to-first-project-ideas.md`. **Files touched:** `CommandPalette.tsx`, `keyboard-shortcuts.ts`, `night-shift-plan.md`. Run **`npm run verify`** locally to confirm.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Command palette + shortcut — Go to Control)
+
+### Chosen Feature
+
+**Command palette and keyboard shortcut: Go to Control** — The app already has "Go to Run", "Go to Testing", "Go to Milestones", "Go to Versioning", "Go to Planner", "Go to Design", and "Go to Architecture" that navigate to the first active project's corresponding tab. The **Control** tab (project control, milestones, ideas) had no equivalent; users could not jump to it via ⌘K or a dedicated shortcut. Adding "Go to Control" completes the set of project-tab quick navigations. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx:** Add `goToControl` callback (same pattern as goToRun/goToPlanner: resolve first active project, then `router.push(\`/projects/${proj.id}?tab=control\`)`). Add action entry "Go to Control" with ClipboardList icon. Add global shortcut ⌘⇧C (Mac) / Ctrl+Alt+C (Windows/Linux) in a new `useEffect`, with same guards as other "Go to" shortcuts.
+- **keyboard-shortcuts.ts:** Add "Go to Control" in Help group (⌘⇧C / Ctrl+Alt+C) and one entry in Command palette group.
+- **ADR:** `.cursor/adr/0246-command-palette-go-to-control.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0246-command-palette-go-to-control.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — add goToControl, one action entry, one useEffect for shortcut, useMemo deps.
+- `src/data/keyboard-shortcuts.ts` — one Help-group entry, one Command palette entry.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add goToControl in CommandPalette and "Go to Control" action entry.
+- [x] Add ⌘⇧C / Ctrl+Alt+C shortcut for Go to Control in CommandPalette.
+- [x] Add "Go to Control" in keyboard-shortcuts.ts (Help + Command palette).
+- [x] Add ADR .cursor/adr/0246-command-palette-go-to-control.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette action **"Go to Control"** and global shortcut **⌘⇧C (Mac) / Ctrl+Alt+C (Windows/Linux)** let users jump to the first active project's Control tab (`/projects/{id}?tab=control`). **CommandPalette.tsx:** Added `goToControl` callback; "Go to Control" action with ClipboardList icon; `useEffect` for the shortcut. **keyboard-shortcuts.ts:** One Help-group entry and one Command palette entry. ADR `.cursor/adr/0246-command-palette-go-to-control.md` documents the decision. **Files created:** `.cursor/adr/0246-command-palette-go-to-control.md`. **Files touched:** `CommandPalette.tsx`, `keyboard-shortcuts.ts`, `night-shift-plan.md`. Run **`npm run verify`** locally to confirm.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Download/Copy first project milestones as Markdown)
+
+### Chosen Feature
+
+**Download and Copy first project milestones as Markdown** — The app already supports Download/Copy first project milestones as JSON and CSV from the command palette and from the Milestones tab. Tickets have a matching Markdown export (list-level). Adding Markdown export for the milestones list (build markdown with header, per-milestone sections: name, slug, dates, content) gives parity with tickets and a real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **New lib** `src/lib/download-project-milestones-md.ts`: Export `buildProjectMilestonesMarkdown(milestones, options?)`, `downloadProjectMilestonesAsMarkdown(milestones, options?)`, `copyProjectMilestonesAsMarkdownToClipboard(milestones, options?)`. Format: "# Project milestones", project name, exportedAt, count, then per-milestone sections (name, slug, id, created_at, updated_at, content if present). Use `filenameTimestamp` and `triggerFileDownload` from download-helpers; toast on empty/success/fail. Same patterns as `download-project-tickets-md.ts` and `download-project-milestones-json.ts`.
+- **CommandPalette.tsx:** Import the new lib; add `handleDownloadFirstProjectMilestonesMarkdown` and `handleCopyFirstProjectMilestonesMarkdown` (resolve first project + fetch milestones via `resolveFirstProjectMilestones`, then call download/copy). Add two action entries after existing first-project milestones JSON/CSV entries.
+- **ProjectMilestonesTab.tsx:** Import the new lib; add "Export Markdown" and "Copy Markdown" buttons next to existing JSON/CSV export buttons.
+- **keyboard-shortcuts.ts:** Add "Download first project milestones as Markdown" and "Copy first project milestones as Markdown" in the Command palette group.
+- **ADR:** `.cursor/adr/0247-command-palette-download-copy-first-project-milestones-md.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/download-project-milestones-md.ts` — build markdown, download, copy to clipboard for milestones list.
+- `.cursor/adr/0247-command-palette-download-copy-first-project-milestones-md.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import, two handlers, two action entries, useMemo deps.
+- `src/components/molecules/TabAndContentSections/ProjectMilestonesTab.tsx` — import, two buttons (Export Markdown, Copy Markdown).
+- `src/data/keyboard-shortcuts.ts` — two Command palette entries.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create src/lib/download-project-milestones-md.ts (buildProjectMilestonesMarkdown, download, copy).
+- [x] Add handleDownloadFirstProjectMilestonesMarkdown and handleCopyFirstProjectMilestonesMarkdown in CommandPalette; add two action entries.
+- [x] Add Export Markdown and Copy Markdown buttons in ProjectMilestonesTab.
+- [x] Add two entries in keyboard-shortcuts.ts (Command palette group).
+- [x] Add ADR .cursor/adr/0247-command-palette-download-copy-first-project-milestones-md.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Users can export or copy the first project's milestones list as Markdown in two places: (1) Command palette (⌘K): "Download first project milestones as Markdown" and "Copy first project milestones as Markdown"; (2) Milestones tab: "Export Markdown" and "Copy Markdown" buttons next to the existing JSON/CSV export buttons. New module `src/lib/download-project-milestones-md.ts` exports `buildProjectMilestonesMarkdown(milestones, options?)`, `downloadProjectMilestonesAsMarkdown(milestones, options?)`, and `copyProjectMilestonesAsMarkdownToClipboard(milestones, options?)`. Markdown format: "# Project milestones", project name, exportedAt, count, then per-milestone sections (name, slug, id, created_at, updated_at, content). CommandPalette resolves the first active project, fetches milestones via `resolveFirstProjectMilestones`, and calls the new lib with `projectName`. ProjectMilestonesTab uses the same lib with the current `milestones` state and `project.name`. Two entries added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0247-command-palette-download-copy-first-project-milestones-md.md` documents the decision.
+
+**Files created:** `src/lib/download-project-milestones-md.ts`, `.cursor/adr/0247-command-palette-download-copy-first-project-milestones-md.md`
+
+**Files touched:** `CommandPalette.tsx` (import, handleDownloadFirstProjectMilestonesMarkdown, handleCopyFirstProjectMilestonesMarkdown, two action entries, useMemo deps), `ProjectMilestonesTab.tsx` (import, Export Markdown and Copy Markdown buttons), `keyboard-shortcuts.ts` (two Command palette entries), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Command palette — Restore projects list filters)
+
+### Chosen Feature
+
+**Command palette: Restore projects list filters** — The app has "Restore run history filters" from ⌘K that resets run history sort/filter to defaults and notifies the Run tab via a custom event. The Projects list page has "Reset filters" in the UI but no command-palette action. Adding "Restore projects list filters" (same pattern: set default preference, dispatch event, ProjectsListPageContent listens and updates local state) gives keyboard-first users parity and a real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **Preference lib:** In `src/lib/projects-list-view-preference.ts`, export a constant `PROJECTS_LIST_VIEW_PREFERENCE_RESTORED_EVENT` (e.g. `"kwcode-projects-list-view-preference-restored"`) so CommandPalette and ProjectsListPageContent can use it.
+- **CommandPalette.tsx:** Import `setProjectsListViewPreference`, `DEFAULT_PROJECTS_LIST_VIEW_PREFERENCE`, and the new event; add `handleRestoreProjectsListFilters` (close palette, set preference to default, dispatch event, toast). Add one action entry "Restore projects list filters" with RotateCcw icon, e.g. near "Restore run history filters".
+- **ProjectsListPageContent.tsx:** Import the event; add `useEffect` that listens for it and sets `setSearchQuery("")` and `setSortOrder("asc")`.
+- **keyboard-shortcuts.ts:** Add "Restore projects list filters" in the Command palette group.
+- **ADR:** `.cursor/adr/0246-command-palette-restore-projects-list-filters.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0246-command-palette-restore-projects-list-filters.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/lib/projects-list-view-preference.ts` — export `PROJECTS_LIST_VIEW_PREFERENCE_RESTORED_EVENT`.
+- `src/components/shared/CommandPalette.tsx` — import, handler, one action entry, useMemo deps.
+- `src/components/organisms/ProjectsListPageContent.tsx` — import event, useEffect listener.
+- `src/data/keyboard-shortcuts.ts` — one Command palette entry.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add PROJECTS_LIST_VIEW_PREFERENCE_RESTORED_EVENT and use it in CommandPalette and ProjectsListPageContent.
+- [x] Add "Restore projects list filters" in CommandPalette and keyboard-shortcuts.ts.
+- [x] Add ADR .cursor/adr/0246-command-palette-restore-projects-list-filters.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette action **"Restore projects list filters"** lets users reset the Projects list sort and filter to defaults from ⌘K. Pattern matches "Restore run history filters": preference is persisted, a custom event is dispatched, and the Projects list page listens and syncs its local state so the list updates immediately when the user is on the Projects page. **Preference lib:** `src/lib/projects-list-view-preference.ts` now exports `PROJECTS_LIST_VIEW_PREFERENCE_RESTORED_EVENT`. **CommandPalette:** imports the preference lib, adds `handleRestoreProjectsListFilters` (close palette, set default preference, dispatch event, toast), and one action entry with RotateCcw icon next to "Restore run history filters". **ProjectsListPageContent:** listens for the event and sets `searchQuery` and `sortOrder` to `DEFAULT_PROJECTS_LIST_VIEW_PREFERENCE`. One entry added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0246-command-palette-restore-projects-list-filters.md` documents the decision.
+
+**Files created:** `.cursor/adr/0246-command-palette-restore-projects-list-filters.md`
+
+**Files touched:** `src/lib/projects-list-view-preference.ts` (export `PROJECTS_LIST_VIEW_PREFERENCE_RESTORED_EVENT`), `CommandPalette.tsx` (import, `handleRestoreProjectsListFilters`, one action entry, useMemo deps), `ProjectsListPageContent.tsx` (import event and default, `useEffect` listener), `keyboard-shortcuts.ts` (one Command palette entry), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Command palette — Open milestones folder & Copy milestones folder path)
+
+### Chosen Feature
+
+**Command palette: Open milestones folder in file manager and Copy milestones folder path** — The app has similar actions for Documentation, Technologies, Ideas, and Planner (`.cursor` subfolders). The milestones folder (`.cursor/milestones`, where `*.milestone.md` files live) has no "Open in file manager" or "Copy path" from ⌘K. Adding two Tauri commands, two frontend libs, and two command-palette actions gives keyboard-first users parity and a real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **Backend:** Add `open_milestones_folder` and `get_milestones_folder_path` in `src-tauri/src/lib.rs` (same pattern as planner/ideas: app repo `.cursor/milestones`, fallback to `.cursor`), and register both in `generate_handler![]`.
+- **New libs:** `src/lib/open-milestones-folder.ts` and `src/lib/copy-milestones-folder-path.ts` calling the new Tauri commands; Tauri-only, toast in browser.
+- **CommandPalette.tsx:** Import both libs; add `handleOpenMilestonesFolder` and `handleCopyMilestonesFolderPath`; add two action entries (e.g. after "Go to Milestones" or with other folder open/copy actions).
+- **keyboard-shortcuts.ts:** Add "Open milestones folder in file manager" and "Copy milestones folder path" in the Command palette group.
+- **ADR:** `.cursor/adr/0245-command-palette-open-copy-milestones-folder.md` (0244 already used).
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/open-milestones-folder.ts` — open app repo `.cursor/milestones` in file manager (Tauri only).
+- `src/lib/copy-milestones-folder-path.ts` — copy milestones folder path to clipboard (Tauri only).
+- `.cursor/adr/0245-command-palette-open-copy-milestones-folder.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src-tauri/src/lib.rs` — add `open_milestones_folder` and `get_milestones_folder_path`, register in handler.
+- `src/components/shared/CommandPalette.tsx` — imports, two handlers, two action entries, useMemo deps.
+- `src/data/keyboard-shortcuts.ts` — two Command palette entries.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add `open_milestones_folder` and `get_milestones_folder_path` in lib.rs and register in generate_handler![].
+- [x] Create open-milestones-folder.ts and copy-milestones-folder-path.ts.
+- [x] Add Open milestones folder / Copy milestones folder path in CommandPalette and keyboard-shortcuts.ts.
+- [x] Add ADR .cursor/adr/0245-command-palette-open-copy-milestones-folder.md.
+- [ ] Run npm run verify and fix any failures (run locally; not run in this session).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette actions **"Open milestones folder in file manager"** and **"Copy milestones folder path"** let users open the app repo's `.cursor/milestones` folder in the file manager or copy its path from ⌘K. Backend: two new Tauri commands in `src-tauri/src/lib.rs` — `open_milestones_folder` and `get_milestones_folder_path` (same pattern as planner/ideas: app root `.cursor/milestones`, fallback to `.cursor`). Frontend: `src/lib/open-milestones-folder.ts` and `src/lib/copy-milestones-folder-path.ts` call these commands; Tauri-only, toast in browser. CommandPalette imports both libs, adds `handleOpenMilestonesFolder` and `handleCopyMilestonesFolderPath`, and two action entries after the planner folder actions. Two entries added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0245-command-palette-open-copy-milestones-folder.md` documents the decision (0244 was already used).
+
+**Files created:** `src/lib/open-milestones-folder.ts`, `src/lib/copy-milestones-folder-path.ts`, `.cursor/adr/0245-command-palette-open-copy-milestones-folder.md`
+
+**Files touched:** `src-tauri/src/lib.rs` (open_milestones_folder, get_milestones_folder_path, handler registration), `CommandPalette.tsx` (imports, two handlers, two action entries, useMemo deps), `keyboard-shortcuts.ts` (two Command palette entries), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Command palette — Download last run as file)
+
+### Chosen Feature
+
+**Command palette: Download last run as plain text (file)** — The palette has "Copy last run to clipboard" (plain text) and "Download run history" (all runs). There is no way to download only the **last** run as a file from ⌘K. Adding a single palette action that formats the last run the same way as copy (header + output) and triggers a file download gives keyboard-first users a one-click way to save the most recent run to disk. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **New lib** `src/lib/download-single-run-as-plain-text.ts`: Export `downloadSingleRunAsPlainText(entry: TerminalOutputHistoryEntry)`. Format entry as in `copy-single-run-as-plain-text.ts` (header line + output); use `triggerFileDownload` from `@/lib/download-helpers` with filename `last-run-{safeLabel}-{timestamp}.txt`. Toast on success; empty output still downloads.
+- **CommandPalette.tsx**: Import the new lib; add `handleDownloadLastRun` (get `terminalOutputHistory[0]`, if none toast "No run history to download", else call `downloadSingleRunAsPlainText(lastRun)`, close palette). Add one action entry after "Copy last run to clipboard": "Download last run as file".
+- **keyboard-shortcuts.ts**: Add one entry in the Command palette group: "Download last run as file".
+- **ADR** `.cursor/adr/0244-command-palette-download-last-run-as-file.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/download-single-run-as-plain-text.ts` — format single run as plain text, trigger download, toast.
+- `.cursor/adr/0244-command-palette-download-last-run-as-file.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import, handleDownloadLastRun, one action entry, useMemo deps.
+- `src/data/keyboard-shortcuts.ts` — one Command palette entry.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create src/lib/download-single-run-as-plain-text.ts.
+- [x] Add handleDownloadLastRun and "Download last run as file" in CommandPalette and keyboard-shortcuts.ts.
+- [x] Add ADR .cursor/adr/0244-command-palette-download-last-run-as-file.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette action **"Download last run as file"** lets users save the most recent run from terminal output history as a plain text file from ⌘K. New module `src/lib/download-single-run-as-plain-text.ts` exports `downloadSingleRunAsPlainText(entry)`: formats the entry in the same way as "Copy last run" (header line + output), then triggers a file download via `triggerFileDownload` with filename `last-run-{safeLabel}-{timestamp}.txt`. If there is no run history, the palette shows a toast "No run history to download". One entry added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0244-command-palette-download-last-run-as-file.md` documents the decision.
+
+**Files created:** `src/lib/download-single-run-as-plain-text.ts`, `.cursor/adr/0244-command-palette-download-last-run-as-file.md`
+
+**Files touched:** `CommandPalette.tsx` (import `downloadSingleRunAsPlainText`, `handleDownloadLastRun`, one action entry, useMemo deps), `keyboard-shortcuts.ts` (one Command palette entry), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Unify all milestone fetching to fetchProjectMilestones)
+
+### Chosen Feature
+
+**Unify all project milestone list fetching to `fetchProjectMilestones`** — The lib `src/lib/fetch-project-milestones.ts` and CommandPalette/ProjectMilestonesTab already use it. ProjectControlTab, ProjectRunTab, and ProjectTicketsTab still use a dual branch (Tauri: invoke; browser: fetch). Replacing those with `fetchProjectMilestones(projectId)` gives one contract everywhere, works in Tauri without the API server, and matches the pattern used for implementation log. Real, additive consistency that would show up in a changelog.
+
+### Approach
+
+- **No new lib** — Use existing `fetchProjectMilestones` from `@/lib/fetch-project-milestones`.
+- **ProjectControlTab.tsx**: In `load`, replace the milestones branch (invoke vs fetch) with `fetchProjectMilestones(projectId)`; build `milMap` from result; keep ideas fetch as-is.
+- **ProjectRunTab.tsx**: In Fast development flow, replace the milestone block with `fetchProjectMilestones(projectId)` then find "General Development"; remove invoke/fetch split for milestones.
+- **ProjectTicketsTab.tsx**: In `loadMilestonesAndIdeas`, replace milestones branch with `fetchProjectMilestones(projectId)`; keep ideas as-is.
+- **ADR** — `.cursor/adr/0243-dual-mode-fetch-project-milestones.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0243-dual-mode-fetch-project-milestones.md` — ADR.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/TabAndContentSections/ProjectControlTab.tsx` — use `fetchProjectMilestones(projectId)` in load.
+- `src/components/molecules/TabAndContentSections/ProjectRunTab.tsx` — use `fetchProjectMilestones(projectId)` in Fast development.
+- `src/components/molecules/TabAndContentSections/ProjectTicketsTab.tsx` — use `fetchProjectMilestones(projectId)` in loadMilestonesAndIdeas.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Use fetchProjectMilestones in ProjectControlTab load.
+- [x] Use fetchProjectMilestones in ProjectRunTab Fast development.
+- [x] Use fetchProjectMilestones in ProjectTicketsTab loadMilestonesAndIdeas.
+- [x] Add ADR .cursor/adr/0243-dual-mode-fetch-project-milestones.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — All project milestone list fetching now goes through `fetchProjectMilestones(projectId)` from `@/lib/fetch-project-milestones`. **ProjectControlTab** (load) and **ProjectTicketsTab** (loadMilestonesAndIdeas) were updated to call it and to use the same dual-mode pattern for ideas (invoke vs fetch); **ProjectRunTab** Fast development flow now uses `fetchProjectMilestones(projectId)` instead of a separate invoke/fetch branch for milestones. No new files were added; the existing lib and CommandPalette/ProjectMilestonesTab usage were already in place. ADR `.cursor/adr/0243-dual-mode-fetch-project-milestones.md` was updated with a follow-up noting unification of Control, Run, and Tickets tabs.
+
+**Files created:** None.
+
+**Files touched:** `ProjectControlTab.tsx` (import `fetchProjectMilestones`; in `load`, use `fetchProjectMilestones(projectId)` and keep ideas via invoke/fetch), `ProjectRunTab.tsx` (import `fetchProjectMilestones`; Fast development uses `fetchProjectMilestones(projectId)` then resolve "General Development"), `ProjectTicketsTab.tsx` (import `fetchProjectMilestones`; `loadMilestonesAndIdeas` uses `fetchProjectMilestones(projectId)` and keep ideas via invoke/fetch), `.cursor/adr/0243-dual-mode-fetch-project-milestones.md` (follow-up paragraph), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Command palette — Open planner folder & Copy planner folder path)
+
+### Chosen Feature
+
+**Command palette: Open planner folder in file manager and Copy planner folder path** — The app has similar actions for Documentation, Technologies, and Ideas (.cursor folders). The planner (`.cursor/7. planner`) has no "Open in file manager" or "Copy path" from ⌘K. Adding two Tauri commands, two frontend libs, and two command-palette actions gives keyboard-first users parity and a real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **Backend:** Add `open_planner_folder` and `get_planner_folder_path` in `src-tauri/src/lib.rs` (same pattern as documentation/ideas: app repo `.cursor/7. planner`, fallback to `.cursor`), and register both in `generate_handler![]`.
+- **New libs:** `src/lib/open-planner-folder.ts` and `src/lib/copy-planner-folder-path.ts` calling the new Tauri commands; Tauri-only, toast in browser.
+- **CommandPalette.tsx:** Import both libs; add `handleOpenPlannerFolder` and `handleCopyPlannerFolderPath`; add two action entries (e.g. after "Go to Planner" or with other folder open/copy actions).
+- **keyboard-shortcuts.ts:** Add "Open planner folder in file manager" and "Copy planner folder path" in the Command palette group.
+- **ADR:** `.cursor/adr/0243-command-palette-open-copy-planner-folder.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/open-planner-folder.ts` — open app repo `.cursor/7. planner` in file manager (Tauri only).
+- `src/lib/copy-planner-folder-path.ts` — copy planner folder path to clipboard (Tauri only).
+- `.cursor/adr/0243-command-palette-open-copy-planner-folder.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src-tauri/src/lib.rs` — add `open_planner_folder` and `get_planner_folder_path`, register in handler.
+- `src/components/shared/CommandPalette.tsx` — imports, two handlers, two action entries, useMemo deps.
+- `src/data/keyboard-shortcuts.ts` — two Command palette entries.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add `open_planner_folder` and `get_planner_folder_path` in lib.rs and register in generate_handler![].
+- [x] Create open-planner-folder.ts and copy-planner-folder-path.ts.
+- [x] Add Open planner folder / Copy planner folder path in CommandPalette and keyboard-shortcuts.ts.
+- [x] Add ADR .cursor/adr/0243-command-palette-open-copy-planner-folder.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette actions **"Open planner folder in file manager"** and **"Copy planner folder path"** let users open the app repo's `.cursor/7. planner` folder in the file manager or copy its path from ⌘K. Backend: two new Tauri commands in `src-tauri/src/lib.rs` — `open_planner_folder` and `get_planner_folder_path` (same pattern as documentation/ideas: app root `.cursor/7. planner`, fallback to `.cursor`). Frontend: `src/lib/open-planner-folder.ts` and `src/lib/copy-planner-folder-path.ts` call these commands; Tauri-only, toast in browser. CommandPalette imports both libs, adds `handleOpenPlannerFolder` and `handleCopyPlannerFolderPath`, and two action entries after the ideas folder actions. Two entries added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0243-command-palette-open-copy-planner-folder.md` documents the decision.
+
+**Files created:** `src/lib/open-planner-folder.ts`, `src/lib/copy-planner-folder-path.ts`, `.cursor/adr/0243-command-palette-open-copy-planner-folder.md`
+
+**Files touched:** `src-tauri/src/lib.rs` (open_planner_folder, get_planner_folder_path, handler registration), `CommandPalette.tsx` (imports, two handlers, two action entries, useMemo deps), `keyboard-shortcuts.ts` (two Command palette entries), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Dual-mode fetch for project milestones)
+
+### Chosen Feature
+
+**Dual-mode fetch for project milestones** — Milestones are currently loaded only via `fetch(\`/api/data/projects/${projectId}/milestones\`)`, which requires the Next.js server. In Tauri desktop mode the backend already exposes `get_project_milestones`. Adding a single `fetchProjectMilestones(projectId)` module (Tauri: invoke; browser: fetch API) gives one contract for all consumers, works in Tauri without depending on the API server, and matches the pattern used for implementation log and tickets. Real, additive capability that would show up in a changelog.
+
+### Approach
+
+- **New lib** — `src/lib/fetch-project-milestones.ts`: `fetchProjectMilestones(projectId): Promise<MilestoneRecord[]>`. Tauri: `invoke("get_project_milestones", projectIdArgPayload(projectId))` and map raw rows to `MilestoneRecord`; browser: existing GET `/api/data/projects/:id/milestones`. Same shape as `fetch-implementation-log.ts`.
+- **CommandPalette.tsx**: In `resolveFirstProjectMilestones`, replace `fetch(.../milestones)` with `fetchProjectMilestones(proj.id)`.
+- **ProjectMilestonesTab.tsx**: In `loadMilestones`, use `fetchProjectMilestones(projectId)` instead of direct fetch (optional but keeps one source of truth).
+- **ADR** — `.cursor/adr/0243-dual-mode-fetch-project-milestones.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/fetch-project-milestones.ts` — dual-mode fetch; export `fetchProjectMilestones(projectId)`.
+- `.cursor/adr/0243-dual-mode-fetch-project-milestones.md` — ADR.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — use `fetchProjectMilestones(proj.id)` in `resolveFirstProjectMilestones`.
+- `src/components/molecules/TabAndContentSections/ProjectMilestonesTab.tsx` — use `fetchProjectMilestones(projectId)` in `loadMilestones`.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [ ] Create fetch-project-milestones.ts (Tauri invoke + browser fetch).
+- [ ] Use fetchProjectMilestones in CommandPalette resolveFirstProjectMilestones.
+- [ ] Use fetchProjectMilestones in ProjectMilestonesTab loadMilestones.
+- [ ] Add ADR .cursor/adr/0243-dual-mode-fetch-project-milestones.md.
+- [ ] Run npm run verify and fix any failures.
+- [ ] Update this plan with Outcome section.
+
+### Outcome
+
+_(To be filled after implementation.)_
+
+---
+
+## Night Shift Plan — 2025-02-18 (Command palette — Download/Copy first project milestones as JSON and CSV)
+
+### Chosen Feature
+
+**Command palette: Download/Copy first project milestones as JSON and CSV** — The project Milestones tab offers export/copy of the milestones list as JSON and CSV (via existing libs). The command palette has first-project actions for implementation log, designs, architectures, and tickets but no way to export the first active project's milestones from ⌘K. Adding four palette actions (Download as JSON, Copy as JSON, Download as CSV, Copy as CSV) gives keyboard-first users parity with the Milestones tab and matches the pattern used for first-project tickets. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **No new lib** — Use existing `downloadProjectMilestonesAsJson`, `copyProjectMilestonesAsJsonToClipboard`, `downloadProjectMilestonesAsCsv`, `copyProjectMilestonesAsCsvToClipboard` from `@/lib/download-project-milestones-json` and `@/lib/download-project-milestones-csv`. Fetch milestones via `fetch(\`/api/data/projects/${projectId}/milestones\`)` (same as ProjectMilestonesTab).
+- **CommandPalette.tsx**: Add `resolveFirstProjectMilestones()` (same guards as other first-project: active project, resolve by path via `listProjects()`, then fetch milestones); add four handlers and four action entries (after first-project tickets).
+- **keyboard-shortcuts.ts**: Add four entries in the Command palette group.
+- **ADR** `.cursor/adr/0242-command-palette-download-copy-first-project-milestones.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0242-command-palette-download-copy-first-project-milestones.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — imports for milestone download/copy libs; resolveFirstProjectMilestones; four handlers; four action entries; useMemo deps.
+- `src/data/keyboard-shortcuts.ts` — four Command palette entries.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add resolveFirstProjectMilestones and four handlers/action entries in CommandPalette; import milestone download/copy libs.
+- [x] Add four keyboard-shortcut entries for first-project milestones in keyboard-shortcuts.ts.
+- [x] Add ADR .cursor/adr/0242-command-palette-download-copy-first-project-milestones.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette actions **"Download first project milestones as JSON"**, **"Copy first project milestones as JSON"**, **"Download first project milestones as CSV"**, and **"Copy first project milestones as CSV"** let users export the first active project's milestones from ⌘K without opening the project or the Milestones tab. A shared `resolveFirstProjectMilestones()` helper (same guards as other first-project actions: active project required, resolve by path via `listProjects()`, then `fetch(\`/api/data/projects/${proj.id}/milestones\`)`) returns `{ projectName, milestones }`; handlers call existing libs `download-project-milestones-json` and `download-project-milestones-csv` for download/copy. Format and toasts match the project Milestones tab. Four entries added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0242-command-palette-download-copy-first-project-milestones.md` documents the decision.
+
+**Files created:** `.cursor/adr/0242-command-palette-download-copy-first-project-milestones.md`
+
+**Files touched:** `CommandPalette.tsx` (imports for milestone download/copy libs and `MilestoneRecord`; `resolveFirstProjectMilestones`; four handlers; four action entries; useMemo deps), `keyboard-shortcuts.ts` (four Command palette entries), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Command palette — Open ideas folder & Copy ideas folder path)
+
+### Chosen Feature
+
+**Command palette: Open ideas folder in file manager and Copy ideas folder path** — The Ideas page has "Open ideas folder in file manager" and "Copy ideas folder path" (via `open-ideas-folder.ts` and `copy-ideas-folder-path.ts`). The command palette has Ideas export/copy (Markdown, JSON, CSV) but no way to open or copy the ideas folder path from ⌘K. Adding two palette actions that call the existing libs gives keyboard-first users parity with the Ideas page and matches the pattern used for Technologies and Documentation folders. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **No new lib** — Use existing `openIdeasFolderInFileManager` from `@/lib/open-ideas-folder` and `copyIdeasFolderPath` from `@/lib/copy-ideas-folder-path`.
+- **CommandPalette.tsx**: Import both libs; add `handleOpenIdeasFolder` and `handleCopyIdeasFolderPath`; add two action entries (after "Copy ideas as CSV" in the Ideas section).
+- **keyboard-shortcuts.ts**: Add "Open ideas folder in file manager" and "Copy ideas folder path" in the Command palette group.
+- **ADR** `.cursor/adr/0241-command-palette-open-copy-ideas-folder.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0241-command-palette-open-copy-ideas-folder.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import both libs, two handlers, two action entries, useMemo deps.
+- `src/data/keyboard-shortcuts.ts` — two Command palette entries.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Import open-ideas-folder and copy-ideas-folder-path in CommandPalette; add handleOpenIdeasFolder and handleCopyIdeasFolderPath and two action entries.
+- [x] Add "Open ideas folder in file manager" and "Copy ideas folder path" to keyboard-shortcuts.ts.
+- [x] Add ADR .cursor/adr/0241-command-palette-open-copy-ideas-folder.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette actions **"Open ideas folder in file manager"** and **"Copy ideas folder path"** let users open the app repo's `.cursor/0. ideas` folder in the file manager or copy its path from ⌘K without opening the Ideas page. Handlers call existing `openIdeasFolderInFileManager()` from `@/lib/open-ideas-folder` and `copyIdeasFolderPath()` from `@/lib/copy-ideas-folder-path`; behavior matches the Ideas page (Tauri-only; browser shows toast). Two entries added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0241-command-palette-open-copy-ideas-folder.md` documents the decision.
+
+**Files created:** `.cursor/adr/0241-command-palette-open-copy-ideas-folder.md`
+
+**Files touched:** `CommandPalette.tsx` (imports for `open-ideas-folder`, `copy-ideas-folder-path`; `handleOpenIdeasFolder`, `handleCopyIdeasFolderPath`; two action entries; useMemo deps), `keyboard-shortcuts.ts` (two Command palette entries), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Milestones tab — Export/Copy list as JSON and CSV)
+
+### Chosen Feature
+
+**Milestones tab: Export and Copy milestones list as JSON and CSV** — The Milestones tab currently only lets users download/copy the **selected milestone’s content** as Markdown. The Tickets, Design, and Architecture tabs offer export/copy of the **list** (JSON, CSV, etc.). Adding list-level export on the Milestones tab (Download as JSON, Copy as JSON, Download as CSV, Copy as CSV) gives parity with other project tabs and a real, additive feature that would show up in a changelog. This is tab-level UI only (no command palette in this run).
+
+### Approach
+
+- **New libs** — `src/lib/download-project-milestones-json.ts` and `src/lib/download-project-milestones-csv.ts`, following the same patterns as `download-project-tickets-json` and `download-project-tickets-csv`: accept `MilestoneRecord[]` (tab already has this state), build payload/CSV, trigger download or copy with toasts.
+- **ProjectMilestonesTab**: Import the two libs; add four buttons (Download as JSON, Copy as JSON, Download as CSV, Copy as CSV) in the Milestone list section (e.g. next to "Add milestone" or in the section header), using existing `milestones` state.
+- **ADR** — `.cursor/adr/0240-milestones-tab-export-list-json-csv.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/download-project-milestones-json.ts` — build payload, download, copy (toast on empty/success/fail).
+- `src/lib/download-project-milestones-csv.ts` — build CSV (id, project_id, name, slug, created_at, updated_at; content omitted or truncated), download, copy.
+- `.cursor/adr/0240-milestones-tab-export-list-json-csv.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/TabAndContentSections/ProjectMilestonesTab.tsx` — imports, four export buttons in the Milestone list area.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create download-project-milestones-json.ts (build payload, downloadProjectMilestonesAsJson, copyProjectMilestonesAsJsonToClipboard).
+- [x] Create download-project-milestones-csv.ts (buildProjectMilestonesCsv, downloadProjectMilestonesAsCsv, copyProjectMilestonesAsCsvToClipboard).
+- [x] Add Export list buttons (JSON/CSV download + copy) to ProjectMilestonesTab using existing milestones state.
+- [x] Add ADR .cursor/adr/0240-milestones-tab-export-list-json-csv.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The Milestones tab now supports exporting and copying the **milestones list** (not just the selected milestone’s content). Four buttons were added in the tab header: **Export JSON**, **Copy JSON**, **Export CSV**, **Copy CSV**. They use the existing `milestones` state; no new fetch. New modules: `src/lib/download-project-milestones-json.ts` (buildProjectMilestonesJsonPayload, downloadProjectMilestonesAsJson, copyProjectMilestonesAsJsonToClipboard) and `src/lib/download-project-milestones-csv.ts` (buildProjectMilestonesCsv, downloadProjectMilestonesAsCsv, copyProjectMilestonesAsCsvToClipboard). JSON payload shape: `{ exportedAt, count, milestones }`; CSV columns: id, project_id, name, slug, created_at, updated_at. Toasts on empty list or success/failure. ADR `.cursor/adr/0240-milestones-tab-export-list-json-csv.md` documents the decision.
+
+**Files created:** `src/lib/download-project-milestones-json.ts`, `src/lib/download-project-milestones-csv.ts`, `.cursor/adr/0240-milestones-tab-export-list-json-csv.md`
+
+**Files touched:** `ProjectMilestonesTab.tsx` (imports for the two libs and Download icon; four export buttons in the Milestone list header row), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Command palette — Copy documentation folder path)
+
+### Chosen Feature
+
+**Command palette: Copy documentation folder path** — The Documentation page has "Open documentation folder in file manager" and "Copy documentation folder path" (via `open-documentation-folder.ts` and `copy-documentation-folder-path.ts`). The command palette already has "Open documentation folder" but no "Copy documentation folder path". Adding one palette action that calls the existing `copyDocumentationFolderPath()` gives keyboard-first users parity from ⌘K. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **No new lib** — Use existing `copyDocumentationFolderPath` from `@/lib/copy-documentation-folder-path`.
+- **CommandPalette.tsx**: Import the lib; add `handleCopyDocumentationFolderPath` and one action entry after "Open documentation folder".
+- **keyboard-shortcuts.ts**: Add "Copy documentation folder path" in the Command palette group.
+- **ADR** `.cursor/adr/0240-command-palette-copy-documentation-folder-path.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0240-command-palette-copy-documentation-folder-path.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import, handler, one action entry, useMemo deps.
+- `src/data/keyboard-shortcuts.ts` — one Command palette entry.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Import copy-documentation-folder-path in CommandPalette; add handleCopyDocumentationFolderPath and one action entry.
+- [x] Add "Copy documentation folder path" to keyboard-shortcuts.ts.
+- [x] Add ADR .cursor/adr/0240-command-palette-copy-documentation-folder-path.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette action **"Copy documentation folder path"** lets users copy the app repo's documentation folder path (.cursor/documentation or .cursor) from ⌘K without opening the Documentation page. The handler calls existing `copyDocumentationFolderPath()` from `@/lib/copy-documentation-folder-path`; behavior matches the Documentation page (Tauri-only; in browser shows info toast). One entry added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0240-command-palette-copy-documentation-folder-path.md` documents the decision.
+
+**Files created:** `.cursor/adr/0240-command-palette-copy-documentation-folder-path.md`
+
+**Files touched:** `CommandPalette.tsx` (import `copyDocumentationFolderPath`, `handleCopyDocumentationFolderPath`, one action entry, useMemo deps), `keyboard-shortcuts.ts` (one Command palette entry), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Completed: Command palette — Download/Copy first project tickets as JSON, CSV, Markdown)
+
+### Chosen Feature
+
+**Command palette: Download/Copy first project tickets as JSON, CSV, and Markdown** — The project Tickets tab offers export/copy as JSON, CSV, and Markdown via existing libs. The command palette has first-project actions for implementation log, designs, and architectures but no way to export the first active project's tickets from ⌘K. Adding six palette actions (download + copy for each of JSON, CSV, Markdown) gives keyboard-first users the same ticket export without opening the project. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **No new lib** — Use existing `fetchProjectTicketsAndKanban` from `@/lib/fetch-project-tickets-and-kanban`; existing download/copy from `@/lib/download-project-tickets-json`, `@/lib/download-project-tickets-csv`, `@/lib/download-project-tickets-md`.
+- **CommandPalette.tsx**: Import fetch-project-tickets-and-kanban and the three ticket download/copy libs; add `resolveFirstProjectTickets` (active project, resolve by path, then fetchProjectTicketsAndKanban(proj.id), return { projectName: proj.name, tickets }); add six handlers and six action entries (after first-project architectures).
+- **keyboard-shortcuts.ts**: Add six entries in the Command palette group.
+- **ADR** `.cursor/adr/0239-command-palette-download-copy-first-project-tickets.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0239-command-palette-download-copy-first-project-tickets.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — imports, resolveFirstProjectTickets, six handlers, six action entries, useMemo deps.
+- `src/data/keyboard-shortcuts.ts` — six Command palette entries.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add resolveFirstProjectTickets and six handlers/action entries in CommandPalette; import ticket download/copy libs.
+- [x] Add six keyboard-shortcut entries for first-project tickets in keyboard-shortcuts.ts.
+- [x] Add ADR .cursor/adr/0239-command-palette-download-copy-first-project-tickets.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette actions **"Download first project tickets as JSON"**, **"Copy first project tickets as JSON"**, **"Download first project tickets as CSV"**, **"Copy first project tickets as CSV"**, **"Download first project tickets as Markdown"**, and **"Copy first project tickets as Markdown"** let users export the first active project's tickets from ⌘K without opening the project or the Tickets tab. A shared `resolveFirstProjectTickets()` helper (same guards as other first-project actions: active project required, resolve by path via `listProjects()`, then `fetchProjectTicketsAndKanban(proj.id)`) returns `{ projectName, tickets }`; handlers call existing libs `download-project-tickets-json`, `download-project-tickets-csv`, `download-project-tickets-md` for download/copy. Markdown export uses `projectName` for the header. The Copy-as-Markdown handler shows success/error toast for consistency with JSON and CSV copy. Format and toasts match the project Tickets tab. Six entries added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0239-command-palette-download-copy-first-project-tickets.md` documents the decision.
+
+**Files created:** `.cursor/adr/0239-command-palette-download-copy-first-project-tickets.md`
+
+**Files touched:** `CommandPalette.tsx` (imports for `fetchProjectTicketsAndKanban`, ticket download/copy libs, type `ParsedTicket`; `resolveFirstProjectTickets`; six handlers including success/error toast for Copy-as-Markdown; six action entries; useMemo deps), `keyboard-shortcuts.ts` (six Command palette entries), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Completed: Command palette — Open technologies folder & Copy technologies folder path)
+
+### Chosen Feature
+
+**Command palette: Open technologies folder in file manager and Copy technologies folder path** — The Technologies page has "Open technologies folder in file manager" and "Copy technologies folder path" (via `open-technologies-folder.ts` and `copy-technologies-folder-path.ts`). The command palette has no equivalent, so keyboard-first users must open the Technologies page to use these actions. Adding two palette actions that call the existing libs gives parity from ⌘K. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **No new lib** — Use existing `openTechnologiesFolderInFileManager` from `@/lib/open-technologies-folder` and `copyTechnologiesFolderPath` from `@/lib/copy-technologies-folder-path`.
+- **CommandPalette.tsx**: Import both libs; add two handlers (`handleOpenTechnologiesFolder`, `handleCopyTechnologiesFolderPath`) and two action entries (e.g. after "Copy data directory path" or near tech stack entries).
+- **keyboard-shortcuts.ts**: Add "Open technologies folder in file manager", "Copy technologies folder path" in the Command palette group.
+- **ADR** `.cursor/adr/0238-command-palette-open-copy-technologies-folder.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0238-command-palette-open-copy-technologies-folder.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import both libs, two handlers, two action entries.
+- `src/data/keyboard-shortcuts.ts` — two Command palette entries.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Import open-technologies-folder and copy-technologies-folder-path in CommandPalette; add two handlers and two action entries.
+- [x] Add "Open technologies folder in file manager" and "Copy technologies folder path" to keyboard-shortcuts.ts.
+- [x] Add ADR .cursor/adr/0238-command-palette-open-copy-technologies-folder.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette actions **"Open technologies folder in file manager"** and **"Copy technologies folder path"** let users open the app repo's `.cursor/technologies` folder in the file manager or copy its path from ⌘K without opening the Technologies page. Handlers call existing `openTechnologiesFolderInFileManager()` from `@/lib/open-technologies-folder` and `copyTechnologiesFolderPath()` from `@/lib/copy-technologies-folder-path`; behavior matches the Technologies page (Tauri-only; browser shows toast). Two entries added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0238-command-palette-open-copy-technologies-folder.md` documents the decision.
+
+**Files created:** `.cursor/adr/0238-command-palette-open-copy-technologies-folder.md`
+
+**Files touched:** `CommandPalette.tsx` (imports, `handleOpenTechnologiesFolder`, `handleCopyTechnologiesFolderPath`, two action entries, useMemo deps), `keyboard-shortcuts.ts` (two Command palette entries), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Completed: Command palette — Download first project implementation log)
+
+### Chosen Feature
+
+**Command palette: Download first project implementation log** — The palette already has "Copy first project implementation log" (ADR 0235). Adding a **download** action for the same data (first active project's implementation log as a file) gives keyboard-first users a way to save the log as a timestamped file (e.g. `implementation-log-2025-02-18-1430.md`) without opening the Control tab. Real, additive UX; mirrors copy and other download actions.
+
+### Approach
+
+- **Reuse** `fetchImplementationLogEntries` and the same plain-text format as copy. Export `formatImplementationLogAsText(entries)` from `copy-implementation-log-to-clipboard.ts` so download can use it without duplicating format logic.
+- **New lib** `src/lib/download-implementation-log.ts`: Export `downloadImplementationLog(projectId: string): Promise<void>`. Fetch entries, format via shared formatter, then `triggerFileDownload(text, implementation-log-{filenameTimestamp()}.md, "text/markdown")` from `@/lib/download-helpers`. Toast on empty or success/fail.
+- **CommandPalette.tsx**: Import download lib; add `handleDownloadFirstProjectImplementationLog` (same guards as copy: active project, resolve by path, then download by project.id); add one action entry after "Copy first project implementation log".
+- **keyboard-shortcuts.ts**: Add "Download first project implementation log" in the Command palette group.
+- **ADR** `.cursor/adr/0237-command-palette-download-first-project-implementation-log.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/download-implementation-log.ts` — fetch, format, trigger file download.
+- `.cursor/adr/0237-command-palette-download-first-project-implementation-log.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/lib/copy-implementation-log-to-clipboard.ts` — export `formatImplementationLogAsText`.
+- `src/components/shared/CommandPalette.tsx` — import, handler, one action entry.
+- `src/data/keyboard-shortcuts.ts` — one Command palette entry.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Export formatImplementationLogAsText from copy-implementation-log-to-clipboard.ts.
+- [x] Create src/lib/download-implementation-log.ts (downloadImplementationLog).
+- [x] Add handleDownloadFirstProjectImplementationLog and action entry in CommandPalette.
+- [x] Add "Download first project implementation log" to keyboard-shortcuts.ts.
+- [x] Add ADR .cursor/adr/0237-command-palette-download-first-project-implementation-log.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette action **"Download first project implementation log"** lets users download the first active project's implementation log as a timestamped file (e.g. `implementation-log-2025-02-18-1430.md`) from ⌘K without opening the project or Control tab. New module `src/lib/download-implementation-log.ts` exports `downloadImplementationLog(projectId)`, which fetches entries via `fetchImplementationLogEntries(projectId)`, formats them with shared `formatImplementationLogAsText(entries)` from `copy-implementation-log-to-clipboard.ts`, and triggers a file download via `triggerFileDownload` and `filenameTimestamp()` from `@/lib/download-helpers`. Empty log or fetch errors show a toast; success shows "Implementation log downloaded". CommandPalette uses the same guards as "Copy first project implementation log" (active project required, resolve by path, then download by project.id). One entry added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0237-command-palette-download-first-project-implementation-log.md` documents the decision.
+
+**Files created:** `src/lib/download-implementation-log.ts`, `.cursor/adr/0237-command-palette-download-first-project-implementation-log.md`
+
+**Files touched:** `src/lib/copy-implementation-log-to-clipboard.ts` (export `formatImplementationLogAsText`), `CommandPalette.tsx` (import `downloadImplementationLog`, `handleDownloadFirstProjectImplementationLog`, one action entry, useMemo deps), `keyboard-shortcuts.ts` (one Command palette entry), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Command palette — Download/Copy first project designs and architectures as JSON/Markdown)
+
+### Chosen Feature
+
+**Command palette: Download/Copy first project designs and architectures as JSON and Markdown** — The Design and Architecture tabs on the project detail page offer export/copy as JSON and Markdown via existing libs (`download-project-designs-json`, `download-project-designs-md`, `download-project-architectures-json`, `download-project-architectures-md`). The command palette has "Go to Design" and "Go to Architecture" but no way to export the first active project's designs or architectures from ⌘K. Adding eight palette actions (four for designs: download/copy × JSON/MD; four for architectures: same) gives keyboard-first users the same export without opening the project. Uses the same "first project" pattern as "Copy first project implementation log": resolve project by active path, then `getProjectResolved(proj.id)` to get designs/architectures, then call existing download/copy functions. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **No new lib** — Use existing `getProjectResolved` from `@/lib/api-projects`; existing download/copy from `@/lib/download-project-designs-json`, `@/lib/download-project-designs-md`, `@/lib/download-project-architectures-json`, `@/lib/download-project-architectures-md`.
+- **CommandPalette.tsx**: Import api-projects and the four design/architecture download libs; add eight handlers (same guards as implementation log: active project, resolve by path, then getProjectResolved(id), cast designs/architectures to typed arrays, call download/copy); add eight action entries (e.g. after "Go to Architecture" or near other first-project actions).
+- **keyboard-shortcuts.ts**: Add eight entries in the Command palette group for the new actions.
+- **ADR** `.cursor/adr/0237-command-palette-download-copy-first-project-designs-architectures.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0237-command-palette-download-copy-first-project-designs-architectures.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — imports, eight handlers, eight action entries, useMemo deps.
+- `src/data/keyboard-shortcuts.ts` — eight Command palette entries.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Import api-projects and design/architecture download libs in CommandPalette; add eight handlers and eight action entries.
+- [x] Add eight keyboard-shortcut entries for first-project designs/architectures in keyboard-shortcuts.ts.
+- [x] Add ADR .cursor/adr/0237-command-palette-download-copy-first-project-designs-architectures.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette actions let users download or copy the first active project's designs or architectures as JSON or Markdown from ⌘K without opening the project or the Design/Architecture tab. Eight actions: **Download first project designs as JSON**, **Copy first project designs as JSON**, **Download first project designs as Markdown**, **Copy first project designs as Markdown**, **Download first project architectures as JSON**, **Copy first project architectures as JSON**, **Download first project architectures as Markdown**, **Copy first project architectures as Markdown**. A shared `resolveFirstProject()` helper (same guards as "Copy first project implementation log": active project required, resolve by path via `listProjects()`, then `getProjectResolved(proj.id)`) returns `{ id, designs, architectures }` with typed arrays; handlers call existing libs `download-project-designs-json`, `download-project-designs-md`, `download-project-architectures-json`, `download-project-architectures-md` for download/copy. Format and toasts match the project Design and Architecture tabs. Eight entries added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0237-command-palette-download-copy-first-project-designs-architectures.md` documents the decision.
+
+**Files created:** `.cursor/adr/0237-command-palette-download-copy-first-project-designs-architectures.md`
+
+**Files touched:** `CommandPalette.tsx` (imports for `getProjectResolved`, design/architecture download libs, types `DesignRecord`/`ArchitectureRecord`; `resolveFirstProject` helper; eight handlers; eight action entries; useMemo deps), `keyboard-shortcuts.ts` (eight Command palette entries), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Completed: Command palette — Download/Copy .cursor prompts as JSON and Markdown)
+
+### Chosen Feature
+
+**Command palette: Download .cursor prompts as JSON/Markdown and Copy .cursor prompts as JSON/Markdown** — The Prompts page ".cursor prompts" tab offers Export/Copy as JSON, Markdown, and CSV. The command palette already has .cursor prompts CSV (ADR 0234) but not JSON or Markdown. Adding four palette actions gives keyboard-first users full parity from ⌘K. Real, additive UX.
+
+### Approach
+
+- **No new lib** — Use existing `downloadAllCursorPromptsAsJson`, `copyAllCursorPromptsAsJsonToClipboard` from `@/lib/download-all-cursor-prompts-json` and `downloadAllCursorPromptsAsMarkdown`, `copyAllCursorPromptsAsMarkdownToClipboard` from `@/lib/download-all-cursor-prompts-md`.
+- **CommandPalette.tsx**: Import both libs; add four handlers and four action entries after the existing .cursor prompts CSV entries.
+- **keyboard-shortcuts.ts**: Add "Download .cursor prompts as JSON", "Copy .cursor prompts as JSON", "Download .cursor prompts as Markdown", "Copy .cursor prompts as Markdown".
+- **ADR** `.cursor/adr/0236-command-palette-download-copy-cursor-prompts-json-md.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0236-command-palette-download-copy-cursor-prompts-json-md.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import JSON + MD libs, four handlers, four action entries.
+- `src/data/keyboard-shortcuts.ts` — four Command palette entries.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Import cursor-prompts JSON and MD libs in CommandPalette; add four handlers and four action entries.
+- [x] Add four .cursor prompts JSON/Markdown entries to keyboard-shortcuts.ts.
+- [x] Add ADR .cursor/adr/0236-command-palette-download-copy-cursor-prompts-json-md.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette actions **"Download .cursor prompts as JSON"**, **"Copy .cursor prompts as JSON"**, **"Download .cursor prompts as Markdown"**, and **"Copy .cursor prompts as Markdown"** let users export .cursor `*.prompt.md` files as JSON or Markdown from ⌘K without opening the Prompts page. Handlers call existing `downloadAllCursorPromptsAsJson`, `copyAllCursorPromptsAsJsonToClipboard` from `@/lib/download-all-cursor-prompts-json` and `downloadAllCursorPromptsAsMarkdown`, `copyAllCursorPromptsAsMarkdownToClipboard` from `@/lib/download-all-cursor-prompts-md` (same format and toasts as the Prompts page). Four entries added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0236-command-palette-download-copy-cursor-prompts-json-md.md` documents the decision.
+
+**Files created:** `.cursor/adr/0236-command-palette-download-copy-cursor-prompts-json-md.md`
+
+**Files touched:** `CommandPalette.tsx` (imports from `download-all-cursor-prompts-json` and `download-all-cursor-prompts-md`, four handlers, four action entries, useMemo deps), `keyboard-shortcuts.ts` (four Command palette entries), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (Completed: Command palette — Copy first project implementation log)
+
+### Chosen Feature
+
+**Command palette: Copy first project implementation log to clipboard** — The Control tab shows implementation log entries per project; there is no way to copy that log from the command palette. Adding a palette action that fetches the first active project's implementation log (via existing `fetchImplementationLogEntries`), formats it as readable text, and copies to clipboard lets users paste the log into tickets, Slack, or docs without opening the project. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **New lib** `src/lib/copy-implementation-log-to-clipboard.ts`: Export `copyImplementationLogToClipboard(projectId: string): Promise<boolean>`. Use `fetchImplementationLogEntries(projectId)`; format entries as plain text (e.g. one block per entry: ticket #, title, completed_at, summary, files changed); call `copyTextToClipboard`; toast success/fail; return boolean.
+- **CommandPalette.tsx**: Import the new lib; add `handleCopyFirstProjectImplementationLog` (same guards as "Copy first project path": active project, resolve project by path, then copy by project.id); add one action entry (e.g. after "Copy first project path").
+- **keyboard-shortcuts.ts**: Add "Copy first project implementation log" in the Command palette group.
+- **ADR** `.cursor/adr/0235-command-palette-copy-first-project-implementation-log.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/copy-implementation-log-to-clipboard.ts` — format and copy implementation log.
+- `.cursor/adr/0235-command-palette-copy-first-project-implementation-log.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import, handler, one action entry.
+- `src/data/keyboard-shortcuts.ts` — one Command palette entry.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create src/lib/copy-implementation-log-to-clipboard.ts (copyImplementationLogToClipboard).
+- [x] Add handleCopyFirstProjectImplementationLog and action entry in CommandPalette.
+- [x] Add "Copy first project implementation log" to keyboard-shortcuts.ts.
+- [x] Add ADR .cursor/adr/0235-command-palette-copy-first-project-implementation-log.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette action **"Copy first project implementation log"** lets users copy the first active project's implementation log as plain text from ⌘K without opening the project or Control tab. New module `src/lib/copy-implementation-log-to-clipboard.ts` exports `copyImplementationLogToClipboard(projectId)`, which fetches entries via `fetchImplementationLogEntries(projectId)`, formats each entry (ticket #, title, completed_at, summary, files changed) with `---` separators, and copies via `copyTextToClipboard`. Empty log or fetch errors show a toast. CommandPalette uses the same guards as "Copy first project path" (active project required, resolve by path, then copy by project.id). One entry added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0235-command-palette-copy-first-project-implementation-log.md` documents the decision.
+
+**Files created:** `src/lib/copy-implementation-log-to-clipboard.ts`, `.cursor/adr/0235-command-palette-copy-first-project-implementation-log.md`
+
+**Files touched:** `CommandPalette.tsx` (import, `handleCopyFirstProjectImplementationLog`, one action entry, useMemo deps), `keyboard-shortcuts.ts` (one Command palette entry), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Command palette — Download/Copy .cursor prompts as CSV)
+
+### Chosen Feature
+
+**Command palette: Download .cursor prompts as CSV and Copy .cursor prompts as CSV** — The Prompts page ".cursor prompts" tab already offers Export/Copy as CSV (via `download-all-cursor-prompts-csv`). The command palette has general prompts (Markdown, JSON, CSV) but no actions for .cursor prompt files. Adding two palette actions that call `downloadAllCursorPromptsAsCsv()` and `copyAllCursorPromptsAsCsvToClipboard()` gives keyboard-first users the same .cursor CSV export from ⌘K. Real, additive UX; mirrors ADR 0232 (ideas CSV).
+
+### Approach
+
+- **No new lib** — Use existing `downloadAllCursorPromptsAsCsv` and `copyAllCursorPromptsAsCsvToClipboard` from `@/lib/download-all-cursor-prompts-csv` (they self-fetch from `/api/data/cursor-prompt-files-contents`; same toasts and empty handling as Prompts page).
+- **CommandPalette.tsx**: Import the two functions; add `handleDownloadCursorPromptsCsv`, `handleCopyCursorPromptsCsv` (async); add two action entries after "Copy prompts as CSV".
+- **keyboard-shortcuts.ts**: Add "Download .cursor prompts as CSV", "Copy .cursor prompts as CSV" in the Command palette group.
+- **ADR** `.cursor/adr/0234-command-palette-download-copy-cursor-prompts-csv.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0234-command-palette-download-copy-cursor-prompts-csv.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import, two handlers, two action entries.
+- `src/data/keyboard-shortcuts.ts` — two Command palette entries.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Import cursor-prompts CSV lib in CommandPalette; add handleDownloadCursorPromptsCsv, handleCopyCursorPromptsCsv and two action entries.
+- [x] Add "Download .cursor prompts as CSV", "Copy .cursor prompts as CSV" to keyboard-shortcuts.ts.
+- [x] Add ADR .cursor/adr/0234-command-palette-download-copy-cursor-prompts-csv.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette actions **"Download .cursor prompts as CSV"** and **"Copy .cursor prompts as CSV"** let users export the .cursor `*.prompt.md` files as CSV from ⌘K without opening the Prompts page. Handlers call existing `downloadAllCursorPromptsAsCsv()` and `copyAllCursorPromptsAsCsvToClipboard()` from `@/lib/download-all-cursor-prompts-csv` (same format and toasts as the Prompts page). Two entries added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0234-command-palette-download-copy-cursor-prompts-csv.md` documents the decision.
+
+**Files created:** `.cursor/adr/0234-command-palette-download-copy-cursor-prompts-csv.md`
+
+**Files touched:** `CommandPalette.tsx` (import from `download-all-cursor-prompts-csv`, `handleDownloadCursorPromptsCsv`, `handleCopyCursorPromptsCsv`, two action entries, useMemo deps), `keyboard-shortcuts.ts` (two Command palette entries), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Command palette — Download/Copy prompts as JSON and CSV)
+
+### Chosen Feature
+
+**Command palette: Download prompts as JSON/CSV and Copy prompts as JSON/CSV** — The Prompts page already offers Export/Copy as Markdown, JSON, and CSV for general prompts (via `download-all-prompts-json` and `download-all-prompts-csv`). The command palette currently only has "Copy prompts" and "Download prompts" (Markdown). Adding four palette actions—Download prompts as JSON, Copy prompts as JSON, Download prompts as CSV, Copy prompts as CSV—gives keyboard-first users the same export options from ⌘K without opening the Prompts page. Real, additive UX that would show up in a changelog; mirrors ADR 0232 (ideas CSV).
+
+### Approach
+
+- **No new lib** — Use existing `downloadAllPromptsAsJson`, `copyAllPromptsAsJsonToClipboard` from `@/lib/download-all-prompts-json` and `downloadAllPromptsAsCsv`, `copyAllPromptsAsCsvToClipboard` from `@/lib/download-all-prompts-csv`. Palette already has `prompts` from the store and `promptsForExport` (id, title, content); pass that to the four functions (same toasts and empty handling as Prompts page).
+- **CommandPalette.tsx**: Import the JSON and CSV libs; add `handleDownloadPromptsJson`, `handleCopyPromptsJson`, `handleDownloadPromptsCsv`, `handleCopyPromptsCsv`; add four action entries after "Download prompts" (Markdown).
+- **keyboard-shortcuts.ts**: Add four entries in the Command palette group: "Download prompts as JSON", "Copy prompts as JSON", "Download prompts as CSV", "Copy prompts as CSV".
+- **ADR** `.cursor/adr/0233-command-palette-prompts-json-csv.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0233-command-palette-prompts-json-csv.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import JSON/CSV libs, four handlers, four action entries.
+- `src/data/keyboard-shortcuts.ts` — four Command palette entries.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Import prompts JSON/CSV libs in CommandPalette; add four handlers and four action entries.
+- [x] Add "Download prompts as JSON", "Copy prompts as JSON", "Download prompts as CSV", "Copy prompts as CSV" to keyboard-shortcuts.ts.
+- [x] Add ADR .cursor/adr/0233-command-palette-prompts-json-csv.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette actions **"Download prompts as JSON"**, **"Copy prompts as JSON"**, **"Download prompts as CSV"**, and **"Copy prompts as CSV"** let users export the general prompt records as JSON or CSV from ⌘K without opening the Prompts page. Handlers use existing store `prompts` (via `promptsForExport`) and call `downloadAllPromptsAsJson`, `copyAllPromptsAsJsonToClipboard`, `downloadAllPromptsAsCsv`, `copyAllPromptsAsCsvToClipboard` from `@/lib/download-all-prompts-json` and `@/lib/download-all-prompts-csv` (same format and toasts as the Prompts page). Four entries added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0233-command-palette-prompts-json-csv.md` documents the decision.
+
+**Files created:** `.cursor/adr/0233-command-palette-prompts-json-csv.md`
+
+**Files touched:** `CommandPalette.tsx` (imports from `download-all-prompts-json` and `download-all-prompts-csv`, `handleDownloadPromptsJson`, `handleCopyPromptsJson`, `handleDownloadPromptsCsv`, `handleCopyPromptsCsv`, four action entries, useMemo deps), `keyboard-shortcuts.ts` (four Command palette entries), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Command palette — Download/Copy ideas as CSV)
+
+### Chosen Feature
+
+**Command palette: Download ideas as CSV and Copy ideas as CSV** — The Ideas page has "Export CSV" and "Copy as CSV"; the command palette already has Download/Copy ideas (Markdown and JSON) but not CSV. Adding two palette actions that fetch ideas via existing `fetchIdeas()` and call `downloadMyIdeasAsCsv` / `copyMyIdeasAsCsvToClipboard` gives keyboard-first users the same CSV export from ⌘K. Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **No new lib** — Use existing `fetchIdeas()` (already used in CommandPalette for ideas actions). Handlers: call `fetchIdeas()`, then `downloadMyIdeasAsCsv(ideas)` / `copyMyIdeasAsCsvToClipboard(ideas)` from `@/lib/download-my-ideas-csv` (same toasts and empty handling as Ideas page).
+- **CommandPalette.tsx**: Import `downloadMyIdeasAsCsv`, `copyMyIdeasAsCsvToClipboard` from `@/lib/download-my-ideas-csv`. Add `handleDownloadIdeasCsv` and `handleCopyIdeasCsv`; add two action entries after "Copy ideas as JSON".
+- **keyboard-shortcuts.ts**: Add two entries in the Command palette group: "Download ideas as CSV", "Copy ideas as CSV".
+- **ADR** `.cursor/adr/0232-command-palette-download-copy-ideas-csv.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0232-command-palette-download-copy-ideas-csv.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — import CSV lib, two handlers, two action entries.
+- `src/data/keyboard-shortcuts.ts` — two Command palette entries.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Import downloadMyIdeasAsCsv, copyMyIdeasAsCsvToClipboard in CommandPalette; add handleDownloadIdeasCsv, handleCopyIdeasCsv and two action entries.
+- [x] Add "Download ideas as CSV" and "Copy ideas as CSV" to keyboard-shortcuts.ts Command palette group.
+- [x] Add ADR .cursor/adr/0232-command-palette-download-copy-ideas-csv.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Command palette actions **"Download ideas as CSV"** and **"Copy ideas as CSV"** let users export the My Ideas list as CSV from ⌘K without opening the Ideas page. Handlers use existing `fetchIdeas()` then call `downloadMyIdeasAsCsv(ideas)` and `copyMyIdeasAsCsvToClipboard(ideas)` from `@/lib/download-my-ideas-csv` (same format and toasts as the Ideas page). Two entries added in `src/data/keyboard-shortcuts.ts` (Command palette group). ADR `.cursor/adr/0232-command-palette-download-copy-ideas-csv.md` documents the decision.
+
+**Files created:** `.cursor/adr/0232-command-palette-download-copy-ideas-csv.md`
+
+**Files touched:** `CommandPalette.tsx` (import from `download-my-ideas-csv`, `handleDownloadIdeasCsv`, `handleCopyIdeasCsv`, two action entries, useMemo deps), `keyboard-shortcuts.ts` (two Command palette entries), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Refactor — Fetch implementation log to lib)
+
+### Chosen Feature
+
+**Refactor: Extract implementation log fetch to a lib** — ProjectControlTab contains inline dual-mode fetch for implementation log entries (Tauri: `get_implementation_log_entries` via invoke; browser: GET `/api/data/projects/:id/implementation-log`) and maps raw rows to a LogEntry shape (including parsing `files_changed` JSON). Extracting this into `src/lib/fetch-implementation-log.ts` with `fetchImplementationLogEntries(projectId)` gives one place for the contract, keeps the component focused on UI, and allows reuse. Behaviour unchanged; only structure and duplication reduced.
+
+### Approach
+
+- **New lib** `src/lib/fetch-implementation-log.ts`: Export type `ImplementationLogEntry` (same shape as current LogEntry) and `fetchImplementationLogEntries(projectId)`. Tauri: invoke `get_implementation_log_entries` with `projectIdArgPayload`, map raw rows (parse `files_changed`). Browser: fetch implementation-log route, normalize response to same type. Throw on error so caller keeps existing try/catch/finally and debug/ingest logging.
+- **ProjectControlTab.tsx**: In `load`, call `fetchImplementationLogEntries(projectId)`, then `setEntries(result)`. Keep milestones and ideas fetch in the component. Keep `setEntryStatus` and all UI unchanged.
+- **ADR** `.cursor/adr/0231-refactor-fetch-implementation-log.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/fetch-implementation-log.ts`
+- `.cursor/adr/0231-refactor-fetch-implementation-log.md`
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/TabAndContentSections/ProjectControlTab.tsx`
+- `.cursor/worker/night-shift-plan.md`
+
+### Checklist
+
+- [x] Create src/lib/fetch-implementation-log.ts (type + fetchImplementationLogEntries).
+- [x] Refactor ProjectControlTab load to use fetchImplementationLogEntries.
+- [x] Add ADR .cursor/adr/0231-refactor-fetch-implementation-log.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was done** — Implementation log fetch was extracted from ProjectControlTab into a dedicated lib with no behaviour change. New module `src/lib/fetch-implementation-log.ts` exports type `ImplementationLogEntry` and `fetchImplementationLogEntries(projectId)`, which performs dual-mode fetch (Tauri: `get_implementation_log_entries` via invoke; browser: GET `/api/data/projects/:id/implementation-log`) and maps raw rows to the same entry shape (including parsing `files_changed` JSON). ProjectControlTab now calls `fetchImplementationLogEntries(projectId)` in `load`, then `setEntries(list)`; milestones and ideas fetch, `setEntryStatus`, debug/ingest logging, and all UI remain unchanged. ADR `.cursor/adr/0231-refactor-fetch-implementation-log.md` documents the refactor.
+
+**Files created:** `src/lib/fetch-implementation-log.ts`, `.cursor/adr/0231-refactor-fetch-implementation-log.md`
+
+**Files touched:** `ProjectControlTab.tsx` (import and use `fetchImplementationLogEntries`, type `ImplementationLogEntry`; removed inline fetch and mapping), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Refactor — Fetch project tickets and kanban shared module)
+
+### Chosen Feature
+
+**Refactor: Shared module for fetching project tickets and kanban state** — ProjectTicketsTab and ProjectRunTab both implement the same dual-mode load: Tauri uses get_project_tickets + get_project_kanban_state via invoke; browser uses GET /api/data/projects/:id/tickets and kanban-state. The fetch logic, TicketRow shape, and mapping to ParsedTicket are duplicated. Extracting fetchProjectTicketsAndKanban(projectId) in src/lib/fetch-project-tickets-and-kanban.ts gives one place for the contract; both tabs call it then buildKanbanFromTickets and set state. Behaviour unchanged; only structure and duplication reduced.
+
+### Approach
+
+- **New lib** src/lib/fetch-project-tickets-and-kanban.ts: Export fetchProjectTicketsAndKanban(projectId). Use projectIdArgPayload, invoke when isTauri, fetch both API URLs when not. Map API rows to ParsedTicket. Throw on error so callers keep existing catch/finally.
+- **ProjectTicketsTab.tsx** and **ProjectRunTab.tsx**: In loadTicketsAndKanban call fetchProjectTicketsAndKanban(projectId), then buildKanbanFromTickets and setKanbanData. Keep existing try/catch/finally and debug/ingest logging.
+- **ADR** .cursor/adr/0230-refactor-fetch-project-tickets-and-kanban.md.
+- Run npm run verify and fix any failures.
+
+### Files to Create
+
+- src/lib/fetch-project-tickets-and-kanban.ts
+- .cursor/adr/0230-refactor-fetch-project-tickets-and-kanban.md
+
+### Files to Touch (minimise)
+
+- ProjectTicketsTab.tsx, ProjectRunTab.tsx, night-shift-plan.md
+
+### Checklist
+
+- [x] Create src/lib/fetch-project-tickets-and-kanban.ts (fetchProjectTicketsAndKanban).
+- [x] Refactor ProjectTicketsTab loadTicketsAndKanban to use it.
+- [x] Refactor ProjectRunTab loadTicketsAndKanban to use it.
+- [x] Add ADR .cursor/adr/0230-refactor-fetch-project-tickets-and-kanban.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — A single shared module `src/lib/fetch-project-tickets-and-kanban.ts` now provides `fetchProjectTicketsAndKanban(projectId)`, which returns `{ tickets: ParsedTicket[]; inProgressIds: string[] }`. It performs the dual-mode fetch (Tauri: `get_project_tickets` + `get_project_kanban_state` via invoke; browser: GET `/api/data/projects/:id/tickets` and `kanban-state`) and maps API rows to `ParsedTicket`. Both **ProjectTicketsTab** and **ProjectRunTab** use it in `loadTicketsAndKanban`: they call the helper, then `buildKanbanFromTickets(tickets, inProgressIds)` and `setKanbanData(data)`. Catch/finally, `setKanbanError`, and existing debug/ingest logging are unchanged. Behaviour is unchanged; duplication is removed and the contract lives in one place.
+
+**Files created:** `src/lib/fetch-project-tickets-and-kanban.ts`, `.cursor/adr/0230-refactor-fetch-project-tickets-and-kanban.md`
+
+**Files touched:** `ProjectTicketsTab.tsx` (import + use fetchProjectTicketsAndKanban in loadTicketsAndKanban), `ProjectRunTab.tsx` (same), `night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Refactor — extract getNextFreeSlotOrNull to run-helpers)
+
+### Chosen Feature
+
+**Refactor: Extract getNextFreeSlotOrNull to run-helpers** — The run-store currently defines `getNextFreeSlotOrNull` locally. Terminal slot logic is documented in conventions as belonging in `src/lib/run-helpers.ts`. Moving this function into run-helpers improves structure (single place for run/terminal slot logic), keeps run-store thinner, and allows the helper to be unit-tested and reused without changing behaviour.
+
+### Approach
+
+- **run-helpers.ts**: Add `getNextFreeSlotOrNull(runningRuns: RunInfo[]): 1 | 2 | 3 | null`. Use existing `isImplementAllRun`. Import `RunInfo` from `@/types/run`.
+- **run-helpers.test.ts**: Add tests for getNextFreeSlotOrNull (empty runs, one slot occupied, all occupied, non–Implement All runs ignored, etc.).
+- **run-store.ts**: Remove local `getNextFreeSlotOrNull`, import from `@/lib/run-helpers`.
+- **ADR** `.cursor/adr/0229-refactor-get-next-free-slot-to-run-helpers.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0229-refactor-get-next-free-slot-to-run-helpers.md` — ADR for this refactor.
+
+### Files to Touch (minimise)
+
+- `src/lib/run-helpers.ts` — add getNextFreeSlotOrNull.
+- `src/lib/__tests__/run-helpers.test.ts` — add unit tests for getNextFreeSlotOrNull.
+- `src/store/run-store.ts` — remove local function, import from run-helpers.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add getNextFreeSlotOrNull to run-helpers.ts and export it.
+- [x] Add unit tests for getNextFreeSlotOrNull in run-helpers.test.ts.
+- [x] Update run-store.ts to import getNextFreeSlotOrNull from run-helpers.
+- [x] Add ADR .cursor/adr/0229-refactor-get-next-free-slot-to-run-helpers.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was done** — `getNextFreeSlotOrNull` was moved from run-store into `src/lib/run-helpers.ts` so all run/terminal slot logic lives in one place. The function takes `runningRuns: RunInfo[]` and returns the first free slot (1, 2, or 3) or null if all are occupied; it only counts running Implement All–style runs (uses existing `isImplementAllRun`). run-store now imports `getNextFreeSlotOrNull` from `@/lib/run-helpers` and no longer defines it locally. Unit tests in `src/lib/__tests__/run-helpers.test.ts` cover empty runs, one or more occupied slots, all occupied, non–Implement All runs ignored, and done runs ignored. ADR `.cursor/adr/0229-refactor-get-next-free-slot-to-run-helpers.md` documents the refactor. Behaviour unchanged.
+
+**Files created:** `.cursor/adr/0229-refactor-get-next-free-slot-to-run-helpers.md`
+
+**Files touched:** `src/lib/run-helpers.ts` (added `getNextFreeSlotOrNull`, import of `RunInfo`), `src/lib/__tests__/run-helpers.test.ts` (tests for `getNextFreeSlotOrNull`), `src/store/run-store.ts` (removed local function, import from run-helpers), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Refactor — extract ticket parsing from ProjectTicketsTab)
+
+### Chosen Feature
+
+**Refactor: Extract ticket JSON parsing from ProjectTicketsTab into a lib** — ProjectTicketsTab contains two pure functions (`normalizeTicketParsed`, `extractTicketJsonFromStdout`) that parse ticket-shaped JSON from agent stdout (including markdown code blocks and snake_case). Extracting them into `src/lib/ticket-parsing.ts` improves separation of concerns, makes the logic testable in isolation, and keeps the component focused on UI. No behaviour change; same public contracts.
+
+### Approach
+
+- **New lib** `src/lib/ticket-parsing.ts`: Export `normalizeTicketParsed`, `extractTicketJsonFromStdout`, and a type for the parsed shape. Logic is copied from ProjectTicketsTab unchanged.
+- **New test** `src/lib/__tests__/ticket-parsing.test.ts`: Unit tests for empty/stdout, code block, snake_case vs camelCase, invalid JSON, multiple braces — to lock current behaviour.
+- **ProjectTicketsTab.tsx**: Remove the two local functions; import from `@/lib/ticket-parsing`.
+- **ADR** `.cursor/adr/0228-refactor-ticket-parsing-lib.md`.
+- Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/ticket-parsing.ts` — normalizeTicketParsed, extractTicketJsonFromStdout, exported type.
+- `src/lib/__tests__/ticket-parsing.test.ts` — unit tests for parsing behaviour.
+- `.cursor/adr/0228-refactor-ticket-parsing-lib.md` — ADR for this refactor.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/TabAndContentSections/ProjectTicketsTab.tsx` — remove local parsing functions, import from lib.
+- `.cursor/worker/night-shift-plan.md` — this entry, checklist, and Outcome.
+
+### Checklist
+
+- [x] Create src/lib/ticket-parsing.ts (normalizeTicketParsed, extractTicketJsonFromStdout, type).
+- [x] Create src/lib/__tests__/ticket-parsing.test.ts.
+- [x] Update ProjectTicketsTab to use @/lib/ticket-parsing.
+- [x] Add ADR .cursor/adr/0228-refactor-ticket-parsing-lib.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Ticket JSON parsing previously embedded in ProjectTicketsTab was extracted into a dedicated lib with no behaviour change. New module `src/lib/ticket-parsing.ts` exports `normalizeTicketParsed`, `extractTicketJsonFromStdout`, and type `ParsedTicketFromStdout`. Logic handles markdown code blocks, snake_case `feature_name`, and leading text; same contracts as before. Unit tests in `src/lib/__tests__/ticket-parsing.test.ts` cover empty input, plain JSON, code block, snake_case, invalid JSON, and array root. ProjectTicketsTab now imports `extractTicketJsonFromStdout` from `@/lib/ticket-parsing` and no longer defines the two parsing functions. ADR `.cursor/adr/0228-refactor-ticket-parsing-lib.md` documents the refactor.
+
+**Files created:** `src/lib/ticket-parsing.ts`, `src/lib/__tests__/ticket-parsing.test.ts`, `.cursor/adr/0228-refactor-ticket-parsing-lib.md`
+
+**Files touched:** `ProjectTicketsTab.tsx` (removed local `normalizeTicketParsed` and `extractTicketJsonFromStdout`, added import from `@/lib/ticket-parsing`), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
 ## Night Shift Plan — 2025-02-18 (This run: Command palette — Download/Copy projects list)
 
 ### Chosen Feature

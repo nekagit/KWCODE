@@ -1,7 +1,8 @@
 "use client";
 
-import React, { createContext, useCallback, useContext, useState, useEffect } from "react";
+import React, { createContext, useCallback, useContext, useState, useEffect, Suspense } from "react";
 import { createPortal } from "react-dom";
+import { useSearchParams } from "next/navigation";
 import { Settings, Plus } from "lucide-react";
 import {
   Dialog,
@@ -89,6 +90,22 @@ export function QuickActionsFAB() {
   return createPortal(fabContent, document.body);
 }
 
+/** When URL has openShortcuts=1 (e.g. from /shortcuts redirect), open shortcuts modal and clear param. Wrapped in Suspense because useSearchParams can suspend. */
+function OpenShortcutsFromQuery() {
+  const searchParams = useSearchParams();
+  const { openShortcutsModal } = useQuickActions();
+  useEffect(() => {
+    if (searchParams.get("openShortcuts") === "1") {
+      openShortcutsModal();
+      const url = new URL(window.location.href);
+      url.searchParams.delete("openShortcuts");
+      const replace = url.search ? `${url.pathname}${url.search}` : url.pathname;
+      window.history.replaceState({}, "", replace);
+    }
+  }, [searchParams, openShortcutsModal]);
+  return null;
+}
+
 export function QuickActionsProvider({ children }: { children: React.ReactNode }) {
   const [modal, setModal] = useState<QuickModal>(null);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
@@ -118,6 +135,9 @@ export function QuickActionsProvider({ children }: { children: React.ReactNode }
 
   return (
     <QuickActionsContext.Provider value={value}>
+      <Suspense fallback={null}>
+        <OpenShortcutsFromQuery />
+      </Suspense>
       {children}
 
       <Dialog open={modal === "config"} onOpenChange={(open) => !open && closeModal()}>

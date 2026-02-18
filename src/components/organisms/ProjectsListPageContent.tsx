@@ -13,12 +13,18 @@ import {
   downloadProjectsListAsCsv,
   copyProjectsListAsCsvToClipboard,
 } from "@/lib/download-projects-list-csv";
+import {
+  downloadProjectsListAsMarkdown,
+  copyProjectsListAsMarkdownToClipboard,
+} from "@/lib/download-projects-list-md";
 import { toast } from "sonner";
-import { Copy, Download, FileJson, Search, X, RotateCcw } from "lucide-react";
+import { Copy, Download, FileJson, FileText, Printer, Search, X, RotateCcw } from "lucide-react";
 import { getRecentProjectIds } from "@/lib/recent-projects";
 import {
   getProjectsListViewPreference,
   setProjectsListViewPreference,
+  PROJECTS_LIST_VIEW_PREFERENCE_RESTORED_EVENT,
+  DEFAULT_PROJECTS_LIST_VIEW_PREFERENCE,
   type ProjectsListSortOrder,
 } from "@/lib/projects-list-view-preference";
 import { Button } from "@/components/ui/button";
@@ -86,6 +92,16 @@ export function ProjectsListPageContent() {
       router.replace("/projects", { scroll: false });
     }
   }, [searchParams, router]);
+
+  // Sync local state when preference is restored from Command palette
+  useEffect(() => {
+    const onRestored = () => {
+      setSearchQuery(DEFAULT_PROJECTS_LIST_VIEW_PREFERENCE.filterQuery);
+      setSortOrder(DEFAULT_PROJECTS_LIST_VIEW_PREFERENCE.sortOrder);
+    };
+    window.addEventListener(PROJECTS_LIST_VIEW_PREFERENCE_RESTORED_EVENT, onRestored);
+    return () => window.removeEventListener(PROJECTS_LIST_VIEW_PREFERENCE_RESTORED_EVENT, onRestored);
+  }, []);
 
   const filteredProjects = useMemo(
     () =>
@@ -253,6 +269,18 @@ export function ProjectsListPageContent() {
         <section className={c["1"]} data-testid="projects-list">
           <h2 className={c["2"]}>Your projects</h2>
           <div className="flex flex-wrap items-center gap-3 mb-4">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => window.print()}
+              className="h-8 gap-1.5 text-xs"
+              aria-label="Print current page"
+              title="Print projects list (⌘P)"
+            >
+              <Printer className="size-3.5" aria-hidden />
+              <span className="hidden sm:inline">Print</span>
+            </Button>
             <div className="relative flex-1 max-w-xs">
               <Search
                 className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none"
@@ -342,6 +370,30 @@ export function ProjectsListPageContent() {
             >
               <Copy className="size-3.5" aria-hidden />
               <span className="hidden sm:inline">Copy CSV</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => downloadProjectsListAsMarkdown(displayList)}
+              className="h-8 gap-1.5 text-xs"
+              aria-label="Download projects list as Markdown"
+              title="Download current list as Markdown"
+            >
+              <FileText className="size-3.5" aria-hidden />
+              <span className="hidden sm:inline">MD</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => void copyProjectsListAsMarkdownToClipboard(displayList)}
+              className="h-8 gap-1.5 text-xs"
+              aria-label="Copy projects list as Markdown to clipboard"
+              title="Copy current list as Markdown (same content as Download MD)"
+            >
+              <Copy className="size-3.5" aria-hidden />
+              <span className="hidden sm:inline">Copy MD</span>
             </Button>
             {(trimmedQuery || sortOrder !== "asc") && (
               <Button

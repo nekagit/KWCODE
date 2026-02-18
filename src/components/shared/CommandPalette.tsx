@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, MessageSquare, Folders, Folder, FolderOpen, FolderPlus, FolderSearch, FolderCog, Lightbulb, Cpu, LayoutGrid, Settings, Moon, Sun, Keyboard, Loader2, RefreshCw, RotateCw, X, Activity, BookOpen, Printer, ChevronUp, ChevronDown, Focus, ClipboardList, Copy, HardDrive, Trash2, Square, Code2, Terminal, RotateCcw, PanelLeft, TestTube2, ExternalLink, Flag, FolderGit2, ListTodo, Palette, Building2, Download, FileSpreadsheet, FileText } from "lucide-react";
+import { LayoutDashboard, MessageSquare, Folders, Folder, FolderOpen, FolderPlus, FolderSearch, FolderCog, Lightbulb, Cpu, LayoutGrid, Settings, Moon, Sun, Keyboard, Loader2, RefreshCw, RotateCw, X, Activity, BookOpen, Printer, ChevronUp, ChevronDown, Focus, Search, ClipboardList, Copy, HardDrive, Trash2, Square, Code2, Terminal, RotateCcw, PanelLeft, TestTube2, ExternalLink, Flag, FolderGit2, ListTodo, Palette, Building2, Download, FileSpreadsheet, FileText, Monitor, Server, Link } from "lucide-react";
 import { default as FileJson } from "lucide-react/dist/esm/icons/file-json";
 import { useQuickActions } from "@/context/quick-actions-context";
 import { useUITheme } from "@/context/ui-theme";
@@ -21,45 +21,151 @@ import { isValidUIThemeId } from "@/data/ui-theme-templates";
 import { getApiHealth } from "@/lib/api-health";
 import { getAppVersion } from "@/lib/app-version";
 import { copyAppInfoToClipboard } from "@/lib/copy-app-info";
+import { copyAppVersionToClipboard } from "@/lib/copy-app-version";
 import { downloadAppInfoAsMarkdown, copyAppInfoAsMarkdownToClipboard } from "@/lib/download-app-info-md";
 import { downloadAppInfoAsJson, copyAppInfoAsJsonToClipboard } from "@/lib/download-app-info-json";
+import { copyDashboardMetricsToClipboard } from "@/lib/copy-dashboard-metrics";
+import { downloadDashboardMetricsAsJson } from "@/lib/download-dashboard-metrics-json";
+import {
+  downloadDashboardMetricsAsCsv,
+  copyDashboardMetricsAsCsvToClipboard,
+} from "@/lib/download-dashboard-metrics-csv";
+import {
+  downloadDashboardMetricsAsMarkdown,
+  copyDashboardMetricsAsMarkdownToClipboard,
+} from "@/lib/download-dashboard-metrics-md";
 import { copyAppDataFolderPath } from "@/lib/copy-app-data-folder-path";
+import { copyDatabaseFilePath } from "@/lib/copy-database-file-path";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 import { openAppDataFolderInFileManager } from "@/lib/open-app-data-folder";
 import { downloadDocumentationInfoAsMarkdown, copyDocumentationInfoAsMarkdownToClipboard } from "@/lib/download-documentation-info-md";
 import { downloadDocumentationInfoAsJson, copyDocumentationInfoAsJsonToClipboard } from "@/lib/download-documentation-info-json";
 import { fetchIdeas } from "@/lib/fetch-ideas";
 import { fetchTechStack } from "@/lib/fetch-tech-stack";
+import { fetchTechStackForProject } from "@/lib/fetch-tech-stack-for-project";
 import { downloadMyIdeasAsMarkdown, copyAllMyIdeasMarkdownToClipboard } from "@/lib/download-my-ideas-md";
 import { downloadMyIdeasAsJson, copyMyIdeasAsJsonToClipboard } from "@/lib/download-my-ideas";
+import { downloadMyIdeasAsCsv, copyMyIdeasAsCsvToClipboard } from "@/lib/download-my-ideas-csv";
 import { copyAllPromptsAsMarkdownToClipboard, downloadAllPromptsAsMarkdown } from "@/lib/download-all-prompts-md";
+import { downloadAllPromptsAsJson, copyAllPromptsAsJsonToClipboard } from "@/lib/download-all-prompts-json";
+import { downloadAllPromptsAsCsv, copyAllPromptsAsCsvToClipboard } from "@/lib/download-all-prompts-csv";
+import { downloadAllCursorPromptsAsCsv, copyAllCursorPromptsAsCsvToClipboard } from "@/lib/download-all-cursor-prompts-csv";
+import { downloadAllCursorPromptsAsJson, copyAllCursorPromptsAsJsonToClipboard } from "@/lib/download-all-cursor-prompts-json";
+import { downloadAllCursorPromptsAsMarkdown, copyAllCursorPromptsAsMarkdownToClipboard } from "@/lib/download-all-cursor-prompts-md";
 import {
   downloadTechStackAsMarkdown,
   downloadTechStack,
   copyTechStackAsMarkdownToClipboard,
 } from "@/lib/download-tech-stack";
+import {
+  downloadTechStackAsCsv,
+  copyTechStackAsCsvToClipboard,
+} from "@/lib/download-tech-stack-csv";
 import { copyTechStackToClipboard } from "@/lib/copy-tech-stack";
 import { downloadProjectsListAsJson, copyProjectsListAsJsonToClipboard } from "@/lib/download-projects-list-json";
 import { downloadProjectsListAsCsv, copyProjectsListAsCsvToClipboard } from "@/lib/download-projects-list-csv";
+import {
+  downloadProjectsListAsMarkdown,
+  copyProjectsListAsMarkdownToClipboard,
+} from "@/lib/download-projects-list-md";
+import {
+  copyActiveProjectsAsJsonToClipboard,
+  downloadActiveProjectsAsJson,
+  copyActiveProjectsAsCsvToClipboard,
+  downloadActiveProjectsAsCsv,
+} from "@/lib/active-projects-export";
+import { copyCurrentPageUrlToClipboard } from "@/lib/copy-current-page-url";
+import { copyDocumentationFolderPath } from "@/lib/copy-documentation-folder-path";
 import { openDocumentationFolderInFileManager } from "@/lib/open-documentation-folder";
+import { openTechnologiesFolderInFileManager } from "@/lib/open-technologies-folder";
+import { copyTechnologiesFolderPath } from "@/lib/copy-technologies-folder-path";
+import { openIdeasFolderInFileManager } from "@/lib/open-ideas-folder";
+import { copyIdeasFolderPath } from "@/lib/copy-ideas-folder-path";
+import { openPlannerFolderInFileManager } from "@/lib/open-planner-folder";
+import { copyPlannerFolderPath } from "@/lib/copy-planner-folder-path";
+import { openMilestonesFolderInFileManager } from "@/lib/open-milestones-folder";
+import { copyMilestonesFolderPath } from "@/lib/copy-milestones-folder-path";
 import { openProjectCursorFolderInFileManager } from "@/lib/open-project-cursor-folder";
 import { openProjectFolderInFileManager } from "@/lib/open-project-folder";
 import { openProjectInEditor } from "@/lib/open-project-in-editor";
 import { openProjectInSystemTerminal } from "@/lib/open-project-in-terminal";
 import { listProjects } from "@/lib/api-projects";
-import { isTauri } from "@/lib/tauri";
+import { invoke, isTauri } from "@/lib/tauri";
+import { parseFirstRemoteUrl } from "@/lib/parse-first-remote-url";
+import type { GitInfo } from "@/types/git";
 import { getRecentProjectIds } from "@/lib/recent-projects";
 import { setRunHistoryPreferences, DEFAULT_RUN_HISTORY_PREFERENCES, RUN_HISTORY_PREFERENCES_RESTORED_EVENT } from "@/lib/run-history-preferences";
+import { setProjectsListViewPreference, DEFAULT_PROJECTS_LIST_VIEW_PREFERENCE, PROJECTS_LIST_VIEW_PREFERENCE_RESTORED_EVENT } from "@/lib/projects-list-view-preference";
+import { dispatchFocusFilterEvent } from "@/lib/focus-filter-event";
 import { dispatchSidebarToggle } from "@/lib/sidebar-toggle-event";
 import { copyAllRunHistoryToClipboard } from "@/lib/copy-all-run-history";
+import { copyRunHistoryStatsSummaryToClipboard } from "@/lib/copy-run-history-stats-summary";
+import {
+  downloadRunHistoryStatsAsJson,
+  copyRunHistoryStatsAsJsonToClipboard,
+} from "@/lib/download-run-history-stats-json";
+import {
+  downloadRunHistoryStatsAsCsv,
+  copyRunHistoryStatsAsCsvToClipboard,
+} from "@/lib/download-run-history-stats-csv";
+import { copyImplementationLogToClipboard } from "@/lib/copy-implementation-log-to-clipboard";
+import { downloadImplementationLog } from "@/lib/download-implementation-log";
+import { getProjectResolved } from "@/lib/api-projects";
+import {
+  downloadProjectDesignsAsJson,
+  copyProjectDesignsAsJsonToClipboard,
+} from "@/lib/download-project-designs-json";
+import {
+  downloadProjectDesignsAsMarkdown,
+  copyProjectDesignsAsMarkdownToClipboard,
+} from "@/lib/download-project-designs-md";
+import {
+  downloadProjectArchitecturesAsJson,
+  copyProjectArchitecturesAsJsonToClipboard,
+} from "@/lib/download-project-architectures-json";
+import {
+  downloadProjectArchitecturesAsMarkdown,
+  copyProjectArchitecturesAsMarkdownToClipboard,
+} from "@/lib/download-project-architectures-md";
+import { fetchProjectTicketsAndKanban } from "@/lib/fetch-project-tickets-and-kanban";
+import { fetchProjectMilestones } from "@/lib/fetch-project-milestones";
+import {
+  downloadProjectTicketsAsJson,
+  copyProjectTicketsAsJsonToClipboard,
+} from "@/lib/download-project-tickets-json";
+import {
+  downloadProjectTicketsAsCsv,
+  copyProjectTicketsAsCsvToClipboard,
+} from "@/lib/download-project-tickets-csv";
+import {
+  downloadProjectTicketsAsMarkdown,
+  copyProjectTicketsAsMarkdownToClipboard,
+} from "@/lib/download-project-tickets-md";
+import {
+  downloadProjectMilestonesAsJson,
+  copyProjectMilestonesAsJsonToClipboard,
+} from "@/lib/download-project-milestones-json";
+import {
+  downloadProjectMilestonesAsCsv,
+  copyProjectMilestonesAsCsvToClipboard,
+} from "@/lib/download-project-milestones-csv";
+import {
+  downloadProjectMilestonesAsMarkdown,
+  copyProjectMilestonesAsMarkdownToClipboard,
+} from "@/lib/download-project-milestones-md";
 import { copySingleRunAsPlainTextToClipboard } from "@/lib/copy-single-run-as-plain-text";
+import { downloadSingleRunAsPlainText } from "@/lib/download-single-run-as-plain-text";
 import { downloadAllRunHistory } from "@/lib/download-all-run-history";
-import { downloadAllRunHistoryJson } from "@/lib/download-all-run-history-json";
-import { downloadAllRunHistoryCsv } from "@/lib/download-all-run-history-csv";
-import { downloadAllRunHistoryMarkdown } from "@/lib/download-all-run-history-md";
-import { copyKeyboardShortcutsAsMarkdownToClipboard, copyKeyboardShortcutsAsJsonToClipboard, downloadKeyboardShortcutsAsMarkdown, downloadKeyboardShortcutsAsJson, downloadKeyboardShortcutsAsCsv } from "@/lib/export-keyboard-shortcuts";
+import { downloadAllRunHistoryJson, copyAllRunHistoryJsonToClipboard } from "@/lib/download-all-run-history-json";
+import { downloadAllRunHistoryCsv, copyAllRunHistoryCsvToClipboard } from "@/lib/download-all-run-history-csv";
+import { downloadAllRunHistoryMarkdown, copyAllRunHistoryMarkdownToClipboard } from "@/lib/download-all-run-history-md";
+import { copyKeyboardShortcutsAsMarkdownToClipboard, copyKeyboardShortcutsAsJsonToClipboard, copyKeyboardShortcutsAsCsvToClipboard, downloadKeyboardShortcutsAsMarkdown, downloadKeyboardShortcutsAsJson, downloadKeyboardShortcutsAsCsv } from "@/lib/export-keyboard-shortcuts";
 import { getAppRepositoryUrl } from "@/lib/app-repository";
 import type { Project } from "@/types/project";
+import type { DesignRecord } from "@/types/design";
+import type { ArchitectureRecord } from "@/types/architecture";
+import type { ParsedTicket } from "@/lib/todos-kanban";
+import type { MilestoneRecord } from "@/types/milestone";
 import { useRunStore } from "@/store/run-store";
 import { toast } from "sonner";
 import { CommandPaletteAnnouncer } from "@/components/shared/CommandPaletteAnnouncer";
@@ -76,9 +182,15 @@ const NAV_ENTRIES: CommandPaletteEntry[] = [
   { href: "/projects", label: "Projects", icon: Folders },
   { href: "/projects/new", label: "New project", icon: FolderPlus },
   { href: "/prompts", label: "Prompts", icon: MessageSquare },
-  { href: "/?tab=all", label: "Database", icon: LayoutGrid },
+  { href: "/run", label: "Run", icon: Activity },
+  { href: "/testing", label: "Testing", icon: TestTube2 },
+  { href: "/planner", label: "Planner", icon: ListTodo },
+  { href: "/design", label: "Design", icon: Palette },
+  { href: "/architecture", label: "Architecture", icon: Building2 },
+  { href: "/database", label: "Database", icon: LayoutGrid },
   { href: "/documentation", label: "Documentation", icon: BookOpen },
   { href: "/configuration", label: "Configuration", icon: Settings },
+  { href: "/shortcuts", label: "Shortcuts", icon: Keyboard },
   { href: "/loading-screen", label: "Loading", icon: Moon },
 ];
 
@@ -108,6 +220,7 @@ export function CommandPalette() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [projects, setProjects] = useState<Project[] | null>(null);
   const [clearRunHistoryConfirmOpen, setClearRunHistoryConfirmOpen] = useState(false);
+  const [removeLastRunConfirmOpen, setRemoveLastRunConfirmOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Load projects when palette opens so "Go to project" entries are available
@@ -187,7 +300,23 @@ export function CommandPalette() {
     router.push(`/projects/${proj.id}?tab=milestones`);
   }, [activeProjects, projects, router]);
 
-  const goToVersioning = useCallback(async () => {
+  const goToVersioning = useCallback(() => {
+    router.push("/versioning");
+  }, [router]);
+
+  const goToPlanner = useCallback(() => {
+    router.push("/planner");
+  }, [router]);
+
+  const goToDesign = useCallback(() => {
+    router.push("/design");
+  }, [router]);
+
+  const goToArchitecture = useCallback(() => {
+    router.push("/architecture");
+  }, [router]);
+
+  const goToControl = useCallback(async () => {
     const active = activeProjects;
     if (!active.length) {
       toast.info("Select a project first");
@@ -201,10 +330,99 @@ export function CommandPalette() {
       router.push("/projects");
       return;
     }
-    router.push(`/projects/${proj.id}?tab=git`);
+    router.push(`/projects/${proj.id}?tab=control`);
   }, [activeProjects, projects, router]);
 
-  const goToPlanner = useCallback(async () => {
+  const goToShortcuts = useCallback(() => {
+    router.push("/shortcuts");
+  }, [router]);
+
+  const goToFirstProjectIdeas = useCallback(async () => {
+    const active = activeProjects;
+    if (!active.length) {
+      toast.info("Select a project first");
+      router.push("/projects");
+      return;
+    }
+    const list = projects ?? (await listProjects().catch(() => []));
+    const proj = list?.find((p) => p.repoPath === active[0]);
+    if (!proj) {
+      toast.info("Open a project first");
+      router.push("/projects");
+      return;
+    }
+    router.push(`/projects/${proj.id}?tab=ideas`);
+  }, [activeProjects, projects, router]);
+
+  const goToFirstProjectDocumentation = useCallback(async () => {
+    const active = activeProjects;
+    if (!active.length) {
+      toast.info("Select a project first");
+      router.push("/projects");
+      return;
+    }
+    const list = projects ?? (await listProjects().catch(() => []));
+    const proj = list?.find((p) => p.repoPath === active[0]);
+    if (!proj) {
+      toast.info("Open a project first");
+      router.push("/projects");
+      return;
+    }
+    router.push(`/projects/${proj.id}?tab=documentation`);
+  }, [activeProjects, projects, router]);
+
+  const goToFirstProjectFrontend = useCallback(async () => {
+    const active = activeProjects;
+    if (!active.length) {
+      toast.info("Select a project first");
+      router.push("/projects");
+      return;
+    }
+    const list = projects ?? (await listProjects().catch(() => []));
+    const proj = list?.find((p) => p.repoPath === active[0]);
+    if (!proj) {
+      toast.info("Open a project first");
+      router.push("/projects");
+      return;
+    }
+    router.push(`/projects/${proj.id}?tab=frontend`);
+  }, [activeProjects, projects, router]);
+
+  const goToFirstProjectBackend = useCallback(async () => {
+    const active = activeProjects;
+    if (!active.length) {
+      toast.info("Select a project first");
+      router.push("/projects");
+      return;
+    }
+    const list = projects ?? (await listProjects().catch(() => []));
+    const proj = list?.find((p) => p.repoPath === active[0]);
+    if (!proj) {
+      toast.info("Open a project first");
+      router.push("/projects");
+      return;
+    }
+    router.push(`/projects/${proj.id}?tab=backend`);
+  }, [activeProjects, projects, router]);
+
+  const goToFirstProjectMilestones = useCallback(async () => {
+    const active = activeProjects;
+    if (!active.length) {
+      toast.info("Select a project first");
+      router.push("/projects");
+      return;
+    }
+    const list = projects ?? (await listProjects().catch(() => []));
+    const proj = list?.find((p) => p.repoPath === active[0]);
+    if (!proj) {
+      toast.info("Open a project first");
+      router.push("/projects");
+      return;
+    }
+    router.push(`/projects/${proj.id}?tab=milestones`);
+  }, [activeProjects, projects, router]);
+
+  const goToFirstProjectPlanner = useCallback(async () => {
     const active = activeProjects;
     if (!active.length) {
       toast.info("Select a project first");
@@ -219,40 +437,6 @@ export function CommandPalette() {
       return;
     }
     router.push(`/projects/${proj.id}?tab=todo`);
-  }, [activeProjects, projects, router]);
-
-  const goToDesign = useCallback(async () => {
-    const active = activeProjects;
-    if (!active.length) {
-      toast.info("Select a project first");
-      router.push("/projects");
-      return;
-    }
-    const list = projects ?? (await listProjects().catch(() => []));
-    const proj = list?.find((p) => p.repoPath === active[0]);
-    if (!proj) {
-      toast.info("Open a project first");
-      router.push("/projects");
-      return;
-    }
-    router.push(`/projects/${proj.id}?tab=project#design`);
-  }, [activeProjects, projects, router]);
-
-  const goToArchitecture = useCallback(async () => {
-    const active = activeProjects;
-    if (!active.length) {
-      toast.info("Select a project first");
-      router.push("/projects");
-      return;
-    }
-    const list = projects ?? (await listProjects().catch(() => []));
-    const proj = list?.find((p) => p.repoPath === active[0]);
-    if (!proj) {
-      toast.info("Open a project first");
-      router.push("/projects");
-      return;
-    }
-    router.push(`/projects/${proj.id}?tab=project#architecture`);
   }, [activeProjects, projects, router]);
 
   const goToFirstProject = useCallback(async () => {
@@ -296,6 +480,16 @@ export function CommandPalette() {
     if (ok) closePalette();
   }, [closePalette, effectiveTheme]);
 
+  const handleCopyAppVersion = useCallback(async () => {
+    const ok = await copyAppVersionToClipboard();
+    if (ok) {
+      toast.success("Version copied to clipboard");
+      closePalette();
+    } else {
+      toast.error("Failed to copy version");
+    }
+  }, [closePalette]);
+
   const handleDownloadAppInfo = useCallback(async () => {
     const version = await getAppVersion().catch(() => "—");
     await downloadAppInfoAsMarkdown({ version, theme: effectiveTheme });
@@ -320,8 +514,48 @@ export function CommandPalette() {
     closePalette();
   }, [closePalette, effectiveTheme]);
 
+  const handleCopyDashboardMetricsJson = useCallback(async () => {
+    await copyDashboardMetricsToClipboard();
+    closePalette();
+  }, [closePalette]);
+
+  const handleDownloadDashboardMetricsJson = useCallback(async () => {
+    await downloadDashboardMetricsAsJson();
+    closePalette();
+  }, [closePalette]);
+
+  const handleCopyDashboardMetricsCsv = useCallback(async () => {
+    await copyDashboardMetricsAsCsvToClipboard();
+    closePalette();
+  }, [closePalette]);
+
+  const handleDownloadDashboardMetricsCsv = useCallback(async () => {
+    await downloadDashboardMetricsAsCsv();
+    closePalette();
+  }, [closePalette]);
+
+  const handleCopyDashboardMetricsMarkdown = useCallback(async () => {
+    await copyDashboardMetricsAsMarkdownToClipboard();
+    closePalette();
+  }, [closePalette]);
+
+  const handleDownloadDashboardMetricsMarkdown = useCallback(async () => {
+    await downloadDashboardMetricsAsMarkdown();
+    closePalette();
+  }, [closePalette]);
+
   const handleOpenDocumentationFolder = useCallback(async () => {
     await openDocumentationFolderInFileManager();
+    closePalette();
+  }, [closePalette]);
+
+  const handleCopyCurrentPageUrl = useCallback(async () => {
+    await copyCurrentPageUrlToClipboard();
+    closePalette();
+  }, [closePalette]);
+
+  const handleCopyDocumentationFolderPath = useCallback(async () => {
+    await copyDocumentationFolderPath();
     closePalette();
   }, [closePalette]);
 
@@ -370,6 +604,18 @@ export function CommandPalette() {
     closePalette();
   }, [closePalette]);
 
+  const handleDownloadIdeasCsv = useCallback(async () => {
+    const ideas = await fetchIdeas();
+    downloadMyIdeasAsCsv(ideas);
+    closePalette();
+  }, [closePalette]);
+
+  const handleCopyIdeasCsv = useCallback(async () => {
+    const ideas = await fetchIdeas();
+    await copyMyIdeasAsCsvToClipboard(ideas);
+    closePalette();
+  }, [closePalette]);
+
   const handleDownloadTechStack = useCallback(async () => {
     const data = await fetchTechStack();
     if (data == null) {
@@ -409,6 +655,26 @@ export function CommandPalette() {
     }
     const ok = await copyTechStackToClipboard(data);
     if (ok) toast.success("Tech stack copied as JSON");
+    closePalette();
+  }, [closePalette]);
+
+  const handleDownloadTechStackCsv = useCallback(async () => {
+    const data = await fetchTechStack();
+    if (data == null) {
+      closePalette();
+      return;
+    }
+    downloadTechStackAsCsv(data);
+    closePalette();
+  }, [closePalette]);
+
+  const handleCopyTechStackCsv = useCallback(async () => {
+    const data = await fetchTechStack();
+    if (data == null) {
+      closePalette();
+      return;
+    }
+    await copyTechStackAsCsvToClipboard(data);
     closePalette();
   }, [closePalette]);
 
@@ -456,6 +722,72 @@ export function CommandPalette() {
     }
   }, [closePalette]);
 
+  const handleDownloadProjectsListMarkdown = useCallback(async () => {
+    try {
+      const list = await listProjects();
+      downloadProjectsListAsMarkdown(list ?? []);
+      closePalette();
+    } catch {
+      toast.error("Failed to load projects");
+      closePalette();
+    }
+  }, [closePalette]);
+
+  const handleCopyProjectsListMarkdown = useCallback(async () => {
+    try {
+      const list = await listProjects();
+      await copyProjectsListAsMarkdownToClipboard(list ?? []);
+      closePalette();
+    } catch {
+      toast.error("Failed to load projects");
+      closePalette();
+    }
+  }, [closePalette]);
+
+  const handleCopyActiveProjectsJson = useCallback(async () => {
+    try {
+      const list = await listProjects();
+      await copyActiveProjectsAsJsonToClipboard(activeProjects, list ?? undefined);
+      closePalette();
+    } catch {
+      toast.error("Failed to load projects");
+      closePalette();
+    }
+  }, [activeProjects, closePalette]);
+
+  const handleDownloadActiveProjectsJson = useCallback(async () => {
+    try {
+      const list = await listProjects();
+      downloadActiveProjectsAsJson(activeProjects, list ?? undefined);
+      closePalette();
+    } catch {
+      toast.error("Failed to load projects");
+      closePalette();
+    }
+  }, [activeProjects, closePalette]);
+
+  const handleCopyActiveProjectsCsv = useCallback(async () => {
+    try {
+      const list = await listProjects();
+      await copyActiveProjectsAsCsvToClipboard(activeProjects, list ?? undefined);
+      closePalette();
+    } catch {
+      toast.error("Failed to load projects");
+      closePalette();
+    }
+  }, [activeProjects, closePalette]);
+
+  const handleDownloadActiveProjectsCsv = useCallback(async () => {
+    try {
+      const list = await listProjects();
+      downloadActiveProjectsAsCsv(activeProjects, list ?? undefined);
+      closePalette();
+    } catch {
+      toast.error("Failed to load projects");
+      closePalette();
+    }
+  }, [activeProjects, closePalette]);
+
   const promptsForExport = useMemo(
     () => prompts.map((p) => ({ id: p.id, title: p.title, content: p.content })),
     [prompts]
@@ -471,6 +803,56 @@ export function CommandPalette() {
     closePalette();
   }, [promptsForExport, closePalette]);
 
+  const handleDownloadPromptsJson = useCallback(() => {
+    downloadAllPromptsAsJson(promptsForExport);
+    closePalette();
+  }, [promptsForExport, closePalette]);
+
+  const handleCopyPromptsJson = useCallback(async () => {
+    await copyAllPromptsAsJsonToClipboard(promptsForExport);
+    closePalette();
+  }, [promptsForExport, closePalette]);
+
+  const handleDownloadPromptsCsv = useCallback(() => {
+    downloadAllPromptsAsCsv(promptsForExport);
+    closePalette();
+  }, [promptsForExport, closePalette]);
+
+  const handleCopyPromptsCsv = useCallback(async () => {
+    await copyAllPromptsAsCsvToClipboard(promptsForExport);
+    closePalette();
+  }, [promptsForExport, closePalette]);
+
+  const handleDownloadCursorPromptsCsv = useCallback(async () => {
+    await downloadAllCursorPromptsAsCsv();
+    closePalette();
+  }, [closePalette]);
+
+  const handleCopyCursorPromptsCsv = useCallback(async () => {
+    await copyAllCursorPromptsAsCsvToClipboard();
+    closePalette();
+  }, [closePalette]);
+
+  const handleDownloadCursorPromptsJson = useCallback(async () => {
+    await downloadAllCursorPromptsAsJson();
+    closePalette();
+  }, [closePalette]);
+
+  const handleCopyCursorPromptsJson = useCallback(async () => {
+    await copyAllCursorPromptsAsJsonToClipboard();
+    closePalette();
+  }, [closePalette]);
+
+  const handleDownloadCursorPromptsMarkdown = useCallback(async () => {
+    await downloadAllCursorPromptsAsMarkdown();
+    closePalette();
+  }, [closePalette]);
+
+  const handleCopyCursorPromptsMarkdown = useCallback(async () => {
+    await copyAllCursorPromptsAsMarkdownToClipboard();
+    closePalette();
+  }, [closePalette]);
+
   const handleOpenAppDataFolder = useCallback(async () => {
     await openAppDataFolderInFileManager();
     closePalette();
@@ -478,6 +860,51 @@ export function CommandPalette() {
 
   const handleCopyDataDirectoryPath = useCallback(async () => {
     await copyAppDataFolderPath();
+    closePalette();
+  }, [closePalette]);
+
+  const handleCopyDatabaseFilePath = useCallback(async () => {
+    await copyDatabaseFilePath();
+    closePalette();
+  }, [closePalette]);
+
+  const handleOpenTechnologiesFolder = useCallback(async () => {
+    await openTechnologiesFolderInFileManager();
+    closePalette();
+  }, [closePalette]);
+
+  const handleCopyTechnologiesFolderPath = useCallback(async () => {
+    await copyTechnologiesFolderPath();
+    closePalette();
+  }, [closePalette]);
+
+  const handleOpenIdeasFolder = useCallback(async () => {
+    await openIdeasFolderInFileManager();
+    closePalette();
+  }, [closePalette]);
+
+  const handleCopyIdeasFolderPath = useCallback(async () => {
+    await copyIdeasFolderPath();
+    closePalette();
+  }, [closePalette]);
+
+  const handleOpenPlannerFolder = useCallback(async () => {
+    await openPlannerFolderInFileManager();
+    closePalette();
+  }, [closePalette]);
+
+  const handleCopyPlannerFolderPath = useCallback(async () => {
+    await copyPlannerFolderPath();
+    closePalette();
+  }, [closePalette]);
+
+  const handleOpenMilestonesFolder = useCallback(async () => {
+    await openMilestonesFolderInFileManager();
+    closePalette();
+  }, [closePalette]);
+
+  const handleCopyMilestonesFolderPath = useCallback(async () => {
+    await copyMilestonesFolderPath();
     closePalette();
   }, [closePalette]);
 
@@ -505,6 +932,324 @@ export function CommandPalette() {
     closePalette();
   }, [activeProjects, projects, closePalette]);
 
+  const handleCopyFirstProjectImplementationLog = useCallback(async () => {
+    const active = activeProjects;
+    if (!active.length) {
+      toast.info("Select a project first");
+      closePalette();
+      return;
+    }
+    const list = projects ?? (await listProjects().catch(() => []));
+    const proj = list?.find((p) => p.repoPath === active[0]);
+    if (!proj) {
+      toast.info("Open a project first");
+      closePalette();
+      return;
+    }
+    await copyImplementationLogToClipboard(proj.id);
+    closePalette();
+  }, [activeProjects, projects, closePalette]);
+
+  const handleDownloadFirstProjectImplementationLog = useCallback(async () => {
+    const active = activeProjects;
+    if (!active.length) {
+      toast.info("Select a project first");
+      closePalette();
+      return;
+    }
+    const list = projects ?? (await listProjects().catch(() => []));
+    const proj = list?.find((p) => p.repoPath === active[0]);
+    if (!proj) {
+      toast.info("Open a project first");
+      closePalette();
+      return;
+    }
+    await downloadImplementationLog(proj.id);
+    closePalette();
+  }, [activeProjects, projects, closePalette]);
+
+  const resolveFirstProject = useCallback(async (): Promise<{ id: string; designs: DesignRecord[]; architectures: ArchitectureRecord[] } | null> => {
+    const active = activeProjects;
+    if (!active.length) {
+      toast.info("Select a project first");
+      closePalette();
+      return null;
+    }
+    const list = projects ?? (await listProjects().catch(() => []));
+    const proj = list?.find((p) => p.repoPath === active[0]);
+    if (!proj) {
+      toast.info("Open a project first");
+      closePalette();
+      return null;
+    }
+    try {
+      const resolved = await getProjectResolved(proj.id);
+      const designs = (resolved.designs ?? []) as DesignRecord[];
+      const architectures = (resolved.architectures ?? []) as ArchitectureRecord[];
+      return { id: proj.id, designs, architectures };
+    } catch {
+      toast.error("Failed to load project");
+      closePalette();
+      return null;
+    }
+  }, [activeProjects, projects, closePalette]);
+
+  const handleDownloadFirstProjectDesignsJson = useCallback(async () => {
+    const data = await resolveFirstProject();
+    if (!data) return;
+    downloadProjectDesignsAsJson(data.designs);
+    closePalette();
+  }, [resolveFirstProject, closePalette]);
+
+  const handleCopyFirstProjectDesignsJson = useCallback(async () => {
+    const data = await resolveFirstProject();
+    if (!data) return;
+    await copyProjectDesignsAsJsonToClipboard(data.designs);
+    closePalette();
+  }, [resolveFirstProject, closePalette]);
+
+  const handleDownloadFirstProjectDesignsMarkdown = useCallback(async () => {
+    const data = await resolveFirstProject();
+    if (!data) return;
+    downloadProjectDesignsAsMarkdown(data.designs);
+    closePalette();
+  }, [resolveFirstProject, closePalette]);
+
+  const handleCopyFirstProjectDesignsMarkdown = useCallback(async () => {
+    const data = await resolveFirstProject();
+    if (!data) return;
+    await copyProjectDesignsAsMarkdownToClipboard(data.designs);
+    closePalette();
+  }, [resolveFirstProject, closePalette]);
+
+  const handleDownloadFirstProjectArchitecturesJson = useCallback(async () => {
+    const data = await resolveFirstProject();
+    if (!data) return;
+    downloadProjectArchitecturesAsJson(data.architectures);
+    closePalette();
+  }, [resolveFirstProject, closePalette]);
+
+  const handleCopyFirstProjectArchitecturesJson = useCallback(async () => {
+    const data = await resolveFirstProject();
+    if (!data) return;
+    await copyProjectArchitecturesAsJsonToClipboard(data.architectures);
+    closePalette();
+  }, [resolveFirstProject, closePalette]);
+
+  const handleDownloadFirstProjectArchitecturesMarkdown = useCallback(async () => {
+    const data = await resolveFirstProject();
+    if (!data) return;
+    downloadProjectArchitecturesAsMarkdown(data.architectures);
+    closePalette();
+  }, [resolveFirstProject, closePalette]);
+
+  const handleCopyFirstProjectArchitecturesMarkdown = useCallback(async () => {
+    const data = await resolveFirstProject();
+    if (!data) return;
+    await copyProjectArchitecturesAsMarkdownToClipboard(data.architectures);
+    closePalette();
+  }, [resolveFirstProject, closePalette]);
+
+  const resolveFirstProjectTickets = useCallback(async (): Promise<{ projectName: string; tickets: ParsedTicket[] } | null> => {
+    const active = activeProjects;
+    if (!active.length) {
+      toast.info("Select a project first");
+      closePalette();
+      return null;
+    }
+    const list = projects ?? (await listProjects().catch(() => []));
+    const proj = list?.find((p) => p.repoPath === active[0]);
+    if (!proj) {
+      toast.info("Open a project first");
+      closePalette();
+      return null;
+    }
+    try {
+      const { tickets } = await fetchProjectTicketsAndKanban(proj.id);
+      return { projectName: proj.name ?? "Project", tickets };
+    } catch {
+      toast.error("Failed to load project tickets");
+      closePalette();
+      return null;
+    }
+  }, [activeProjects, projects, closePalette]);
+
+  const handleDownloadFirstProjectTicketsJson = useCallback(async () => {
+    const data = await resolveFirstProjectTickets();
+    if (!data) return;
+    downloadProjectTicketsAsJson(data.tickets);
+    closePalette();
+  }, [resolveFirstProjectTickets, closePalette]);
+
+  const handleCopyFirstProjectTicketsJson = useCallback(async () => {
+    const data = await resolveFirstProjectTickets();
+    if (!data) return;
+    await copyProjectTicketsAsJsonToClipboard(data.tickets);
+    closePalette();
+  }, [resolveFirstProjectTickets, closePalette]);
+
+  const handleDownloadFirstProjectTicketsCsv = useCallback(async () => {
+    const data = await resolveFirstProjectTickets();
+    if (!data) return;
+    downloadProjectTicketsAsCsv(data.tickets);
+    closePalette();
+  }, [resolveFirstProjectTickets, closePalette]);
+
+  const handleCopyFirstProjectTicketsCsv = useCallback(async () => {
+    const data = await resolveFirstProjectTickets();
+    if (!data) return;
+    await copyProjectTicketsAsCsvToClipboard(data.tickets);
+    closePalette();
+  }, [resolveFirstProjectTickets, closePalette]);
+
+  const handleDownloadFirstProjectTicketsMarkdown = useCallback(async () => {
+    const data = await resolveFirstProjectTickets();
+    if (!data) return;
+    downloadProjectTicketsAsMarkdown(data.tickets, { projectName: data.projectName });
+    closePalette();
+  }, [resolveFirstProjectTickets, closePalette]);
+
+  const handleCopyFirstProjectTicketsMarkdown = useCallback(async () => {
+    const data = await resolveFirstProjectTickets();
+    if (!data) return;
+    const ok = await copyProjectTicketsAsMarkdownToClipboard(data.tickets, { projectName: data.projectName });
+    if (ok) toast.success("Tickets copied as Markdown");
+    else toast.error("Failed to copy to clipboard");
+    closePalette();
+  }, [resolveFirstProjectTickets, closePalette]);
+
+  const resolveFirstProjectMilestones = useCallback(async (): Promise<{ projectName: string; milestones: MilestoneRecord[] } | null> => {
+    const active = activeProjects;
+    if (!active.length) {
+      toast.info("Select a project first");
+      closePalette();
+      return null;
+    }
+    const list = projects ?? (await listProjects().catch(() => []));
+    const proj = list?.find((p) => p.repoPath === active[0]);
+    if (!proj) {
+      toast.info("Open a project first");
+      closePalette();
+      return null;
+    }
+    try {
+      const milestones = await fetchProjectMilestones(proj.id);
+      return { projectName: proj.name ?? "Project", milestones };
+    } catch {
+      toast.error("Failed to load project milestones");
+      closePalette();
+      return null;
+    }
+  }, [activeProjects, projects, closePalette]);
+
+  const handleDownloadFirstProjectMilestonesJson = useCallback(async () => {
+    const data = await resolveFirstProjectMilestones();
+    if (!data) return;
+    downloadProjectMilestonesAsJson(data.milestones);
+    closePalette();
+  }, [resolveFirstProjectMilestones, closePalette]);
+
+  const handleCopyFirstProjectMilestonesJson = useCallback(async () => {
+    const data = await resolveFirstProjectMilestones();
+    if (!data) return;
+    await copyProjectMilestonesAsJsonToClipboard(data.milestones);
+    closePalette();
+  }, [resolveFirstProjectMilestones, closePalette]);
+
+  const handleDownloadFirstProjectMilestonesCsv = useCallback(async () => {
+    const data = await resolveFirstProjectMilestones();
+    if (!data) return;
+    downloadProjectMilestonesAsCsv(data.milestones);
+    closePalette();
+  }, [resolveFirstProjectMilestones, closePalette]);
+
+  const handleCopyFirstProjectMilestonesCsv = useCallback(async () => {
+    const data = await resolveFirstProjectMilestones();
+    if (!data) return;
+    await copyProjectMilestonesAsCsvToClipboard(data.milestones);
+    closePalette();
+  }, [resolveFirstProjectMilestones, closePalette]);
+
+  const handleDownloadFirstProjectMilestonesMarkdown = useCallback(async () => {
+    const data = await resolveFirstProjectMilestones();
+    if (!data) return;
+    downloadProjectMilestonesAsMarkdown(data.milestones, { projectName: data.projectName });
+    closePalette();
+  }, [resolveFirstProjectMilestones, closePalette]);
+
+  const handleCopyFirstProjectMilestonesMarkdown = useCallback(async () => {
+    const data = await resolveFirstProjectMilestones();
+    if (!data) return;
+    await copyProjectMilestonesAsMarkdownToClipboard(data.milestones, { projectName: data.projectName });
+    closePalette();
+  }, [resolveFirstProjectMilestones, closePalette]);
+
+  const handleDownloadFirstProjectTechStackJson = useCallback(async () => {
+    if (!activeProjects.length) {
+      toast.info("Select a project first");
+      return;
+    }
+    const data = await fetchTechStackForProject(activeProjects[0]);
+    if (!data) return;
+    downloadTechStack(data);
+    closePalette();
+  }, [activeProjects, closePalette]);
+
+  const handleCopyFirstProjectTechStackJson = useCallback(async () => {
+    if (!activeProjects.length) {
+      toast.info("Select a project first");
+      return;
+    }
+    const data = await fetchTechStackForProject(activeProjects[0]);
+    if (!data) return;
+    await copyTechStackToClipboard(data);
+    closePalette();
+  }, [activeProjects, closePalette]);
+
+  const handleDownloadFirstProjectTechStackMarkdown = useCallback(async () => {
+    if (!activeProjects.length) {
+      toast.info("Select a project first");
+      return;
+    }
+    const data = await fetchTechStackForProject(activeProjects[0]);
+    if (!data) return;
+    downloadTechStackAsMarkdown(data);
+    closePalette();
+  }, [activeProjects, closePalette]);
+
+  const handleCopyFirstProjectTechStackMarkdown = useCallback(async () => {
+    if (!activeProjects.length) {
+      toast.info("Select a project first");
+      return;
+    }
+    const data = await fetchTechStackForProject(activeProjects[0]);
+    if (!data) return;
+    await copyTechStackAsMarkdownToClipboard(data);
+    closePalette();
+  }, [activeProjects, closePalette]);
+
+  const handleDownloadFirstProjectTechStackCsv = useCallback(async () => {
+    if (!activeProjects.length) {
+      toast.info("Select a project first");
+      return;
+    }
+    const data = await fetchTechStackForProject(activeProjects[0]);
+    if (!data) return;
+    downloadTechStackAsCsv(data);
+    closePalette();
+  }, [activeProjects, closePalette]);
+
+  const handleCopyFirstProjectTechStackCsv = useCallback(async () => {
+    if (!activeProjects.length) {
+      toast.info("Select a project first");
+      return;
+    }
+    const data = await fetchTechStackForProject(activeProjects[0]);
+    if (!data) return;
+    await copyTechStackAsCsvToClipboard(data);
+    closePalette();
+  }, [activeProjects, closePalette]);
+
   const handleClearRunHistory = useCallback(() => {
     closePalette();
     if (terminalOutputHistoryLength === 0) {
@@ -526,15 +1271,28 @@ export function CommandPalette() {
       toast.info("No runs in history");
       return;
     }
+    setRemoveLastRunConfirmOpen(true);
+  }, [firstRunId, closePalette]);
+
+  const handleConfirmRemoveLastRun = useCallback(() => {
+    if (firstRunId == null) return;
     removeTerminalOutputFromHistory(firstRunId);
+    setRemoveLastRunConfirmOpen(false);
     toast.success("Last run removed from history");
-  }, [firstRunId, removeTerminalOutputFromHistory, closePalette]);
+  }, [firstRunId, removeTerminalOutputFromHistory]);
 
   const handleRestoreRunHistoryFilters = useCallback(() => {
     closePalette();
     setRunHistoryPreferences(DEFAULT_RUN_HISTORY_PREFERENCES);
     window.dispatchEvent(new CustomEvent(RUN_HISTORY_PREFERENCES_RESTORED_EVENT));
     toast.success("Run history filters restored to defaults.");
+  }, [closePalette]);
+
+  const handleRestoreProjectsListFilters = useCallback(() => {
+    closePalette();
+    setProjectsListViewPreference(DEFAULT_PROJECTS_LIST_VIEW_PREFERENCE);
+    window.dispatchEvent(new CustomEvent(PROJECTS_LIST_VIEW_PREFERENCE_RESTORED_EVENT));
+    toast.success("Projects list filters restored to defaults.");
   }, [closePalette]);
 
   const handleOpenFirstProjectInCursor = useCallback(() => {
@@ -595,6 +1353,43 @@ export function CommandPalette() {
     closePalette();
   }, [activeProjects, projects, router, closePalette]);
 
+  const handleOpenFirstProjectRemoteInBrowser = useCallback(async () => {
+    if (!activeProjects.length) {
+      toast.info("Select a project first");
+      router.push("/projects");
+      closePalette();
+      return;
+    }
+    if (!isTauri) {
+      toast.info("Open first project's remote is available in the desktop app.");
+      closePalette();
+      return;
+    }
+    const list = projects ?? (await listProjects().catch(() => []));
+    const proj = list?.find((p) => p.repoPath === activeProjects[0]);
+    if (!proj) {
+      toast.info("Open a project first");
+      closePalette();
+      return;
+    }
+    try {
+      const info = await invoke<GitInfo>("get_git_info", {
+        projectPath: proj.repoPath.trim(),
+      });
+      const url = parseFirstRemoteUrl(info.remotes);
+      if (!url) {
+        toast.info("No remote URL for this project");
+        closePalette();
+        return;
+      }
+      window.open(url, "_blank", "noopener,noreferrer");
+      toast.success("Opened remote in browser");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to get remote URL");
+    }
+    closePalette();
+  }, [activeProjects, projects, router, closePalette]);
+
   const handleStopAllRuns = useCallback(async () => {
     if (runningRuns.length === 0) {
       toast.info("No runs in progress");
@@ -632,6 +1427,11 @@ export function CommandPalette() {
     closePalette();
   }, [closePalette]);
 
+  const handleCopyKeyboardShortcutsCsv = useCallback(async () => {
+    await copyKeyboardShortcutsAsCsvToClipboard();
+    closePalette();
+  }, [closePalette]);
+
   const handleDownloadKeyboardShortcuts = useCallback(() => {
     downloadKeyboardShortcutsAsMarkdown();
     closePalette();
@@ -652,12 +1452,62 @@ export function CommandPalette() {
     closePalette();
   }, [terminalOutputHistory, closePalette]);
 
+  const handleCopyRunHistoryStatsSummary = useCallback(() => {
+    copyRunHistoryStatsSummaryToClipboard(terminalOutputHistory);
+    closePalette();
+  }, [terminalOutputHistory, closePalette]);
+
+  const handleDownloadRunHistoryStatsJson = useCallback(() => {
+    downloadRunHistoryStatsAsJson(terminalOutputHistory);
+    closePalette();
+  }, [terminalOutputHistory, closePalette]);
+
+  const handleCopyRunHistoryStatsJson = useCallback(async () => {
+    await copyRunHistoryStatsAsJsonToClipboard(terminalOutputHistory);
+    closePalette();
+  }, [terminalOutputHistory, closePalette]);
+
+  const handleDownloadRunHistoryStatsCsv = useCallback(() => {
+    downloadRunHistoryStatsAsCsv(terminalOutputHistory);
+    closePalette();
+  }, [terminalOutputHistory, closePalette]);
+
+  const handleCopyRunHistoryStatsCsv = useCallback(async () => {
+    await copyRunHistoryStatsAsCsvToClipboard(terminalOutputHistory);
+    closePalette();
+  }, [terminalOutputHistory, closePalette]);
+
+  const handleCopyRunHistoryJson = useCallback(async () => {
+    await copyAllRunHistoryJsonToClipboard(terminalOutputHistory);
+    closePalette();
+  }, [terminalOutputHistory, closePalette]);
+
+  const handleCopyRunHistoryMarkdown = useCallback(async () => {
+    await copyAllRunHistoryMarkdownToClipboard(terminalOutputHistory);
+    closePalette();
+  }, [terminalOutputHistory, closePalette]);
+
+  const handleCopyRunHistoryCsv = useCallback(async () => {
+    await copyAllRunHistoryCsvToClipboard(terminalOutputHistory);
+    closePalette();
+  }, [terminalOutputHistory, closePalette]);
+
   const handleCopyLastRun = useCallback(() => {
     const lastRun = terminalOutputHistory[0];
     if (lastRun) {
       copySingleRunAsPlainTextToClipboard(lastRun);
     } else {
       toast.info("No run history to copy");
+    }
+    closePalette();
+  }, [terminalOutputHistory, closePalette]);
+
+  const handleDownloadLastRun = useCallback(() => {
+    const lastRun = terminalOutputHistory[0];
+    if (lastRun) {
+      downloadSingleRunAsPlainText(lastRun);
+    } else {
+      toast.info("No run history to download");
     }
     closePalette();
   }, [terminalOutputHistory, closePalette]);
@@ -693,65 +1543,162 @@ export function CommandPalette() {
       { label: "Go to Planner", icon: ListTodo, onSelect: () => { goToPlanner(); closePalette(); } },
       { label: "Go to Design", icon: Palette, onSelect: () => { goToDesign(); closePalette(); } },
       { label: "Go to Architecture", icon: Building2, onSelect: () => { goToArchitecture(); closePalette(); } },
+      { label: "Go to Control", icon: ClipboardList, onSelect: () => { goToControl(); closePalette(); } },
+      { label: "Go to Shortcuts", icon: Keyboard, onSelect: () => { goToShortcuts(); closePalette(); } },
+      { label: "Go to first project Ideas", icon: Lightbulb, onSelect: () => { goToFirstProjectIdeas(); closePalette(); } },
+      { label: "Go to first project Documentation", icon: FileText, onSelect: () => { goToFirstProjectDocumentation(); closePalette(); } },
+      { label: "Go to first project Frontend", icon: Monitor, onSelect: () => { goToFirstProjectFrontend(); closePalette(); } },
+      { label: "Go to first project Backend", icon: Server, onSelect: () => { goToFirstProjectBackend(); closePalette(); } },
+      { label: "Go to first project Milestones", icon: Flag, onSelect: () => { goToFirstProjectMilestones(); closePalette(); } },
+      { label: "Go to first project Planner", icon: ListTodo, onSelect: () => { goToFirstProjectPlanner(); closePalette(); } },
       { label: "Go to first project", icon: FolderOpen, onSelect: goToFirstProject },
       { label: "Open first project in Cursor", icon: Code2, onSelect: handleOpenFirstProjectInCursor },
       { label: "Open first project in Terminal", icon: Terminal, onSelect: handleOpenFirstProjectInTerminal },
       { label: "Open first project in file manager", icon: Folder, onSelect: handleOpenFirstProjectInFileManager },
       { label: "Open first project's .cursor folder", icon: FolderCog, onSelect: handleOpenFirstProjectCursorFolder },
+      { label: "Open first project's remote in browser", icon: ExternalLink, onSelect: handleOpenFirstProjectRemoteInBrowser },
       { label: "Stop all runs", icon: Square, onSelect: handleStopAllRuns },
       { label: "Clear run history", icon: Trash2, onSelect: handleClearRunHistory },
       { label: "Remove last run from history", icon: Trash2, onSelect: handleRemoveLastRun },
       { label: "Restore run history filters", icon: RotateCcw, onSelect: handleRestoreRunHistoryFilters },
+      { label: "Restore projects list filters", icon: RotateCcw, onSelect: handleRestoreProjectsListFilters },
       { label: "Switch to light mode", icon: Sun, onSelect: handleSwitchToLightMode },
       { label: "Switch to dark mode", icon: Moon, onSelect: handleSwitchToDarkMode },
       { label: "Keyboard shortcuts", icon: Keyboard, onSelect: openShortcutsModal },
       { label: "Copy app info", icon: ClipboardList, onSelect: handleCopyAppInfo },
+      { label: "Copy app version", icon: Copy, onSelect: handleCopyAppVersion },
       { label: "Copy app info as Markdown", icon: FileText, onSelect: handleCopyAppInfoAsMarkdown },
       { label: "Copy app info as JSON", icon: FileJson, onSelect: handleCopyAppInfoAsJson },
       { label: "Download app info", icon: Download, onSelect: handleDownloadAppInfo },
       { label: "Download app info as JSON", icon: FileJson, onSelect: handleDownloadAppInfoJson },
+      { label: "Copy dashboard metrics as JSON", icon: FileJson, onSelect: handleCopyDashboardMetricsJson },
+      { label: "Download dashboard metrics as JSON", icon: FileJson, onSelect: handleDownloadDashboardMetricsJson },
+      { label: "Copy dashboard metrics as CSV", icon: FileSpreadsheet, onSelect: handleCopyDashboardMetricsCsv },
+      { label: "Download dashboard metrics as CSV", icon: FileSpreadsheet, onSelect: handleDownloadDashboardMetricsCsv },
+      { label: "Copy dashboard metrics as Markdown", icon: FileText, onSelect: handleCopyDashboardMetricsMarkdown },
+      { label: "Download dashboard metrics as Markdown", icon: FileText, onSelect: handleDownloadDashboardMetricsMarkdown },
       { label: "Copy first project path", icon: Copy, onSelect: handleCopyFirstProjectPath },
+      { label: "Copy first project implementation log", icon: ClipboardList, onSelect: handleCopyFirstProjectImplementationLog },
+      { label: "Download first project implementation log", icon: Download, onSelect: handleDownloadFirstProjectImplementationLog },
+      { label: "Download first project designs as JSON", icon: FileJson, onSelect: handleDownloadFirstProjectDesignsJson },
+      { label: "Copy first project designs as JSON", icon: FileJson, onSelect: handleCopyFirstProjectDesignsJson },
+      { label: "Download first project designs as Markdown", icon: FileText, onSelect: handleDownloadFirstProjectDesignsMarkdown },
+      { label: "Copy first project designs as Markdown", icon: FileText, onSelect: handleCopyFirstProjectDesignsMarkdown },
+      { label: "Download first project architectures as JSON", icon: FileJson, onSelect: handleDownloadFirstProjectArchitecturesJson },
+      { label: "Copy first project architectures as JSON", icon: FileJson, onSelect: handleCopyFirstProjectArchitecturesJson },
+      { label: "Download first project architectures as Markdown", icon: FileText, onSelect: handleDownloadFirstProjectArchitecturesMarkdown },
+      { label: "Copy first project architectures as Markdown", icon: FileText, onSelect: handleCopyFirstProjectArchitecturesMarkdown },
+      { label: "Download first project tickets as JSON", icon: FileJson, onSelect: handleDownloadFirstProjectTicketsJson },
+      { label: "Copy first project tickets as JSON", icon: FileJson, onSelect: handleCopyFirstProjectTicketsJson },
+      { label: "Download first project tickets as CSV", icon: FileSpreadsheet, onSelect: handleDownloadFirstProjectTicketsCsv },
+      { label: "Copy first project tickets as CSV", icon: FileSpreadsheet, onSelect: handleCopyFirstProjectTicketsCsv },
+      { label: "Download first project tickets as Markdown", icon: FileText, onSelect: handleDownloadFirstProjectTicketsMarkdown },
+      { label: "Copy first project tickets as Markdown", icon: FileText, onSelect: handleCopyFirstProjectTicketsMarkdown },
+      { label: "Download first project milestones as JSON", icon: FileJson, onSelect: handleDownloadFirstProjectMilestonesJson },
+      { label: "Copy first project milestones as JSON", icon: FileJson, onSelect: handleCopyFirstProjectMilestonesJson },
+      { label: "Download first project milestones as CSV", icon: FileSpreadsheet, onSelect: handleDownloadFirstProjectMilestonesCsv },
+      { label: "Copy first project milestones as CSV", icon: FileSpreadsheet, onSelect: handleCopyFirstProjectMilestonesCsv },
+      { label: "Download first project milestones as Markdown", icon: FileText, onSelect: handleDownloadFirstProjectMilestonesMarkdown },
+      { label: "Copy first project milestones as Markdown", icon: FileText, onSelect: handleCopyFirstProjectMilestonesMarkdown },
+      { label: "Download first project tech stack as JSON", icon: FileJson, onSelect: handleDownloadFirstProjectTechStackJson },
+      { label: "Copy first project tech stack as JSON", icon: FileJson, onSelect: handleCopyFirstProjectTechStackJson },
+      { label: "Download first project tech stack as Markdown", icon: FileText, onSelect: handleDownloadFirstProjectTechStackMarkdown },
+      { label: "Copy first project tech stack as Markdown", icon: FileText, onSelect: handleCopyFirstProjectTechStackMarkdown },
+      { label: "Download first project tech stack as CSV", icon: FileSpreadsheet, onSelect: handleDownloadFirstProjectTechStackCsv },
+      { label: "Copy first project tech stack as CSV", icon: FileSpreadsheet, onSelect: handleCopyFirstProjectTechStackCsv },
       { label: "Copy data directory path", icon: Copy, onSelect: handleCopyDataDirectoryPath },
+      { label: "Copy database file path", icon: Copy, onSelect: handleCopyDatabaseFilePath },
+      { label: "Open technologies folder in file manager", icon: FolderOpen, onSelect: handleOpenTechnologiesFolder },
+      { label: "Copy technologies folder path", icon: Copy, onSelect: handleCopyTechnologiesFolderPath },
       { label: "Copy keyboard shortcuts", icon: Copy, onSelect: handleCopyKeyboardShortcuts },
       { label: "Copy keyboard shortcuts as JSON", icon: FileJson, onSelect: handleCopyKeyboardShortcutsJson },
+      { label: "Copy keyboard shortcuts as CSV", icon: FileSpreadsheet, onSelect: handleCopyKeyboardShortcutsCsv },
       { label: "Download keyboard shortcuts", icon: Download, onSelect: handleDownloadKeyboardShortcuts },
       { label: "Download keyboard shortcuts as JSON", icon: FileJson, onSelect: handleDownloadKeyboardShortcutsJson },
       { label: "Download keyboard shortcuts as CSV", icon: FileSpreadsheet, onSelect: handleDownloadKeyboardShortcutsCsv },
       { label: "Copy run history to clipboard", icon: Copy, onSelect: handleCopyRunHistory },
+      { label: "Copy run history stats summary", icon: Copy, onSelect: handleCopyRunHistoryStatsSummary },
+      { label: "Download run history stats as JSON", icon: FileJson, onSelect: handleDownloadRunHistoryStatsJson },
+      { label: "Copy run history stats as JSON", icon: FileJson, onSelect: handleCopyRunHistoryStatsJson },
+      { label: "Download run history stats as CSV", icon: FileSpreadsheet, onSelect: handleDownloadRunHistoryStatsCsv },
+      { label: "Copy run history stats as CSV", icon: FileSpreadsheet, onSelect: handleCopyRunHistoryStatsCsv },
+      { label: "Copy run history as JSON", icon: FileJson, onSelect: handleCopyRunHistoryJson },
+      { label: "Copy run history as Markdown", icon: FileText, onSelect: handleCopyRunHistoryMarkdown },
+      { label: "Copy run history as CSV", icon: FileSpreadsheet, onSelect: handleCopyRunHistoryCsv },
       { label: "Copy last run to clipboard", icon: Copy, onSelect: handleCopyLastRun },
+      { label: "Download last run as file", icon: Download, onSelect: handleDownloadLastRun },
       { label: "Download run history", icon: Download, onSelect: handleDownloadRunHistory },
       { label: "Download run history as JSON", icon: FileJson, onSelect: handleDownloadRunHistoryJson },
       { label: "Download run history as Markdown", icon: FileText, onSelect: handleDownloadRunHistoryMarkdown },
       { label: "Download run history as CSV", icon: FileSpreadsheet, onSelect: handleDownloadRunHistoryCsv },
       { label: "Open data folder", icon: HardDrive, onSelect: handleOpenAppDataFolder },
       { label: "Open documentation folder", icon: FolderOpen, onSelect: handleOpenDocumentationFolder },
+      { label: "Copy documentation folder path", icon: Copy, onSelect: handleCopyDocumentationFolderPath },
+      { label: "Copy current page URL", icon: Link, onSelect: handleCopyCurrentPageUrl },
       { label: "Download documentation info", icon: Download, onSelect: handleDownloadDocumentationInfo },
       { label: "Download documentation info as JSON", icon: FileJson, onSelect: handleDownloadDocumentationInfoJson },
       { label: "Copy documentation info", icon: Copy, onSelect: handleCopyDocumentationInfo },
       { label: "Copy documentation info as JSON", icon: FileJson, onSelect: handleCopyDocumentationInfoJson },
       { label: "Copy prompts", icon: Copy, onSelect: handleCopyPrompts },
       { label: "Download prompts", icon: Download, onSelect: handleDownloadPrompts },
+      { label: "Download prompts as JSON", icon: FileJson, onSelect: handleDownloadPromptsJson },
+      { label: "Copy prompts as JSON", icon: FileJson, onSelect: handleCopyPromptsJson },
+      { label: "Download prompts as CSV", icon: FileSpreadsheet, onSelect: handleDownloadPromptsCsv },
+      { label: "Copy prompts as CSV", icon: FileSpreadsheet, onSelect: handleCopyPromptsCsv },
+      { label: "Download .cursor prompts as CSV", icon: FileSpreadsheet, onSelect: handleDownloadCursorPromptsCsv },
+      { label: "Copy .cursor prompts as CSV", icon: FileSpreadsheet, onSelect: handleCopyCursorPromptsCsv },
+      { label: "Download .cursor prompts as JSON", icon: FileJson, onSelect: handleDownloadCursorPromptsJson },
+      { label: "Copy .cursor prompts as JSON", icon: FileJson, onSelect: handleCopyCursorPromptsJson },
+      { label: "Download .cursor prompts as Markdown", icon: FileText, onSelect: handleDownloadCursorPromptsMarkdown },
+      { label: "Copy .cursor prompts as Markdown", icon: FileText, onSelect: handleCopyCursorPromptsMarkdown },
       { label: "Download ideas", icon: Download, onSelect: handleDownloadIdeas },
       { label: "Download ideas as JSON", icon: FileJson, onSelect: handleDownloadIdeasJson },
+      { label: "Download ideas as CSV", icon: FileSpreadsheet, onSelect: handleDownloadIdeasCsv },
       { label: "Copy ideas", icon: Copy, onSelect: handleCopyIdeas },
       { label: "Copy ideas as JSON", icon: FileJson, onSelect: handleCopyIdeasJson },
+      { label: "Copy ideas as CSV", icon: FileSpreadsheet, onSelect: handleCopyIdeasCsv },
+      { label: "Open ideas folder in file manager", icon: FolderOpen, onSelect: handleOpenIdeasFolder },
+      { label: "Copy ideas folder path", icon: Copy, onSelect: handleCopyIdeasFolderPath },
+      { label: "Open planner folder in file manager", icon: FolderOpen, onSelect: handleOpenPlannerFolder },
+      { label: "Copy planner folder path", icon: Copy, onSelect: handleCopyPlannerFolderPath },
+      { label: "Open milestones folder in file manager", icon: FolderOpen, onSelect: handleOpenMilestonesFolder },
+      { label: "Copy milestones folder path", icon: Copy, onSelect: handleCopyMilestonesFolderPath },
       { label: "Download tech stack", icon: Download, onSelect: handleDownloadTechStack },
       { label: "Download tech stack as JSON", icon: FileJson, onSelect: handleDownloadTechStackJson },
       { label: "Copy tech stack", icon: Copy, onSelect: handleCopyTechStack },
       { label: "Copy tech stack as JSON", icon: FileJson, onSelect: handleCopyTechStackJson },
+      { label: "Download tech stack as CSV", icon: FileSpreadsheet, onSelect: handleDownloadTechStackCsv },
+      { label: "Copy tech stack as CSV", icon: FileSpreadsheet, onSelect: handleCopyTechStackCsv },
       { label: "Download projects list as JSON", icon: FileJson, onSelect: handleDownloadProjectsListJson },
       { label: "Copy projects list as JSON", icon: FileJson, onSelect: handleCopyProjectsListJson },
       { label: "Download projects list as CSV", icon: FileSpreadsheet, onSelect: handleDownloadProjectsListCsv },
       { label: "Copy projects list as CSV", icon: FileSpreadsheet, onSelect: handleCopyProjectsListCsv },
+      { label: "Download projects list as Markdown", icon: FileText, onSelect: handleDownloadProjectsListMarkdown },
+      { label: "Copy projects list as Markdown", icon: FileText, onSelect: handleCopyProjectsListMarkdown },
+      { label: "Download active projects as JSON", icon: FileJson, onSelect: handleDownloadActiveProjectsJson },
+      { label: "Copy active projects as JSON", icon: FileJson, onSelect: handleCopyActiveProjectsJson },
+      { label: "Download active projects as CSV", icon: FileSpreadsheet, onSelect: handleDownloadActiveProjectsCsv },
+      { label: "Copy active projects as CSV", icon: FileSpreadsheet, onSelect: handleCopyActiveProjectsCsv },
       { label: "Discover folders", icon: FolderSearch, onSelect: () => { router.push("/projects?discover=1"); closePalette(); } },
       { label: "Print current page", icon: Printer, onSelect: () => { window.print(); closePalette(); } },
       { label: "Toggle sidebar", icon: PanelLeft, onSelect: () => { dispatchSidebarToggle(); closePalette(); } },
       { label: "Scroll to top", icon: ChevronUp, onSelect: () => { const main = document.getElementById("main-content"); if (main) main.scrollTop = 0; closePalette(); } },
       { label: "Scroll to bottom", icon: ChevronDown, onSelect: () => { const main = document.getElementById("main-content"); if (main) main.scrollTop = main.scrollHeight - main.clientHeight; closePalette(); } },
       { label: "Focus main content", icon: Focus, onSelect: () => { document.getElementById("main-content")?.focus(); closePalette(); } },
+      { label: "Focus filter", icon: Search, onSelect: () => { dispatchFocusFilterEvent(); closePalette(); } },
     ];
     const repoUrl = getAppRepositoryUrl();
     if (repoUrl) {
+      entries.push({
+        label: "Copy repository URL",
+        icon: Copy,
+        onSelect: async () => {
+          const ok = await copyTextToClipboard(repoUrl);
+          if (ok) toast.success("Repository URL copied to clipboard");
+          else toast.error("Failed to copy to clipboard");
+          closePalette();
+        },
+      });
       entries.push({
         label: "View source",
         icon: ExternalLink,
@@ -769,7 +1716,7 @@ export function CommandPalette() {
       });
     }
     return entries;
-  }, [handleRefreshData, goToRun, goToTesting, goToMilestones, goToVersioning, goToPlanner, goToDesign, goToArchitecture, goToFirstProject, closePalette, openShortcutsModal, handleClearRunHistory, handleRemoveLastRun, handleRestoreRunHistoryFilters, handleSwitchToLightMode, handleSwitchToDarkMode, handleOpenFirstProjectInCursor, handleOpenFirstProjectInTerminal, handleOpenFirstProjectInFileManager, handleOpenFirstProjectCursorFolder, handleStopAllRuns, handleCheckApiHealth, handleCopyAppInfo, handleCopyAppInfoAsMarkdown, handleCopyAppInfoAsJson, handleDownloadAppInfo, handleDownloadAppInfoJson, handleCopyFirstProjectPath, handleCopyDataDirectoryPath, handleCopyKeyboardShortcuts, handleCopyKeyboardShortcutsJson, handleDownloadKeyboardShortcuts, handleDownloadKeyboardShortcutsJson, handleDownloadKeyboardShortcutsCsv, handleCopyRunHistory, handleCopyLastRun, handleDownloadRunHistory, handleDownloadRunHistoryJson, handleDownloadRunHistoryMarkdown, handleDownloadRunHistoryCsv, handleOpenAppDataFolder, handleOpenDocumentationFolder, handleDownloadDocumentationInfo, handleDownloadDocumentationInfoJson, handleCopyDocumentationInfo, handleCopyDocumentationInfoJson, handleCopyPrompts, handleDownloadPrompts, handleDownloadIdeas, handleDownloadIdeasJson, handleCopyIdeas, handleCopyIdeasJson, handleDownloadTechStack, handleDownloadTechStackJson, handleCopyTechStack, handleCopyTechStackJson, handleDownloadProjectsListJson, handleCopyProjectsListJson, handleDownloadProjectsListCsv, handleCopyProjectsListCsv]);
+  }, [handleRefreshData, goToRun, goToTesting, goToMilestones, goToVersioning, goToPlanner, goToDesign, goToArchitecture, goToControl, goToShortcuts, goToFirstProjectIdeas, goToFirstProjectDocumentation, goToFirstProjectFrontend, goToFirstProjectBackend, goToFirstProjectMilestones, goToFirstProjectPlanner, goToFirstProject, closePalette, openShortcutsModal, handleClearRunHistory, handleRemoveLastRun, handleRestoreRunHistoryFilters, handleRestoreProjectsListFilters, handleSwitchToLightMode, handleSwitchToDarkMode, handleOpenFirstProjectInCursor, handleOpenFirstProjectInTerminal, handleOpenFirstProjectInFileManager, handleOpenFirstProjectCursorFolder, handleOpenFirstProjectRemoteInBrowser, handleStopAllRuns, handleCheckApiHealth, handleCopyAppInfo, handleCopyAppVersion, handleCopyAppInfoAsMarkdown, handleCopyAppInfoAsJson, handleDownloadAppInfo, handleDownloadAppInfoJson, handleCopyDashboardMetricsJson, handleDownloadDashboardMetricsJson, handleCopyDashboardMetricsCsv, handleDownloadDashboardMetricsCsv, handleCopyDashboardMetricsMarkdown, handleDownloadDashboardMetricsMarkdown, handleCopyFirstProjectPath, handleCopyFirstProjectImplementationLog, handleDownloadFirstProjectImplementationLog, handleDownloadFirstProjectDesignsJson, handleCopyFirstProjectDesignsJson, handleDownloadFirstProjectDesignsMarkdown, handleCopyFirstProjectDesignsMarkdown, handleDownloadFirstProjectArchitecturesJson, handleCopyFirstProjectArchitecturesJson, handleDownloadFirstProjectArchitecturesMarkdown, handleCopyFirstProjectArchitecturesMarkdown, handleDownloadFirstProjectTicketsJson, handleCopyFirstProjectTicketsJson, handleDownloadFirstProjectTicketsCsv, handleCopyFirstProjectTicketsCsv, handleDownloadFirstProjectTicketsMarkdown, handleCopyFirstProjectTicketsMarkdown, handleDownloadFirstProjectMilestonesJson, handleCopyFirstProjectMilestonesJson, handleDownloadFirstProjectMilestonesCsv, handleCopyFirstProjectMilestonesCsv, handleDownloadFirstProjectMilestonesMarkdown, handleCopyFirstProjectMilestonesMarkdown, handleDownloadFirstProjectTechStackJson, handleCopyFirstProjectTechStackJson, handleDownloadFirstProjectTechStackMarkdown, handleCopyFirstProjectTechStackMarkdown, handleDownloadFirstProjectTechStackCsv, handleCopyFirstProjectTechStackCsv, handleCopyDataDirectoryPath, handleCopyDatabaseFilePath, handleOpenTechnologiesFolder, handleCopyTechnologiesFolderPath, handleCopyKeyboardShortcuts, handleCopyKeyboardShortcutsJson, handleCopyKeyboardShortcutsCsv, handleDownloadKeyboardShortcuts, handleDownloadKeyboardShortcutsJson, handleDownloadKeyboardShortcutsCsv, handleCopyRunHistory, handleCopyRunHistoryStatsSummary, handleDownloadRunHistoryStatsJson, handleCopyRunHistoryStatsJson, handleDownloadRunHistoryStatsCsv, handleCopyRunHistoryStatsCsv, handleCopyRunHistoryJson, handleCopyRunHistoryMarkdown, handleCopyRunHistoryCsv, handleCopyLastRun, handleDownloadLastRun, handleDownloadRunHistory, handleDownloadRunHistoryJson, handleDownloadRunHistoryMarkdown, handleDownloadRunHistoryCsv, handleOpenAppDataFolder, handleOpenDocumentationFolder, handleCopyCurrentPageUrl, handleCopyDocumentationFolderPath, handleDownloadDocumentationInfo, handleDownloadDocumentationInfoJson, handleCopyDocumentationInfo, handleCopyDocumentationInfoJson, handleCopyPrompts, handleDownloadPrompts, handleDownloadPromptsJson, handleCopyPromptsJson, handleDownloadPromptsCsv, handleCopyPromptsCsv, handleDownloadCursorPromptsCsv, handleCopyCursorPromptsCsv, handleDownloadCursorPromptsJson, handleCopyCursorPromptsJson, handleDownloadCursorPromptsMarkdown, handleCopyCursorPromptsMarkdown, handleDownloadIdeas, handleDownloadIdeasJson, handleDownloadIdeasCsv, handleCopyIdeas, handleCopyIdeasJson, handleCopyIdeasCsv, handleOpenIdeasFolder, handleCopyIdeasFolderPath, handleOpenPlannerFolder, handleCopyPlannerFolderPath, handleOpenMilestonesFolder, handleCopyMilestonesFolderPath, handleDownloadTechStack, handleDownloadTechStackJson, handleCopyTechStack, handleCopyTechStackJson, handleDownloadTechStackCsv, handleCopyTechStackCsv, handleDownloadProjectsListJson, handleCopyProjectsListJson, handleDownloadProjectsListCsv, handleCopyProjectsListCsv, handleDownloadProjectsListMarkdown, handleCopyProjectsListMarkdown, handleDownloadActiveProjectsJson, handleCopyActiveProjectsJson, handleDownloadActiveProjectsCsv, handleCopyActiveProjectsCsv]);
   const projectEntries: CommandPaletteEntry[] = useMemo(() => {
     if (!projects || projects.length === 0) return [];
     const recentIds = getRecentProjectIds();
@@ -950,7 +1897,7 @@ export function CommandPalette() {
         isMac ? e.metaKey && e.shiftKey && e.key === "G" : e.ctrlKey && e.altKey && e.key === "g";
       if (goDatabase) {
         e.preventDefault();
-        router.push("/?tab=all");
+        router.push("/database");
       }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -1065,6 +2012,78 @@ export function CommandPalette() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, goToPlanner]);
 
+  // Go to Control: ⌘⇧C (Mac) / Ctrl+Alt+C (Windows/Linux); same guards as Dashboard
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (open) return;
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      const isMac = typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+      const goControl =
+        isMac ? e.metaKey && e.shiftKey && e.key === "C" : e.ctrlKey && e.altKey && e.key === "c";
+      if (goControl) {
+        e.preventDefault();
+        goToControl();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, goToControl]);
+
+  // Go to Design: ⌘⇧X (Mac) / Ctrl+Alt+X (Windows/Linux); same guards as Dashboard
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (open) return;
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      const isMac = typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+      const goDesign =
+        isMac ? e.metaKey && e.shiftKey && e.key === "X" : e.ctrlKey && e.altKey && e.key === "x";
+      if (goDesign) {
+        e.preventDefault();
+        goToDesign();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, goToDesign]);
+
+  // Go to Architecture: ⌘⇧A (Mac) / Ctrl+Alt+A (Windows/Linux); same guards as Dashboard
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (open) return;
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      const isMac = typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+      const goArchitecture =
+        isMac ? e.metaKey && e.shiftKey && e.key === "A" : e.ctrlKey && e.altKey && e.key === "a";
+      if (goArchitecture) {
+        e.preventDefault();
+        goToArchitecture();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, goToArchitecture]);
+
+  // Go to Shortcuts: ⌘⇧S (Mac) / Ctrl+Alt+S (Windows/Linux); same guards as Dashboard
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (open) return;
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      const isMac = typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+      const goShortcuts =
+        isMac ? e.metaKey && e.shiftKey && e.key === "S" : e.ctrlKey && e.altKey && e.key === "s";
+      if (goShortcuts) {
+        e.preventDefault();
+        goToShortcuts();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, goToShortcuts]);
+
   // Go to Documentation: ⌘⇧D (Mac) / Ctrl+Alt+E (Windows/Linux); same guards as Dashboard (D is used for Dashboard on Windows)
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -1095,6 +2114,24 @@ export function CommandPalette() {
       if (focusMain) {
         e.preventDefault();
         document.getElementById("main-content")?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
+  // Focus filter (global): ⌘⇧/ (Mac) / Ctrl+Alt+/ (Windows/Linux); same guards as Dashboard
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (open) return;
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      const isMac = typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+      const focusFilter =
+        isMac ? e.metaKey && e.shiftKey && e.key === "/" : e.ctrlKey && e.altKey && e.key === "/";
+      if (focusFilter) {
+        e.preventDefault();
+        dispatchFocusFilterEvent();
       }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -1192,6 +2229,27 @@ export function CommandPalette() {
               onClick={handleConfirmClearRunHistory}
             >
               Clear history
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={removeLastRunConfirmOpen} onOpenChange={setRemoveLastRunConfirmOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Remove last run from history?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            The most recent run will be removed. This cannot be undone.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRemoveLastRunConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmRemoveLastRun}
+            >
+              Remove
             </Button>
           </DialogFooter>
         </DialogContent>

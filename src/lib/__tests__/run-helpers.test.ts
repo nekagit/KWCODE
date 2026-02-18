@@ -2,11 +2,13 @@
  * Unit tests for run-helpers used by Implement All and terminal slot UI.
  */
 import { describe, it, expect } from "vitest";
+import type { RunInfo } from "@/types/run";
 import {
   isImplementAllRun,
   parseTicketNumberFromRunLabel,
   formatElapsed,
   formatDurationMs,
+  getNextFreeSlotOrNull,
 } from "../run-helpers";
 
 describe("isImplementAllRun", () => {
@@ -168,5 +170,64 @@ describe("formatDurationMs", () => {
   it("formats 60s+ as m:ss", () => {
     expect(formatDurationMs(60000)).toBe("1:00");
     expect(formatDurationMs(125000)).toBe("2:05");
+  });
+});
+
+function runInfo(overrides: Partial<{ runId: string; label: string; status: "running" | "done"; slot: 1 | 2 | 3 }>): RunInfo {
+  return {
+    runId: "r1",
+    label: "Implement All",
+    logLines: [],
+    status: "running",
+    slot: 1,
+    ...overrides,
+  };
+}
+
+describe("getNextFreeSlotOrNull", () => {
+  it("returns 1 when no runs", () => {
+    expect(getNextFreeSlotOrNull([])).toBe(1);
+  });
+
+  it("returns 2 when slot 1 is occupied by an Implement All run", () => {
+    expect(getNextFreeSlotOrNull([runInfo({ runId: "a", slot: 1, label: "Implement All" })])).toBe(2);
+  });
+
+  it("returns 1 when slot 1 is occupied by a non–Implement All run (Manual run)", () => {
+    expect(getNextFreeSlotOrNull([runInfo({ runId: "a", slot: 1, label: "Manual run" })])).toBe(1);
+  });
+
+  it("returns 3 when slots 1 and 2 are occupied", () => {
+    expect(
+      getNextFreeSlotOrNull([
+        runInfo({ runId: "a", slot: 1, label: "Implement All" }),
+        runInfo({ runId: "b", slot: 2, label: "Ticket #1: x" }),
+      ])
+    ).toBe(3);
+  });
+
+  it("returns null when all three slots are occupied", () => {
+    expect(
+      getNextFreeSlotOrNull([
+        runInfo({ runId: "a", slot: 1, label: "Implement All" }),
+        runInfo({ runId: "b", slot: 2, label: "Ticket #1: x" }),
+        runInfo({ runId: "c", slot: 3, label: "Fast dev: y" }),
+      ])
+    ).toBe(null);
+  });
+
+  it("ignores runs with status done", () => {
+    expect(
+      getNextFreeSlotOrNull([runInfo({ runId: "a", slot: 1, label: "Implement All", status: "done" })])
+    ).toBe(1);
+  });
+
+  it("returns first free slot when slot 2 is free", () => {
+    expect(
+      getNextFreeSlotOrNull([
+        runInfo({ runId: "a", slot: 1, label: "Implement All" }),
+        runInfo({ runId: "b", slot: 3, label: "Ticket #2: y" }),
+      ])
+    ).toBe(2);
   });
 });

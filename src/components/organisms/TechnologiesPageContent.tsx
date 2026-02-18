@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { Copy, Cpu, Download, FileText, FolderOpen, Loader2, Pencil, RefreshCw, Save, Layout, Search, Server, Wrench, X } from "lucide-react";
+import { Copy, Cpu, Download, FileText, FolderOpen, Loader2, Pencil, Printer, RefreshCw, Save, Layout, Search, Server, Wrench, X } from "lucide-react";
 import { toast } from "sonner";
 import { Breadcrumb } from "@/components/shared/Breadcrumb";
 import { SingleContentPage } from "@/components/organisms/SingleContentPage";
@@ -29,6 +29,10 @@ import {
   downloadTechStack,
   downloadTechStackAsMarkdown,
 } from "@/lib/download-tech-stack";
+import {
+  downloadTechStackAsCsv,
+  copyTechStackAsCsvToClipboard,
+} from "@/lib/download-tech-stack-csv";
 import { openTechnologiesFolderInFileManager } from "@/lib/open-technologies-folder";
 import { useTechnologiesFocusFilterShortcut } from "@/lib/technologies-focus-filter-shortcut";
 
@@ -254,6 +258,17 @@ export function TechnologiesPageContent() {
           type="button"
           variant="outline"
           size="sm"
+          onClick={() => window.print()}
+          aria-label="Print current page"
+          title="Print technologies page (⌘P)"
+        >
+          <Printer className="h-4 w-4 mr-1.5" aria-hidden />
+          Print
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
           onClick={() => copyTechnologiesFolderPath()}
           aria-label="Copy technologies folder path"
         >
@@ -398,6 +413,26 @@ export function TechnologiesPageContent() {
                       >
                         <FileText className="size-4 mr-1.5" />
                         Download as Markdown
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => downloadTechStackAsCsv(techStack)}
+                        aria-label="Download tech stack as CSV"
+                        title="Download as CSV (category, technology, description)"
+                      >
+                        <Download className="size-4 mr-1.5" />
+                        Download as CSV
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => void copyTechStackAsCsvToClipboard(techStack)}
+                        aria-label="Copy tech stack as CSV to clipboard"
+                        title="Copy as CSV (same structure as Download as CSV)"
+                      >
+                        <Copy className="size-4 mr-1.5" />
+                        Copy as CSV
                       </Button>
                     </>
                   )}

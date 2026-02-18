@@ -1,13 +1,26 @@
 "use client";
 
-import { useEffect, useState, useMemo, useRef } from "react";
+import React, { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { invoke, isTauri } from "@/lib/tauri";
 import { listProjects } from "@/lib/api-projects";
 import { getDashboardMetrics } from "@/lib/api-dashboard-metrics";
+import { copyDashboardMetricsToClipboard } from "@/lib/copy-dashboard-metrics";
+import {
+  downloadDashboardMetricsAsCsv,
+  copyDashboardMetricsAsCsvToClipboard,
+} from "@/lib/download-dashboard-metrics-csv";
+import { downloadDashboardMetricsAsJson } from "@/lib/download-dashboard-metrics-json";
+import {
+  downloadDashboardMetricsAsMarkdown,
+  copyDashboardMetricsAsMarkdownToClipboard,
+} from "@/lib/download-dashboard-metrics-md";
 import { getRecentProjectIds } from "@/lib/recent-projects";
 import { useDashboardFocusFilterShortcut } from "@/lib/dashboard-focus-filter-shortcut";
+import { useQuickActions } from "@/context/quick-actions-context";
+import { useRunStore } from "@/store/run-store";
+import { RunHistoryStatsCard } from "@/components/molecules/DashboardsAndViews/RunHistoryStatsCard";
 import type { Project } from "@/types/project";
 import type { DashboardMetrics } from "@/types/dashboard";
 import {
@@ -18,12 +31,26 @@ import {
   Palette,
   Lightbulb,
   Cpu,
+  Terminal,
   ArrowRight,
   LayoutGrid,
   Folders,
   Search,
   CheckSquare,
   Square,
+  BookOpen,
+  Settings,
+  Moon,
+  Copy,
+  TestTube2,
+  ListTodo,
+  Keyboard,
+  Building2,
+  FileJson,
+  FileSpreadsheet,
+  FileText,
+  FolderGit2,
+  Printer,
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,12 +58,23 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 
 const entityLinks = [
   { href: "/projects", label: "Projects", icon: Folders, color: "text-blue-600 dark:text-blue-400" },
   { href: "/ideas", label: "Ideas", icon: Lightbulb, color: "text-amber-600 dark:text-amber-400" },
   { href: "/technologies", label: "Technologies", icon: Cpu, color: "text-emerald-600 dark:text-emerald-400" },
   { href: "/prompts", label: "Prompts", icon: MessageSquare, color: "text-violet-600 dark:text-violet-400" },
+  { href: "/design", label: "Design", icon: Palette, color: "text-pink-600 dark:text-pink-400" },
+  { href: "/architecture", label: "Architecture", icon: Building2, color: "text-teal-600 dark:text-teal-400" },
+  { href: "/run", label: "Run", icon: Terminal, color: "text-orange-600 dark:text-orange-400" },
+  { href: "/testing", label: "Testing", icon: TestTube2, color: "text-rose-600 dark:text-rose-400" },
+  { href: "/planner", label: "Planner", icon: ListTodo, color: "text-blue-600 dark:text-blue-400" },
+  { href: "/versioning", label: "Versioning", icon: FolderGit2, color: "text-amber-600 dark:text-amber-400" },
+  { href: "/documentation", label: "Documentation", icon: BookOpen, color: "text-sky-600 dark:text-sky-400" },
+  { href: "/database", label: "Database", icon: LayoutGrid, color: "text-slate-600 dark:text-slate-400" },
+  { href: "/configuration", label: "Configuration", icon: Settings, color: "text-green-600 dark:text-green-400" },
+  { href: "/loading-screen", label: "Loading", icon: Moon, color: "text-indigo-600 dark:text-indigo-400" },
 ];
 
 function ProjectCard({ project }: { project: Project }) {
@@ -118,7 +156,29 @@ function ProjectCard({ project }: { project: Project }) {
                 </p>
               )}
             </div>
-            <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-transform" />
+            <div className="flex shrink-0 items-center gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                aria-label="Copy project path to clipboard"
+                title="Copy path"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const path = project.repoPath?.trim();
+                  if (path) {
+                    await copyTextToClipboard(path);
+                  } else {
+                    toast.info("No project path set");
+                  }
+                }}
+              >
+                <Copy className="h-4 w-4" aria-hidden />
+              </Button>
+              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-transform" />
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-4 pt-0">
@@ -154,12 +214,16 @@ export interface DashboardOverviewProps {
 }
 
 export function DashboardOverview({ setActiveProjects }: DashboardOverviewProps = {}) {
+  const router = useRouter();
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filterQuery, setFilterQuery] = useState("");
   const filterInputRef = useRef<HTMLInputElement>(null);
+  const terminalOutputHistory = useRunStore((s) => s.terminalOutputHistory);
+  const activeProjects = useRunStore((s) => s.activeProjects);
+  const { openShortcutsModal } = useQuickActions();
   useDashboardFocusFilterShortcut(filterInputRef);
 
   useEffect(() => {
@@ -201,6 +265,23 @@ export function DashboardOverview({ setActiveProjects }: DashboardOverviewProps 
     });
     return list.slice(0, 6);
   }, [projects, filterQuery]);
+
+  const goToTesting = useCallback(async () => {
+    const active = activeProjects ?? [];
+    if (!active.length) {
+      toast.info("Select a project first");
+      router.push("/projects");
+      return;
+    }
+    const list = projects.length > 0 ? projects : await listProjects().catch(() => []);
+    const proj = Array.isArray(list) ? list.find((p) => p.repoPath === active[0]) : null;
+    if (!proj) {
+      toast.info("Open a project first");
+      router.push("/projects");
+      return;
+    }
+    router.push(`/projects/${proj.id}?tab=testing`);
+  }, [activeProjects, projects, router]);
 
   if (loading) {
     return (
@@ -270,32 +351,136 @@ export function DashboardOverview({ setActiveProjects }: DashboardOverviewProps 
               ))}
             </div>
           </div>
+          <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border/60 pt-4">
+            <span className="text-xs font-medium text-muted-foreground mr-1">Export metrics</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.print()}
+              aria-label="Print current page"
+              title="Print dashboard (⌘P)"
+            >
+              <Printer className="h-3.5 w-3.5 mr-1.5" aria-hidden />
+              Print
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void copyDashboardMetricsToClipboard()}
+              aria-label="Copy dashboard metrics as JSON"
+              title="Copy metrics as JSON"
+            >
+              <FileJson className="h-3.5 w-3.5 mr-1.5" aria-hidden />
+              Copy as JSON
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void downloadDashboardMetricsAsJson()}
+              aria-label="Download dashboard metrics as JSON"
+              title="Download metrics as JSON"
+            >
+              <FileJson className="h-3.5 w-3.5 mr-1.5" aria-hidden />
+              Download as JSON
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void copyDashboardMetricsAsCsvToClipboard()}
+              aria-label="Copy dashboard metrics as CSV"
+              title="Copy metrics as CSV"
+            >
+              <FileSpreadsheet className="h-3.5 w-3.5 mr-1.5" aria-hidden />
+              Copy as CSV
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void downloadDashboardMetricsAsCsv()}
+              aria-label="Download dashboard metrics as CSV"
+              title="Download metrics as CSV"
+            >
+              <FileSpreadsheet className="h-3.5 w-3.5 mr-1.5" aria-hidden />
+              Download as CSV
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void copyDashboardMetricsAsMarkdownToClipboard()}
+              aria-label="Copy dashboard metrics as Markdown"
+              title="Copy metrics as Markdown"
+            >
+              <FileText className="h-3.5 w-3.5 mr-1.5" aria-hidden />
+              Copy as Markdown
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void downloadDashboardMetricsAsMarkdown()}
+              aria-label="Download dashboard metrics as Markdown"
+              title="Download metrics as Markdown"
+            >
+              <FileText className="h-3.5 w-3.5 mr-1.5" aria-hidden />
+              Download as Markdown
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Entity quick links */}
       <div className="flex flex-wrap gap-2">
         {entityLinks.map(({ href, label, icon: Icon, color }) => (
-          <Link
-            key={href}
-            href={href}
-            className={cn(
-              "inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium",
-              "transition-colors hover:bg-muted/50 hover:border-primary/20",
-              color
+          <React.Fragment key={href}>
+            <Link
+              href={href}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium",
+                "transition-colors hover:bg-muted/50 hover:border-primary/20",
+                color
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              {label}
+            </Link>
+            {href === "/run" && (
+              <Button
+                type="button"
+                variant="ghost"
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium",
+                  "transition-colors hover:bg-muted/50 hover:border-primary/20",
+                  "text-emerald-600 dark:text-emerald-400"
+                )}
+                onClick={goToTesting}
+              >
+                <TestTube2 className="h-4 w-4" />
+                Testing
+              </Button>
             )}
-          >
-            <Icon className="h-4 w-4" />
-            {label}
-          </Link>
+            {href === "/run" && (
+              <Button
+                type="button"
+                variant="ghost"
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium",
+                  "transition-colors hover:bg-muted/50 hover:border-primary/20",
+                  "text-slate-600 dark:text-slate-400"
+                )}
+                onClick={openShortcutsModal}
+                aria-label="Open keyboard shortcuts help"
+                title="Keyboard shortcuts"
+              >
+                <Keyboard className="h-4 w-4" />
+                Shortcuts
+              </Button>
+            )}
+          </React.Fragment>
         ))}
-        <Link
-          href="/?tab=all"
-          className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:border-primary/20"
-        >
-          <LayoutGrid className="h-4 w-4" />
-          Database
-        </Link>
+      </div>
+
+      {/* Run history stats card */}
+      <div className="max-w-sm">
+        <RunHistoryStatsCard entries={terminalOutputHistory} />
       </div>
 
       {/* Projects */}
@@ -351,12 +536,12 @@ export function DashboardOverview({ setActiveProjects }: DashboardOverviewProps 
                 />
               </div>
             )}
-            <Link
-              href="/projects"
-              className="text-xs font-medium text-primary hover:underline"
-            >
-              View all
-            </Link>
+        <Link
+          href="/projects"
+          className="text-xs font-medium text-primary hover:underline"
+        >
+          View all
+        </Link>
           </div>
         </div>
         {projects.length === 0 ? (

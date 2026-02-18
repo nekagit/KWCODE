@@ -4,6 +4,10 @@
  */
 
 const STORAGE_KEY = "kwcode-projects-list-view-preference";
+
+/** Custom event name dispatched when projects list view preference is restored to defaults (e.g. from Command palette). ProjectsListPageContent listens to sync its local state. */
+export const PROJECTS_LIST_VIEW_PREFERENCE_RESTORED_EVENT =
+  "kwcode-projects-list-view-preference-restored";
 const MAX_FILTER_LENGTH = 500;
 
 export type ProjectsListSortOrder = "asc" | "desc" | "recent";

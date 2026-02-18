@@ -9,6 +9,7 @@ import { Loader2, Database, FileCode, Braces, FolderOpen, Copy } from "lucide-re
 import { invoke, isTauri } from "@/lib/tauri";
 import { openAppDataFolderInFileManager } from "@/lib/open-app-data-folder";
 import { copyAppDataFolderPath } from "@/lib/copy-app-data-folder-path";
+import { copyDatabaseFilePath } from "@/lib/copy-database-file-path";
 import type { TicketRow } from "@/types/ticket";
 
 import { ScriptListDisplay } from "@/components/molecules/Displays/ScriptListDisplay";
@@ -156,6 +157,19 @@ export function DatabaseDataTabContent({
           <Copy className="size-4 shrink-0 mr-1.5" aria-hidden />
           Copy path
         </Button>
+        {isTauriEnv && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => void copyDatabaseFilePath()}
+            aria-label="Copy database file path to clipboard"
+            title="Copy path to app.db"
+          >
+            <Copy className="size-4 shrink-0 mr-1.5" aria-hidden />
+            Copy database file path
+          </Button>
+        )}
       </div>
       {dataError && (
         <ErrorDisplay message={dataError} />

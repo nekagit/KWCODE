@@ -4,7 +4,9 @@ import { useState, useCallback, useEffect, useMemo, useRef, Fragment } from "rea
 import type { Project } from "@/types/project";
 import type { NightShiftCirclePhase } from "@/types/run";
 import { readProjectFileOrEmpty, listProjectFiles } from "@/lib/api-projects";
-import { invoke, isTauri } from "@/lib/tauri";
+import { fetchProjectTicketsAndKanban } from "@/lib/fetch-project-tickets-and-kanban";
+import { invoke, isTauri, projectIdArgPayload } from "@/lib/tauri";
+import { fetchProjectMilestones } from "@/lib/fetch-project-milestones";
 import {
   buildKanbanFromTickets,
   applyInProgressState,
@@ -51,6 +53,7 @@ import {
   FileJson,
   FileText,
   FileSpreadsheet,
+  Printer,
   Search,
   X,
   RotateCcw,
@@ -63,6 +66,7 @@ import { downloadRunOutput } from "@/lib/download-run-output";
 import { downloadRunAsJson, copyRunAsJsonToClipboard } from "@/lib/download-run-as-json";
 import { downloadRunAsMarkdown, copyRunAsMarkdownToClipboard } from "@/lib/download-run-as-md";
 import { copySingleRunAsPlainTextToClipboard } from "@/lib/copy-single-run-as-plain-text";
+import { downloadSingleRunAsPlainText } from "@/lib/download-single-run-as-plain-text";
 import { downloadRunAsCsv, copyRunAsCsvToClipboard } from "@/lib/download-run-as-csv";
 import { copyAllRunHistoryToClipboard } from "@/lib/copy-all-run-history";
 import { downloadAllRunHistory } from "@/lib/download-all-run-history";
@@ -75,6 +79,9 @@ import { groupRunHistoryByDate, RUN_HISTORY_DATE_GROUP_LABELS, getRunHistoryDate
 import { useRunHistoryFocusFilterShortcut } from "@/lib/run-history-focus-filter-shortcut";
 import { filterRunHistoryByQuery } from "@/lib/run-history-filter";
 import { computeRunHistoryStats, formatRunHistoryStatsToolbar } from "@/lib/run-history-stats";
+import { copyRunHistoryStatsSummaryToClipboard } from "@/lib/copy-run-history-stats-summary";
+import { downloadRunHistoryStatsAsJson, copyRunHistoryStatsAsJsonToClipboard } from "@/lib/download-run-history-stats-json";
+import { downloadRunHistoryStatsAsCsv, copyRunHistoryStatsAsCsvToClipboard } from "@/lib/download-run-history-stats-csv";
 import { StatusPill } from "@/components/shared/DisplayPrimitives";
 import { TerminalSlot } from "@/components/shared/TerminalSlot";
 import { KanbanTicketCard } from "@/components/molecules/Kanban/KanbanTicketCard";
@@ -633,39 +640,7 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
         invoke("frontend_debug_log", { location: "ProjectRunTab.tsx:loadTicketsAndKanban", message: "Worker: loadTicketsAndKanban start", data: { projectId, useInvoke: true } }).catch(() => {});
       }
       // #endregion
-      type TicketRow = { id: string; number: number; title: string; description?: string; priority: string; feature_name?: string; featureName?: string; done: boolean; status: string; agents?: string[]; milestone_id?: number; idea_id?: number };
-      let apiTickets: TicketRow[];
-      let inProgressIds: string[];
-      if (isTauri) {
-        const [ticketsList, kanbanState] = await Promise.all([
-          invoke<TicketRow[]>("get_project_tickets", { projectId }),
-          invoke<{ inProgressIds: string[] }>("get_project_kanban_state", { projectId }),
-        ]);
-        apiTickets = ticketsList ?? [];
-        inProgressIds = kanbanState?.inProgressIds ?? [];
-      } else {
-        const [ticketsRes, stateRes] = await Promise.all([
-          fetch(`/api/data/projects/${projectId}/tickets`),
-          fetch(`/api/data/projects/${projectId}/kanban-state`),
-        ]);
-        if (!ticketsRes.ok || !stateRes.ok) throw new Error("Failed to load tickets");
-        apiTickets = (await ticketsRes.json()) as TicketRow[];
-        const state = (await stateRes.json()) as { inProgressIds: string[] };
-        inProgressIds = state.inProgressIds ?? [];
-      }
-      const tickets: ParsedTicket[] = apiTickets.map((t) => ({
-        id: t.id,
-        number: t.number,
-        title: t.title,
-        description: t.description,
-        priority: (t.priority as ParsedTicket["priority"]) || "P1",
-        featureName: t.featureName ?? t.feature_name ?? "General",
-        done: t.done,
-        status: (t.status as ParsedTicket["status"]) || "Todo",
-        agents: t.agents,
-        milestoneId: t.milestone_id,
-        ideaId: t.idea_id,
-      }));
+      const { tickets, inProgressIds } = await fetchProjectTicketsAndKanban(projectId);
       const data = buildKanbanFromTickets(tickets, inProgressIds);
       setKanbanData(data);
     } catch (e) {
@@ -991,6 +966,7 @@ function WorkerHistorySection() {
   const removeTerminalOutputFromHistory = useRunStore((s) => s.removeTerminalOutputFromHistory);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
+  const [removeLastRunConfirmOpen, setRemoveLastRunConfirmOpen] = useState(false);
   const [filterQuery, setFilterQuery] = useState(() => getRunHistoryPreferences().filterQuery);
   const filterInputRef = useRef<HTMLInputElement>(null);
   useRunHistoryFocusFilterShortcut(filterInputRef);
@@ -1068,6 +1044,10 @@ function WorkerHistorySection() {
   const groupedByDate = useMemo(() => groupRunHistoryByDate(displayHistory), [displayHistory]);
   const historyStats = useMemo(() => computeRunHistoryStats(displayHistory), [displayHistory]);
   const historyStatsToolbarText = formatRunHistoryStatsToolbar(historyStats);
+  const lastRun = useMemo(() => {
+    if (history.length === 0) return null;
+    return [...history].sort((a, b) => (b.timestamp || "").localeCompare(a.timestamp || ""))[0] ?? null;
+  }, [history]);
   const entry = expandedId ? history.find((e) => e.id === expandedId) : null;
 
   return (
@@ -1086,6 +1066,113 @@ function WorkerHistorySection() {
         </div>
         {history.length > 0 && (
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => window.print()}
+              className="gap-1.5 text-xs h-8 rounded-lg text-muted-foreground hover:text-foreground"
+              title="Print run tab (⌘P)"
+              aria-label="Print current page"
+            >
+              <Printer className="size-3" />
+              Print
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={!lastRun}
+              onClick={() => lastRun && copySingleRunAsPlainTextToClipboard(lastRun)}
+              className="gap-1.5 text-xs h-8 rounded-lg text-muted-foreground hover:text-foreground"
+              title={lastRun ? "Copy most recent run to clipboard" : "No run to copy"}
+              aria-label="Copy last run to clipboard"
+            >
+              <Copy className="size-3" />
+              Copy last run
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={!lastRun}
+              onClick={() => lastRun && downloadSingleRunAsPlainText(lastRun)}
+              className="gap-1.5 text-xs h-8 rounded-lg text-muted-foreground hover:text-foreground"
+              title={lastRun ? "Download most recent run as file" : "No run to download"}
+              aria-label="Download last run as file"
+            >
+              <Download className="size-3" />
+              Download last run
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={!lastRun}
+              onClick={() => lastRun && setRemoveLastRunConfirmOpen(true)}
+              className="gap-1.5 text-xs h-8 rounded-lg text-muted-foreground hover:text-foreground"
+              title={lastRun ? "Remove most recent run from history" : "No run to remove"}
+              aria-label="Remove last run from history"
+            >
+              <Trash2 className="size-3" />
+              Remove last run
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={displayHistory.length === 0}
+              onClick={() => copyRunHistoryStatsSummaryToClipboard(displayHistory)}
+              className="gap-1.5 text-xs h-8 rounded-lg text-muted-foreground hover:text-foreground"
+              title={displayHistory.length > 0 ? "Copy run history stats summary to clipboard" : "No run history to copy"}
+              aria-label="Copy run history stats summary to clipboard"
+            >
+              <Copy className="size-3" />
+              Copy summary
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={displayHistory.length === 0}
+              onClick={() => downloadRunHistoryStatsAsJson(displayHistory)}
+              className="gap-1.5 text-xs h-8 rounded-lg text-muted-foreground hover:text-foreground"
+              title={displayHistory.length > 0 ? "Export run history stats as JSON file" : "No runs to export"}
+              aria-label="Download run history stats as JSON"
+            >
+              <FileJson className="size-3" />
+              Download stats as JSON
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={displayHistory.length === 0}
+              onClick={() => void copyRunHistoryStatsAsJsonToClipboard(displayHistory)}
+              className="gap-1.5 text-xs h-8 rounded-lg text-muted-foreground hover:text-foreground"
+              title={displayHistory.length > 0 ? "Copy run history stats as JSON to clipboard" : "No runs to copy"}
+              aria-label="Copy run history stats as JSON to clipboard"
+            >
+              <FileJson className="size-3" />
+              Copy stats as JSON
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={displayHistory.length === 0}
+              onClick={() => downloadRunHistoryStatsAsCsv(displayHistory)}
+              className="gap-1.5 text-xs h-8 rounded-lg text-muted-foreground hover:text-foreground"
+              title={displayHistory.length > 0 ? "Export run history stats as CSV file" : "No runs to export"}
+              aria-label="Download run history stats as CSV"
+            >
+              <FileSpreadsheet className="size-3" />
+              Download stats as CSV
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={displayHistory.length === 0}
+              onClick={() => void copyRunHistoryStatsAsCsvToClipboard(displayHistory)}
+              className="gap-1.5 text-xs h-8 rounded-lg text-muted-foreground hover:text-foreground"
+              title={displayHistory.length > 0 ? "Copy run history stats as CSV to clipboard" : "No runs to copy"}
+              aria-label="Copy run history stats as CSV to clipboard"
+            >
+              <FileSpreadsheet className="size-3" />
+              Copy stats as CSV
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -1699,6 +1786,34 @@ function WorkerHistorySection() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={removeLastRunConfirmOpen} onOpenChange={setRemoveLastRunConfirmOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Remove last run from history?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            The most recent run will be removed. This cannot be undone.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRemoveLastRunConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (lastRun) {
+                  removeTerminalOutputFromHistory(lastRun.id);
+                  setRemoveLastRunConfirmOpen(false);
+                  toast.success("Last run removed from history");
+                }
+              }}
+            >
+              Remove
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -1930,18 +2045,9 @@ function WorkerFastDevelopmentSection({
       const fullPrompt = FAST_DEV_PROMPT_PREFIX + text + agentsBlock;
       const title = text.length > 120 ? `${text.slice(0, 117)}…` : text;
 
-      let milestoneId: number;
-      if (isTauri) {
-        const mils = await invoke<{ id: number; name: string }[]>("get_project_milestones", { projectId });
-        const general = mils?.find((m) => m.name === "General Development");
-        milestoneId = general?.id ?? mils?.[0]?.id;
-      } else {
-        const milRes = await fetch(`/api/data/projects/${projectId}/milestones`);
-        if (!milRes.ok) throw new Error("Failed to load milestones");
-        const mils = (await milRes.json()) as { id: number; name: string }[];
-        const general = mils.find((m) => m.name === "General Development");
-        milestoneId = (general ?? mils[0])?.id;
-      }
+      const mils = await fetchProjectMilestones(projectId);
+      const general = mils.find((m) => m.name === "General Development");
+      const milestoneId = general?.id ?? mils[0]?.id;
       if (milestoneId == null) {
         toast.error("No milestone found. Add a milestone in the Milestones tab (e.g. General Development).");
         setLoading(false);
@@ -1981,7 +2087,7 @@ function WorkerFastDevelopmentSection({
 
       let inProgressIds: string[];
       if (isTauri) {
-        const state = await invoke<{ inProgressIds: string[] }>("get_project_kanban_state", { projectId });
+        const state = await invoke<{ inProgressIds: string[] }>("get_project_kanban_state", projectIdArgPayload(projectId));
         inProgressIds = state?.inProgressIds ?? [];
       } else {
         const stateRes = await fetch(`/api/data/projects/${projectId}/kanban-state`);

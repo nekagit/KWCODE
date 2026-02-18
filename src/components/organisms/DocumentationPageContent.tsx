@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { BookOpen, Copy, FileJson, FileText, FolderOpen, Loader2, RefreshCw } from "lucide-react";
+import { BookOpen, Copy, FileJson, FileText, FolderOpen, Loader2, Printer, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Breadcrumb } from "@/components/shared/Breadcrumb";
 import { SingleContentPage } from "@/components/organisms/SingleContentPage";
@@ -66,6 +66,17 @@ export function DocumentationPageContent() {
             From the repo root, open these folders in your editor or file manager to read or edit the docs.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => window.print()}
+              aria-label="Print current page"
+              title="Print documentation page (⌘P)"
+            >
+              <Printer className="mr-2 h-4 w-4" aria-hidden />
+              Print
+            </Button>
             <Button
               type="button"
               variant="outline"

@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { LayoutDashboard, MessageSquare, Folders, Lightbulb, Cpu, Settings, Moon, BookOpen } from "lucide-react";
+import { LayoutDashboard, LayoutGrid, MessageSquare, Folders, Lightbulb, Cpu, Settings, Moon, BookOpen, Activity, TestTube2, Keyboard, ListTodo, Palette, Building2, FolderGit2 } from "lucide-react";
 import { NavLinkItem } from "@/components/molecules/Navigation/NavLinkItem";
 import { getOrganismClasses } from "./organism-classes";
 
@@ -25,13 +25,21 @@ const getNavItems = (): {
     { href: "/ideas", label: "Ideas", icon: Lightbulb, iconClassName: c["18"] },
     { href: "/technologies", label: "Technologies", icon: Cpu, iconClassName: c["14"] },
     { href: "/documentation", label: "Documentation", icon: BookOpen, iconClassName: c["14"] },
+    { href: "/database", label: "Database", icon: LayoutGrid, tab: "all", iconClassName: c["14"] },
   ],
   workNavItems: [
     { href: "/projects", label: "Projects", icon: Folders, iconClassName: c["14"] },
     { href: "/prompts", label: "Prompts", icon: MessageSquare, iconClassName: c["16"] },
+    { href: "/run", label: "Run", icon: Activity, iconClassName: c["14"] },
+    { href: "/testing", label: "Testing", icon: TestTube2, iconClassName: c["14"] },
+    { href: "/planner", label: "Planner", icon: ListTodo, iconClassName: c["14"] },
+    { href: "/versioning", label: "Versioning", icon: FolderGit2, iconClassName: c["14"] },
+    { href: "/design", label: "Design", icon: Palette, iconClassName: c["14"] },
+    { href: "/architecture", label: "Architecture", icon: Building2, iconClassName: c["14"] },
   ],
   bottomNavItems: [
     { href: "/configuration", label: "Configuration", icon: Settings, iconClassName: c["14"] },
+    { href: "/shortcuts", label: "Shortcuts", icon: Keyboard, iconClassName: c["14"] },
     { href: "/loading-screen", label: "Loading", icon: Moon, iconClassName: c["19"] },
   ],
 });
@@ -67,9 +75,12 @@ function SidebarNavigationContent({
 
   const renderItem = (item: NavItem) => {
     const { href, label, icon, tab, iconClassName } = item;
-    const isActive = tab != null
-      ? pathname === "/" && currentTab === tab
-      : pathname === href || (href !== "/" && pathname.startsWith(href));
+    const isActive =
+      href === "/database"
+        ? pathname === "/database" || (pathname === "/" && currentTab === "all")
+        : tab != null
+          ? pathname === "/" && currentTab === tab
+          : pathname === href || (href !== "/" && pathname.startsWith(href));
     return (
       <NavLinkItem
         key={href}

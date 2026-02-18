@@ -11,9 +11,10 @@ In the Worker tab’s **Fast development** flow, after creating a ticket and upd
 ## Decision
 
 - **Backend (Rust):** Introduce a `RunTerminalAgentArgs` struct with `#[serde(alias = "projectPath")]` for `project_path` and `#[serde(alias = "promptContent")]` for `prompt_content`, so the frontend’s camelCase payload deserializes correctly. Change `run_run_terminal_agent` to take a single `args: RunTerminalAgentArgs` parameter and destructure it inside the command.
-- **Frontend:** No change; it continues to send `{ projectPath, promptContent, label }` from `run-store.ts` (processTempTicketQueue).
+- **Frontend:** Initially continued to send `{ projectPath, promptContent, label }`. In the **built** app, Tauri IPC expects the parameter key `args`, so the payload must be `{ args: { projectPath, promptContent, label } }`. See ADR 0227.
 
 ## Consequences
 
 - Fast development flow works in Tauri dev and built app: ticket is created, kanban updated, and the terminal agent starts (or is queued) without invoke errors.
 - Aligns with existing pattern (e.g. `ProjectIdArg` with `projectId` alias) for accepting camelCase from the frontend.
+- Night shift and other `runTempTicket` / `runSetupPrompt` flows also require the `args` wrapper in the built app (ADR 0227).

@@ -17,6 +17,12 @@ const APP_TITLE = "KWCode";
 /** Pathname to default page title (without " — KWCode"). */
 const PATHNAME_TITLE_MAP: Record<string, string> = {
   "/": "Dashboard",
+  "/database": "Database",
+  "/shortcuts": "Shortcuts",
+  "/planner": "Planner",
+  "/versioning": "Versioning",
+  "/design": "Design",
+  "/architecture": "Architecture",
   "/projects": "Projects",
   "/projects/new": "New project",
   "/prompts": "Prompts",

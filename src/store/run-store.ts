@@ -2,8 +2,8 @@
 
 import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
-import { invoke, isTauri } from "@/lib/tauri";
-import { isImplementAllRun } from "@/lib/run-helpers";
+import { invoke, isTauri, runRunTerminalAgentPayload } from "@/lib/tauri";
+import { isImplementAllRun, getNextFreeSlotOrNull } from "@/lib/run-helpers";
 import { getApiErrorMessage } from "@/lib/utils";
 import { toast } from "sonner";
 import {
@@ -149,20 +149,6 @@ export interface PendingTempTicketJob {
   meta?: RunMeta;
 }
 
-/** Next free terminal slot (1–3) or null if all occupied. Used so we only start when a slot is free. */
-function getNextFreeSlotOrNull(runningRuns: RunInfo[]): 1 | 2 | 3 | null {
-  const occupied = new Set<1 | 2 | 3>();
-  for (const r of runningRuns) {
-    if (r.status !== "running") continue;
-    if (!isImplementAllRun(r)) continue;
-    if (r.slot === 1 || r.slot === 2 || r.slot === 3) occupied.add(r.slot);
-  }
-  for (const slot of [1, 2, 3] as const) {
-    if (!occupied.has(slot)) return slot;
-  }
-  return null;
-}
-
 /** Start one pending temp-ticket job if queue non-empty and a slot is free. Called after enqueue and on run exit. */
 function processTempTicketQueue(
   get: () => RunStore,
@@ -192,11 +178,7 @@ function processTempTicketQueue(
 
   (async () => {
     try {
-      const { run_id } = await invoke<{ run_id: string }>("run_run_terminal_agent", {
-        projectPath: job.projectPath,
-        promptContent: job.promptContent,
-        label: job.label,
-      });
+      const { run_id } = await invoke<{ run_id: string }>("run_run_terminal_agent", runRunTerminalAgentPayload(job.projectPath, job.promptContent, job.label));
       set((s) => ({
         runningRuns: s.runningRuns.map((r) =>
           r.runId === tempId ? { ...r, runId: run_id } : r
@@ -568,11 +550,7 @@ export const useRunStore = create<RunStore>()((set, get) => ({
     }
     set({ error: null });
     try {
-      const { run_id } = await invoke<{ run_id: string }>("run_run_terminal_agent", {
-        projectPath: path,
-        promptContent: promptContent.trim(),
-        label: `Setup Prompt: ${label}`,
-      });
+      const { run_id } = await invoke<{ run_id: string }>("run_run_terminal_agent", runRunTerminalAgentPayload(path, promptContent.trim(), `Setup Prompt: ${label}`));
       const runLabel = `Setup Prompt: ${label}`;
       set((s) => ({
         runningRuns: [

@@ -3,7 +3,7 @@
  * Dual-mode: Tauri uses get_ideas_list(project_id: null); browser uses /api/data/ideas.
  */
 
-import { invoke, isTauri } from "@/lib/tauri";
+import { invoke, isTauri, projectIdArgPayload } from "@/lib/tauri";
 import type { IdeaRecord } from "@/types/idea";
 import { toast } from "sonner";
 
@@ -37,7 +37,7 @@ function rowToRecord(row: IdeaRow): IdeaRecord {
 export async function fetchIdeas(): Promise<IdeaRecord[]> {
   try {
     if (isTauri) {
-      const rows = await invoke<IdeaRow[]>("get_ideas_list", { projectId: null });
+      const rows = await invoke<IdeaRow[]>("get_ideas_list", projectIdArgPayload(null));
       return Array.isArray(rows) ? rows.map(rowToRecord) : [];
     }
     const res = await fetch("/api/data/ideas");

@@ -46,6 +46,22 @@ if (!isTauri) {
 
 const TAURI_API_WAIT_MS = 5000;
 
+/**
+ * Payload for Tauri commands that take a single ProjectIdArg or ProjectIdArgOptional.
+ * In the built app, the IPC expects the parameter key `projectIdArg` (camelCase of the type);
+ * the value is the struct with `projectId` (alias for project_id).
+ */
+export function projectIdArgPayload(projectId: string | null): { projectIdArg: { projectId: string | null } } {
+  return { projectIdArg: { projectId } };
+}
+
+/**
+ * Payload for run_run_terminal_agent. In the built app, the IPC expects the parameter key `args`.
+ */
+export function runRunTerminalAgentPayload(projectPath: string, promptContent: string, label: string): { args: { projectPath: string; promptContent: string; label: string } } {
+  return { args: { projectPath, promptContent, label } };
+}
+
 export const invoke = async <T>(cmd: string, args?: Record<string, unknown>): Promise<T> => {
   if (isTauri && invokeReadyPromise) {
     const timeout = new Promise<never>((_, reject) =>

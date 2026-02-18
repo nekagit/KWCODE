@@ -27,6 +27,7 @@ import {
   Lightbulb,
   Activity,
   ExternalLink,
+  Copy,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Project } from "@/types/project";
@@ -73,6 +74,7 @@ import {
 import { useSetPageTitle } from "@/context/page-title-context";
 import { toast } from "sonner";
 import { Breadcrumb } from "@/components/shared/Breadcrumb";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 
 /**
  * Each tab’s dedicated .md in .cursor, updated by agent -p using current project data.
@@ -489,6 +491,25 @@ export function ProjectDetailsPageContent(props: ProjectDetailsPageContentProps 
                       {project.repoPath}
                     </span>
                   </MetadataBadge>
+                )}
+                {project.repoPath && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2"
+                    onClick={async () => {
+                      const path = project.repoPath?.trim();
+                      if (!path) return;
+                      const ok = await copyTextToClipboard(path);
+                      if (ok) toast.success("Project path copied to clipboard");
+                      else toast.error("Failed to copy");
+                    }}
+                    aria-label="Copy project path to clipboard"
+                    title="Copy path"
+                  >
+                    <Copy className="size-3.5" aria-hidden />
+                  </Button>
                 )}
                 {/* Initialize Button */}
                 {project.repoPath && (

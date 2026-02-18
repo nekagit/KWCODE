@@ -9,7 +9,7 @@ import {
 import { useUITheme } from "@/context/ui-theme";
 import { useRunState } from "@/context/run-state";
 import { useQuickActions } from "@/context/quick-actions-context";
-import { Palette, Keyboard, Copy, FileText, FileJson, RefreshCw, Loader2, FolderOpen, ClipboardList, Check, XCircle, ExternalLink } from "lucide-react";
+import { Palette, Keyboard, Copy, FileText, FileJson, RefreshCw, Loader2, FolderOpen, ClipboardList, Check, XCircle, ExternalLink, Printer } from "lucide-react";
 import { getOrganismClasses } from "./organism-classes";
 
 const c = getOrganismClasses("ConfigurationPageContent.tsx");
@@ -39,6 +39,7 @@ export function ConfigurationPageContent() {
   const [version, setVersion] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [apiHealthOk, setApiHealthOk] = useState<boolean | null>(null);
+  const [apiHealthChecking, setApiHealthChecking] = useState(false);
   const [dataDir, setDataDir] = useState<string | null>(null);
   const [repoUrl, setRepoUrl] = useState<string | null>(null);
 
@@ -88,6 +89,25 @@ export function ConfigurationPageContent() {
     [setUITheme]
   );
 
+  const handleCheckApiHealth = useCallback(async () => {
+    if (isTauri) return;
+    setApiHealthChecking(true);
+    try {
+      const data = await getApiHealth();
+      setApiHealthOk(data.ok === true);
+      if (data.ok) {
+        toast.success(data.version ? `API health: OK (${data.version})` : "API health: OK");
+      } else {
+        toast.error("API health: Unavailable");
+      }
+    } catch {
+      setApiHealthOk(false);
+      toast.error("API health: Unavailable");
+    } finally {
+      setApiHealthChecking(false);
+    }
+  }, []);
+
   const effectiveTheme = isValidUIThemeId(uiTheme) ? uiTheme : "light";
 
   return (
@@ -99,6 +119,18 @@ export function ConfigurationPageContent() {
         ]}
       />
       <div className="flex flex-wrap items-center justify-end gap-3">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => window.print()}
+          className="h-9 gap-2"
+          aria-label="Print current page"
+          title="Print configuration page (⌘P)"
+        >
+          <Printer className="size-4 shrink-0" aria-hidden />
+          Print
+        </Button>
         <Button
           type="button"
           variant="outline"
@@ -271,36 +303,74 @@ export function ConfigurationPageContent() {
                 </Button>
               )}
               {repoUrl && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-9 gap-2"
-                  onClick={() => window.open(repoUrl, "_blank", "noopener,noreferrer")}
-                  aria-label="Open app repository in browser"
-                  title={repoUrl}
-                >
-                  <ExternalLink className="size-4 shrink-0" aria-hidden />
-                  View source
-                </Button>
+                <>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 gap-2 text-muted-foreground hover:text-foreground"
+                    onClick={async () => {
+                      const ok = await copyTextToClipboard(repoUrl);
+                      if (ok) toast.success("Repository URL copied to clipboard");
+                    }}
+                    aria-label="Copy repository URL to clipboard"
+                    title="Copy repository URL"
+                  >
+                    <Copy className="size-4 shrink-0" aria-hidden />
+                    Copy repository URL
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-9 gap-2"
+                    onClick={() => window.open(repoUrl, "_blank", "noopener,noreferrer")}
+                    aria-label="Open app repository in browser"
+                    title={repoUrl}
+                  >
+                    <ExternalLink className="size-4 shrink-0" aria-hidden />
+                    View source
+                  </Button>
+                </>
               )}
-              {!isTauri && apiHealthOk !== null && (
-                <p
-                  className="text-sm text-muted-foreground flex items-center gap-2"
-                  aria-label="API health status"
-                >
-                  {apiHealthOk ? (
-                    <>
-                      <Check className="size-4 shrink-0 text-green-600 dark:text-green-500" aria-hidden />
-                      API health: OK
-                    </>
-                  ) : (
-                    <>
-                      <XCircle className="size-4 shrink-0 text-destructive" aria-hidden />
-                      API health: Unavailable
-                    </>
+              {!isTauri && (
+                <div className="flex flex-wrap items-center gap-2">
+                  {apiHealthOk !== null && (
+                    <p
+                      className="text-sm text-muted-foreground flex items-center gap-2"
+                      aria-label="API health status"
+                    >
+                      {apiHealthOk ? (
+                        <>
+                          <Check className="size-4 shrink-0 text-green-600 dark:text-green-500" aria-hidden />
+                          API health: OK
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="size-4 shrink-0 text-destructive" aria-hidden />
+                          API health: Unavailable
+                        </>
+                      )}
+                    </p>
                   )}
-                </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={apiHealthChecking}
+                    onClick={() => void handleCheckApiHealth()}
+                    className="h-8 gap-1.5"
+                    aria-label="Check API health"
+                    title="Re-check API health (browser mode)"
+                  >
+                    {apiHealthChecking ? (
+                      <RefreshCw className="size-3.5 shrink-0 animate-spin" aria-hidden />
+                    ) : (
+                      <RefreshCw className="size-3.5 shrink-0" aria-hidden />
+                    )}
+                    Check API health
+                  </Button>
+                </div>
               )}
             </div>
           )}

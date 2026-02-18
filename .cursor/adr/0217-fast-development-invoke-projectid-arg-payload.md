@@ -10,14 +10,16 @@ In **Tauri dev** (and built app), the Worker tab’s **Fast development** flow c
 
 ## Decision
 
-- For Tauri commands that take a single **ProjectIdArg** or **ProjectIdArgOptional** parameter, the frontend must pass the struct directly: **`{ projectId }`** (i.e. `{ projectId: projectId }`), not `{ projectIdArg: { projectId } }`.
+- For Tauri commands that take a single **ProjectIdArg** or **ProjectIdArgOptional** parameter, the frontend must pass the payload shape expected by the **built app** IPC: **`{ projectIdArg: { projectId } }`** (parameter name as key, struct as value). See ADR 0226.
+- Introduced **`projectIdArgPayload(projectId)`** in `@/lib/tauri` and use it for all such invokes.
 - Updated all invocations in:
   - **ProjectRunTab.tsx**: Fast development section and Kanban/ticket loading (`get_project_milestones`, `get_project_kanban_state`, `get_project_tickets`).
   - **ProjectTicketsTab.tsx**: `get_project_tickets`, `get_project_kanban_state`, `get_project_milestones`, `get_ideas_list`.
   - **ProjectControlTab.tsx**: `get_implementation_log_entries`, `get_project_milestones`, `get_ideas_list`.
+  - **fetch-ideas.ts**: `get_ideas_list` (with `projectIdArgPayload(null)` for optional).
 - No changes to Rust commands or to `ProjectIdArg` / `ProjectIdArgOptional`; only the frontend invoke payload shape was corrected.
 
 ## Consequences
 
-- Fast development (and other Worker/project flows that use these commands) work correctly in Tauri dev and built app.
-- Invoke payloads are consistent with Tauri’s deserialization of a single struct parameter.
+- Fast development (and other Worker/Planner/Control flows that use these commands) work correctly in Tauri dev and **built app**.
+- Invoke payloads use the parameter-key shape required by Tauri’s IPC in the built version.
