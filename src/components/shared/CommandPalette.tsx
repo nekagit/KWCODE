@@ -24,16 +24,6 @@ import { copyAppInfoToClipboard } from "@/lib/copy-app-info";
 import { copyAppVersionToClipboard } from "@/lib/copy-app-version";
 import { downloadAppInfoAsMarkdown, copyAppInfoAsMarkdownToClipboard } from "@/lib/download-app-info-md";
 import { downloadAppInfoAsJson, copyAppInfoAsJsonToClipboard } from "@/lib/download-app-info-json";
-import { copyDashboardMetricsToClipboard } from "@/lib/copy-dashboard-metrics";
-import { downloadDashboardMetricsAsJson } from "@/lib/download-dashboard-metrics-json";
-import {
-  downloadDashboardMetricsAsCsv,
-  copyDashboardMetricsAsCsvToClipboard,
-} from "@/lib/download-dashboard-metrics-csv";
-import {
-  downloadDashboardMetricsAsMarkdown,
-  copyDashboardMetricsAsMarkdownToClipboard,
-} from "@/lib/download-dashboard-metrics-md";
 import { copyAppDataFolderPath } from "@/lib/copy-app-data-folder-path";
 import { copyDatabaseFilePath } from "@/lib/copy-database-file-path";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
@@ -513,36 +503,6 @@ export function CommandPalette() {
     await copyAppInfoAsJsonToClipboard({ version, theme: effectiveTheme });
     closePalette();
   }, [closePalette, effectiveTheme]);
-
-  const handleCopyDashboardMetricsJson = useCallback(async () => {
-    await copyDashboardMetricsToClipboard();
-    closePalette();
-  }, [closePalette]);
-
-  const handleDownloadDashboardMetricsJson = useCallback(async () => {
-    await downloadDashboardMetricsAsJson();
-    closePalette();
-  }, [closePalette]);
-
-  const handleCopyDashboardMetricsCsv = useCallback(async () => {
-    await copyDashboardMetricsAsCsvToClipboard();
-    closePalette();
-  }, [closePalette]);
-
-  const handleDownloadDashboardMetricsCsv = useCallback(async () => {
-    await downloadDashboardMetricsAsCsv();
-    closePalette();
-  }, [closePalette]);
-
-  const handleCopyDashboardMetricsMarkdown = useCallback(async () => {
-    await copyDashboardMetricsAsMarkdownToClipboard();
-    closePalette();
-  }, [closePalette]);
-
-  const handleDownloadDashboardMetricsMarkdown = useCallback(async () => {
-    await downloadDashboardMetricsAsMarkdown();
-    closePalette();
-  }, [closePalette]);
 
   const handleOpenDocumentationFolder = useCallback(async () => {
     await openDocumentationFolderInFileManager();
@@ -1571,12 +1531,6 @@ export function CommandPalette() {
       { label: "Copy app info as JSON", icon: FileJson, onSelect: handleCopyAppInfoAsJson },
       { label: "Download app info", icon: Download, onSelect: handleDownloadAppInfo },
       { label: "Download app info as JSON", icon: FileJson, onSelect: handleDownloadAppInfoJson },
-      { label: "Copy dashboard metrics as JSON", icon: FileJson, onSelect: handleCopyDashboardMetricsJson },
-      { label: "Download dashboard metrics as JSON", icon: FileJson, onSelect: handleDownloadDashboardMetricsJson },
-      { label: "Copy dashboard metrics as CSV", icon: FileSpreadsheet, onSelect: handleCopyDashboardMetricsCsv },
-      { label: "Download dashboard metrics as CSV", icon: FileSpreadsheet, onSelect: handleDownloadDashboardMetricsCsv },
-      { label: "Copy dashboard metrics as Markdown", icon: FileText, onSelect: handleCopyDashboardMetricsMarkdown },
-      { label: "Download dashboard metrics as Markdown", icon: FileText, onSelect: handleDownloadDashboardMetricsMarkdown },
       { label: "Copy first project path", icon: Copy, onSelect: handleCopyFirstProjectPath },
       { label: "Copy first project implementation log", icon: ClipboardList, onSelect: handleCopyFirstProjectImplementationLog },
       { label: "Download first project implementation log", icon: Download, onSelect: handleDownloadFirstProjectImplementationLog },
@@ -1716,7 +1670,7 @@ export function CommandPalette() {
       });
     }
     return entries;
-  }, [handleRefreshData, goToRun, goToTesting, goToMilestones, goToVersioning, goToPlanner, goToDesign, goToArchitecture, goToControl, goToShortcuts, goToFirstProjectIdeas, goToFirstProjectDocumentation, goToFirstProjectFrontend, goToFirstProjectBackend, goToFirstProjectMilestones, goToFirstProjectPlanner, goToFirstProject, closePalette, openShortcutsModal, handleClearRunHistory, handleRemoveLastRun, handleRestoreRunHistoryFilters, handleRestoreProjectsListFilters, handleSwitchToLightMode, handleSwitchToDarkMode, handleOpenFirstProjectInCursor, handleOpenFirstProjectInTerminal, handleOpenFirstProjectInFileManager, handleOpenFirstProjectCursorFolder, handleOpenFirstProjectRemoteInBrowser, handleStopAllRuns, handleCheckApiHealth, handleCopyAppInfo, handleCopyAppVersion, handleCopyAppInfoAsMarkdown, handleCopyAppInfoAsJson, handleDownloadAppInfo, handleDownloadAppInfoJson, handleCopyDashboardMetricsJson, handleDownloadDashboardMetricsJson, handleCopyDashboardMetricsCsv, handleDownloadDashboardMetricsCsv, handleCopyDashboardMetricsMarkdown, handleDownloadDashboardMetricsMarkdown, handleCopyFirstProjectPath, handleCopyFirstProjectImplementationLog, handleDownloadFirstProjectImplementationLog, handleDownloadFirstProjectDesignsJson, handleCopyFirstProjectDesignsJson, handleDownloadFirstProjectDesignsMarkdown, handleCopyFirstProjectDesignsMarkdown, handleDownloadFirstProjectArchitecturesJson, handleCopyFirstProjectArchitecturesJson, handleDownloadFirstProjectArchitecturesMarkdown, handleCopyFirstProjectArchitecturesMarkdown, handleDownloadFirstProjectTicketsJson, handleCopyFirstProjectTicketsJson, handleDownloadFirstProjectTicketsCsv, handleCopyFirstProjectTicketsCsv, handleDownloadFirstProjectTicketsMarkdown, handleCopyFirstProjectTicketsMarkdown, handleDownloadFirstProjectMilestonesJson, handleCopyFirstProjectMilestonesJson, handleDownloadFirstProjectMilestonesCsv, handleCopyFirstProjectMilestonesCsv, handleDownloadFirstProjectMilestonesMarkdown, handleCopyFirstProjectMilestonesMarkdown, handleDownloadFirstProjectTechStackJson, handleCopyFirstProjectTechStackJson, handleDownloadFirstProjectTechStackMarkdown, handleCopyFirstProjectTechStackMarkdown, handleDownloadFirstProjectTechStackCsv, handleCopyFirstProjectTechStackCsv, handleCopyDataDirectoryPath, handleCopyDatabaseFilePath, handleOpenTechnologiesFolder, handleCopyTechnologiesFolderPath, handleCopyKeyboardShortcuts, handleCopyKeyboardShortcutsJson, handleCopyKeyboardShortcutsCsv, handleDownloadKeyboardShortcuts, handleDownloadKeyboardShortcutsJson, handleDownloadKeyboardShortcutsCsv, handleCopyRunHistory, handleCopyRunHistoryStatsSummary, handleDownloadRunHistoryStatsJson, handleCopyRunHistoryStatsJson, handleDownloadRunHistoryStatsCsv, handleCopyRunHistoryStatsCsv, handleCopyRunHistoryJson, handleCopyRunHistoryMarkdown, handleCopyRunHistoryCsv, handleCopyLastRun, handleDownloadLastRun, handleDownloadRunHistory, handleDownloadRunHistoryJson, handleDownloadRunHistoryMarkdown, handleDownloadRunHistoryCsv, handleOpenAppDataFolder, handleOpenDocumentationFolder, handleCopyCurrentPageUrl, handleCopyDocumentationFolderPath, handleDownloadDocumentationInfo, handleDownloadDocumentationInfoJson, handleCopyDocumentationInfo, handleCopyDocumentationInfoJson, handleCopyPrompts, handleDownloadPrompts, handleDownloadPromptsJson, handleCopyPromptsJson, handleDownloadPromptsCsv, handleCopyPromptsCsv, handleDownloadCursorPromptsCsv, handleCopyCursorPromptsCsv, handleDownloadCursorPromptsJson, handleCopyCursorPromptsJson, handleDownloadCursorPromptsMarkdown, handleCopyCursorPromptsMarkdown, handleDownloadIdeas, handleDownloadIdeasJson, handleDownloadIdeasCsv, handleCopyIdeas, handleCopyIdeasJson, handleCopyIdeasCsv, handleOpenIdeasFolder, handleCopyIdeasFolderPath, handleOpenPlannerFolder, handleCopyPlannerFolderPath, handleOpenMilestonesFolder, handleCopyMilestonesFolderPath, handleDownloadTechStack, handleDownloadTechStackJson, handleCopyTechStack, handleCopyTechStackJson, handleDownloadTechStackCsv, handleCopyTechStackCsv, handleDownloadProjectsListJson, handleCopyProjectsListJson, handleDownloadProjectsListCsv, handleCopyProjectsListCsv, handleDownloadProjectsListMarkdown, handleCopyProjectsListMarkdown, handleDownloadActiveProjectsJson, handleCopyActiveProjectsJson, handleDownloadActiveProjectsCsv, handleCopyActiveProjectsCsv]);
+  }, [handleRefreshData, goToRun, goToTesting, goToMilestones, goToVersioning, goToPlanner, goToDesign, goToArchitecture, goToControl, goToShortcuts, goToFirstProjectIdeas, goToFirstProjectDocumentation, goToFirstProjectFrontend, goToFirstProjectBackend, goToFirstProjectMilestones, goToFirstProjectPlanner, goToFirstProject, closePalette, openShortcutsModal, handleClearRunHistory, handleRemoveLastRun, handleRestoreRunHistoryFilters, handleRestoreProjectsListFilters, handleSwitchToLightMode, handleSwitchToDarkMode, handleOpenFirstProjectInCursor, handleOpenFirstProjectInTerminal, handleOpenFirstProjectInFileManager, handleOpenFirstProjectCursorFolder, handleOpenFirstProjectRemoteInBrowser, handleStopAllRuns, handleCheckApiHealth, handleCopyAppInfo, handleCopyAppVersion, handleCopyAppInfoAsMarkdown, handleCopyAppInfoAsJson, handleDownloadAppInfo, handleDownloadAppInfoJson, handleCopyFirstProjectPath, handleCopyFirstProjectImplementationLog, handleDownloadFirstProjectImplementationLog, handleDownloadFirstProjectDesignsJson, handleCopyFirstProjectDesignsJson, handleDownloadFirstProjectDesignsMarkdown, handleCopyFirstProjectDesignsMarkdown, handleDownloadFirstProjectArchitecturesJson, handleCopyFirstProjectArchitecturesJson, handleDownloadFirstProjectArchitecturesMarkdown, handleCopyFirstProjectArchitecturesMarkdown, handleDownloadFirstProjectTicketsJson, handleCopyFirstProjectTicketsJson, handleDownloadFirstProjectTicketsCsv, handleCopyFirstProjectTicketsCsv, handleDownloadFirstProjectTicketsMarkdown, handleCopyFirstProjectTicketsMarkdown, handleDownloadFirstProjectMilestonesJson, handleCopyFirstProjectMilestonesJson, handleDownloadFirstProjectMilestonesCsv, handleCopyFirstProjectMilestonesCsv, handleDownloadFirstProjectMilestonesMarkdown, handleCopyFirstProjectMilestonesMarkdown, handleDownloadFirstProjectTechStackJson, handleCopyFirstProjectTechStackJson, handleDownloadFirstProjectTechStackMarkdown, handleCopyFirstProjectTechStackMarkdown, handleDownloadFirstProjectTechStackCsv, handleCopyFirstProjectTechStackCsv, handleCopyDataDirectoryPath, handleCopyDatabaseFilePath, handleOpenTechnologiesFolder, handleCopyTechnologiesFolderPath, handleCopyKeyboardShortcuts, handleCopyKeyboardShortcutsJson, handleCopyKeyboardShortcutsCsv, handleDownloadKeyboardShortcuts, handleDownloadKeyboardShortcutsJson, handleDownloadKeyboardShortcutsCsv, handleCopyRunHistory, handleCopyRunHistoryStatsSummary, handleDownloadRunHistoryStatsJson, handleCopyRunHistoryStatsJson, handleDownloadRunHistoryStatsCsv, handleCopyRunHistoryStatsCsv, handleCopyRunHistoryJson, handleCopyRunHistoryMarkdown, handleCopyRunHistoryCsv, handleCopyLastRun, handleDownloadLastRun, handleDownloadRunHistory, handleDownloadRunHistoryJson, handleDownloadRunHistoryMarkdown, handleDownloadRunHistoryCsv, handleOpenAppDataFolder, handleOpenDocumentationFolder, handleCopyCurrentPageUrl, handleCopyDocumentationFolderPath, handleDownloadDocumentationInfo, handleDownloadDocumentationInfoJson, handleCopyDocumentationInfo, handleCopyDocumentationInfoJson, handleCopyPrompts, handleDownloadPrompts, handleDownloadPromptsJson, handleCopyPromptsJson, handleDownloadPromptsCsv, handleCopyPromptsCsv, handleDownloadCursorPromptsCsv, handleCopyCursorPromptsCsv, handleDownloadCursorPromptsJson, handleCopyCursorPromptsJson, handleDownloadCursorPromptsMarkdown, handleCopyCursorPromptsMarkdown, handleDownloadIdeas, handleDownloadIdeasJson, handleDownloadIdeasCsv, handleCopyIdeas, handleCopyIdeasJson, handleCopyIdeasCsv, handleOpenIdeasFolder, handleCopyIdeasFolderPath, handleOpenPlannerFolder, handleCopyPlannerFolderPath, handleOpenMilestonesFolder, handleCopyMilestonesFolderPath, handleDownloadTechStack, handleDownloadTechStackJson, handleCopyTechStack, handleCopyTechStackJson, handleDownloadTechStackCsv, handleCopyTechStackCsv, handleDownloadProjectsListJson, handleCopyProjectsListJson, handleDownloadProjectsListCsv, handleCopyProjectsListCsv, handleDownloadProjectsListMarkdown, handleCopyProjectsListMarkdown, handleDownloadActiveProjectsJson, handleCopyActiveProjectsJson, handleDownloadActiveProjectsCsv, handleCopyActiveProjectsCsv]);
   const projectEntries: CommandPaletteEntry[] = useMemo(() => {
     if (!projects || projects.length === 0) return [];
     const recentIds = getRecentProjectIds();

@@ -7,26 +7,9 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SectionCard } from "@/components/shared/DisplayPrimitives";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { Flag, Loader2, FileText, Plus, Pencil, Trash2, ListTodo, Folder, FolderOpen, Copy, Download } from "lucide-react";
+import { Flag, Loader2, FileText, Plus, Pencil, Trash2, ListTodo, Folder, FolderOpen } from "lucide-react";
 import { listProjectFiles, type FileEntry } from "@/lib/api-projects";
-import {
-  downloadMilestoneContentAsMarkdown,
-  copyMilestoneContentAsMarkdownToClipboard,
-} from "@/lib/download-milestone-document";
 import { fetchProjectMilestones } from "@/lib/fetch-project-milestones";
-import {
-  downloadProjectMilestonesAsJson,
-  copyProjectMilestonesAsJsonToClipboard,
-} from "@/lib/download-project-milestones-json";
-import {
-  downloadProjectMilestonesAsCsv,
-  copyProjectMilestonesAsCsvToClipboard,
-} from "@/lib/download-project-milestones-csv";
-import {
-  downloadProjectMilestonesAsMarkdown,
-  copyProjectMilestonesAsMarkdownToClipboard,
-} from "@/lib/download-project-milestones-md";
-import { safeNameForFile } from "@/lib/download-helpers";
 import { openProjectMilestonesFolderInFileManager } from "@/lib/open-project-milestones-folder";
 import { useRunStore } from "@/store/run-store";
 import {
@@ -373,81 +356,19 @@ export function ProjectMilestonesTab({
               </Button>
             </>
           )}
-          <div className="flex items-center gap-1.5">
-            {isTauriEnv === true && project.repoPath && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => openProjectMilestonesFolderInFileManager(project.repoPath ?? undefined)}
-                className="gap-1"
-                aria-label="Open milestones folder in file manager"
-                title="Open folder"
-              >
-                <FolderOpen className="size-3" />
-                Open folder
-              </Button>
-            )}
+          {isTauriEnv === true && project.repoPath && (
             <Button
               variant="outline"
               size="sm"
-              onClick={() => downloadProjectMilestonesAsJson(milestones)}
+              onClick={() => openProjectMilestonesFolderInFileManager(project.repoPath ?? undefined)}
               className="gap-1"
-              title="Download milestones list as JSON"
+              aria-label="Open milestones folder in file manager"
+              title="Open folder"
             >
-              <Download className="size-3" />
-              Export JSON
+              <FolderOpen className="size-3" />
+              Open folder
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => void copyProjectMilestonesAsJsonToClipboard(milestones)}
-              className="gap-1"
-              title="Copy milestones list as JSON"
-            >
-              <Copy className="size-3" />
-              Copy JSON
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => downloadProjectMilestonesAsCsv(milestones)}
-              className="gap-1"
-              title="Download milestones list as CSV"
-            >
-              <Download className="size-3" />
-              Export CSV
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => void copyProjectMilestonesAsCsvToClipboard(milestones)}
-              className="gap-1"
-              title="Copy milestones list as CSV"
-            >
-              <Copy className="size-3" />
-              Copy CSV
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => downloadProjectMilestonesAsMarkdown(milestones, { projectName: project.name ?? undefined })}
-              className="gap-1"
-              title="Download milestones list as Markdown"
-            >
-              <Download className="size-3" />
-              Export Markdown
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => void copyProjectMilestonesAsMarkdownToClipboard(milestones, { projectName: project.name ?? undefined })}
-              className="gap-1"
-              title="Copy milestones list as Markdown"
-            >
-              <Copy className="size-3" />
-              Copy Markdown
-            </Button>
-          </div>
+          )}
           <Button variant="outline" size="sm" onClick={() => setAddOpen(true)} className="gap-1">
             <Plus className="size-3" />
             Add milestone
@@ -478,42 +399,11 @@ export function ProjectMilestonesTab({
           </div>
           <div className="flex-1 min-w-0 border border-border/60 rounded-md overflow-hidden flex flex-col">
             {selectedMilestone?.content ? (
-              <>
-                <div className="flex items-center gap-1.5 p-2 border-b border-border/60 bg-muted/30">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      downloadMilestoneContentAsMarkdown(
-                        selectedMilestone.content ?? "",
-                        safeNameForFile(selectedMilestone.name, selectedMilestone.slug || "milestone")
-                      )
-                    }
-                    aria-label="Download milestone content as Markdown"
-                    title="Download as Markdown"
-                    className="gap-1"
-                  >
-                    <FileText className="size-3" aria-hidden />
-                    Download as Markdown
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => void copyMilestoneContentAsMarkdownToClipboard(selectedMilestone.content ?? "")}
-                    aria-label="Copy milestone content as Markdown"
-                    title="Copy as Markdown"
-                    className="gap-1"
-                  >
-                    <Copy className="size-3" aria-hidden />
-                    Copy as Markdown
-                  </Button>
+              <ScrollArea className="flex-1 min-h-[300px]">
+                <div className={cn("p-4", markdownClasses)}>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedMilestone.content}</ReactMarkdown>
                 </div>
-                <ScrollArea className="flex-1 min-h-[300px]">
-                  <div className={cn("p-4", markdownClasses)}>
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedMilestone.content}</ReactMarkdown>
-                  </div>
-                </ScrollArea>
-              </>
+              </ScrollArea>
             ) : (
               <div className="p-6 text-sm text-muted-foreground text-center flex-1 flex items-center justify-center">
                 No content for this milestone.

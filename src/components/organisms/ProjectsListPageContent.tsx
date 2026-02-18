@@ -5,20 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { Project } from "@/types/project";
 import { invoke, isTauri } from "@/lib/tauri";
 import { listProjects, deleteProject } from "@/lib/api-projects";
-import {
-  copyProjectsListAsJsonToClipboard,
-  downloadProjectsListAsJson,
-} from "@/lib/download-projects-list-json";
-import {
-  downloadProjectsListAsCsv,
-  copyProjectsListAsCsvToClipboard,
-} from "@/lib/download-projects-list-csv";
-import {
-  downloadProjectsListAsMarkdown,
-  copyProjectsListAsMarkdownToClipboard,
-} from "@/lib/download-projects-list-md";
-import { toast } from "sonner";
-import { Copy, Download, FileJson, FileText, Printer, Search, X, RotateCcw } from "lucide-react";
+import { Search, X, RotateCcw } from "lucide-react";
 import { getRecentProjectIds } from "@/lib/recent-projects";
 import {
   getProjectsListViewPreference,
@@ -38,7 +25,6 @@ import {
 } from "@/components/ui/select";
 import { Breadcrumb } from "@/components/shared/Breadcrumb";
 import { ProjectsHeader } from "@/components/molecules/LayoutAndNavigation/ProjectsHeader";
-import { DiscoverFoldersDialog } from "@/components/molecules/FormsAndDialogs/DiscoverFoldersDialog";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { NoProjectsFoundCard } from "@/components/molecules/CardsAndDisplay/NoProjectsFoundCard";
 import { ProjectLoadingState } from "@/components/molecules/UtilitiesAndHelpers/ProjectLoadingState";
@@ -56,9 +42,6 @@ export function ProjectsListPageContent() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [seeding, setSeeding] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  const [discoverOpen, setDiscoverOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState(() => {
     if (typeof window === "undefined") return "";
     return getProjectsListViewPreference().filterQuery;
@@ -84,14 +67,6 @@ export function ProjectsListPageContent() {
     );
     return () => clearTimeout(t);
   }, [searchQuery]);
-
-  // Open Discover dialog when navigating from Dashboard empty state (?discover=1)
-  useEffect(() => {
-    if (searchParams?.get("discover") === "1") {
-      setDiscoverOpen(true);
-      router.replace("/projects", { scroll: false });
-    }
-  }, [searchParams, router]);
 
   // Sync local state when preference is restored from Command palette
   useEffect(() => {
@@ -132,15 +107,6 @@ export function ProjectsListPageContent() {
     return list;
   }, [filteredProjects, sortOrder]);
 
-  const handleRefresh = useCallback(() => {
-    setRefreshing(true);
-    listProjects()
-      .then((data: Project[]) => setProjects(Array.isArray(data) ? data : []))
-      .then(() => toast.success("Projects refreshed"))
-      .catch(() => toast.error("Refresh failed"))
-      .finally(() => setRefreshing(false));
-  }, []);
-
   const refetch = useCallback(() => {
     listProjects()
       .then((data: Project[]) => setProjects(Array.isArray(data) ? data : []))
@@ -174,23 +140,6 @@ export function ProjectsListPageContent() {
     },
     [router]
   );
-
-  const seedTemplateProject = async () => {
-    setSeeding(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/data/seed-template", { method: "POST" });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || res.statusText);
-      }
-      refetch();
-    } catch (e: any) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setSeeding(false);
-    }
-  };
 
   useEffect(() => {
     let cancelled = false;
@@ -236,18 +185,7 @@ export function ProjectsListPageContent() {
         ]}
         className="mb-3"
       />
-      <ProjectsHeader
-        seeding={seeding}
-        seedTemplateProject={seedTemplateProject}
-        onRefresh={handleRefresh}
-        refreshing={refreshing}
-        onDiscoverFolders={() => setDiscoverOpen(true)}
-      />
-      <DiscoverFoldersDialog
-        isOpen={discoverOpen}
-        onClose={() => setDiscoverOpen(false)}
-        onAdded={refetch}
-      />
+      <ProjectsHeader />
 
       {error && (
         <ErrorDisplay
@@ -264,23 +202,11 @@ export function ProjectsListPageContent() {
       {loading ? (
         <ProjectLoadingState />
       ) : projects.length === 0 ? (
-        <NoProjectsFoundCard seeding={seeding} seedTemplateProject={seedTemplateProject} />
+        <NoProjectsFoundCard />
       ) : (
         <section className={c["1"]} data-testid="projects-list">
           <h2 className={c["2"]}>Your projects</h2>
           <div className="flex flex-wrap items-center gap-3 mb-4">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => window.print()}
-              className="h-8 gap-1.5 text-xs"
-              aria-label="Print current page"
-              title="Print projects list (⌘P)"
-            >
-              <Printer className="size-3.5" aria-hidden />
-              <span className="hidden sm:inline">Print</span>
-            </Button>
             <div className="relative flex-1 max-w-xs">
               <Search
                 className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none"
@@ -322,79 +248,6 @@ export function ProjectsListPageContent() {
                 <SelectItem value="recent" className="text-xs">Recently opened</SelectItem>
               </SelectContent>
             </Select>
-            <span className="text-xs text-muted-foreground whitespace-nowrap">Export:</span>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => downloadProjectsListAsJson(displayList)}
-              className="h-8 gap-1.5 text-xs"
-              aria-label="Download projects list as JSON"
-              title="Download current list as JSON"
-            >
-              <FileJson className="size-3.5" aria-hidden />
-              <span className="hidden sm:inline">JSON</span>
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => copyProjectsListAsJsonToClipboard(displayList)}
-              className="h-8 gap-1.5 text-xs"
-              aria-label="Copy projects list as JSON to clipboard"
-              title="Copy current list as JSON (same data as Download JSON)"
-            >
-              <Copy className="size-3.5" aria-hidden />
-              <span className="hidden sm:inline">Copy JSON</span>
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => downloadProjectsListAsCsv(displayList)}
-              className="h-8 gap-1.5 text-xs"
-              aria-label="Download projects list as CSV"
-              title="Download current list as CSV"
-            >
-              <Download className="size-3.5" aria-hidden />
-              <span className="hidden sm:inline">CSV</span>
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => void copyProjectsListAsCsvToClipboard(displayList)}
-              className="h-8 gap-1.5 text-xs"
-              aria-label="Copy projects list as CSV to clipboard"
-              title="Copy current list as CSV (same data as Download CSV)"
-            >
-              <Copy className="size-3.5" aria-hidden />
-              <span className="hidden sm:inline">Copy CSV</span>
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => downloadProjectsListAsMarkdown(displayList)}
-              className="h-8 gap-1.5 text-xs"
-              aria-label="Download projects list as Markdown"
-              title="Download current list as Markdown"
-            >
-              <FileText className="size-3.5" aria-hidden />
-              <span className="hidden sm:inline">MD</span>
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => void copyProjectsListAsMarkdownToClipboard(displayList)}
-              className="h-8 gap-1.5 text-xs"
-              aria-label="Copy projects list as Markdown to clipboard"
-              title="Copy current list as Markdown (same content as Download MD)"
-            >
-              <Copy className="size-3.5" aria-hidden />
-              <span className="hidden sm:inline">Copy MD</span>
-            </Button>
             {(trimmedQuery || sortOrder !== "asc") && (
               <Button
                 type="button"

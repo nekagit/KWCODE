@@ -6,7 +6,7 @@ import { usePageFocusFilterShortcut } from "@/lib/page-focus-filter-shortcut";
 /**
  * On the Dashboard tab (home page at "/"), pressing "/" focuses the filter input
  * unless focus is already in an input, textarea, or select.
- * DashboardOverview is only mounted when the Dashboard tab is active, so pathname "/" is sufficient.
+ * SimpleDashboard is only mounted when the Dashboard tab is active, so pathname "/" is sufficient.
  */
 export function useDashboardFocusFilterShortcut(
   inputRef: RefObject<HTMLInputElement | null>

@@ -1,6 +1,6 @@
 /**
  * Dashboard metrics API: Tauri invoke when in Tauri, else GET /api/data/dashboard-metrics.
- * Single module used by DashboardOverview and DashboardMetricsCards.
+ * Single module used by SimpleDashboard and DashboardMetricsCards.
  */
 import { invoke, isTauri } from "@/lib/tauri";
 import type { DashboardMetrics } from "@/types/dashboard";

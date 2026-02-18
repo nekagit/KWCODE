@@ -5,7 +5,7 @@ import type { Project } from "@/types/project";
 import type { NightShiftCirclePhase } from "@/types/run";
 import { readProjectFileOrEmpty, listProjectFiles } from "@/lib/api-projects";
 import { fetchProjectTicketsAndKanban } from "@/lib/fetch-project-tickets-and-kanban";
-import { invoke, isTauri, projectIdArgPayload } from "@/lib/tauri";
+import { invoke, isTauri, projectIdArgPayload, createPlanTicketPayload, setPlanKanbanStatePayload } from "@/lib/tauri";
 import { fetchProjectMilestones } from "@/lib/fetch-project-milestones";
 import {
   buildKanbanFromTickets,
@@ -736,7 +736,7 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
         const inProgressIds = (kanbanData.columns.in_progress?.items.map((t) => t.id) ?? []).filter((id) => id !== ticketId);
         if (isTauri) {
           await invoke("delete_plan_ticket", { project_id: projectId, ticket_id: ticketId });
-          await invoke("set_plan_kanban_state", { project_id: projectId, in_progress_ids: inProgressIds });
+          await invoke("set_plan_kanban_state", setPlanKanbanStatePayload(projectId, inProgressIds));
         } else {
           const res = await fetch(`/api/data/projects/${projectId}/tickets/${ticketId}`, { method: "DELETE" });
           if (!res.ok) throw new Error((await res.json()).error || "Failed to delete");
@@ -2056,16 +2056,19 @@ function WorkerFastDevelopmentSection({
 
       let newTicket: { id: string; number: number; title: string; milestone_id?: number };
       if (isTauri) {
-        newTicket = await invoke<{ id: string; number: number; title: string; milestone_id?: number }>("create_plan_ticket", {
-          project_id: projectId,
-          title,
-          description: fullPrompt,
-          priority: "P1",
-          feature_name: "Fast development",
-          milestone_id: milestoneId,
-          idea_id: null,
-          agents: null,
-        });
+        newTicket = await invoke<{ id: string; number: number; title: string; milestone_id?: number }>(
+          "create_plan_ticket",
+          createPlanTicketPayload({
+            project_id: projectId,
+            title,
+            description: fullPrompt,
+            priority: "P1",
+            feature_name: "Fast development",
+            milestone_id: milestoneId,
+            idea_id: null,
+            agents: null,
+          })
+        );
       } else {
         const createRes = await fetch(`/api/data/projects/${projectId}/tickets`, {
           method: "POST",
@@ -2097,7 +2100,7 @@ function WorkerFastDevelopmentSection({
       }
       inProgressIds = [...inProgressIds.filter((id) => id !== newTicket.id), newTicket.id];
       if (isTauri) {
-        await invoke("set_plan_kanban_state", { project_id: projectId, in_progress_ids: inProgressIds });
+        await invoke("set_plan_kanban_state", setPlanKanbanStatePayload(projectId, inProgressIds));
       } else {
         const patchRes = await fetch(`/api/data/projects/${projectId}/kanban-state`, {
           method: "PATCH",

@@ -62,6 +62,25 @@ export function runRunTerminalAgentPayload(projectPath: string, promptContent: s
   return { args: { projectPath, promptContent, label } };
 }
 
+/** Payload for create_plan_ticket. In the built app, the IPC expects the parameter key `args`. */
+export function createPlanTicketPayload(payload: {
+  project_id: string;
+  title: string;
+  description?: string | null;
+  priority?: string | null;
+  feature_name?: string | null;
+  milestone_id: number;
+  idea_id?: number | null;
+  agents?: string | null;
+}): { args: typeof payload } {
+  return { args: payload };
+}
+
+/** Payload for set_plan_kanban_state. In the built app, the IPC expects the parameter key `args`. */
+export function setPlanKanbanStatePayload(projectId: string, inProgressIds: string[]): { args: { project_id: string; in_progress_ids: string[] } } {
+  return { args: { project_id: projectId, in_progress_ids: inProgressIds } };
+}
+
 export const invoke = async <T>(cmd: string, args?: Record<string, unknown>): Promise<T> => {
   if (isTauri && invokeReadyPromise) {
     const timeout = new Promise<never>((_, reject) =>

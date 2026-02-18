@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { LayoutDashboard, LayoutGrid, MessageSquare, Folders, Lightbulb, Cpu, Settings, Moon, BookOpen, Activity, TestTube2, Keyboard, ListTodo, Palette, Building2, FolderGit2 } from "lucide-react";
+import { LayoutDashboard, LayoutGrid, MessageSquare, Folders, Lightbulb, Cpu, Settings, Moon, BookOpen, Keyboard } from "lucide-react";
 import { NavLinkItem } from "@/components/molecules/Navigation/NavLinkItem";
 import { getOrganismClasses } from "./organism-classes";
 
@@ -30,12 +30,6 @@ const getNavItems = (): {
   workNavItems: [
     { href: "/projects", label: "Projects", icon: Folders, iconClassName: c["14"] },
     { href: "/prompts", label: "Prompts", icon: MessageSquare, iconClassName: c["16"] },
-    { href: "/run", label: "Run", icon: Activity, iconClassName: c["14"] },
-    { href: "/testing", label: "Testing", icon: TestTube2, iconClassName: c["14"] },
-    { href: "/planner", label: "Planner", icon: ListTodo, iconClassName: c["14"] },
-    { href: "/versioning", label: "Versioning", icon: FolderGit2, iconClassName: c["14"] },
-    { href: "/design", label: "Design", icon: Palette, iconClassName: c["14"] },
-    { href: "/architecture", label: "Architecture", icon: Building2, iconClassName: c["14"] },
   ],
   bottomNavItems: [
     { href: "/configuration", label: "Configuration", icon: Settings, iconClassName: c["14"] },

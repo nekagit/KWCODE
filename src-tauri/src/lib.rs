@@ -459,37 +459,54 @@ fn get_project_milestones(ProjectIdArg { project_id }: ProjectIdArg) -> Result<V
     with_db(|conn| db::get_milestones_for_project(conn, &project_id))
 }
 
-/// Create a plan ticket (for Fast development in Tauri mode; avoids fetch to /api).
-#[tauri::command]
-fn create_plan_ticket(
+/// Args for create_plan_ticket; accept camelCase from frontend. In built app, IPC expects payload key `args`.
+#[derive(serde::Deserialize)]
+struct CreatePlanTicketArgs {
+    #[serde(alias = "projectId")]
     project_id: String,
     title: String,
     description: Option<String>,
     priority: Option<String>,
+    #[serde(alias = "featureName")]
     feature_name: Option<String>,
+    #[serde(alias = "milestoneId")]
     milestone_id: i64,
+    #[serde(alias = "ideaId")]
     idea_id: Option<i64>,
     agents: Option<String>,
-) -> Result<serde_json::Value, String> {
+}
+
+/// Create a plan ticket (for Fast development in Tauri mode; avoids fetch to /api).
+#[tauri::command]
+fn create_plan_ticket(args: CreatePlanTicketArgs) -> Result<serde_json::Value, String> {
     with_db(|conn| {
         db::create_plan_ticket(
             conn,
-            &project_id,
-            &title,
-            description.as_deref(),
-            priority.as_deref().unwrap_or("P1"),
-            feature_name.as_deref().unwrap_or("General"),
-            milestone_id,
-            idea_id,
-            agents.as_deref(),
+            &args.project_id,
+            &args.title,
+            args.description.as_deref(),
+            args.priority.as_deref().unwrap_or("P1"),
+            args.feature_name.as_deref().unwrap_or("General"),
+            args.milestone_id,
+            args.idea_id,
+            args.agents.as_deref(),
         )
     })
 }
 
+/// Args for set_plan_kanban_state; accept camelCase from frontend. In built app, IPC expects payload key `args`.
+#[derive(serde::Deserialize)]
+struct SetPlanKanbanStateArgs {
+    #[serde(alias = "projectId")]
+    project_id: String,
+    #[serde(alias = "inProgressIds")]
+    in_progress_ids: Vec<String>,
+}
+
 /// Set plan kanban in-progress IDs (for Fast development in Tauri mode; avoids fetch to /api).
 #[tauri::command]
-fn set_plan_kanban_state(project_id: String, in_progress_ids: Vec<String>) -> Result<(), String> {
-    with_db(|conn| db::set_plan_kanban_state_for_project(conn, &project_id, &in_progress_ids))
+fn set_plan_kanban_state(args: SetPlanKanbanStateArgs) -> Result<(), String> {
+    with_db(|conn| db::set_plan_kanban_state_for_project(conn, &args.project_id, &args.in_progress_ids))
 }
 
 /// Update a plan ticket's done and status (for Worker tab Mark done/Redo; avoids fetch in Tauri).

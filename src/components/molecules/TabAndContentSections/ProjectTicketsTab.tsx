@@ -43,10 +43,6 @@ import {
   Circle,
   Trash,
   Wand2,
-  Copy,
-  Download,
-  FileJson,
-  FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Project } from "@/types/project";
@@ -73,18 +69,6 @@ import { cn, humanizeAgentId } from "@/lib/utils";
 import { isImplementAllRun } from "@/lib/run-helpers";
 import { AddPromptDialog } from "@/components/molecules/FormsAndDialogs/AddPromptDialog";
 import { TerminalSlot } from "@/components/shared/TerminalSlot";
-import {
-  downloadProjectTicketsAsMarkdown,
-  copyProjectTicketsAsMarkdownToClipboard,
-} from "@/lib/download-project-tickets-md";
-import {
-  downloadProjectTicketsAsCsv,
-  copyProjectTicketsAsCsvToClipboard,
-} from "@/lib/download-project-tickets-csv";
-import {
-  downloadProjectTicketsAsJson,
-  copyProjectTicketsAsJsonToClipboard,
-} from "@/lib/download-project-tickets-json";
 import { extractTicketJsonFromStdout } from "@/lib/ticket-parsing";
 
 const PRIORITIES: Array<"P0" | "P1" | "P2" | "P3"> = ["P0", "P1", "P2", "P3"];
@@ -1012,89 +996,6 @@ export function ProjectTicketsTab({
                       </span>
                     </div>
                   )}
-
-                  {/* Export */}
-                  <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Export project tickets">
-                    <span className="text-sm text-muted-foreground mr-2">Export tickets:</span>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={totalTickets === 0}
-                      onClick={() => downloadProjectTicketsAsJson(kanbanData.tickets)}
-                      aria-label="Download project tickets as JSON"
-                      title="Download tickets as JSON (list export)"
-                      className="gap-1.5"
-                    >
-                      <FileJson className="size-3.5" aria-hidden />
-                      Download as JSON
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={totalTickets === 0}
-                      onClick={() => void copyProjectTicketsAsJsonToClipboard(kanbanData.tickets)}
-                      aria-label="Copy project tickets as JSON to clipboard"
-                      title="Copy as JSON (same data as Download as JSON)"
-                      className="gap-1.5"
-                    >
-                      <Copy className="size-3.5" aria-hidden />
-                      Copy as JSON
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={totalTickets === 0}
-                      onClick={() => downloadProjectTicketsAsCsv(kanbanData.tickets)}
-                      aria-label="Export project tickets as CSV"
-                      title="Download tickets as CSV"
-                      className="gap-1.5"
-                    >
-                      <Download className="size-3.5" />
-                      Download as CSV
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={totalTickets === 0}
-                      onClick={() => void copyProjectTicketsAsCsvToClipboard(kanbanData.tickets)}
-                      aria-label="Copy project tickets as CSV to clipboard"
-                      title="Copy as CSV (same data as Download as CSV)"
-                      className="gap-1.5"
-                    >
-                      <Copy className="size-3.5" aria-hidden />
-                      Copy as CSV
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={totalTickets === 0}
-                      onClick={() => downloadProjectTicketsAsMarkdown(kanbanData.tickets, { projectName: project?.name })}
-                      aria-label="Export project tickets as Markdown"
-                      title="Download tickets as Markdown"
-                      className="gap-1.5"
-                    >
-                      <FileText className="size-3.5" />
-                      Download as Markdown
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={totalTickets === 0}
-                      onClick={() => void copyProjectTicketsAsMarkdownToClipboard(kanbanData.tickets, { projectName: project?.name })}
-                      aria-label="Copy project tickets as Markdown to clipboard"
-                      title="Copy as Markdown (same format as Download as Markdown)"
-                      className="gap-1.5"
-                    >
-                      <FileText className="size-3.5" />
-                      Copy as Markdown
-                    </Button>
-                  </div>
 
                   {/* Kanban Board */}
                   <div data-testid="kanban-columns-grid">

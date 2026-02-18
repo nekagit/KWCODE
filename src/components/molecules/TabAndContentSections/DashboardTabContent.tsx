@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { DashboardOverview } from "@/components/molecules/DashboardsAndViews/DashboardOverview";
+import { SimpleDashboard } from "@/components/molecules/DashboardsAndViews/SimpleDashboard";
 import { getClasses } from "@/components/molecules/tailwind-molecules";
 import { useRunState } from "@/store/run-store";
 import { Button } from "@/components/ui/button";
@@ -52,7 +52,7 @@ export function DashboardTabContent() {
         </Button>
       </div>
       <section className="mb-6">
-        <DashboardOverview setActiveProjects={setActiveProjects} />
+        <SimpleDashboard setActiveProjects={setActiveProjects} />
       </section>
     </div>
   );
