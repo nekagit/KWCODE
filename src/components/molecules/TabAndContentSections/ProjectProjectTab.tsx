@@ -89,6 +89,34 @@ export function ProjectProjectTab({ project, projectId, docsRefreshKey, onProjec
   const [folderRefreshKey, setFolderRefreshKey] = useState(0);
   const cancelledRef = useRef(false);
 
+  /** Accordion section open by default or from hash (#design, #architecture, etc.). */
+  const ACCORDION_VALUES = ["run", "project-files", "design", "architecture", "adr", "agents", "rules"] as const;
+  const [openSection, setOpenSection] = useState<string>(() => {
+    if (typeof window === "undefined") return "run";
+    const h = window.location.hash.slice(1).toLowerCase();
+    return ACCORDION_VALUES.includes(h as (typeof ACCORDION_VALUES)[number]) ? h : "run";
+  });
+
+  useEffect(() => {
+    const syncFromHash = () => {
+      const h = window.location.hash.slice(1).toLowerCase();
+      if (ACCORDION_VALUES.includes(h as (typeof ACCORDION_VALUES)[number])) {
+        setOpenSection(h);
+      }
+    };
+    syncFromHash();
+    window.addEventListener("hashchange", syncFromHash);
+    return () => window.removeEventListener("hashchange", syncFromHash);
+  }, []);
+
+  // Sync accordion section to URL hash so the current view is shareable (e.g. #design, #architecture).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hash = openSection === "run" ? "" : openSection;
+    const url = window.location.pathname + window.location.search + (hash ? `#${hash}` : "");
+    window.history.replaceState(null, "", url);
+  }, [openSection]);
+
   const loadAdrAndRules = useCallback(async () => {
     if (!project.repoPath) return;
     cancelledRef.current = false;
@@ -160,7 +188,7 @@ export function ProjectProjectTab({ project, projectId, docsRefreshKey, onProjec
     <div className="space-y-6">
       <ScrollArea className="h-[calc(100vh-14rem)]">
         <div className="space-y-2 pr-4">
-          <Accordion type="single" collapsible defaultValue="run" className="w-full space-y-2">
+          <Accordion type="single" collapsible value={openSection} onValueChange={setOpenSection} className="w-full space-y-2">
             {/* Run section: scripts from package.json + Play + terminal output — only one expanded by default */}
             <AccordionItem value="run" className="rounded-xl border border-border/40 bg-card/60 backdrop-blur-sm overflow-hidden data-[state=open]:border-emerald-500/30">
               <AccordionTrigger className="px-5 py-3 hover:no-underline hover:bg-muted/20 [&[data-state=open]]:border-b [&[data-state=open]]:border-border/40">

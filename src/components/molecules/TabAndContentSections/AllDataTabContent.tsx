@@ -2,7 +2,7 @@
 
 import { Card } from "@/components/shared/Card";
 import { Button } from "@/components/ui/button";
-import { Folders, MessageSquare, Lightbulb, Palette, LayoutGrid } from "lucide-react";
+import { Folders, MessageSquare, Lightbulb, Palette, LayoutGrid, CheckSquare, Square } from "lucide-react";
 import type { PromptRecord } from "@/types/prompt";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import { AllProjectsDisplayList } from "@/components/molecules/Displays/AllProjectsDisplayList";
@@ -17,6 +17,9 @@ interface AllDataTabContentProps {
   activeProjects: string[];
   toggleProject: (path: string) => void;
   saveActiveProjects: () => Promise<void>;
+  /** When provided, "Select all" and "Deselect all" are shown in the Projects card. */
+  onSelectAll?: () => void;
+  onDeselectAll?: () => void;
   prompts: { id: number; title: string; description?: string }[];
   selectedPromptRecordIds: number[];
   setSelectedPromptRecordIds: React.Dispatch<React.SetStateAction<number[]>>;
@@ -30,6 +33,8 @@ export function AllDataTabContent({
   activeProjects,
   toggleProject,
   saveActiveProjects,
+  onSelectAll,
+  onDeselectAll,
   prompts,
   selectedPromptRecordIds,
   setSelectedPromptRecordIds,
@@ -68,6 +73,18 @@ export function AllDataTabContent({
           subtitle={`All (${allProjects.length}) · Active (${activeProjects.length})`}
           footerButtons={
             <ButtonGroup alignment="right">
+              {onSelectAll != null && onDeselectAll != null && (
+                <>
+                  <Button variant="outline" size="sm" onClick={onSelectAll} aria-label="Select all projects">
+                    <CheckSquare className="h-4 w-4 mr-1.5" aria-hidden />
+                    Select all
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={onDeselectAll} aria-label="Deselect all projects">
+                    <Square className="h-4 w-4 mr-1.5" aria-hidden />
+                    Deselect all
+                  </Button>
+                </>
+              )}
               <Button size="sm" onClick={saveActiveProjects}>Save active</Button>
             </ButtonGroup>
           }

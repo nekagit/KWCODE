@@ -19,11 +19,20 @@ import { AiGeneratedIdeasCard } from "@/components/molecules/CardsAndDisplay/AiG
 import { IdeaFormDialog } from "@/components/molecules/FormsAndDialogs/IdeaFormDialog";
 import { ThreeTabResourcePageContent } from "@/components/organisms/ThreeTabResourcePageContent";
 import { getOrganismClasses } from "./organism-classes";
-import { downloadMyIdeasAsJson } from "@/lib/download-my-ideas";
-import { downloadMyIdeasAsCsv } from "@/lib/download-my-ideas-csv";
+import { copyMyIdeasAsJsonToClipboard, downloadMyIdeasAsJson } from "@/lib/download-my-ideas";
+import {
+  downloadMyIdeasAsCsv,
+  copyMyIdeasAsCsvToClipboard,
+} from "@/lib/download-my-ideas-csv";
 import { downloadMyIdeasAsMarkdown, copyAllMyIdeasMarkdownToClipboard } from "@/lib/download-my-ideas-md";
 import { copyIdeasFolderPath } from "@/lib/copy-ideas-folder-path";
 import { openIdeasFolderInFileManager } from "@/lib/open-ideas-folder";
+import {
+  getIdeasViewPreference,
+  setIdeasViewPreference,
+  type IdeasViewSort,
+} from "@/lib/ideas-view-preference";
+import { useIdeasFocusFilterShortcut } from "@/lib/ideas-focus-filter-shortcut";
 import { IdeaCategory, IdeaRecord } from "@/types/idea";
 
 const c = getOrganismClasses("IdeasPageContent.tsx");
@@ -69,9 +78,28 @@ export function IdeasPageContent() {
   const [formId, setFormId] = useState<number | undefined>(undefined);
   const [saveLoading, setSaveLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [ideaSort, setIdeaSort] = useState<"newest" | "oldest" | "title-asc" | "title-desc">("newest");
-  const [filterQuery, setFilterQuery] = useState("");
+  const [ideaSort, setIdeaSort] = useState<IdeasViewSort>(() => {
+    if (typeof window === "undefined") return "newest";
+    return getIdeasViewPreference().sort;
+  });
+  const [filterQuery, setFilterQuery] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return getIdeasViewPreference().filterQuery;
+  });
+  const filterInputRef = useRef<HTMLInputElement>(null);
+  useIdeasFocusFilterShortcut(filterInputRef);
   const cancelledRef = useRef(false);
+
+  // Persist sort when user changes it
+  useEffect(() => {
+    setIdeasViewPreference({ sort: ideaSort });
+  }, [ideaSort]);
+
+  // Persist filter query with debounce when user types
+  useEffect(() => {
+    const t = setTimeout(() => setIdeasViewPreference({ filterQuery }), 300);
+    return () => clearTimeout(t);
+  }, [filterQuery]);
 
   const sortedMyIdeas = useMemo(() => {
     const list = [...myIdeas];
@@ -321,6 +349,7 @@ export function IdeasPageContent() {
               aria-hidden
             />
             <Input
+              ref={filterInputRef}
               type="text"
               placeholder="Filter My ideas by title…"
               value={filterQuery}
@@ -331,7 +360,11 @@ export function IdeasPageContent() {
           </div>
           <Select
             value={ideaSort}
-            onValueChange={(v) => setIdeaSort(v as typeof ideaSort)}
+            onValueChange={(v) => {
+              const sort = v as IdeasViewSort;
+              setIdeaSort(sort);
+              setIdeasViewPreference({ sort });
+            }}
           >
             <SelectTrigger
               className="h-9 w-[140px] text-xs"
@@ -367,6 +400,7 @@ export function IdeasPageContent() {
               onClick={() => {
                 setFilterQuery("");
                 setIdeaSort("newest");
+                setIdeasViewPreference({ filterQuery: "", sort: "newest" });
               }}
               className="h-9 gap-1.5 text-xs"
               aria-label="Reset filters"
@@ -393,6 +427,22 @@ export function IdeasPageContent() {
             >
               <FileJson className="size-4 shrink-0" aria-hidden />
               <span className="hidden sm:inline">Export JSON</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                copyMyIdeasAsJsonToClipboard(
+                  trimmedFilterQuery ? filteredMyIdeas : sortedMyIdeas
+                )
+              }
+              className="h-9 gap-2"
+              aria-label="Copy my ideas as JSON"
+              title="Copy as JSON (same data as Export JSON)"
+            >
+              <Copy className="size-4 shrink-0" aria-hidden />
+              <span className="hidden sm:inline">Copy as JSON</span>
             </Button>
             <Button
               type="button"
@@ -439,6 +489,22 @@ export function IdeasPageContent() {
             >
               <Table className="size-4 shrink-0" aria-hidden />
               <span className="hidden sm:inline">Export CSV</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                void copyMyIdeasAsCsvToClipboard(
+                  trimmedFilterQuery ? filteredMyIdeas : sortedMyIdeas
+                )
+              }
+              className="h-9 gap-2"
+              aria-label="Copy my ideas as CSV to clipboard"
+              title="Copy as CSV (same data as Export CSV)"
+            >
+              <Copy className="size-4 shrink-0" aria-hidden />
+              <span className="hidden sm:inline">Copy as CSV</span>
             </Button>
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3" role="group" aria-label="Folder actions">

@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRunState } from "@/context/run-state";
-import { isTauri } from "@/lib/tauri";
+import { isTauri, invoke } from "@/lib/tauri";
 import { useRunStore, registerRunCompleteHandler } from "@/store/run-store";
 import type { Project } from "@/types/project";
 import { Breadcrumb } from "@/components/shared/Breadcrumb";
@@ -30,10 +30,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FileText, Loader2, RefreshCw, RotateCcw, Search, X } from "lucide-react";
+import { Copy, FileJson, FileText, Loader2, RefreshCw, RotateCcw, Search, X } from "lucide-react";
 import { getOrganismClasses } from "./organism-classes";
-import { downloadAllPromptsAsJson } from "@/lib/download-all-prompts-json";
-import { downloadAllPromptsAsCsv } from "@/lib/download-all-prompts-csv";
+import {
+  copyAllPromptsAsJsonToClipboard,
+  downloadAllPromptsAsJson,
+} from "@/lib/download-all-prompts-json";
+import {
+  copyAllPromptsAsCsvToClipboard,
+  downloadAllPromptsAsCsv,
+} from "@/lib/download-all-prompts-csv";
 import {
   copyAllPromptsAsMarkdownToClipboard,
   downloadAllPromptsAsMarkdown,
@@ -42,8 +48,20 @@ import {
   copyAllCursorPromptsAsMarkdownToClipboard,
   downloadAllCursorPromptsAsMarkdown,
 } from "@/lib/download-all-cursor-prompts-md";
-import { downloadAllCursorPromptsAsJson } from "@/lib/download-all-cursor-prompts-json";
-import { downloadAllCursorPromptsAsCsv } from "@/lib/download-all-cursor-prompts-csv";
+import {
+  copyAllCursorPromptsAsJsonToClipboard,
+  downloadAllCursorPromptsAsJson,
+} from "@/lib/download-all-cursor-prompts-json";
+import {
+  copyAllCursorPromptsAsCsvToClipboard,
+  downloadAllCursorPromptsAsCsv,
+} from "@/lib/download-all-cursor-prompts-csv";
+import {
+  getPromptsViewPreference,
+  setPromptsViewPreference,
+  type PromptsViewSort,
+} from "@/lib/prompts-view-preference";
+import { usePromptsFocusFilterShortcut } from "@/lib/prompts-focus-filter-shortcut";
 
 const c = getOrganismClasses("PromptRecordsPageContent.tsx");
 
@@ -68,6 +86,7 @@ export function PromptRecordsPageContent() {
     refreshData,
     setError,
   } = useRunState();
+  const addPrompt = useRunStore((s) => s.addPrompt);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -85,14 +104,22 @@ export function PromptRecordsPageContent() {
   const [fullPromptRecords, setFullPromptRecords] = useState<PromptRecordRecord[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [tableLoading, setTableLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<string>(CURSOR_PROMPTS_TAB);
+  const [activeTab, setActiveTab] = useState<string>(() =>
+    typeof window !== "undefined" ? getPromptsViewPreference().mainTab : CURSOR_PROMPTS_TAB
+  );
   const [viewingPrompt, setViewingPrompt] = useState<PromptRecordRecord | null>(null);
   const [cursorPromptFiles, setCursorPromptFiles] = useState<CursorPromptFileEntry[]>([]);
   const [cursorPromptFilesLoading, setCursorPromptFilesLoading] = useState(true);
-  const [filterQuery, setFilterQuery] = useState("");
-  const [promptSort, setPromptSort] = useState<"newest" | "oldest" | "title-asc" | "title-desc">("newest");
+  const [filterQuery, setFilterQuery] = useState(() =>
+    typeof window !== "undefined" ? getPromptsViewPreference().filterQuery : ""
+  );
+  const [promptSort, setPromptSort] = useState<PromptsViewSort>(() =>
+    typeof window !== "undefined" ? getPromptsViewPreference().sort : "newest"
+  );
   const [refreshing, setRefreshing] = useState(false);
   const cancelledRef = useRef(false);
+  const filterInputRef = useRef<HTMLInputElement>(null);
+  usePromptsFocusFilterShortcut(filterInputRef);
   const searchParams = useSearchParams();
 
   const fetchFullPromptRecords = useCallback(async () => {
@@ -177,6 +204,19 @@ export function PromptRecordsPageContent() {
       setActiveTab(projectId);
     }
   }, [searchParams, projects]);
+
+  // Persist sort when user changes it
+  useEffect(() => {
+    setPromptsViewPreference({ sort: promptSort });
+  }, [promptSort]);
+
+  // Persist filter query with debounce (300 ms)
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setPromptsViewPreference({ filterQuery });
+    }, 300);
+    return () => clearTimeout(t);
+  }, [filterQuery]);
 
   const { generalPrompts, projectsWithPrompts } = useMemo(() => {
     const allPromptIdsInProjects = new Set(projects.flatMap((p) => p.promptIds ?? []));
@@ -455,6 +495,54 @@ export function PromptRecordsPageContent() {
     [refreshData, fetchFullPromptRecords, setSelectedPromptRecordIds, setError]
   );
 
+  const handleRunPrompt = useCallback(
+    async (prompt: PromptRecordRecord) => {
+      const projectPath = defaultProjectPath?.trim();
+      if (!projectPath) {
+        toast.info("Select at least one project on the Dashboard first.");
+        return;
+      }
+      const content = prompt.content?.trim() ?? "";
+      if (!content) {
+        toast.error("Prompt has no content.");
+        return;
+      }
+      const label = (prompt.title?.trim() || `Prompt #${prompt.id}`).slice(0, 80);
+      const runId = await runTempTicket(projectPath, content, label);
+      if (runId) {
+        toast.success(runId === "queued" ? "Prompt queued. Check the Run tab." : "Prompt running. Check the Run tab.");
+      } else {
+        toast.error("Failed to start run.");
+      }
+    },
+    [defaultProjectPath, runTempTicket]
+  );
+
+  const handleDuplicatePrompt = useCallback(
+    async (prompt: PromptRecordRecord) => {
+      const title = `${prompt.title ?? "Prompt"} (copy)`.trim();
+      const content = prompt.content ?? "";
+      try {
+        if (isTauri) {
+          await invoke("add_prompt", { title, content });
+          await refreshData();
+        } else {
+          addPrompt(title, content);
+          const res = await fetch("/api/data/prompts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title, content }),
+          });
+          if (res.ok) await refreshData();
+        }
+        toast.success("Prompt duplicated.");
+      } catch {
+        toast.error("Failed to duplicate prompt.");
+      }
+    },
+    [addPrompt, refreshData]
+  );
+
   return (
     <div className={c["0"]}>
       <Breadcrumb
@@ -511,7 +599,16 @@ export function PromptRecordsPageContent() {
           {tableLoading ? (
             <p className={c["7"]}>Loading prompts…</p>
           ) : (
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <Tabs
+              value={activeTab}
+              onValueChange={(v) => {
+                setActiveTab(v);
+                if (v === CURSOR_PROMPTS_TAB || v === GENERAL_TAB) {
+                  setPromptsViewPreference({ mainTab: v });
+                }
+              }}
+              className="w-full"
+            >
               <TabsList className="flex w-full flex-wrap gap-1 bg-muted/50">
                 <TabsTrigger value={CURSOR_PROMPTS_TAB}>.cursor prompts</TabsTrigger>
                 <TabsTrigger value={GENERAL_TAB}>General</TabsTrigger>
@@ -552,6 +649,28 @@ export function PromptRecordsPageContent() {
                   >
                     <FileText className="size-3.5 mr-1.5" aria-hidden />
                     Copy as Markdown
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void copyAllCursorPromptsAsJsonToClipboard()}
+                    disabled={cursorPromptFiles.length === 0}
+                    aria-label="Copy all .cursor prompts as JSON"
+                    title="Copy as JSON (same data as Export JSON)"
+                  >
+                    <FileJson className="size-3.5 mr-1.5" aria-hidden />
+                    Copy as JSON
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void copyAllCursorPromptsAsCsvToClipboard()}
+                    disabled={cursorPromptFiles.length === 0}
+                    aria-label="Copy all .cursor prompts as CSV"
+                    title="Copy as CSV (same data as Export CSV)"
+                  >
+                    <Copy className="size-3.5 mr-1.5" aria-hidden />
+                    Copy as CSV
                   </Button>
                   <Button
                     variant="outline"
@@ -607,6 +726,28 @@ export function PromptRecordsPageContent() {
                         variant="outline"
                         size="sm"
                         className="h-8"
+                        onClick={() => void copyAllPromptsAsJsonToClipboard(generalPrompts)}
+                        aria-label="Copy all general prompts as JSON"
+                        title="Copy as JSON (same data as Export JSON)"
+                      >
+                        <FileJson className="size-3.5 mr-1.5" aria-hidden />
+                        Copy as JSON
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8"
+                        onClick={() => void copyAllPromptsAsCsvToClipboard(generalPrompts)}
+                        aria-label="Copy all general prompts as CSV"
+                        title="Copy as CSV (same data as Export CSV)"
+                      >
+                        <Copy className="size-3.5 mr-1.5" aria-hidden />
+                        Copy as CSV
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8"
                         onClick={() => downloadAllPromptsAsCsv(generalPrompts)}
                         aria-label="Export all general prompts as CSV"
                       >
@@ -619,6 +760,7 @@ export function PromptRecordsPageContent() {
                         aria-hidden
                       />
                       <Input
+                        ref={filterInputRef}
                         type="text"
                         placeholder="Filter by title…"
                         value={filterQuery}
@@ -627,7 +769,7 @@ export function PromptRecordsPageContent() {
                         aria-label="Filter prompts by title"
                       />
                     </div>
-                    <Select value={promptSort} onValueChange={(v) => setPromptSort(v as typeof promptSort)}>
+                    <Select value={promptSort} onValueChange={(v) => setPromptSort(v as PromptsViewSort)}>
                       <SelectTrigger className="h-8 w-[140px] text-xs" aria-label="Sort prompts">
                         <SelectValue />
                       </SelectTrigger>
@@ -689,6 +831,8 @@ export function PromptRecordsPageContent() {
                     setFormTitle={setFormTitle}
                     setFormContent={setFormContent}
                     onViewPrompt={setViewingPrompt}
+                    onRunPrompt={handleRunPrompt}
+                    onDuplicatePrompt={handleDuplicatePrompt}
                   />
                 )}
               </TabsContent>
@@ -704,6 +848,8 @@ export function PromptRecordsPageContent() {
                     setFormTitle={setFormTitle}
                     setFormContent={setFormContent}
                     onViewPrompt={setViewingPrompt}
+                    onRunPrompt={handleRunPrompt}
+                    onDuplicatePrompt={handleDuplicatePrompt}
                   />
                 </TabsContent>
               ))}

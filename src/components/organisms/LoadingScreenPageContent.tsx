@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ExternalLink } from "lucide-react";
 import { RainEffect } from "@/components/molecules/VisualEffects/RainEffect";
 import { CursorLightGlow } from "@/components/molecules/VisualEffects/CursorLightGlow";
 import { StarField } from "@/components/molecules/VisualEffects/StarField";
@@ -10,6 +10,8 @@ import { MoonGraphic } from "@/components/molecules/VisualEffects/MoonGraphic";
 import { KwcodeBranding } from "@/components/molecules/Display/KwcodeBranding";
 import { Breadcrumb } from "@/components/shared/Breadcrumb";
 import { getOrganismClasses } from "./organism-classes";
+import { getAppVersion } from "@/lib/app-version";
+import { getAppRepositoryUrl } from "@/lib/app-repository";
 
 const c = getOrganismClasses("LoadingScreenPageContent.tsx");
 
@@ -19,10 +21,16 @@ const BREADCRUMB_DARK_CLASS =
 
 /**
  * Full-page Loading Screen (moon and stars): same look as the root loading overlay,
- * with a go-back arrow at the top left to leave.
+ * with a go-back arrow at the top left to leave. Shows app version and View source link in footer.
  */
 export function LoadingScreenPageContent() {
   const [mouse, setMouse] = useState({ x: -1000, y: -1000 });
+  const [version, setVersion] = useState<string | null>(null);
+  const repoUrl = getAppRepositoryUrl();
+
+  useEffect(() => {
+    getAppVersion().then(setVersion).catch(() => setVersion("—"));
+  }, []);
 
   const onMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     setMouse({ x: e.clientX, y: e.clientY });
@@ -58,6 +66,26 @@ export function LoadingScreenPageContent() {
           <ArrowLeft className={c["2"]} />
         </Link>
       </div>
+
+      <footer className="absolute bottom-4 left-4 right-4 z-10 flex flex-wrap items-center justify-center gap-4 text-xs text-white/60">
+        {version != null && (
+          <span className="font-mono" aria-label="App version">
+            {version === "—" ? "—" : `v${version}`}
+          </span>
+        )}
+        {repoUrl && (
+          <a
+            href={repoUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-white/60 hover:text-white/90 transition-colors"
+            aria-label="View source (opens in new tab)"
+          >
+            <ExternalLink className="size-3.5" aria-hidden />
+            View source
+          </a>
+        )}
+      </footer>
     </div>
   );
 }

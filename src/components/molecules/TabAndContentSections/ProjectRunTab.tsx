@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef, Fragment } from "react";
 import type { Project } from "@/types/project";
 import type { NightShiftCirclePhase } from "@/types/run";
 import { readProjectFileOrEmpty, listProjectFiles } from "@/lib/api-projects";
@@ -60,15 +60,19 @@ import { cn } from "@/lib/utils";
 import { isImplementAllRun, parseTicketNumberFromRunLabel, formatElapsed } from "@/lib/run-helpers";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 import { downloadRunOutput } from "@/lib/download-run-output";
-import { downloadRunAsJson } from "@/lib/download-run-as-json";
+import { downloadRunAsJson, copyRunAsJsonToClipboard } from "@/lib/download-run-as-json";
 import { downloadRunAsMarkdown, copyRunAsMarkdownToClipboard } from "@/lib/download-run-as-md";
-import { downloadRunAsCsv } from "@/lib/download-run-as-csv";
+import { downloadRunAsCsv, copyRunAsCsvToClipboard } from "@/lib/download-run-as-csv";
 import { copyAllRunHistoryToClipboard } from "@/lib/copy-all-run-history";
 import { downloadAllRunHistory } from "@/lib/download-all-run-history";
-import { downloadAllRunHistoryCsv } from "@/lib/download-all-run-history-csv";
-import { downloadAllRunHistoryJson } from "@/lib/download-all-run-history-json";
+import { downloadAllRunHistoryCsv, copyAllRunHistoryCsvToClipboard } from "@/lib/download-all-run-history-csv";
+import { downloadAllRunHistoryJson, copyAllRunHistoryJsonToClipboard } from "@/lib/download-all-run-history-json";
 import { downloadAllRunHistoryMarkdown, copyAllRunHistoryMarkdownToClipboard } from "@/lib/download-all-run-history-md";
-import { getRunHistoryPreferences, setRunHistoryPreferences, DEFAULT_RUN_HISTORY_PREFERENCES } from "@/lib/run-history-preferences";
+import { formatTimestampShort, formatTimestampFull } from "@/lib/format-timestamp";
+import { formatRelativeTime } from "@/lib/format-relative-time";
+import { getRunHistoryPreferences, setRunHistoryPreferences, DEFAULT_RUN_HISTORY_PREFERENCES, RUN_HISTORY_FILTER_QUERY_MAX_LEN, RUN_HISTORY_PREFERENCES_RESTORED_EVENT } from "@/lib/run-history-preferences";
+import { groupRunHistoryByDate, RUN_HISTORY_DATE_GROUP_LABELS, getRunHistoryDateGroupOrder, getRunHistoryDateGroupTitle } from "@/lib/run-history-date-groups";
+import { useRunHistoryFocusFilterShortcut } from "@/lib/run-history-focus-filter-shortcut";
 import { StatusPill } from "@/components/shared/DisplayPrimitives";
 import { TerminalSlot } from "@/components/shared/TerminalSlot";
 import { KanbanTicketCard } from "@/components/molecules/Kanban/KanbanTicketCard";
@@ -245,8 +249,12 @@ async function loadPhasePrompt(
 const CIRCLE_PHASE_ORDER: NightShiftCirclePhase[] = ["refactor", "test", "debugging", "implement", "create"];
 function nextCirclePhase(phase: NightShiftCirclePhase): NightShiftCirclePhase | null {
   const i = CIRCLE_PHASE_ORDER.indexOf(phase);
-  if (i < 0 || i >= CIRCLE_PHASE_ORDER.length - 1) return null;
-  return CIRCLE_PHASE_ORDER[i + 1] ?? null;
+  return i < 0 || i >= CIRCLE_PHASE_ORDER.length - 1 ? null : CIRCLE_PHASE_ORDER[i + 1];
+}
+/** Run label for circle mode so terminals and history show which phase is active. */
+function nightShiftCircleRunLabel(slot: 1 | 2 | 3, phase: NightShiftCirclePhase): string {
+  const phaseLabel = phase.charAt(0).toUpperCase() + phase.slice(1);
+  return `Night shift (Terminal ${slot}) — ${phaseLabel}`;
 }
 
 /** Build badge block from selected badges (loads prompts from .cursor/8. worker/{id}.md) and optional extra instructions. */
@@ -372,7 +380,7 @@ function WorkerNightShiftSection({
           setNightShiftCircleState(true, next, 0);
           const nextPrompt = await buildPromptForPhase(next);
           for (const i of [1, 2, 3]) {
-            runTempTicket(projectPath, nextPrompt, `Night shift (Terminal ${i})`, {
+            runTempTicket(projectPath, nextPrompt, nightShiftCircleRunLabel(i, next), {
               isNightShift: true,
               isNightShiftCircle: true,
               circlePhase: next,
@@ -381,7 +389,7 @@ function WorkerNightShiftSection({
           toast.success(`Circle: ${next} (3 agents).`);
         } else {
           const currentPrompt = await buildPromptForPhase(phase);
-          runTempTicket(projectPath, currentPrompt, `Night shift (Terminal ${slot})`, {
+          runTempTicket(projectPath, currentPrompt, nightShiftCircleRunLabel(slot, phase), {
             isNightShift: true,
             isNightShiftCircle: true,
             circlePhase: phase,
@@ -389,7 +397,7 @@ function WorkerNightShiftSection({
         }
       });
       for (const slot of [1, 2, 3] as const) {
-        runTempTicket(projectPath, promptContent, `Night shift (Terminal ${slot})`, {
+        runTempTicket(projectPath, promptContent, nightShiftCircleRunLabel(slot, "refactor"), {
           isNightShift: true,
           isNightShiftCircle: true,
           circlePhase: "refactor",
@@ -468,9 +476,16 @@ function WorkerNightShiftSection({
       {(!nightShiftActive || nightShiftCircleMode) && (
         <>
           <div className="px-5 pb-2">
-            <span className="text-[10px] text-muted-foreground">
-              {nightShiftCircleMode ? "Circle phase:" : "Mode (click to toggle):"}
-            </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] text-muted-foreground">
+                {nightShiftCircleMode ? "Circle phase:" : "Mode (click to toggle):"}
+              </span>
+              {nightShiftActive && nightShiftCircleMode && nightShiftCirclePhase && (
+                <span className="text-[10px] font-medium text-indigo-600 dark:text-indigo-400" aria-live="polite">
+                  Current: {NIGHT_SHIFT_BADGES.find((b) => b.id === nightShiftCirclePhase)?.label ?? nightShiftCirclePhase}
+                </span>
+              )}
+            </div>
             <div className="flex flex-wrap gap-1.5 mt-1.5">
               {NIGHT_SHIFT_BADGES.map((b) => {
                 const selected = nightShiftCircleMode ? b.id === nightShiftCirclePhase : !!badges[b.id];
@@ -482,12 +497,14 @@ function WorkerNightShiftSection({
                       "text-xs font-medium transition-colors",
                       nightShiftCircleMode ? "cursor-default" : "cursor-pointer hover:bg-muted/60",
                       selected
-                        ? "bg-indigo-600 text-white hover:bg-indigo-700 hover:text-white"
+                        ? "bg-indigo-600 text-white hover:bg-indigo-700 hover:text-white ring-2 ring-indigo-400 ring-offset-2 ring-offset-background"
                         : nightShiftCircleMode ? "" : "hover:bg-muted/60"
                     )}
                     onClick={nightShiftCircleMode ? undefined : () => toggleBadge(b.id)}
                     role={nightShiftCircleMode ? undefined : "button"}
                     tabIndex={nightShiftCircleMode ? undefined : 0}
+                    aria-pressed={nightShiftCircleMode ? selected : undefined}
+                    title={nightShiftCircleMode && selected ? "Current phase" : undefined}
                     onKeyDown={
                       nightShiftCircleMode
                         ? undefined
@@ -883,13 +900,17 @@ const MS_24H = 24 * 60 * 60 * 1000;
 const MS_7D = 7 * MS_24H;
 const MS_30D = 30 * MS_24H;
 
+const FILTER_QUERY_DEBOUNCE_MS = 400;
+
 function WorkerHistorySection() {
   const history = useRunStore((s) => s.terminalOutputHistory);
   const clearTerminalOutputHistory = useRunStore((s) => s.clearTerminalOutputHistory);
   const removeTerminalOutputFromHistory = useRunStore((s) => s.removeTerminalOutputFromHistory);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
-  const [filterQuery, setFilterQuery] = useState("");
+  const [filterQuery, setFilterQuery] = useState(() => getRunHistoryPreferences().filterQuery);
+  const filterInputRef = useRef<HTMLInputElement>(null);
+  useRunHistoryFocusFilterShortcut(filterInputRef);
   const [exitStatusFilter, setExitStatusFilter] = useState<ExitStatusFilter>(() => getRunHistoryPreferences().exitStatusFilter);
   const [dateRangeFilter, setDateRangeFilter] = useState<DateRangeFilter>(() => getRunHistoryPreferences().dateRangeFilter);
   const [slotFilter, setSlotFilter] = useState<SlotFilter>(() => getRunHistoryPreferences().slotFilter);
@@ -897,12 +918,30 @@ function WorkerHistorySection() {
   useEffect(() => {
     setRunHistoryPreferences({ sortOrder, exitStatusFilter, dateRangeFilter, slotFilter });
   }, [sortOrder, exitStatusFilter, dateRangeFilter, slotFilter]);
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      setRunHistoryPreferences({ filterQuery: filterQuery.trim().slice(0, RUN_HISTORY_FILTER_QUERY_MAX_LEN) });
+    }, FILTER_QUERY_DEBOUNCE_MS);
+    return () => window.clearTimeout(t);
+  }, [filterQuery]);
+  useEffect(() => {
+    const onRestored = () => {
+      setSortOrder(DEFAULT_RUN_HISTORY_PREFERENCES.sortOrder);
+      setExitStatusFilter(DEFAULT_RUN_HISTORY_PREFERENCES.exitStatusFilter);
+      setDateRangeFilter(DEFAULT_RUN_HISTORY_PREFERENCES.dateRangeFilter);
+      setSlotFilter(DEFAULT_RUN_HISTORY_PREFERENCES.slotFilter);
+      setFilterQuery(DEFAULT_RUN_HISTORY_PREFERENCES.filterQuery);
+    };
+    window.addEventListener(RUN_HISTORY_PREFERENCES_RESTORED_EVENT, onRestored);
+    return () => window.removeEventListener(RUN_HISTORY_PREFERENCES_RESTORED_EVENT, onRestored);
+  }, []);
   const trimmedQuery = filterQuery.trim().toLowerCase();
   const isNonDefaultPreferences =
     sortOrder !== DEFAULT_RUN_HISTORY_PREFERENCES.sortOrder ||
     exitStatusFilter !== DEFAULT_RUN_HISTORY_PREFERENCES.exitStatusFilter ||
     dateRangeFilter !== DEFAULT_RUN_HISTORY_PREFERENCES.dateRangeFilter ||
-    slotFilter !== DEFAULT_RUN_HISTORY_PREFERENCES.slotFilter;
+    slotFilter !== DEFAULT_RUN_HISTORY_PREFERENCES.slotFilter ||
+    filterQuery !== DEFAULT_RUN_HISTORY_PREFERENCES.filterQuery;
   const filteredHistory = useMemo(() => {
     const byLabel = !trimmedQuery
       ? history
@@ -945,14 +984,24 @@ function WorkerHistorySection() {
     }
     return filteredHistory;
   }, [filteredHistory, sortOrder]);
+  const groupedByDate = useMemo(() => groupRunHistoryByDate(displayHistory), [displayHistory]);
   const entry = expandedId ? history.find((e) => e.id === expandedId) : null;
 
-  const formatTime = (iso: string) => {
+  const formatTimeWithRelative = (iso: string) => {
+    const absolute = formatTimestampShort(iso);
     try {
-      const d = new Date(iso);
-      return d.toLocaleString(undefined, { dateStyle: "short", timeStyle: "medium" });
+      const ms = new Date(iso).getTime();
+      if (!Number.isFinite(ms)) return absolute;
+      return (
+        <>
+          {absolute}
+          <span className="text-muted-foreground/80 font-normal ml-1">
+            {" "}({formatRelativeTime(ms)})
+          </span>
+        </>
+      );
     } catch {
-      return iso;
+      return absolute;
     }
   };
 
@@ -993,6 +1042,28 @@ function WorkerHistorySection() {
             >
               <FileText className="size-3" />
               Copy as Markdown
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => void copyAllRunHistoryJsonToClipboard(displayHistory)}
+              className="gap-1.5 text-xs h-8 rounded-lg text-muted-foreground hover:text-foreground"
+              title="Copy visible run history as JSON (same data as Download as JSON)"
+              aria-label="Copy visible run history as JSON to clipboard"
+            >
+              <Copy className="size-3" />
+              Copy as JSON
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => void copyAllRunHistoryCsvToClipboard(displayHistory)}
+              className="gap-1.5 text-xs h-8 rounded-lg text-muted-foreground hover:text-foreground"
+              title="Copy visible run history as CSV (same data as Download as CSV)"
+              aria-label="Copy visible run history as CSV to clipboard"
+            >
+              <Copy className="size-3" />
+              Copy as CSV
             </Button>
             <Button
               variant="ghost"
@@ -1061,6 +1132,7 @@ function WorkerHistorySection() {
               <div className="relative flex-1 min-w-[160px] max-w-xs">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" aria-hidden />
                 <Input
+                  ref={filterInputRef}
                   type="text"
                   placeholder="Filter by label…"
                   value={filterQuery}
@@ -1153,6 +1225,7 @@ function WorkerHistorySection() {
                     setExitStatusFilter(DEFAULT_RUN_HISTORY_PREFERENCES.exitStatusFilter);
                     setDateRangeFilter(DEFAULT_RUN_HISTORY_PREFERENCES.dateRangeFilter);
                     setSlotFilter(DEFAULT_RUN_HISTORY_PREFERENCES.slotFilter);
+                    setFilterQuery(DEFAULT_RUN_HISTORY_PREFERENCES.filterQuery);
                     setRunHistoryPreferences(DEFAULT_RUN_HISTORY_PREFERENCES);
                     toast.success("Preferences restored to defaults.");
                   }}
@@ -1185,13 +1258,23 @@ function WorkerHistorySection() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {displayHistory.map((h) => {
-                  const preview = h.output.trim().slice(0, OUTPUT_PREVIEW_LEN);
-                  const hasMore = h.output.trim().length > OUTPUT_PREVIEW_LEN;
+                {getRunHistoryDateGroupOrder().map((groupKey) => {
+                  const entries = groupedByDate[groupKey];
+                  if (entries.length === 0) return null;
                   return (
+                    <Fragment key={groupKey}>
+                      <TableRow className="border-border/40 bg-muted/30 hover:bg-muted/30">
+                        <TableCell colSpan={7} className="text-xs font-semibold text-muted-foreground py-2.5 px-4" title={getRunHistoryDateGroupTitle(groupKey)}>
+                          {RUN_HISTORY_DATE_GROUP_LABELS[groupKey]}
+                        </TableCell>
+                      </TableRow>
+                      {entries.map((h) => {
+                        const preview = h.output.trim().slice(0, OUTPUT_PREVIEW_LEN);
+                        const hasMore = h.output.trim().length > OUTPUT_PREVIEW_LEN;
+                        return (
                     <TableRow key={h.id} className="group">
-                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap font-mono">
-                        {formatTime(h.timestamp)}
+                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap font-mono" title={formatTimestampFull(h.timestamp)}>
+                        {formatTimeWithRelative(h.timestamp)}
                       </TableCell>
                       <TableCell className="text-xs font-medium truncate max-w-[200px]" title={h.label}>
                         {h.label}
@@ -1286,6 +1369,28 @@ function WorkerHistorySection() {
                             variant="ghost"
                             size="sm"
                             className="h-7 px-2 text-xs gap-1 opacity-70 group-hover:opacity-100"
+                            onClick={() => void copyRunAsJsonToClipboard(h)}
+                            title="Copy run as JSON (same data as Export JSON)"
+                            aria-label="Copy run as JSON to clipboard"
+                          >
+                            <Copy className="size-3" />
+                            Copy JSON
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs gap-1 opacity-70 group-hover:opacity-100"
+                            onClick={() => void copyRunAsCsvToClipboard(h)}
+                            title="Copy run as CSV (same data as Export CSV)"
+                            aria-label="Copy run as CSV to clipboard"
+                          >
+                            <Copy className="size-3" />
+                            Copy CSV
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs gap-1 opacity-70 group-hover:opacity-100"
                             onClick={() => downloadRunAsCsv(h)}
                             title="Export run as CSV"
                           >
@@ -1317,6 +1422,9 @@ function WorkerHistorySection() {
                         </div>
                       </TableCell>
                     </TableRow>
+                        );
+                      })}
+                    </Fragment>
                   );
                 })}
               </TableBody>
@@ -1416,6 +1524,28 @@ function WorkerHistorySection() {
                 >
                   <FileText className="size-3.5" />
                   Copy as Markdown
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => void copyRunAsJsonToClipboard(entry)}
+                  title="Copy as JSON (same data as Export JSON)"
+                  aria-label="Copy run as JSON to clipboard"
+                >
+                  <Copy className="size-3.5" />
+                  Copy as JSON
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => void copyRunAsCsvToClipboard(entry)}
+                  title="Copy as CSV (same data as Export CSV)"
+                  aria-label="Copy run as CSV to clipboard"
+                >
+                  <Copy className="size-3.5" />
+                  Copy as CSV
                 </Button>
                 <Button
                   variant="outline"

@@ -48,6 +48,8 @@ export interface RunState {
   nightShiftCircleMode: boolean;
   nightShiftCirclePhase: NightShiftCirclePhase | null;
   nightShiftCircleCompletedInPhase: number;
+  /** Timestamp (ms) when refreshData last completed successfully; null before first refresh. */
+  lastRefreshedAt: number | null;
 }
 
 export interface RunActions {
@@ -236,6 +238,7 @@ const initialState: RunState = {
   nightShiftCircleMode: false,
   nightShiftCirclePhase: null,
   nightShiftCircleCompletedInPhase: 0,
+  lastRefreshedAt: null,
 };
 
 const TERMINAL_HISTORY_MAX = 100;
@@ -315,7 +318,7 @@ export const useRunStore = create<RunStore>()((set, get) => ({
           invoke<string[]>("get_active_projects"),
           invoke<PromptRecordItem[]>("get_prompts"),
         ]);
-        set({ allProjects: all ?? [], activeProjects: active ?? [], prompts: promptList ?? [] });
+        set({ allProjects: all ?? [], activeProjects: active ?? [], prompts: promptList ?? [], lastRefreshedAt: Date.now() });
       } else {
         const [dataRes, promptsRes] = await Promise.all([
           fetch("/api/data"),
@@ -347,6 +350,7 @@ export const useRunStore = create<RunStore>()((set, get) => ({
           activeProjects: Array.isArray(data.activeProjects) ? data.activeProjects : [],
           prompts,
           dataWarning: warning ?? null,
+          lastRefreshedAt: Date.now(),
         });
       }
     } catch (e) {

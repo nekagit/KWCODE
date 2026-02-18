@@ -9,7 +9,7 @@ import {
 import { useUITheme } from "@/context/ui-theme";
 import { useRunState } from "@/context/run-state";
 import { useQuickActions } from "@/context/quick-actions-context";
-import { Palette, Keyboard, Copy, RefreshCw, Loader2, FolderOpen, ClipboardList, Check, XCircle } from "lucide-react";
+import { Palette, Keyboard, Copy, FileText, FileJson, RefreshCw, Loader2, FolderOpen, ClipboardList, Check, XCircle, ExternalLink } from "lucide-react";
 import { getOrganismClasses } from "./organism-classes";
 
 const c = getOrganismClasses("ConfigurationPageContent.tsx");
@@ -20,9 +20,16 @@ import { Button } from "@/components/ui/button";
 import { getAppVersion } from "@/lib/app-version";
 import { getApiHealth } from "@/lib/api-health";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
-import { isTauri } from "@/lib/tauri";
+import { invoke, isTauri } from "@/lib/tauri";
+import { copyAppDataFolderPath } from "@/lib/copy-app-data-folder-path";
 import { copyAppInfoToClipboard } from "@/lib/copy-app-info";
+import {
+  downloadAppInfoAsMarkdown,
+  copyAppInfoAsMarkdownToClipboard,
+} from "@/lib/download-app-info-md";
+import { copyAppInfoAsJsonToClipboard, downloadAppInfoAsJson } from "@/lib/download-app-info-json";
 import { openAppDataFolderInFileManager } from "@/lib/open-app-data-folder";
+import { getAppRepositoryUrl } from "@/lib/app-repository";
 import { toast } from "sonner";
 
 export function ConfigurationPageContent() {
@@ -32,9 +39,25 @@ export function ConfigurationPageContent() {
   const [version, setVersion] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [apiHealthOk, setApiHealthOk] = useState<boolean | null>(null);
+  const [dataDir, setDataDir] = useState<string | null>(null);
+  const [repoUrl, setRepoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    setRepoUrl(getAppRepositoryUrl());
+  }, []);
 
   useEffect(() => {
     getAppVersion().then(setVersion).catch(() => setVersion("—"));
+  }, []);
+
+  useEffect(() => {
+    if (!isTauri) {
+      setDataDir("—");
+      return;
+    }
+    invoke<string>("get_data_dir")
+      .then((p) => setDataDir(p?.trim() ?? "—"))
+      .catch(() => setDataDir("—"));
   }, []);
 
   useEffect(() => {
@@ -116,6 +139,27 @@ export function ConfigurationPageContent() {
           </div>
           <div className="pt-6 border-t border-border/60">
             <p className="text-sm font-medium text-muted-foreground mb-3">Data</p>
+            {dataDir !== null && (
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <span className="text-xs text-muted-foreground">Data directory:</span>
+                <code className="text-xs font-mono text-muted-foreground bg-muted/50 px-2 py-1 rounded break-all">
+                  {dataDir}
+                </code>
+                {isTauri && dataDir !== "—" && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 gap-1.5 text-muted-foreground hover:text-foreground"
+                    onClick={() => void copyAppDataFolderPath()}
+                    aria-label="Copy data directory path to clipboard"
+                  >
+                    <Copy className="size-3.5 shrink-0" aria-hidden />
+                    Copy path
+                  </Button>
+                )}
+              </div>
+            )}
             <div className="flex flex-wrap gap-3">
               <Button
                 type="button"
@@ -142,6 +186,70 @@ export function ConfigurationPageContent() {
                 <ClipboardList className="size-4 shrink-0" aria-hidden />
                 Copy app info
               </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() =>
+                  void copyAppInfoAsMarkdownToClipboard({
+                    version: version ?? "—",
+                    theme: effectiveTheme,
+                  })
+                }
+                className="h-9 gap-2"
+                aria-label="Copy app info as Markdown to clipboard"
+                title="Copy as Markdown (same content as Download as Markdown)"
+              >
+                <Copy className="size-4 shrink-0" aria-hidden />
+                Copy as Markdown
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() =>
+                  downloadAppInfoAsMarkdown({
+                    version: version ?? "—",
+                    theme: effectiveTheme,
+                  })
+                }
+                className="h-9 gap-2"
+                aria-label="Download app info as Markdown"
+                title="Download app info as Markdown (same data as Copy app info)"
+              >
+                <FileText className="size-4 shrink-0" aria-hidden />
+                Download as Markdown
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() =>
+                  copyAppInfoAsJsonToClipboard({
+                    version: version ?? "—",
+                    theme: effectiveTheme,
+                  })
+                }
+                className="h-9 gap-2"
+                aria-label="Copy app info as JSON to clipboard"
+                title="Copy as JSON (same data as Download as JSON)"
+              >
+                <Copy className="size-4 shrink-0" aria-hidden />
+                Copy as JSON
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() =>
+                  downloadAppInfoAsJson({
+                    version: version ?? "—",
+                    theme: effectiveTheme,
+                  })
+                }
+                className="h-9 gap-2"
+                aria-label="Download app info as JSON"
+                title="Download app info as JSON (same data as Copy app info)"
+              >
+                <FileJson className="size-4 shrink-0" aria-hidden />
+                Download as JSON
+              </Button>
             </div>
           </div>
           {version !== null && (
@@ -160,6 +268,20 @@ export function ConfigurationPageContent() {
                 >
                   <Copy className="size-4 shrink-0" aria-hidden />
                   Copy version
+                </Button>
+              )}
+              {repoUrl && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-2"
+                  onClick={() => window.open(repoUrl, "_blank", "noopener,noreferrer")}
+                  aria-label="Open app repository in browser"
+                  title={repoUrl}
+                >
+                  <ExternalLink className="size-4 shrink-0" aria-hidden />
+                  View source
                 </Button>
               )}
               {!isTauri && apiHealthOk !== null && (

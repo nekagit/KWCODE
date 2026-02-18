@@ -3,9 +3,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { Card } from "@/components/shared/Card";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
-import { Loader2, Database, FileCode, Braces } from "lucide-react";
+import { Loader2, Database, FileCode, Braces, FolderOpen, Copy } from "lucide-react";
 import { invoke, isTauri } from "@/lib/tauri";
+import { openAppDataFolderInFileManager } from "@/lib/open-app-data-folder";
+import { copyAppDataFolderPath } from "@/lib/copy-app-data-folder-path";
 import type { TicketRow } from "@/types/ticket";
 
 import { ScriptListDisplay } from "@/components/molecules/Displays/ScriptListDisplay";
@@ -130,6 +133,30 @@ export function DatabaseDataTabContent({
         </>
       }
     >
+      <div className="flex flex-wrap gap-2 mb-3">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => openAppDataFolderInFileManager()}
+          aria-label="Open data folder in file manager"
+          title="Open app data directory (where app.db and data files live)"
+        >
+          <FolderOpen className="size-4 shrink-0 mr-1.5" aria-hidden />
+          Open data folder
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => copyAppDataFolderPath()}
+          aria-label="Copy data folder path"
+          title="Copy app data directory path to clipboard"
+        >
+          <Copy className="size-4 shrink-0 mr-1.5" aria-hidden />
+          Copy path
+        </Button>
+      </div>
       {dataError && (
         <ErrorDisplay message={dataError} />
       )}

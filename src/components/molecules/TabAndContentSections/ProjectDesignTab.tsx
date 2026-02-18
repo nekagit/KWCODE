@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Download, FileText, Palette, RotateCcw, Search, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Copy, Download, FileJson, FileText, Palette, RotateCcw, Search, X } from "lucide-react";
 import type { Project } from "@/types/project";
 import type { DesignRecord } from "@/types/design";
 import { ProjectCategoryHeader } from "@/components/shared/ProjectCategoryHeader";
@@ -15,16 +15,27 @@ import {
   copyProjectDesignsAsMarkdownToClipboard,
 } from "@/lib/download-project-designs-md";
 import {
+  downloadProjectDesignsAsJson,
+  copyProjectDesignsAsJsonToClipboard,
+} from "@/lib/download-project-designs-json";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  getProjectDesignPreferences,
+  setProjectDesignPreferences,
+  DEFAULT_PROJECT_DESIGN_PREFERENCES,
+  PROJECT_DESIGN_ARCH_FILTER_QUERY_MAX_LEN,
+  type DesignSortOrder,
+} from "@/lib/project-design-architecture-preferences";
+import { useProjectDesignFocusFilterShortcut } from "@/lib/project-design-focus-filter-shortcut";
 
 const classes = getClasses("TabAndContentSections/ProjectDesignTab.tsx");
-
-type DesignSortOrder = "name-asc" | "name-desc";
+const FILTER_DEBOUNCE_MS = 300;
 
 /** Project with resolved designs (from getProjectResolved). */
 type ProjectWithDesigns = Project & { designs?: (DesignRecord & Record<string, unknown>)[] };
@@ -60,6 +71,33 @@ export function ProjectDesignTab({
   const designs = getDesignsToShow(project);
   const [filterQuery, setFilterQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<DesignSortOrder>("name-asc");
+
+  // Restore preferences when projectId is set or changes
+  useEffect(() => {
+    if (!projectId) return;
+    const prefs = getProjectDesignPreferences(projectId);
+    setFilterQuery(prefs.filterQuery);
+    setSortOrder(prefs.sortOrder);
+  }, [projectId]);
+
+  const filterInputRef = useRef<HTMLInputElement>(null);
+  useProjectDesignFocusFilterShortcut(filterInputRef);
+
+  // Debounced persist of filter query
+  const filterDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!projectId) return;
+    if (filterDebounceRef.current) clearTimeout(filterDebounceRef.current);
+    filterDebounceRef.current = setTimeout(() => {
+      setProjectDesignPreferences(projectId, {
+        filterQuery: filterQuery.trim().slice(0, PROJECT_DESIGN_ARCH_FILTER_QUERY_MAX_LEN),
+      });
+      filterDebounceRef.current = null;
+    }, FILTER_DEBOUNCE_MS);
+    return () => {
+      if (filterDebounceRef.current) clearTimeout(filterDebounceRef.current);
+    };
+  }, [projectId, filterQuery]);
 
   const trimmedFilterQuery = filterQuery.trim().toLowerCase();
   const filteredDesigns = useMemo(
@@ -105,6 +143,7 @@ export function ProjectDesignTab({
               aria-hidden
             />
             <Input
+              ref={filterInputRef}
               type="text"
               placeholder="Filter designs by name…"
               value={filterQuery}
@@ -113,7 +152,14 @@ export function ProjectDesignTab({
               aria-label="Filter designs by name"
             />
           </div>
-          <Select value={sortOrder} onValueChange={(v) => setSortOrder(v as DesignSortOrder)}>
+          <Select
+            value={sortOrder}
+            onValueChange={(v) => {
+              const next = v as DesignSortOrder;
+              setSortOrder(next);
+              setProjectDesignPreferences(projectId, { sortOrder: next });
+            }}
+          >
             <SelectTrigger className="h-8 w-[130px] text-sm" aria-label="Sort designs by name">
               <SelectValue />
             </SelectTrigger>
@@ -130,6 +176,7 @@ export function ProjectDesignTab({
               onClick={() => {
                 setFilterQuery("");
                 setSortOrder("name-asc");
+                setProjectDesignPreferences(projectId, DEFAULT_PROJECT_DESIGN_PREFERENCES);
               }}
               className="h-8 gap-1.5"
               aria-label="Reset filters"
@@ -157,6 +204,30 @@ export function ProjectDesignTab({
             </span>
           ) : null}
           <div className="flex items-center gap-2 ml-auto">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 text-xs"
+              onClick={() => downloadProjectDesignsAsJson(sortedDesigns)}
+              title="Download visible designs as JSON"
+              aria-label="Download visible designs as JSON"
+            >
+              <FileJson className="size-3.5" aria-hidden />
+              Download as JSON
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 text-xs"
+              onClick={() => copyProjectDesignsAsJsonToClipboard(sortedDesigns)}
+              title="Copy as JSON (same data as Download as JSON)"
+              aria-label="Copy designs as JSON to clipboard"
+            >
+              <Copy className="size-3.5" aria-hidden />
+              Copy as JSON
+            </Button>
             <Button
               type="button"
               variant="outline"

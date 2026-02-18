@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Building2, Download, FileText, RotateCcw, Search, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Building2, Copy, Download, FileJson, FileText, RotateCcw, Search, X } from "lucide-react";
 import type { Project } from "@/types/project";
 import type { ArchitectureRecord } from "@/types/architecture";
 import { ProjectCategoryHeader } from "@/components/shared/ProjectCategoryHeader";
@@ -9,6 +9,10 @@ import {
   downloadProjectArchitecturesAsMarkdown,
   copyProjectArchitecturesAsMarkdownToClipboard,
 } from "@/lib/download-project-architectures-md";
+import {
+  downloadProjectArchitecturesAsJson,
+  copyProjectArchitecturesAsJsonToClipboard,
+} from "@/lib/download-project-architectures-json";
 import { ProjectArchitectureListItem } from "@/components/atoms/list-items/ProjectArchitectureListItem";
 import { GridContainer } from "@/components/shared/GridContainer";
 import { getClasses } from "@/components/molecules/tailwind-molecules";
@@ -21,8 +25,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  getProjectArchitecturePreferences,
+  setProjectArchitecturePreferences,
+  DEFAULT_PROJECT_ARCHITECTURE_PREFERENCES,
+  PROJECT_DESIGN_ARCH_FILTER_QUERY_MAX_LEN,
+  type ArchitectureSortOrder,
+} from "@/lib/project-design-architecture-preferences";
+import { useProjectArchitectureFocusFilterShortcut } from "@/lib/project-architecture-focus-filter-shortcut";
 
 const classes = getClasses("TabAndContentSections/ProjectArchitectureTab.tsx");
+const FILTER_DEBOUNCE_MS = 300;
 
 /** Resolved architecture shape (when project is loaded with resolve=1). */
 interface ResolvedArchitectureItem {
@@ -38,8 +51,6 @@ interface ArchitectureDisplayItem {
   name: string;
   description?: string;
 }
-
-type ArchitectureSortOrder = "name-asc" | "name-desc";
 
 interface ProjectArchitectureTabProps {
   project: Project & { architectures?: unknown[] };
@@ -69,6 +80,33 @@ export function ProjectArchitectureTab({
   const architectures = useMemo(() => getArchitecturesToShow(project), [project]);
   const [filterQuery, setFilterQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<ArchitectureSortOrder>("name-asc");
+
+  // Restore preferences when projectId is set or changes
+  useEffect(() => {
+    if (!projectId) return;
+    const prefs = getProjectArchitecturePreferences(projectId);
+    setFilterQuery(prefs.filterQuery);
+    setSortOrder(prefs.sortOrder);
+  }, [projectId]);
+
+  const filterInputRef = useRef<HTMLInputElement>(null);
+  useProjectArchitectureFocusFilterShortcut(filterInputRef);
+
+  // Debounced persist of filter query
+  const filterDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!projectId) return;
+    if (filterDebounceRef.current) clearTimeout(filterDebounceRef.current);
+    filterDebounceRef.current = setTimeout(() => {
+      setProjectArchitecturePreferences(projectId, {
+        filterQuery: filterQuery.trim().slice(0, PROJECT_DESIGN_ARCH_FILTER_QUERY_MAX_LEN),
+      });
+      filterDebounceRef.current = null;
+    }, FILTER_DEBOUNCE_MS);
+    return () => {
+      if (filterDebounceRef.current) clearTimeout(filterDebounceRef.current);
+    };
+  }, [projectId, filterQuery]);
 
   const trimmedFilterQuery = filterQuery.trim().toLowerCase();
   const filteredArchitectures = useMemo(
@@ -127,6 +165,7 @@ export function ProjectArchitectureTab({
               aria-hidden
             />
             <Input
+              ref={filterInputRef}
               type="text"
               placeholder="Filter architectures by name…"
               value={filterQuery}
@@ -135,7 +174,14 @@ export function ProjectArchitectureTab({
               aria-label="Filter architectures by name"
             />
           </div>
-          <Select value={sortOrder} onValueChange={(v) => setSortOrder(v as ArchitectureSortOrder)}>
+          <Select
+            value={sortOrder}
+            onValueChange={(v) => {
+              const next = v as ArchitectureSortOrder;
+              setSortOrder(next);
+              setProjectArchitecturePreferences(projectId, { sortOrder: next });
+            }}
+          >
             <SelectTrigger className="h-8 w-[130px] text-sm" aria-label="Sort architectures by name">
               <SelectValue />
             </SelectTrigger>
@@ -165,6 +211,7 @@ export function ProjectArchitectureTab({
               onClick={() => {
                 setFilterQuery("");
                 setSortOrder("name-asc");
+                setProjectArchitecturePreferences(projectId, DEFAULT_PROJECT_ARCHITECTURE_PREFERENCES);
               }}
               className="h-8 gap-1.5"
               aria-label="Reset filters"
@@ -180,6 +227,30 @@ export function ProjectArchitectureTab({
           ) : null}
           {showExportButtons ? (
             <>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => downloadProjectArchitecturesAsJson(fullArchitecturesForExport)}
+                className="h-8 gap-1.5"
+                aria-label="Download architectures as JSON"
+                title="Download as JSON (list export)"
+              >
+                <FileJson className="size-3.5" aria-hidden />
+                Download as JSON
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => void copyProjectArchitecturesAsJsonToClipboard(fullArchitecturesForExport)}
+                className="h-8 gap-1.5"
+                aria-label="Copy architectures as JSON to clipboard"
+                title="Copy as JSON (same data as Download as JSON)"
+              >
+                <Copy className="size-3.5" aria-hidden />
+                Copy as JSON
+              </Button>
               <Button
                 type="button"
                 variant="outline"

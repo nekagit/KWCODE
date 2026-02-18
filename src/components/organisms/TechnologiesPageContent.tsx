@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
-import { Copy, Cpu, Download, FileText, FolderOpen, Loader2, Pencil, RefreshCw, Save, Layout, Server, Wrench } from "lucide-react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { Copy, Cpu, Download, FileText, FolderOpen, Loader2, Pencil, RefreshCw, Save, Layout, Search, Server, Wrench, X } from "lucide-react";
 import { toast } from "sonner";
 import { Breadcrumb } from "@/components/shared/Breadcrumb";
 import { SingleContentPage } from "@/components/organisms/SingleContentPage";
 import { SectionCard } from "@/components/shared/DisplayPrimitives";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -20,11 +21,16 @@ import { getTechLogoUrl } from "@/lib/tech-logos";
 import { copyTechStackToClipboard } from "@/lib/copy-tech-stack";
 import { copyTechnologiesFolderPath } from "@/lib/copy-technologies-folder-path";
 import {
+  copyTechnologiesDocumentAsMarkdownToClipboard,
+  downloadTechnologiesDocumentAsMarkdown,
+} from "@/lib/download-technologies-document";
+import {
   copyTechStackAsMarkdownToClipboard,
   downloadTechStack,
   downloadTechStackAsMarkdown,
 } from "@/lib/download-tech-stack";
 import { openTechnologiesFolderInFileManager } from "@/lib/open-technologies-folder";
+import { useTechnologiesFocusFilterShortcut } from "@/lib/technologies-focus-filter-shortcut";
 
 const c = getOrganismClasses("TechnologiesPageContent.tsx");
 
@@ -44,6 +50,26 @@ function parseTechStack(raw: string | undefined): TechStackJson | null {
   } catch {
     return null;
   }
+}
+
+/** Filter tech stack entries by query (label or value, case-insensitive). */
+function filterTechStackEntries(
+  entries: Record<string, string> | undefined,
+  query: string
+): Record<string, string> {
+  if (!entries || typeof entries !== "object") return {};
+  const q = query.trim().toLowerCase();
+  if (!q) return entries;
+  const out: Record<string, string> = {};
+  for (const [key, value] of Object.entries(entries)) {
+    if (
+      key.toLowerCase().includes(q) ||
+      (value && String(value).toLowerCase().includes(q))
+    ) {
+      out[key] = value;
+    }
+  }
+  return out;
 }
 
 function TechBadge({ label, value }: { label: string; value: string }) {
@@ -74,10 +100,12 @@ const CATEGORY_META: Record<string, { accent: "blue" | "emerald" | "amber"; icon
 
 function renderCategoryCard(
   title: string,
-  entries: Record<string, string> | undefined
+  entries: Record<string, string> | undefined,
+  options?: { emptyMessage?: string }
 ) {
-  if (!entries || Object.keys(entries).length === 0) return null;
   const meta = CATEGORY_META[title] ?? { accent: "blue" as const, icon: null };
+  const hasEntries = entries && Object.keys(entries).length > 0;
+  if (!hasEntries && !options?.emptyMessage) return null;
   return (
     <SectionCard key={title} accentColor={meta.accent} className="space-y-4">
       <div className="flex items-center gap-2">
@@ -86,11 +114,15 @@ function renderCategoryCard(
           {title}
         </h3>
       </div>
-      <div className="flex flex-wrap gap-2">
-        {Object.entries(entries).map(([key, value]) => (
-          <TechBadge key={key} label={key} value={value} />
-        ))}
-      </div>
+      {hasEntries ? (
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(entries!).map(([key, value]) => (
+            <TechBadge key={key} label={key} value={value} />
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">{options!.emptyMessage}</p>
+      )}
     </SectionCard>
   );
 }
@@ -103,7 +135,10 @@ export function TechnologiesPageContent() {
   const [editContent, setEditContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [techStackFilterQuery, setTechStackFilterQuery] = useState("");
   const cancelledRef = useRef(false);
+  const filterInputRef = useRef<HTMLInputElement>(null);
+  useTechnologiesFocusFilterShortcut(filterInputRef);
 
   const load = useCallback(async (): Promise<boolean> => {
     try {
@@ -181,8 +216,29 @@ export function TechnologiesPageContent() {
   }, [load]);
 
   const techStack = parseTechStack(files["tech-stack.json"]);
+  const { filteredFrontend, filteredBackend, filteredTooling, totalBadges, filteredBadges } = useMemo(() => {
+    const fe = filterTechStackEntries(techStack?.frontend, techStackFilterQuery);
+    const be = filterTechStackEntries(techStack?.backend, techStackFilterQuery);
+    const to = filterTechStackEntries(techStack?.tooling, techStackFilterQuery);
+    const total = [techStack?.frontend, techStack?.backend, techStack?.tooling].reduce(
+      (sum, r) => sum + (r ? Object.keys(r).length : 0),
+      0
+    );
+    const filtered = Object.keys(fe).length + Object.keys(be).length + Object.keys(to).length;
+    return {
+      filteredFrontend: fe,
+      filteredBackend: be,
+      filteredTooling: to,
+      totalBadges: total,
+      filteredBadges: filtered,
+    };
+  }, [techStack, techStackFilterQuery]);
+
   const librariesMd = files["libraries.md"] ?? "";
   const sourcesMd = files["sources.md"] ?? "";
+  const trimmedTechStackFilter = techStackFilterQuery.trim();
+  const noMatches =
+    trimmedTechStackFilter.length > 0 && filteredBadges === 0;
 
   return (
     <div className="space-y-0">
@@ -256,6 +312,43 @@ export function TechnologiesPageContent() {
               </div>
               {(files["tech-stack.json"] != null || techStack) && (
                 <div className="flex flex-wrap items-center gap-2">
+                  {techStack && (
+                    <>
+                      <div className="relative flex-1 min-w-[160px] max-w-xs">
+                        <Search
+                          className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none"
+                          aria-hidden
+                        />
+                        <Input
+                          ref={filterInputRef}
+                          type="text"
+                          placeholder="Filter by name or value…"
+                          value={techStackFilterQuery}
+                          onChange={(e) => setTechStackFilterQuery(e.target.value)}
+                          className="pl-8 h-8 text-sm"
+                          aria-label="Filter tech stack by name or value"
+                        />
+                      </div>
+                      {trimmedTechStackFilter && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setTechStackFilterQuery("")}
+                          className="h-8 gap-1.5"
+                          aria-label="Clear filter"
+                        >
+                          <X className="size-3.5" aria-hidden />
+                          Clear
+                        </Button>
+                      )}
+                      {trimmedTechStackFilter && totalBadges > 0 && (
+                        <span className="text-sm text-muted-foreground whitespace-nowrap">
+                          Showing {filteredBadges} of {totalBadges}
+                        </span>
+                      )}
+                    </>
+                  )}
                   {files["tech-stack.json"] != null && (
                     <Button
                       variant="outline"
@@ -312,11 +405,23 @@ export function TechnologiesPageContent() {
               )}
             </div>
             {techStack ? (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {renderCategoryCard("Frontend", techStack.frontend)}
-                {renderCategoryCard("Backend", techStack.backend)}
-                {renderCategoryCard("Tooling", techStack.tooling)}
-              </div>
+              noMatches ? (
+                <p className="text-sm text-muted-foreground py-2">
+                  No badges match &quot;{techStackFilterQuery.trim()}&quot;.
+                </p>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {renderCategoryCard("Frontend", filteredFrontend, {
+                    emptyMessage: trimmedTechStackFilter ? "No matches" : undefined,
+                  })}
+                  {renderCategoryCard("Backend", filteredBackend, {
+                    emptyMessage: trimmedTechStackFilter ? "No matches" : undefined,
+                  })}
+                  {renderCategoryCard("Tooling", filteredTooling, {
+                    emptyMessage: trimmedTechStackFilter ? "No matches" : undefined,
+                  })}
+                </div>
+              )
             ) : (
               <p className="text-sm text-muted-foreground">
                 No tech-stack.json found. Add one in .cursor/technologies/ or use the project template (project_template.zip or project_template/.cursor/technologies/).
@@ -326,16 +431,42 @@ export function TechnologiesPageContent() {
 
           {/* Libraries & frameworks */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-base font-semibold">Libraries & frameworks</h2>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => openEdit("libraries.md")}
-              >
-                <Pencil className="size-4 mr-1.5" />
-                Edit
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openEdit("libraries.md")}
+                >
+                  <Pencil className="size-4 mr-1.5" />
+                  Edit
+                </Button>
+                {librariesMd.trim() && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => downloadTechnologiesDocumentAsMarkdown(librariesMd, "libraries.md")}
+                      aria-label="Download Libraries as Markdown"
+                      title="Download as Markdown"
+                    >
+                      <FileText className="size-4 mr-1.5" />
+                      Download as Markdown
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void copyTechnologiesDocumentAsMarkdownToClipboard(librariesMd)}
+                      aria-label="Copy Libraries as Markdown to clipboard"
+                      title="Copy as Markdown"
+                    >
+                      <Copy className="size-4 mr-1.5" />
+                      Copy as Markdown
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
             <SectionCard accentColor="violet" className="min-h-[80px]">
               {librariesMd ? (
@@ -353,16 +484,42 @@ export function TechnologiesPageContent() {
 
           {/* Open source / GitHub sources */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-base font-semibold">Open source / GitHub</h2>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => openEdit("sources.md")}
-              >
-                <Pencil className="size-4 mr-1.5" />
-                Edit
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openEdit("sources.md")}
+                >
+                  <Pencil className="size-4 mr-1.5" />
+                  Edit
+                </Button>
+                {sourcesMd.trim() && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => downloadTechnologiesDocumentAsMarkdown(sourcesMd, "sources.md")}
+                      aria-label="Download Open source as Markdown"
+                      title="Download as Markdown"
+                    >
+                      <FileText className="size-4 mr-1.5" />
+                      Download as Markdown
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void copyTechnologiesDocumentAsMarkdownToClipboard(sourcesMd)}
+                      aria-label="Copy Open source as Markdown to clipboard"
+                      title="Copy as Markdown"
+                    >
+                      <Copy className="size-4 mr-1.5" />
+                      Copy as Markdown
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
             <SectionCard accentColor="cyan" className="min-h-[80px]">
               {sourcesMd ? (

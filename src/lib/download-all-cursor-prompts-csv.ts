@@ -1,6 +1,8 @@
 import { toast } from "sonner";
 import { filenameTimestamp, downloadBlob } from "@/lib/download-helpers";
 import { escapeCsvField } from "@/lib/csv-helpers";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 
 export interface CursorPromptFileWithContent {
   relativePath: string;
@@ -28,16 +30,23 @@ function cursorPromptsToCsv(files: CursorPromptFileWithContent[]): string {
 }
 
 /**
+ * Fetch .cursor prompt files from API (same as download).
+ */
+async function fetchCursorPromptFiles(): Promise<CursorPromptFileWithContent[]> {
+  const res = await fetch("/api/data/cursor-prompt-files-contents");
+  if (!res.ok) throw new Error("Failed to load .cursor prompts");
+  const data = (await res.json()) as { files?: CursorPromptFileWithContent[] };
+  return Array.isArray(data.files) ? data.files : [];
+}
+
+/**
  * Download all .cursor *.prompt.md files as a single CSV file.
  * Fetches content from /api/data/cursor-prompt-files-contents.
  * Filename: all-cursor-prompts-{YYYY-MM-DD-HHmm}.csv
  */
 export async function downloadAllCursorPromptsAsCsv(): Promise<void> {
   try {
-    const res = await fetch("/api/data/cursor-prompt-files-contents");
-    if (!res.ok) throw new Error("Failed to load .cursor prompts");
-    const data = (await res.json()) as { files?: CursorPromptFileWithContent[] };
-    const files = Array.isArray(data.files) ? data.files : [];
+    const files = await fetchCursorPromptFiles();
     if (files.length === 0) {
       toast.info("No .cursor prompts to export");
       return;
@@ -50,5 +59,58 @@ export async function downloadAllCursorPromptsAsCsv(): Promise<void> {
     toast.success(".cursor prompts exported as CSV");
   } catch (e) {
     toast.error(e instanceof Error ? e.message : "Export failed");
+  }
+}
+
+/**
+ * Copy all .cursor prompt files to the clipboard as CSV.
+ * Same columns as downloadAllCursorPromptsAsCsv. Fetches from same API.
+ */
+export async function copyAllCursorPromptsAsCsvToClipboard(): Promise<boolean> {
+  try {
+    const res = await fetch("/api/data/cursor-prompt-files-contents");
+    if (!res.ok) throw new Error("Failed to load .cursor prompts");
+    const data = (await res.json()) as { files?: CursorPromptFileWithContent[] };
+    const files = Array.isArray(data.files) ? data.files : [];
+    if (files.length === 0) {
+      toast.info("No .cursor prompts to export");
+      return false;
+    }
+    const csv = cursorPromptsToCsv(files);
+    const ok = await copyTextToClipboard(csv);
+    if (ok) {
+      toast.success(".cursor prompts copied as CSV");
+    } else {
+      toast.error("Failed to copy to clipboard");
+    }
+    return ok;
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : "Copy failed");
+    return false;
+  }
+}
+
+/**
+ * Copy all .cursor *.prompt.md files to the clipboard as CSV.
+ * Same columns as downloadAllCursorPromptsAsCsv.
+ */
+export async function copyAllCursorPromptsAsCsvToClipboard(): Promise<boolean> {
+  try {
+    const files = await fetchCursorPromptFiles();
+    if (files.length === 0) {
+      toast.info("No .cursor prompts to export");
+      return false;
+    }
+    const csv = cursorPromptsToCsv(files);
+    const ok = await copyTextToClipboard(csv);
+    if (ok) {
+      toast.success(".cursor prompts copied as CSV");
+    } else {
+      toast.error("Failed to copy to clipboard");
+    }
+    return ok;
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : "Export failed");
+    return false;
   }
 }

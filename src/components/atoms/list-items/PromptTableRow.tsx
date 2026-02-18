@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Pencil, Trash2, Copy, Check, Eye, Hash } from "lucide-react";
+import { Pencil, Trash2, Copy, Check, Eye, Hash, Play, CopyPlus } from "lucide-react";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 import { toast } from "sonner";
@@ -34,6 +34,8 @@ interface PromptTableRowProps {
   setFormTitle: (title: string) => void;
   setFormContent: (content: string) => void;
   onViewPrompt?: (prompt: PromptRecord) => void;
+  onRunPrompt?: (prompt: PromptRecord) => void;
+  onDuplicatePrompt?: (prompt: PromptRecord) => void;
 }
 
 export const PromptTableRow: React.FC<PromptTableRowProps> = ({
@@ -46,6 +48,8 @@ export const PromptTableRow: React.FC<PromptTableRowProps> = ({
   setFormTitle,
   setFormContent,
   onViewPrompt,
+  onRunPrompt,
+  onDuplicatePrompt,
 }) => {
   const [copied, setCopied] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -143,6 +147,38 @@ export const PromptTableRow: React.FC<PromptTableRowProps> = ({
           >
             {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
           </Button>
+          {onRunPrompt && (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10"
+              title="Run this prompt (first active project)"
+              aria-label="Run this prompt"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRunPrompt(p);
+              }}
+            >
+              <Play className="h-4 w-4" />
+            </Button>
+          )}
+          {onDuplicatePrompt && (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0"
+              title="Duplicate prompt (create a copy as new record)"
+              aria-label="Duplicate prompt"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDuplicatePrompt(p);
+              }}
+            >
+              <CopyPlus className="h-4 w-4" />
+            </Button>
+          )}
           <Button
             type="button"
             size="sm"

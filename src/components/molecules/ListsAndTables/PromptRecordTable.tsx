@@ -26,6 +26,8 @@ interface PromptRecordTableProps {
   setFormTitle: (title: string) => void;
   setFormContent: (content: string) => void;
   onViewPrompt?: (prompt: PromptRecordRecord) => void;
+  onRunPrompt?: (prompt: PromptRecordRecord) => void;
+  onDuplicatePrompt?: (prompt: PromptRecordRecord) => void;
 }
 
 export function PromptRecordTable({
@@ -38,6 +40,8 @@ export function PromptRecordTable({
   setFormTitle,
   setFormContent,
   onViewPrompt,
+  onRunPrompt,
+  onDuplicatePrompt,
 }: PromptRecordTableProps) {
   return (
     <Table>
@@ -79,6 +83,8 @@ export function PromptRecordTable({
               setFormTitle={setFormTitle}
               setFormContent={setFormContent}
               onViewPrompt={onViewPrompt}
+              onRunPrompt={onRunPrompt}
+              onDuplicatePrompt={onDuplicatePrompt}
             />
           ))
         )}

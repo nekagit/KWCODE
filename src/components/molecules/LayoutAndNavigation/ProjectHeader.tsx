@@ -3,13 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Trash2, Download, FolderOpen, FolderCog, Copy, Hash, Type, Terminal } from "lucide-react";
+import { Trash2, Download, FolderOpen, FolderCog, Copy, Hash, Type, Terminal, Code2, Code } from "lucide-react";
 import type { Project } from "@/types/project";
 import { deleteProject } from "@/lib/api-projects";
 import { downloadProjectExport } from "@/lib/download-project-export";
 import { openProjectFolderInFileManager } from "@/lib/open-project-folder";
 import { openProjectCursorFolderInFileManager } from "@/lib/open-project-cursor-folder";
 import { openProjectInSystemTerminal } from "@/lib/open-project-in-terminal";
+import { openProjectInEditor } from "@/lib/open-project-in-editor";
+import { copyProjectCursorFolderPath } from "@/lib/copy-project-cursor-folder-path";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import { getClasses } from "@/components/molecules/tailwind-molecules";
@@ -104,11 +106,49 @@ export function ProjectHeader({ project, projectId }: ProjectHeaderProps) {
         </Button>
         <Button
           variant="outline"
+          onClick={() => openProjectInEditor(project.repoPath, "cursor")}
+          aria-label="Open project in Cursor"
+          title="Open in Cursor"
+        >
+          <Code2 className={classes[1]} />
+          Open in Cursor
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => openProjectInEditor(project.repoPath, "vscode")}
+          aria-label="Open project in VS Code"
+          title="Open in VS Code"
+        >
+          <Code className={classes[1]} />
+          Open in VS Code
+        </Button>
+        <Button
+          variant="outline"
+          onClick={async () => {
+            await copyProjectCursorFolderPath(project.repoPath);
+          }}
+          aria-label="Copy .cursor folder path to clipboard"
+          title="Copy .cursor folder path"
+        >
+          <Copy className={classes[1]} />
+          Copy .cursor path
+        </Button>
+        <Button
+          variant="outline"
           onClick={() => openProjectCursorFolderInFileManager(project.repoPath)}
           aria-label="Open project .cursor folder in file manager"
         >
           <FolderCog className={classes[1]} />
           Open .cursor folder
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => copyProjectCursorFolderPath(project.repoPath)}
+          aria-label="Copy .cursor folder path to clipboard"
+          title="Copy .cursor folder path"
+        >
+          <Copy className={classes[1]} />
+          Copy .cursor path
         </Button>
         <Button variant="outline" onClick={handleExport}>
           <Download className={classes[1]} />

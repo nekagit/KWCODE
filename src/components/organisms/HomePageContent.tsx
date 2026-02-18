@@ -14,6 +14,7 @@ import { DashboardTabContent } from "@/components/molecules/TabAndContentSection
 import { PromptsTabContent } from "@/components/molecules/TabAndContentSections/PromptsTabContent";
 import { getOrganismClasses } from "./organism-classes";
 import { toast } from "sonner";
+import { DASHBOARD_TAB_TITLES } from "@/context/page-title-context";
 
 import type { Ticket, TicketRow, TicketStatus } from "@/types/ticket";
 
@@ -81,6 +82,20 @@ export function HomePageContent() {
   useEffect(() => {
     if (isTauri) loadTickets();
   }, [loadTickets, isTauri]);
+
+  // Restore last dashboard tab from localStorage when URL has no ?tab= (persist preference)
+  useEffect(() => {
+    const fromUrl = searchParams.get("tab");
+    if (fromUrl != null && fromUrl !== "") return;
+    try {
+      const saved = typeof window !== "undefined" ? localStorage.getItem(DASHBOARD_TAB_STORAGE_KEY) : null;
+      if (saved && saved !== "dashboard" && DASHBOARD_TAB_VALUES.includes(saved as (typeof DASHBOARD_TAB_VALUES)[number])) {
+        router.replace("/?tab=" + saved);
+      }
+    } catch {
+      // ignore
+    }
+  }, [router, searchParams]);
 
   // Browser: load tickets and kv entries from /api/data (reads data/*.json)
   useEffect(() => {
@@ -154,9 +169,21 @@ export function HomePageContent() {
     [navigateToTab]
   );
 
+  const tabTriggers = (["dashboard", "projects", "prompts", "all", "data"] as const).map((t) => ({
+    value: t,
+    label: DASHBOARD_TAB_TITLES[t] ?? t,
+  }));
+
   return (
     <Tabs value={tab} onValueChange={handleTabChange} className={c["0"]} data-testid="home-page-tabs">
       <div className={c["1"]}>
+        <TabsList className="mb-4 flex w-full flex-wrap gap-1 rounded-xl border border-border/40 bg-muted/20 p-1.5" aria-label="Dashboard sections">
+          {tabTriggers.map(({ value, label }) => (
+            <TabsTrigger key={value} value={value} data-testid={`tab-${value}`}>
+              {label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
         <TabsContent value="dashboard" className={c["4"]}>
           <DashboardTabContent />
         </TabsContent>
@@ -175,6 +202,8 @@ export function HomePageContent() {
             activeProjects={activeProjects}
             toggleProject={toggleProject}
             saveActiveProjects={saveActiveProjects}
+            onSelectAll={() => setActiveProjects([...allProjects])}
+            onDeselectAll={() => setActiveProjects([])}
           />
         </TabsContent>
 
@@ -184,6 +213,8 @@ export function HomePageContent() {
             activeProjects={activeProjects}
             toggleProject={toggleProject}
             saveActiveProjects={saveActiveProjects}
+            onSelectAll={() => setActiveProjects([...allProjects])}
+            onDeselectAll={() => setActiveProjects([])}
             prompts={prompts}
             selectedPromptRecordIds={selectedPromptRecordIds}
             setSelectedPromptRecordIds={setSelectedPromptRecordIds}

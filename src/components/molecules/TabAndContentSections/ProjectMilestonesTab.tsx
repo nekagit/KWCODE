@@ -7,8 +7,13 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SectionCard } from "@/components/shared/DisplayPrimitives";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { Flag, Loader2, FileText, Plus, Pencil, Trash2, ListTodo, Folder } from "lucide-react";
+import { Flag, Loader2, FileText, Plus, Pencil, Trash2, ListTodo, Folder, Copy } from "lucide-react";
 import { listProjectFiles, type FileEntry } from "@/lib/api-projects";
+import {
+  downloadMilestoneContentAsMarkdown,
+  copyMilestoneContentAsMarkdownToClipboard,
+} from "@/lib/download-milestone-document";
+import { safeNameForFile } from "@/lib/download-helpers";
 import {
   Table,
   TableBody,
@@ -369,11 +374,42 @@ export function ProjectMilestonesTab({
           </div>
           <div className="flex-1 min-w-0 border border-border/60 rounded-md overflow-hidden flex flex-col">
             {selectedMilestone?.content ? (
-              <ScrollArea className="flex-1 min-h-[300px]">
-                <div className={cn("p-4", markdownClasses)}>
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedMilestone.content}</ReactMarkdown>
+              <>
+                <div className="flex items-center gap-1.5 p-2 border-b border-border/60 bg-muted/30">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      downloadMilestoneContentAsMarkdown(
+                        selectedMilestone.content ?? "",
+                        safeNameForFile(selectedMilestone.name, selectedMilestone.slug || "milestone")
+                      )
+                    }
+                    aria-label="Download milestone content as Markdown"
+                    title="Download as Markdown"
+                    className="gap-1"
+                  >
+                    <FileText className="size-3" aria-hidden />
+                    Download as Markdown
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void copyMilestoneContentAsMarkdownToClipboard(selectedMilestone.content ?? "")}
+                    aria-label="Copy milestone content as Markdown"
+                    title="Copy as Markdown"
+                    className="gap-1"
+                  >
+                    <Copy className="size-3" aria-hidden />
+                    Copy as Markdown
+                  </Button>
                 </div>
-              </ScrollArea>
+                <ScrollArea className="flex-1 min-h-[300px]">
+                  <div className={cn("p-4", markdownClasses)}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedMilestone.content}</ReactMarkdown>
+                  </div>
+                </ScrollArea>
+              </>
             ) : (
               <div className="p-6 text-sm text-muted-foreground text-center flex-1 flex items-center justify-center">
                 No content for this milestone.

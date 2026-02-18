@@ -5,23 +5,33 @@ import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, MessageSquare, Folders, FolderOpen, FolderPlus, Lightbulb, Cpu, LayoutGrid, Settings, Moon, Keyboard, Loader2, RefreshCw, X, Activity, BookOpen, Printer, ChevronUp, Focus, ClipboardList, HardDrive } from "lucide-react";
+import { LayoutDashboard, MessageSquare, Folders, FolderOpen, FolderPlus, FolderSearch, Lightbulb, Cpu, LayoutGrid, Settings, Moon, Sun, Keyboard, Loader2, RefreshCw, RotateCw, X, Activity, BookOpen, Printer, ChevronUp, ChevronDown, Focus, ClipboardList, Copy, HardDrive, Trash2, Square, Code2, Terminal, RotateCcw, PanelLeft, TestTube2, ExternalLink, Flag, FolderGit2, ListTodo, Palette, Building2 } from "lucide-react";
 import { useQuickActions } from "@/context/quick-actions-context";
 import { useUITheme } from "@/context/ui-theme";
 import { isValidUIThemeId } from "@/data/ui-theme-templates";
 import { getApiHealth } from "@/lib/api-health";
 import { getAppVersion } from "@/lib/app-version";
 import { copyAppInfoToClipboard } from "@/lib/copy-app-info";
+import { copyAppDataFolderPath } from "@/lib/copy-app-data-folder-path";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 import { openAppDataFolderInFileManager } from "@/lib/open-app-data-folder";
 import { openDocumentationFolderInFileManager } from "@/lib/open-documentation-folder";
+import { openProjectInEditor } from "@/lib/open-project-in-editor";
+import { openProjectInSystemTerminal } from "@/lib/open-project-in-terminal";
 import { listProjects } from "@/lib/api-projects";
 import { isTauri } from "@/lib/tauri";
 import { getRecentProjectIds } from "@/lib/recent-projects";
+import { setRunHistoryPreferences, DEFAULT_RUN_HISTORY_PREFERENCES, RUN_HISTORY_PREFERENCES_RESTORED_EVENT } from "@/lib/run-history-preferences";
+import { dispatchSidebarToggle } from "@/lib/sidebar-toggle-event";
+import { getAppRepositoryUrl } from "@/lib/app-repository";
 import type { Project } from "@/types/project";
 import { useRunStore } from "@/store/run-store";
 import { toast } from "sonner";
@@ -54,14 +64,21 @@ function filterEntries(entries: CommandPaletteEntry[], query: string): CommandPa
 export function CommandPalette() {
   const router = useRouter();
   const { openShortcutsModal } = useQuickActions();
-  const { theme: uiTheme } = useUITheme();
+  const { theme: uiTheme, setTheme } = useUITheme();
   const refreshData = useRunStore((s) => s.refreshData);
+  const clearTerminalOutputHistory = useRunStore((s) => s.clearTerminalOutputHistory);
+  const removeTerminalOutputFromHistory = useRunStore((s) => s.removeTerminalOutputFromHistory);
+  const terminalOutputHistoryLength = useRunStore((s) => s.terminalOutputHistory.length);
+  const firstRunId = useRunStore((s) => s.terminalOutputHistory[0]?.id);
+  const stopAllImplementAll = useRunStore((s) => s.stopAllImplementAll);
+  const runningRuns = useRunStore((s) => s.runningRuns);
   const activeProjects = useRunStore((s) => s.activeProjects);
   const effectiveTheme = isValidUIThemeId(uiTheme) ? uiTheme : "light";
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [projects, setProjects] = useState<Project[] | null>(null);
+  const [clearRunHistoryConfirmOpen, setClearRunHistoryConfirmOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Load projects when palette opens so "Go to project" entries are available
@@ -107,6 +124,128 @@ export function CommandPalette() {
     router.push(`/projects/${proj.id}?tab=worker`);
   }, [activeProjects, projects, router]);
 
+  const goToTesting = useCallback(async () => {
+    const active = activeProjects;
+    if (!active.length) {
+      toast.info("Select a project first");
+      router.push("/projects");
+      return;
+    }
+    const list = projects ?? (await listProjects().catch(() => []));
+    const proj = list?.find((p) => p.repoPath === active[0]);
+    if (!proj) {
+      toast.info("Open a project first");
+      router.push("/projects");
+      return;
+    }
+    router.push(`/projects/${proj.id}?tab=testing`);
+  }, [activeProjects, projects, router]);
+
+  const goToMilestones = useCallback(async () => {
+    const active = activeProjects;
+    if (!active.length) {
+      toast.info("Select a project first");
+      router.push("/projects");
+      return;
+    }
+    const list = projects ?? (await listProjects().catch(() => []));
+    const proj = list?.find((p) => p.repoPath === active[0]);
+    if (!proj) {
+      toast.info("Open a project first");
+      router.push("/projects");
+      return;
+    }
+    router.push(`/projects/${proj.id}?tab=milestones`);
+  }, [activeProjects, projects, router]);
+
+  const goToVersioning = useCallback(async () => {
+    const active = activeProjects;
+    if (!active.length) {
+      toast.info("Select a project first");
+      router.push("/projects");
+      return;
+    }
+    const list = projects ?? (await listProjects().catch(() => []));
+    const proj = list?.find((p) => p.repoPath === active[0]);
+    if (!proj) {
+      toast.info("Open a project first");
+      router.push("/projects");
+      return;
+    }
+    router.push(`/projects/${proj.id}?tab=git`);
+  }, [activeProjects, projects, router]);
+
+  const goToPlanner = useCallback(async () => {
+    const active = activeProjects;
+    if (!active.length) {
+      toast.info("Select a project first");
+      router.push("/projects");
+      return;
+    }
+    const list = projects ?? (await listProjects().catch(() => []));
+    const proj = list?.find((p) => p.repoPath === active[0]);
+    if (!proj) {
+      toast.info("Open a project first");
+      router.push("/projects");
+      return;
+    }
+    router.push(`/projects/${proj.id}?tab=todo`);
+  }, [activeProjects, projects, router]);
+
+  const goToDesign = useCallback(async () => {
+    const active = activeProjects;
+    if (!active.length) {
+      toast.info("Select a project first");
+      router.push("/projects");
+      return;
+    }
+    const list = projects ?? (await listProjects().catch(() => []));
+    const proj = list?.find((p) => p.repoPath === active[0]);
+    if (!proj) {
+      toast.info("Open a project first");
+      router.push("/projects");
+      return;
+    }
+    router.push(`/projects/${proj.id}?tab=project#design`);
+  }, [activeProjects, projects, router]);
+
+  const goToArchitecture = useCallback(async () => {
+    const active = activeProjects;
+    if (!active.length) {
+      toast.info("Select a project first");
+      router.push("/projects");
+      return;
+    }
+    const list = projects ?? (await listProjects().catch(() => []));
+    const proj = list?.find((p) => p.repoPath === active[0]);
+    if (!proj) {
+      toast.info("Open a project first");
+      router.push("/projects");
+      return;
+    }
+    router.push(`/projects/${proj.id}?tab=project#architecture`);
+  }, [activeProjects, projects, router]);
+
+  const goToFirstProject = useCallback(async () => {
+    const active = activeProjects;
+    if (!active.length) {
+      toast.info("Select a project first");
+      router.push("/projects");
+      closePalette();
+      return;
+    }
+    const list = projects ?? (await listProjects().catch(() => []));
+    const proj = list?.find((p) => p.repoPath === active[0]);
+    if (!proj) {
+      toast.info("Open a project first");
+      router.push("/projects");
+      closePalette();
+      return;
+    }
+    closePalette();
+    router.push(`/projects/${proj.id}`);
+  }, [activeProjects, projects, router, closePalette]);
+
   const handleCheckApiHealth = useCallback(async () => {
     try {
       const data = await getApiHealth();
@@ -138,18 +277,160 @@ export function CommandPalette() {
     closePalette();
   }, [closePalette]);
 
+  const handleCopyDataDirectoryPath = useCallback(async () => {
+    await copyAppDataFolderPath();
+    closePalette();
+  }, [closePalette]);
+
+  const handleCopyFirstProjectPath = useCallback(async () => {
+    const active = activeProjects;
+    if (!active.length) {
+      toast.info("Select a project first");
+      closePalette();
+      return;
+    }
+    const list = projects ?? (await listProjects().catch(() => []));
+    const proj = list?.find((p) => p.repoPath === active[0]);
+    if (!proj) {
+      toast.info("Open a project first");
+      closePalette();
+      return;
+    }
+    if (!proj.repoPath?.trim()) {
+      toast.info("No project path set");
+      closePalette();
+      return;
+    }
+    const ok = await copyTextToClipboard(proj.repoPath);
+    if (ok) toast.success("Project path copied");
+    closePalette();
+  }, [activeProjects, projects, closePalette]);
+
+  const handleClearRunHistory = useCallback(() => {
+    closePalette();
+    if (terminalOutputHistoryLength === 0) {
+      toast.info("Run history is already empty");
+      return;
+    }
+    setClearRunHistoryConfirmOpen(true);
+  }, [closePalette, terminalOutputHistoryLength]);
+
+  const handleConfirmClearRunHistory = useCallback(() => {
+    clearTerminalOutputHistory();
+    setClearRunHistoryConfirmOpen(false);
+    toast.success("Run history cleared");
+  }, [clearTerminalOutputHistory]);
+
+  const handleRemoveLastRun = useCallback(() => {
+    closePalette();
+    if (firstRunId == null) {
+      toast.info("No runs in history");
+      return;
+    }
+    removeTerminalOutputFromHistory(firstRunId);
+    toast.success("Last run removed from history");
+  }, [firstRunId, removeTerminalOutputFromHistory, closePalette]);
+
+  const handleRestoreRunHistoryFilters = useCallback(() => {
+    closePalette();
+    setRunHistoryPreferences(DEFAULT_RUN_HISTORY_PREFERENCES);
+    window.dispatchEvent(new CustomEvent(RUN_HISTORY_PREFERENCES_RESTORED_EVENT));
+    toast.success("Run history filters restored to defaults.");
+  }, [closePalette]);
+
+  const handleOpenFirstProjectInCursor = useCallback(() => {
+    if (!activeProjects.length) {
+      toast.info("Select a project first");
+      router.push("/projects");
+      closePalette();
+      return;
+    }
+    void openProjectInEditor(activeProjects[0], "cursor");
+    closePalette();
+  }, [activeProjects, router, closePalette]);
+
+  const handleOpenFirstProjectInTerminal = useCallback(() => {
+    if (!activeProjects.length) {
+      toast.info("Select a project first");
+      router.push("/projects");
+      closePalette();
+      return;
+    }
+    void openProjectInSystemTerminal(activeProjects[0]);
+    closePalette();
+  }, [activeProjects, router, closePalette]);
+
+  const handleStopAllRuns = useCallback(async () => {
+    if (runningRuns.length === 0) {
+      toast.info("No runs in progress");
+      closePalette();
+      return;
+    }
+    try {
+      await stopAllImplementAll();
+      toast.success("All runs stopped");
+    } catch {
+      toast.error("Failed to stop runs");
+    }
+    closePalette();
+  }, [stopAllImplementAll, runningRuns.length, closePalette]);
+
+  const handleSwitchToLightMode = useCallback(() => {
+    setTheme("light");
+    toast.success("Switched to light mode");
+    closePalette();
+  }, [setTheme, closePalette]);
+
+  const handleSwitchToDarkMode = useCallback(() => {
+    setTheme("dark");
+    toast.success("Switched to dark mode");
+    closePalette();
+  }, [setTheme, closePalette]);
+
   const actionEntries: CommandPaletteEntry[] = useMemo(() => {
     const entries: CommandPaletteEntry[] = [
       { label: "Refresh data", icon: RefreshCw, onSelect: handleRefreshData },
+      { label: "Reload app", icon: RotateCw, onSelect: () => { closePalette(); window.location.reload(); } },
       { label: "Go to Run", icon: Activity, onSelect: () => { goToRun(); closePalette(); } },
+      { label: "Go to Testing", icon: TestTube2, onSelect: () => { goToTesting(); closePalette(); } },
+      { label: "Go to Milestones", icon: Flag, onSelect: () => { goToMilestones(); closePalette(); } },
+      { label: "Go to Versioning", icon: FolderGit2, onSelect: () => { goToVersioning(); closePalette(); } },
+      { label: "Go to Planner", icon: ListTodo, onSelect: () => { goToPlanner(); closePalette(); } },
+      { label: "Go to Design", icon: Palette, onSelect: () => { goToDesign(); closePalette(); } },
+      { label: "Go to Architecture", icon: Building2, onSelect: () => { goToArchitecture(); closePalette(); } },
+      { label: "Go to first project", icon: FolderOpen, onSelect: goToFirstProject },
+      { label: "Open first project in Cursor", icon: Code2, onSelect: handleOpenFirstProjectInCursor },
+      { label: "Open first project in Terminal", icon: Terminal, onSelect: handleOpenFirstProjectInTerminal },
+      { label: "Stop all runs", icon: Square, onSelect: handleStopAllRuns },
+      { label: "Clear run history", icon: Trash2, onSelect: handleClearRunHistory },
+      { label: "Remove last run from history", icon: Trash2, onSelect: handleRemoveLastRun },
+      { label: "Restore run history filters", icon: RotateCcw, onSelect: handleRestoreRunHistoryFilters },
+      { label: "Switch to light mode", icon: Sun, onSelect: handleSwitchToLightMode },
+      { label: "Switch to dark mode", icon: Moon, onSelect: handleSwitchToDarkMode },
       { label: "Keyboard shortcuts", icon: Keyboard, onSelect: openShortcutsModal },
       { label: "Copy app info", icon: ClipboardList, onSelect: handleCopyAppInfo },
+      { label: "Copy first project path", icon: Copy, onSelect: handleCopyFirstProjectPath },
+      { label: "Copy data directory path", icon: Copy, onSelect: handleCopyDataDirectoryPath },
       { label: "Open data folder", icon: HardDrive, onSelect: handleOpenAppDataFolder },
       { label: "Open documentation folder", icon: FolderOpen, onSelect: handleOpenDocumentationFolder },
+      { label: "Discover folders", icon: FolderSearch, onSelect: () => { router.push("/projects?discover=1"); closePalette(); } },
       { label: "Print current page", icon: Printer, onSelect: () => { window.print(); closePalette(); } },
+      { label: "Toggle sidebar", icon: PanelLeft, onSelect: () => { dispatchSidebarToggle(); closePalette(); } },
       { label: "Scroll to top", icon: ChevronUp, onSelect: () => { const main = document.getElementById("main-content"); if (main) main.scrollTop = 0; closePalette(); } },
+      { label: "Scroll to bottom", icon: ChevronDown, onSelect: () => { const main = document.getElementById("main-content"); if (main) main.scrollTop = main.scrollHeight - main.clientHeight; closePalette(); } },
       { label: "Focus main content", icon: Focus, onSelect: () => { document.getElementById("main-content")?.focus(); closePalette(); } },
     ];
+    const repoUrl = getAppRepositoryUrl();
+    if (repoUrl) {
+      entries.push({
+        label: "View source",
+        icon: ExternalLink,
+        onSelect: () => {
+          window.open(repoUrl, "_blank", "noopener,noreferrer");
+          closePalette();
+        },
+      });
+    }
     if (!isTauri) {
       entries.push({
         label: "Check API health",
@@ -158,7 +439,7 @@ export function CommandPalette() {
       });
     }
     return entries;
-  }, [handleRefreshData, goToRun, closePalette, openShortcutsModal, handleCheckApiHealth, handleCopyAppInfo, handleOpenAppDataFolder, handleOpenDocumentationFolder]);
+  }, [handleRefreshData, goToRun, goToTesting, goToMilestones, goToVersioning, goToPlanner, goToDesign, goToArchitecture, goToFirstProject, closePalette, openShortcutsModal, handleClearRunHistory, handleRemoveLastRun, handleRestoreRunHistoryFilters, handleSwitchToLightMode, handleSwitchToDarkMode, handleOpenFirstProjectInCursor, handleOpenFirstProjectInTerminal, handleStopAllRuns, handleCheckApiHealth, handleCopyAppInfo, handleCopyFirstProjectPath, handleCopyDataDirectoryPath, handleOpenAppDataFolder, handleOpenDocumentationFolder]);
   const projectEntries: CommandPaletteEntry[] = useMemo(() => {
     if (!projects || projects.length === 0) return [];
     const recentIds = getRecentProjectIds();
@@ -382,6 +663,78 @@ export function CommandPalette() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, goToRun]);
 
+  // Go to Testing: ⌘⇧Y (Mac) / Ctrl+Alt+Y (Windows/Linux); same guards as Dashboard
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (open) return;
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      const isMac = typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+      const goTesting =
+        isMac ? e.metaKey && e.shiftKey && e.key === "Y" : e.ctrlKey && e.altKey && e.key === "y";
+      if (goTesting) {
+        e.preventDefault();
+        goToTesting();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, goToTesting]);
+
+  // Go to Milestones: ⌘⇧V (Mac) / Ctrl+Alt+V (Windows/Linux); same guards as Dashboard
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (open) return;
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      const isMac = typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+      const goMilestones =
+        isMac ? e.metaKey && e.shiftKey && e.key === "V" : e.ctrlKey && e.altKey && e.key === "v";
+      if (goMilestones) {
+        e.preventDefault();
+        goToMilestones();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, goToMilestones]);
+
+  // Go to Versioning: ⌘⇧U (Mac) / Ctrl+Alt+U (Windows/Linux); same guards as Dashboard
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (open) return;
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      const isMac = typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+      const goVersioning =
+        isMac ? e.metaKey && e.shiftKey && e.key === "U" : e.ctrlKey && e.altKey && e.key === "u";
+      if (goVersioning) {
+        e.preventDefault();
+        goToVersioning();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, goToVersioning]);
+
+  // Go to Planner: ⌘⇧J (Mac) / Ctrl+Alt+J (Windows/Linux); same guards as Dashboard
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (open) return;
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      const isMac = typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+      const goPlanner =
+        isMac ? e.metaKey && e.shiftKey && e.key === "J" : e.ctrlKey && e.altKey && e.key === "j";
+      if (goPlanner) {
+        e.preventDefault();
+        goToPlanner();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, goToPlanner]);
+
   // Go to Documentation: ⌘⇧D (Mac) / Ctrl+Alt+E (Windows/Linux); same guards as Dashboard (D is used for Dashboard on Windows)
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -399,6 +752,24 @@ export function CommandPalette() {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, router]);
+
+  // Focus main content: ⌘⇧F (Mac) / Ctrl+Alt+F (Windows/Linux); same guards as Dashboard
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (open) return;
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      const isMac = typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+      const focusMain =
+        isMac ? e.metaKey && e.shiftKey && e.key === "F" : e.ctrlKey && e.altKey && e.key === "f";
+      if (focusMain) {
+        e.preventDefault();
+        document.getElementById("main-content")?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open]);
 
   // Refresh data: ⌘⇧R (Mac) / Ctrl+Alt+R (Windows/Linux); same guards as Dashboard
   useEffect(() => {
@@ -472,6 +843,29 @@ export function CommandPalette() {
   return (
     <>
       <CommandPaletteAnnouncer open={open} />
+      <Dialog open={clearRunHistoryConfirmOpen} onOpenChange={setClearRunHistoryConfirmOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Clear run history?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            {terminalOutputHistoryLength === 1
+              ? "1 run will be removed from history. This cannot be undone."
+              : `${terminalOutputHistoryLength} runs will be removed from history. This cannot be undone.`}
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setClearRunHistoryConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmClearRunHistory}
+            >
+              Clear history
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Dialog open={open} onOpenChange={(isOpen) => !isOpen && closePalette()}>
       <DialogContent
         className="sm:max-w-lg p-0 gap-0 overflow-hidden"

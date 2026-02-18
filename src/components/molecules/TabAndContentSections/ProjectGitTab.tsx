@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCw, GitBranch, FolderGit2, GitPullRequest, GitCommit, Upload } from "lucide-react";
+import { Loader2, RefreshCw, GitBranch, FolderGit2, GitPullRequest, GitCommit, Upload, Copy, FileText } from "lucide-react";
 import { invoke, isTauri } from "@/lib/tauri";
 import { toast } from "sonner";
 import type { Project } from "@/types/project";
@@ -17,6 +17,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getClasses } from "@/components/molecules/tailwind-molecules";
 import { cn } from "@/lib/utils";
+import { copyChangedFilesListToClipboard, downloadChangedFilesAsMarkdown } from "@/lib/export-versioning-changed-files";
+import { safeNameForFile } from "@/lib/download-helpers";
 const classes = getClasses("TabAndContentSections/ProjectGitTab.tsx");
 
 interface ProjectGitTabProps {
@@ -363,6 +365,28 @@ export function ProjectGitTab({ project, projectId }: ProjectGitTabProps) {
                     <span className="rounded px-1.5 py-0.5 bg-destructive/15 text-destructive font-medium">D</span>
                     <span className="rounded px-1.5 py-0.5 bg-muted text-muted-foreground font-medium">??</span>
                   </span>
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void copyChangedFilesListToClipboard(changedFiles)}
+                      title="Copy changed files list (plain text)"
+                      aria-label="Copy changed files list to clipboard"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                      <span className="sr-only sm:not-sr-only sm:ml-1">Copy list</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => downloadChangedFilesAsMarkdown(changedFiles, safeNameForFile(project.name ?? "", "project"))}
+                      title="Download changed files as Markdown"
+                      aria-label="Download changed files as Markdown"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span className="sr-only sm:not-sr-only sm:ml-1">Download as Markdown</span>
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>

@@ -459,6 +459,39 @@ fn get_project_milestones(ProjectIdArg { project_id }: ProjectIdArg) -> Result<V
     with_db(|conn| db::get_milestones_for_project(conn, &project_id))
 }
 
+/// Create a plan ticket (for Fast development in Tauri mode; avoids fetch to /api).
+#[tauri::command]
+fn create_plan_ticket(
+    project_id: String,
+    title: String,
+    description: Option<String>,
+    priority: Option<String>,
+    feature_name: Option<String>,
+    milestone_id: i64,
+    idea_id: Option<i64>,
+    agents: Option<String>,
+) -> Result<serde_json::Value, String> {
+    with_db(|conn| {
+        db::create_plan_ticket(
+            conn,
+            &project_id,
+            &title,
+            description.as_deref(),
+            priority.as_deref().unwrap_or("P1"),
+            feature_name.as_deref().unwrap_or("General"),
+            milestone_id,
+            idea_id,
+            agents.as_deref(),
+        )
+    })
+}
+
+/// Set plan kanban in-progress IDs (for Fast development in Tauri mode; avoids fetch to /api).
+#[tauri::command]
+fn set_plan_kanban_state(project_id: String, in_progress_ids: Vec<String>) -> Result<(), String> {
+    with_db(|conn| db::set_plan_kanban_state_for_project(conn, &project_id, &in_progress_ids))
+}
+
 /// Ideas list (optional project filter). Used when isTauri to avoid fetch to /api.
 #[tauri::command]
 fn get_ideas_list(ProjectIdArgOptional { project_id }: ProjectIdArgOptional) -> Result<Vec<serde_json::Value>, String> {
@@ -2594,6 +2627,55 @@ fn open_project_in_system_terminal(project_path: String) -> Result<(), String> {
     }
 }
 
+/// Opens a project directory in Cursor or Visual Studio Code.
+/// `editor` must be "cursor" or "vscode". On macOS uses `open -a "Cursor" path` / `open -a "Visual Studio Code" path`;
+/// on Windows/Linux spawns the editor CLI with the path (cursor/code in PATH when installed).
+#[tauri::command]
+fn open_project_in_editor(project_path: String, editor: String) -> Result<(), String> {
+    let path = project_path.trim();
+    if path.is_empty() {
+        return Err("Project path is empty".to_string());
+    }
+    let dir = Path::new(path)
+        .canonicalize()
+        .map_err(|e| format!("Invalid project path: {}", e))?;
+    if !dir.is_dir() {
+        return Err("Project path is not a directory".to_string());
+    }
+    let path_str = dir.to_string_lossy();
+    let editor_lower = editor.trim().to_lowercase();
+
+    #[cfg(target_os = "macos")]
+    {
+        let (app_name, label) = match editor_lower.as_str() {
+            "cursor" => ("Cursor", "Cursor"),
+            "vscode" | "code" => ("Visual Studio Code", "VS Code"),
+            _ => return Err(format!("Unknown editor '{}'. Use 'cursor' or 'vscode'.", editor.trim())),
+        };
+        Command::new("open")
+            .arg("-a")
+            .arg(app_name)
+            .arg(path_str.as_ref())
+            .spawn()
+            .map_err(|e| format!("Failed to open in {}: {}", label, e))?;
+        Ok(())
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        let (bin, label) = match editor_lower.as_str() {
+            "cursor" => ("cursor", "Cursor"),
+            "vscode" | "code" => ("code", "VS Code"),
+            _ => return Err(format!("Unknown editor '{}'. Use 'cursor' or 'vscode'.", editor.trim())),
+        };
+        Command::new(bin)
+            .arg(path_str.as_ref())
+            .spawn()
+            .map_err(|e| format!("Failed to open in {}: {}. Is {} installed and in PATH?", label, e, label))?;
+        Ok(())
+    }
+}
+
 /// Opens the given directory in the system file manager (Finder on macOS, Explorer on Windows, xdg-open on Linux).
 /// Caller must ensure `dir` exists and is a directory.
 fn open_dir_in_file_manager(dir: &Path) -> Result<(), String> {
@@ -3089,6 +3171,8 @@ pub fn run() {
             get_project_tickets,
             get_project_kanban_state,
             get_project_milestones,
+            create_plan_ticket,
+            set_plan_kanban_state,
             get_ideas_list,
             update_implementation_log_entry_status,
             append_implementation_log_entry,
@@ -3128,6 +3212,7 @@ pub fn run() {
             run_run_terminal_agent,
             open_implement_all_in_system_terminal,
             open_project_in_system_terminal,
+            open_project_in_editor,
             open_path_in_file_manager,
             open_documentation_folder,
             get_documentation_folder_path,

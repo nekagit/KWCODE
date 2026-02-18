@@ -3,7 +3,11 @@
 import { useState, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Loader2, FileText, TestTube2, RefreshCw } from "lucide-react";
+import { Copy, Loader2, FileText, TestTube2, RefreshCw } from "lucide-react";
+import {
+  downloadTestingDocumentAsMarkdown,
+  copyTestingDocumentAsMarkdownToClipboard,
+} from "@/lib/download-testing-document";
 import { AnalyzeButtonSplit } from "@/components/molecules/ControlsAndButtons/AnalyzeButtonSplit";
 import { listProjectFiles, readProjectFileOrEmpty, readCursorDocFromServer, analyzeProjectDoc, type FileEntry } from "@/lib/api-projects";
 import { isTauri } from "@/lib/tauri";
@@ -309,11 +313,42 @@ export function ProjectTestingTab({ project, projectId, docsRefreshKey }: Projec
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
               ) : content ? (
-                <ScrollArea className="h-[min(400px,50vh)] rounded-md border border-border/60 p-4">
-                  <div className={cn("pr-4", markdownClasses)}>
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+                <>
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        downloadTestingDocumentAsMarkdown(
+                          content,
+                          items.find((i) => i.path === selectedPath)?.name ?? "document.md"
+                        )
+                      }
+                      aria-label="Download current document as Markdown"
+                      title="Download as Markdown file"
+                      className="gap-1.5"
+                    >
+                      <FileText className="h-3.5 w-3.5" aria-hidden />
+                      Download as Markdown
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void copyTestingDocumentAsMarkdownToClipboard(content)}
+                      aria-label="Copy current document as Markdown to clipboard"
+                      title="Copy as Markdown (same content as download)"
+                      className="gap-1.5"
+                    >
+                      <Copy className="h-3.5 w-3.5" aria-hidden />
+                      Copy as Markdown
+                    </Button>
                   </div>
-                </ScrollArea>
+                  <ScrollArea className="h-[min(400px,50vh)] rounded-md border border-border/60 p-4">
+                    <div className={cn("pr-4", markdownClasses)}>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+                    </div>
+                  </ScrollArea>
+                </>
               ) : (
                 <p className="text-sm text-muted-foreground py-4">Select a document from the table above.</p>
               )}

@@ -1,12 +1,20 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { BookOpen, Copy, FolderOpen, Loader2, RefreshCw } from "lucide-react";
+import { BookOpen, Copy, FileJson, FileText, FolderOpen, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Breadcrumb } from "@/components/shared/Breadcrumb";
 import { SingleContentPage } from "@/components/organisms/SingleContentPage";
 import { Button } from "@/components/ui/button";
 import { copyDocumentationFolderPath } from "@/lib/copy-documentation-folder-path";
+import {
+  downloadDocumentationInfoAsMarkdown,
+  copyDocumentationInfoAsMarkdownToClipboard,
+} from "@/lib/download-documentation-info-md";
+import {
+  downloadDocumentationInfoAsJson,
+  copyDocumentationInfoAsJsonToClipboard,
+} from "@/lib/download-documentation-info-json";
 import { openDocumentationFolderInFileManager } from "@/lib/open-documentation-folder";
 import { useRunState } from "@/context/run-state";
 
@@ -77,6 +85,50 @@ export function DocumentationPageContent() {
             >
               <Copy className="mr-2 h-4 w-4" aria-hidden />
               Copy path
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => downloadDocumentationInfoAsMarkdown()}
+              aria-label="Download documentation info as Markdown"
+              title="Download documentation info as Markdown file"
+            >
+              <FileText className="mr-2 h-4 w-4" aria-hidden />
+              Download as Markdown
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => void copyDocumentationInfoAsMarkdownToClipboard()}
+              aria-label="Copy documentation info as Markdown"
+              title="Copy as Markdown (same content as Download as Markdown)"
+            >
+              <Copy className="mr-2 h-4 w-4" aria-hidden />
+              Copy as Markdown
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => downloadDocumentationInfoAsJson()}
+              aria-label="Download documentation info as JSON"
+              title="Download documentation info as JSON file"
+            >
+              <FileJson className="mr-2 h-4 w-4" aria-hidden />
+              Download as JSON
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => void copyDocumentationInfoAsJsonToClipboard()}
+              aria-label="Copy documentation info as JSON"
+              title="Copy as JSON (same content as Download as JSON)"
+            >
+              <Copy className="mr-2 h-4 w-4" aria-hidden />
+              Copy as JSON
             </Button>
             <Button
               type="button"

@@ -15,6 +15,8 @@ import { SkipToMainContent } from "@/components/shared/SkipToMainContent";
 import { RunStatusAnnouncer } from "@/components/shared/RunStatusAnnouncer";
 import { BackToTop } from "@/components/shared/BackToTop";
 import { SidebarVersion } from "@/components/shared/SidebarVersion";
+import { SidebarThemeLabel } from "@/components/shared/SidebarThemeLabel";
+import { SIDEBAR_TOGGLE_EVENT } from "@/lib/sidebar-toggle-event";
 
 const SIDEBAR_STORAGE_KEY = "kwcode-sidebar-width";
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "kwcode-sidebar-collapsed";
@@ -52,6 +54,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, String(sidebarCollapsed));
     } catch (_) {}
   }, [sidebarCollapsed]);
+
+  // Command palette (and others) can request sidebar toggle via custom event
+  useEffect(() => {
+    const handler = () => setSidebarCollapsed((prev) => !prev);
+    window.addEventListener(SIDEBAR_TOGGLE_EVENT, handler);
+    return () => window.removeEventListener(SIDEBAR_TOGGLE_EVENT, handler);
+  }, []);
 
   // Scroll main content to top on route change (fresh-page experience; instant scroll for reduced-motion)
   useEffect(() => {
@@ -132,6 +141,41 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  // Print current page: ⌘P (Mac) / Ctrl+P (Windows/Linux); skip when focus in input/textarea/select
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (e.key !== "p" && e.key !== "P") return;
+      const isMac = typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+      const printShortcut = isMac ? e.metaKey && !e.shiftKey : e.ctrlKey && !e.altKey;
+      if (printShortcut) {
+        e.preventDefault();
+        window.print();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  // Scroll main content to bottom: ⌘ End (Mac) / Ctrl+End (Windows/Linux); skip when focus in input/textarea/select
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (e.key !== "End") return;
+      const isMac = typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+      const scrollToBottom = isMac ? e.metaKey : e.ctrlKey;
+      if (scrollToBottom) {
+        e.preventDefault();
+        const main = document.getElementById("main-content");
+        if (main) main.scrollTop = main.scrollHeight - main.clientHeight;
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   const currentWidth = sidebarCollapsed ? SIDEBAR_COLLAPSED : sidebarWidth;
 
   const {
@@ -179,6 +223,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* Version + Toggle footer */}
         <div className={`shrink-0 border-t border-border/40 ${sidebarCollapsed ? "flex flex-col items-center px-2 py-2" : "px-2 py-2"
           }`}>
+          <SidebarThemeLabel collapsed={sidebarCollapsed} />
           <SidebarVersion collapsed={sidebarCollapsed} />
           <SidebarToggle
             sidebarCollapsed={sidebarCollapsed}

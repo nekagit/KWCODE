@@ -1,15 +1,17 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { invoke, isTauri } from "@/lib/tauri";
 import { listProjects } from "@/lib/api-projects";
 import { getRecentProjectIds } from "@/lib/recent-projects";
+import { useDashboardFocusFilterShortcut } from "@/lib/dashboard-focus-filter-shortcut";
 import type { Project } from "@/types/project";
 import type { DashboardMetrics } from "@/types/dashboard";
 import {
   FolderOpen,
+  FolderPlus,
   Ticket,
   MessageSquare,
   Palette,
@@ -18,10 +20,16 @@ import {
   ArrowRight,
   LayoutGrid,
   Folders,
+  Search,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 async function fetchMetrics(): Promise<DashboardMetrics> {
   if (isTauri) return invoke<DashboardMetrics>("get_dashboard_metrics");
@@ -146,11 +154,19 @@ function ProjectCard({ project }: { project: Project }) {
   );
 }
 
-export function DashboardOverview() {
+export interface DashboardOverviewProps {
+  /** When provided, "Select all" and "Deselect all" are shown in the Projects section (ADR 0189). */
+  setActiveProjects?: (paths: string[] | ((prev: string[]) => string[])) => void;
+}
+
+export function DashboardOverview({ setActiveProjects }: DashboardOverviewProps = {}) {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filterQuery, setFilterQuery] = useState("");
+  const filterInputRef = useRef<HTMLInputElement>(null);
+  useDashboardFocusFilterShortcut(filterInputRef);
 
   useEffect(() => {
     let cancelled = false;
@@ -174,8 +190,13 @@ export function DashboardOverview() {
 
   // All hooks must run unconditionally (before any early return) to satisfy Rules of Hooks.
   const projectsForDisplay = useMemo(() => {
+    const q = filterQuery.trim().toLowerCase();
+    let list = projects;
+    if (q) {
+      list = list.filter((p) => p.name.toLowerCase().includes(q));
+    }
     const recentIds = getRecentProjectIds();
-    const list = [...projects];
+    list = [...list];
     list.sort((a, b) => {
       const ai = recentIds.indexOf(a.id);
       const bi = recentIds.indexOf(b.id);
@@ -185,7 +206,7 @@ export function DashboardOverview() {
       return ai - bi;
     });
     return list.slice(0, 6);
-  }, [projects]);
+  }, [projects, filterQuery]);
 
   if (loading) {
     return (
@@ -285,26 +306,92 @@ export function DashboardOverview() {
 
       {/* Projects */}
       <section>
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <h3 className="text-sm font-semibold text-foreground">Projects</h3>
-          <Link
-            href="/projects"
-            className="text-xs font-medium text-primary hover:underline"
-          >
-            View all
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            {projects.length > 0 && setActiveProjects && projectsForDisplay.length > 0 && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const paths = projectsForDisplay.map((p) => p.repoPath ?? p.id);
+                    setActiveProjects(paths);
+                    toast.success(
+                      `${paths.length} project${paths.length === 1 ? "" : "s"} selected for run. Save on the Projects tab to persist.`
+                    );
+                  }}
+                  aria-label="Select all displayed projects for run"
+                >
+                  <CheckSquare className="h-4 w-4 mr-1.5" aria-hidden />
+                  Select all
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setActiveProjects([]);
+                    toast.success("No projects selected for run.");
+                  }}
+                  aria-label="Deselect all projects for run"
+                >
+                  <Square className="h-4 w-4 mr-1.5" aria-hidden />
+                  Deselect all
+                </Button>
+              </>
+            )}
+            {projects.length > 0 && (
+              <div className="relative flex-1 min-w-[180px] max-w-xs">
+                <Search
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none"
+                  aria-hidden
+                />
+                <Input
+                  ref={filterInputRef}
+                  type="text"
+                  placeholder="Filter by name…"
+                  value={filterQuery}
+                  onChange={(e) => setFilterQuery(e.target.value)}
+                  className="pl-8 h-9"
+                  aria-label="Filter projects by name"
+                />
+              </div>
+            )}
+            <Link
+              href="/projects"
+              className="text-xs font-medium text-primary hover:underline"
+            >
+              View all
+            </Link>
+          </div>
         </div>
         {projects.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
               <Folders className="h-10 w-10 text-muted-foreground/50 mb-2" />
               <p className="text-sm text-muted-foreground">No projects yet</p>
-              <Link
-                href="/projects"
-                className="mt-2 text-sm font-medium text-primary hover:underline"
-              >
-                Create a project
-              </Link>
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
+                <Link
+                  href="/projects"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted/50 hover:border-primary/20"
+                >
+                  <FolderOpen className="h-4 w-4" />
+                  Create a project
+                </Link>
+                <Link
+                  href="/projects?discover=1"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20 hover:border-primary/50"
+                >
+                  <FolderPlus className="h-4 w-4" />
+                  Discover folders
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        ) : projectsForDisplay.length === 0 ? (
+          <Card>
+            <CardContent className="py-8 text-center text-sm text-muted-foreground">
+              No projects match &quot;{filterQuery.trim()}&quot;
             </CardContent>
           </Card>
         ) : (

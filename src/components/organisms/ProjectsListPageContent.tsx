@@ -1,13 +1,26 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Project } from "@/types/project";
 import { invoke, isTauri } from "@/lib/tauri";
 import { listProjects, deleteProject } from "@/lib/api-projects";
+import {
+  copyProjectsListAsJsonToClipboard,
+  downloadProjectsListAsJson,
+} from "@/lib/download-projects-list-json";
+import {
+  downloadProjectsListAsCsv,
+  copyProjectsListAsCsvToClipboard,
+} from "@/lib/download-projects-list-csv";
 import { toast } from "sonner";
-import { Search, X, RotateCcw } from "lucide-react";
+import { Copy, Download, FileJson, Search, X, RotateCcw } from "lucide-react";
 import { getRecentProjectIds } from "@/lib/recent-projects";
+import {
+  getProjectsListViewPreference,
+  setProjectsListViewPreference,
+  type ProjectsListSortOrder,
+} from "@/lib/projects-list-view-preference";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,12 +32,14 @@ import {
 } from "@/components/ui/select";
 import { Breadcrumb } from "@/components/shared/Breadcrumb";
 import { ProjectsHeader } from "@/components/molecules/LayoutAndNavigation/ProjectsHeader";
+import { DiscoverFoldersDialog } from "@/components/molecules/FormsAndDialogs/DiscoverFoldersDialog";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { NoProjectsFoundCard } from "@/components/molecules/CardsAndDisplay/NoProjectsFoundCard";
 import { ProjectLoadingState } from "@/components/molecules/UtilitiesAndHelpers/ProjectLoadingState";
 import { ProjectCard } from "@/components/molecules/CardsAndDisplay/ProjectCard";
 import { ProjectDetailsPageContent } from "@/components/organisms/ProjectDetailsPageContent";
 import { getOrganismClasses } from "./organism-classes";
+import { useProjectsFocusFilterShortcut } from "@/lib/projects-focus-filter-shortcut";
 
 const c = getOrganismClasses("ProjectsListPageContent.tsx");
 
@@ -37,10 +52,41 @@ export function ProjectsListPageContent() {
   const [error, setError] = useState<string | null>(null);
   const [seeding, setSeeding] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  type SortOrder = "asc" | "desc" | "recent";
-  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+  const [discoverOpen, setDiscoverOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return getProjectsListViewPreference().filterQuery;
+  });
+  const [sortOrder, setSortOrder] = useState<ProjectsListSortOrder>(() => {
+    if (typeof window === "undefined") return "asc";
+    return getProjectsListViewPreference().sortOrder;
+  });
+  const filterInputRef = useRef<HTMLInputElement>(null);
+  useProjectsFocusFilterShortcut(filterInputRef);
   const trimmedQuery = searchQuery.trim().toLowerCase();
+
+  // Persist sort when user changes it
+  useEffect(() => {
+    setProjectsListViewPreference({ sortOrder });
+  }, [sortOrder]);
+
+  // Persist filter query with debounce when user types
+  useEffect(() => {
+    const t = setTimeout(
+      () => setProjectsListViewPreference({ filterQuery: searchQuery }),
+      300
+    );
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  // Open Discover dialog when navigating from Dashboard empty state (?discover=1)
+  useEffect(() => {
+    if (searchParams?.get("discover") === "1") {
+      setDiscoverOpen(true);
+      router.replace("/projects", { scroll: false });
+    }
+  }, [searchParams, router]);
+
   const filteredProjects = useMemo(
     () =>
       !trimmedQuery
@@ -179,6 +225,12 @@ export function ProjectsListPageContent() {
         seedTemplateProject={seedTemplateProject}
         onRefresh={handleRefresh}
         refreshing={refreshing}
+        onDiscoverFolders={() => setDiscoverOpen(true)}
+      />
+      <DiscoverFoldersDialog
+        open={discoverOpen}
+        onClose={() => setDiscoverOpen(false)}
+        onAdded={refetch}
       />
 
       {error && (
@@ -207,6 +259,7 @@ export function ProjectsListPageContent() {
                 aria-hidden
               />
               <Input
+                ref={filterInputRef}
                 type="text"
                 placeholder="Filter by name…"
                 value={searchQuery}
@@ -230,7 +283,7 @@ export function ProjectsListPageContent() {
             )}
             <Select
               value={sortOrder}
-              onValueChange={(v) => setSortOrder(v as SortOrder)}
+              onValueChange={(v) => setSortOrder(v as ProjectsListSortOrder)}
             >
               <SelectTrigger className="w-[10rem] h-8 text-xs" aria-label="Sort order">
                 <SelectValue />
@@ -241,6 +294,55 @@ export function ProjectsListPageContent() {
                 <SelectItem value="recent" className="text-xs">Recently opened</SelectItem>
               </SelectContent>
             </Select>
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Export:</span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => downloadProjectsListAsJson(displayList)}
+              className="h-8 gap-1.5 text-xs"
+              aria-label="Download projects list as JSON"
+              title="Download current list as JSON"
+            >
+              <FileJson className="size-3.5" aria-hidden />
+              <span className="hidden sm:inline">JSON</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => copyProjectsListAsJsonToClipboard(displayList)}
+              className="h-8 gap-1.5 text-xs"
+              aria-label="Copy projects list as JSON to clipboard"
+              title="Copy current list as JSON (same data as Download JSON)"
+            >
+              <Copy className="size-3.5" aria-hidden />
+              <span className="hidden sm:inline">Copy JSON</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => downloadProjectsListAsCsv(displayList)}
+              className="h-8 gap-1.5 text-xs"
+              aria-label="Download projects list as CSV"
+              title="Download current list as CSV"
+            >
+              <Download className="size-3.5" aria-hidden />
+              <span className="hidden sm:inline">CSV</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => void copyProjectsListAsCsvToClipboard(displayList)}
+              className="h-8 gap-1.5 text-xs"
+              aria-label="Copy projects list as CSV to clipboard"
+              title="Copy current list as CSV (same data as Download CSV)"
+            >
+              <Copy className="size-3.5" aria-hidden />
+              <span className="hidden sm:inline">Copy CSV</span>
+            </Button>
             {(trimmedQuery || sortOrder !== "asc") && (
               <Button
                 type="button"

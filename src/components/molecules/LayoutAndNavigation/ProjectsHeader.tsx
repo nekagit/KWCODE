@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Folders, Plus, Sparkles, FolderOpen, Loader2, RefreshCw } from "lucide-react";
+import { FolderPlus, Plus, Sparkles, Loader2, RefreshCw } from "lucide-react";
 import { PageHeader } from "@/components/molecules/LayoutAndNavigation/PageHeader";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import { getClasses } from "@/components/molecules/tailwind-molecules";
@@ -14,6 +14,8 @@ interface ProjectsHeaderProps {
   /** When provided, a Refresh button is shown that calls this and shows loading while refreshing. */
   onRefresh?: () => void | Promise<void>;
   refreshing?: boolean;
+  /** When provided, a Discover folders button is shown that opens the discover-folders dialog. */
+  onDiscoverFolders?: () => void;
 }
 
 export function ProjectsHeader({
@@ -21,6 +23,7 @@ export function ProjectsHeader({
   seedTemplateProject,
   onRefresh,
   refreshing = false,
+  onDiscoverFolders,
 }: ProjectsHeaderProps) {
   return (
     <div className={classes[0]}>
@@ -40,6 +43,17 @@ export function ProjectsHeader({
           >
             {refreshing ? <Loader2 className={classes[1]} /> : <RefreshCw className={classes[2]} />}
             Refresh
+          </Button>
+        )}
+        {onDiscoverFolders != null && (
+          <Button
+            variant="outline"
+            onClick={onDiscoverFolders}
+            aria-label="Discover folders and add as projects"
+            title="List folders from projects root that are not yet projects; add selected as projects"
+          >
+            <FolderPlus className={classes[2]} />
+            Discover folders
           </Button>
         )}
         <Button

@@ -66,6 +66,10 @@ import {
 } from "@/lib/api-projects";
 import { ANALYZE_JOB_IDS, getPromptPath, getOutputPath } from "@/lib/cursor-paths";
 import { recordProjectVisit } from "@/lib/recent-projects";
+import {
+  getProjectDetailTabPreference,
+  setProjectDetailTabPreference,
+} from "@/lib/project-detail-tab-preference";
 import { useSetPageTitle } from "@/context/page-title-context";
 import { toast } from "sonner";
 import { Breadcrumb } from "@/components/shared/Breadcrumb";
@@ -152,6 +156,12 @@ export function ProjectDetailsPageContent(props: ProjectDetailsPageContentProps 
     if (tabFromUrl && (VALID_PROJECT_TABS as Set<string>).has(tabFromUrl)) {
       setActiveTab(tabFromUrl);
     }
+  }, [projectId, tabFromUrl]);
+  // Restore last tab from localStorage when no ?tab= in URL (persist preference).
+  useEffect(() => {
+    if (!projectId || (tabFromUrl != null && tabFromUrl !== "")) return;
+    const saved = getProjectDetailTabPreference(projectId);
+    setActiveTab(saved);
   }, [projectId, tabFromUrl]);
   const [initializing, setInitializing] = useState(false);
   const [analyzingAll, setAnalyzingAll] = useState(false);
@@ -759,6 +769,7 @@ export function ProjectDetailsPageContent(props: ProjectDetailsPageContentProps 
               invoke("frontend_debug_log", { location: "ProjectDetailsPageContent.tsx:tabChange", message: "ProjectDetails: tab changed", data: { from: activeTab, to: v } }).catch(() => {});
             }
             setActiveTab(v);
+            if (projectId) setProjectDetailTabPreference(projectId, v);
           }}
           className="w-full"
           data-testid="project-detail-tabs"
