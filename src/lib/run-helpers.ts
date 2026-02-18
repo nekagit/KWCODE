@@ -28,3 +28,16 @@ export function formatElapsed(seconds: number): string {
     const sec = Math.floor(s % 60);
     return `${m}:${sec.toString().padStart(2, "0")}`;
 }
+
+/**
+ * Format duration in milliseconds as human-readable (e.g. "2:34" or "45s").
+ * Returns empty string for undefined or negative. Sub-60s uses Math.round; 60s+
+ * uses m:ss (same logic as formatElapsed) for consistency with run duration display.
+ */
+export function formatDurationMs(ms: number | undefined): string {
+    if (ms === undefined || ms < 0) return "";
+    if (ms < 60_000) return `${Math.round(ms / 1000)}s`;
+    const sec = Math.floor(ms / 1000) % 60;
+    const min = Math.floor(ms / 60_000);
+    return `${min}:${sec.toString().padStart(2, "0")}`;
+}

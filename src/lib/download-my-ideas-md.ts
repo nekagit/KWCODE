@@ -1,5 +1,7 @@
 import type { IdeaRecord } from "@/types/idea";
 import { toast } from "sonner";
+import { filenameTimestamp, triggerFileDownload } from "@/lib/download-helpers";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 
 const CATEGORY_LABELS: Record<string, string> = {
   saas: "SaaS",
@@ -17,9 +19,11 @@ function escapeMarkdownHeading(text: string): string {
 
 /**
  * Build markdown content for the given ideas.
- * Format: title, exportedAt, then for each idea: ## Title, Category, Description, dates.
+ * Format: # My Ideas, exportedAt, then for each idea: ## Title, Category, Description, dates.
+ * Used by both download and copy-to-clipboard so format stays in sync.
  */
-function ideasToMarkdown(ideas: IdeaRecord[], exportedAt: string): string {
+export function buildMyIdeasMarkdown(ideas: IdeaRecord[]): string {
+  const exportedAt = new Date().toISOString();
   const lines: string[] = [
     "# My Ideas",
     "",
@@ -64,23 +68,24 @@ export function downloadMyIdeasAsMarkdown(ideas: IdeaRecord[]): void {
     return;
   }
 
-  const exportedAt = new Date().toISOString();
-  const markdown = ideasToMarkdown(ideas, exportedAt);
-
-  const now = new Date();
-  const date = now.toISOString().slice(0, 10);
-  const time = now.toTimeString().slice(0, 5).replace(":", "");
-  const filename = `my-ideas-${date}-${time}.md`;
-
-  const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-
+  const markdown = buildMyIdeasMarkdown(ideas);
+  const filename = `my-ideas-${filenameTimestamp()}.md`;
+  triggerFileDownload(markdown, filename, "text/markdown;charset=utf-8");
   toast.success("Ideas exported as Markdown");
+}
+
+/**
+ * Copy the current "My ideas" list to the clipboard as Markdown.
+ * Same format as downloadMyIdeasAsMarkdown: # My Ideas, export timestamp, then per-idea sections.
+ * If ideas is empty, shows a toast and returns false.
+ */
+export async function copyAllMyIdeasMarkdownToClipboard(
+  ideas: IdeaRecord[]
+): Promise<boolean> {
+  if (ideas.length === 0) {
+    toast.info("No ideas to copy");
+    return false;
+  }
+  const markdown = buildMyIdeasMarkdown(ideas);
+  return copyTextToClipboard(markdown);
 }

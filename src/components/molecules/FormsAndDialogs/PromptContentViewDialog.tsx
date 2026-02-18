@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Copy, Check, Download, Hash, FileJson } from "lucide-react";
-import { downloadPromptRecord } from "@/lib/download-prompt-record";
+import { downloadPromptRecord, copyPromptRecordToClipboard } from "@/lib/download-prompt-record";
 import { downloadPromptRecordAsJson } from "@/lib/download-prompt-record-json";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 
@@ -72,6 +72,15 @@ export function PromptContentViewDialog({
               <Copy className="h-4 w-4" />
             )}
             <span className="ml-2">{copied ? "Copied" : "Copy prompt"}</span>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => copyPromptRecordToClipboard(prompt.title, prompt.content)}
+            title="Copy as Markdown (title + content)"
+            aria-label="Copy prompt as Markdown to clipboard"
+          >
+            <Copy className="h-4 w-4" />
+            <span className="ml-2">Copy as Markdown</span>
           </Button>
           <Button
             variant="outline"

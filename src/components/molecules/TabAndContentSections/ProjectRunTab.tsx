@@ -61,13 +61,13 @@ import { isImplementAllRun, parseTicketNumberFromRunLabel, formatElapsed } from 
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 import { downloadRunOutput } from "@/lib/download-run-output";
 import { downloadRunAsJson } from "@/lib/download-run-as-json";
-import { downloadRunAsMarkdown } from "@/lib/download-run-as-md";
+import { downloadRunAsMarkdown, copyRunAsMarkdownToClipboard } from "@/lib/download-run-as-md";
 import { downloadRunAsCsv } from "@/lib/download-run-as-csv";
 import { copyAllRunHistoryToClipboard } from "@/lib/copy-all-run-history";
 import { downloadAllRunHistory } from "@/lib/download-all-run-history";
 import { downloadAllRunHistoryCsv } from "@/lib/download-all-run-history-csv";
 import { downloadAllRunHistoryJson } from "@/lib/download-all-run-history-json";
-import { downloadAllRunHistoryMarkdown } from "@/lib/download-all-run-history-md";
+import { downloadAllRunHistoryMarkdown, copyAllRunHistoryMarkdownToClipboard } from "@/lib/download-all-run-history-md";
 import { getRunHistoryPreferences, setRunHistoryPreferences, DEFAULT_RUN_HISTORY_PREFERENCES } from "@/lib/run-history-preferences";
 import { StatusPill } from "@/components/shared/DisplayPrimitives";
 import { TerminalSlot } from "@/components/shared/TerminalSlot";
@@ -977,11 +977,22 @@ function WorkerHistorySection() {
               size="sm"
               onClick={() => copyAllRunHistoryToClipboard(displayHistory)}
               className="gap-1.5 text-xs h-8 rounded-lg text-muted-foreground hover:text-foreground"
-              title="Copy visible run history to clipboard"
-              aria-label="Copy visible run history to clipboard"
+              title="Copy visible run history to clipboard (plain text)"
+              aria-label="Copy visible run history to clipboard (plain text)"
             >
               <Copy className="size-3" />
               Copy all
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => copyAllRunHistoryMarkdownToClipboard(displayHistory)}
+              className="gap-1.5 text-xs h-8 rounded-lg text-muted-foreground hover:text-foreground"
+              title="Copy visible run history as Markdown to clipboard"
+              aria-label="Copy visible run history as Markdown to clipboard"
+            >
+              <FileText className="size-3" />
+              Copy as Markdown
             </Button>
             <Button
               variant="ghost"
@@ -1264,6 +1275,17 @@ function WorkerHistorySection() {
                             variant="ghost"
                             size="sm"
                             className="h-7 px-2 text-xs gap-1 opacity-70 group-hover:opacity-100"
+                            onClick={() => void copyRunAsMarkdownToClipboard(h)}
+                            title="Copy run as Markdown (same format as Export MD)"
+                            aria-label="Copy run as Markdown to clipboard"
+                          >
+                            <FileText className="size-3" />
+                            Copy MD
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs gap-1 opacity-70 group-hover:opacity-100"
                             onClick={() => downloadRunAsCsv(h)}
                             title="Export run as CSV"
                           >
@@ -1388,6 +1410,17 @@ function WorkerHistorySection() {
                   variant="outline"
                   size="sm"
                   className="gap-1.5"
+                  onClick={() => void copyRunAsMarkdownToClipboard(entry)}
+                  title="Copy as Markdown (same format as Export Markdown)"
+                  aria-label="Copy run as Markdown to clipboard"
+                >
+                  <FileText className="size-3.5" />
+                  Copy as Markdown
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
                   onClick={() => downloadRunAsCsv(entry)}
                   title="Export run as CSV"
                 >
@@ -1455,10 +1488,16 @@ function WorkerHistorySection() {
 function WorkerStatusBar() {
   const runningRuns = useRunStore((s) => s.runningRuns);
   const pendingQueueLength = useRunStore((s) => s.pendingTempTicketQueue.length);
+  const clearPendingTempTicketQueue = useRunStore((s) => s.clearPendingTempTicketQueue);
   const implementAllRuns = runningRuns.filter(isImplementAllRun);
   const runningCount = implementAllRuns.filter((r) => r.status === "running").length;
   const doneCount = implementAllRuns.filter((r) => r.status === "done").length;
   const totalCount = implementAllRuns.length;
+
+  const handleClearQueue = () => {
+    clearPendingTempTicketQueue();
+    toast.success("Queue cleared. All queued tasks removed.");
+  };
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-border/40 bg-gradient-to-r from-emerald-500/[0.06] via-card to-teal-500/[0.06] p-5 backdrop-blur-sm">
@@ -1494,16 +1533,29 @@ function WorkerStatusBar() {
           </div>
         </div>
 
-        {/* Status pills */}
+        {/* Status pills + Clear queue */}
         <div className="flex items-center gap-2">
           {pendingQueueLength > 0 && (
-            <StatusPill
-              icon={<Circle className="size-3" />}
-              label="Queued"
-              count={pendingQueueLength}
-              color="violet"
-              pulse
-            />
+            <>
+              <StatusPill
+                icon={<Circle className="size-3" />}
+                label="Queued"
+                count={pendingQueueLength}
+                color="violet"
+                pulse
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleClearQueue}
+                className="h-7 gap-1.5 text-xs rounded-lg border-violet-500/40 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 hover:border-violet-500/60"
+                title="Clear all queued tasks"
+                aria-label="Clear all queued tasks"
+              >
+                <X className="size-3" />
+                Clear queue
+              </Button>
+            </>
           )}
           {totalCount > 0 && (
             <>

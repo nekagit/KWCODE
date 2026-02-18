@@ -1,5 +1,7 @@
 import type { TerminalOutputHistoryEntry } from "@/types/run";
 import { toast } from "sonner";
+import { filenameTimestamp, downloadBlob } from "@/lib/download-helpers";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 
 /**
  * Format a single history entry as a Markdown section: ## Run: label, metadata block, fenced code for output.
@@ -30,6 +32,23 @@ function formatEntryAsMarkdown(entry: TerminalOutputHistoryEntry): string {
 }
 
 /**
+ * Build the full run history as a single Markdown string (chronological, with header and export info).
+ * Used by both download and copy-to-clipboard.
+ */
+function buildRunHistoryMarkdown(entries: TerminalOutputHistoryEntry[]): string {
+  const reversed = [...entries].reverse();
+  return [
+    "# Run history",
+    "",
+    `Exported at ${new Date().toISOString()}. ${entries.length} run(s).`,
+    "",
+    "---",
+    "",
+    ...reversed.map(formatEntryAsMarkdown),
+  ].join("\n");
+}
+
+/**
  * Download the full terminal output history as a single Markdown file.
  * Format: # Run history, then for each entry (chronological): ## Run: label, metadata, fenced code block.
  * Filename: run-history-{YYYY-MM-DD-HHmm}.md
@@ -43,31 +62,25 @@ export function downloadAllRunHistoryMarkdown(
     return;
   }
 
-  const reversed = [...entries].reverse();
-  const body = [
-    "# Run history",
-    "",
-    `Exported at ${new Date().toISOString()}. ${entries.length} run(s).`,
-    "",
-    "---",
-    "",
-    ...reversed.map(formatEntryAsMarkdown),
-  ].join("\n");
-
-  const now = new Date();
-  const date = now.toISOString().slice(0, 10);
-  const time = now.toTimeString().slice(0, 5).replace(":", "");
-  const filename = `run-history-${date}-${time}.md`;
-
+  const body = buildRunHistoryMarkdown(entries);
+  const filename = `run-history-${filenameTimestamp()}.md`;
   const blob = new Blob([body], { type: "text/markdown;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-
+  downloadBlob(blob, filename);
   toast.success("History exported as Markdown");
+}
+
+/**
+ * Copy the full terminal output history to the clipboard as Markdown.
+ * Same format as downloadAllRunHistoryMarkdown: # Run history, then for each entry (chronological): ## Run: label, metadata, fenced code block.
+ * If entries is empty, shows a toast and does nothing.
+ */
+export async function copyAllRunHistoryMarkdownToClipboard(
+  entries: TerminalOutputHistoryEntry[]
+): Promise<boolean> {
+  if (entries.length === 0) {
+    toast.info("No history to copy");
+    return false;
+  }
+  const markdown = buildRunHistoryMarkdown(entries);
+  return copyTextToClipboard(markdown);
 }

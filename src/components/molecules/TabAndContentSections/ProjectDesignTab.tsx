@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Palette, RotateCcw, Search, X } from "lucide-react";
+import { Download, FileText, Palette, RotateCcw, Search, X } from "lucide-react";
 import type { Project } from "@/types/project";
 import type { DesignRecord } from "@/types/design";
 import { ProjectCategoryHeader } from "@/components/shared/ProjectCategoryHeader";
@@ -10,6 +10,10 @@ import { GridContainer } from "@/components/shared/GridContainer";
 import { getClasses } from "@/components/molecules/tailwind-molecules";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  downloadProjectDesignsAsMarkdown,
+  copyProjectDesignsAsMarkdownToClipboard,
+} from "@/lib/download-project-designs-md";
 import {
   Select,
   SelectContent,
@@ -152,6 +156,32 @@ export function ProjectDesignTab({
               Showing {filteredDesigns.length} of {designs.length} designs
             </span>
           ) : null}
+          <div className="flex items-center gap-2 ml-auto">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 text-xs"
+              onClick={() => copyProjectDesignsAsMarkdownToClipboard(sortedDesigns)}
+              title="Copy visible designs as Markdown to clipboard"
+              aria-label="Copy visible designs as Markdown to clipboard"
+            >
+              <FileText className="size-3.5" aria-hidden />
+              Copy as Markdown
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 text-xs"
+              onClick={() => downloadProjectDesignsAsMarkdown(sortedDesigns)}
+              title="Download visible designs as Markdown"
+              aria-label="Download visible designs as Markdown"
+            >
+              <Download className="size-3.5" aria-hidden />
+              Download as Markdown
+            </Button>
+          </div>
         </div>
       )}
 

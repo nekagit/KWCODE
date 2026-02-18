@@ -5,14 +5,11 @@ import {
   type DesignRecordForExport,
 } from "@/lib/design-to-markdown";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
-
-/**
- * Sanitize a string for use in a filename: replace unsafe chars with underscore, limit length.
- */
-function safeNameForFile(name: string, maxLength = 60): string {
-  const sanitized = name.replace(/[^\w\s-]/g, "_").replace(/\s+/g, "-").trim();
-  return sanitized.slice(0, maxLength) || "design";
-}
+import {
+  safeNameForFile,
+  filenameTimestamp,
+  triggerFileDownload,
+} from "@/lib/download-helpers";
 
 /**
  * Download a design record as a markdown file.
@@ -39,21 +36,10 @@ export function downloadDesignRecord(record: DesignRecord): void {
     return;
   }
 
-  const segment = safeNameForFile(record.name);
-  const now = new Date();
-  const date = now.toISOString().slice(0, 10);
-  const time = now.toTimeString().slice(0, 5).replace(":", "");
-  const filename = `design-${segment}-${date}-${time}.md`;
+  const segment = safeNameForFile(record.name, "design");
+  const filename = `design-${segment}-${filenameTimestamp()}.md`;
 
-  const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  triggerFileDownload(markdown, filename, "text/markdown;charset=utf-8");
   toast.success("Design downloaded");
 }
 

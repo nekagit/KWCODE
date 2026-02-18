@@ -1,4 +1,6 @@
 import { toast } from "sonner";
+import { filenameTimestamp, downloadBlob } from "@/lib/download-helpers";
+import { escapeCsvField } from "@/lib/csv-helpers";
 
 export interface PromptRecordForExport {
   id: number;
@@ -7,14 +9,6 @@ export interface PromptRecordForExport {
   category?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
-}
-
-function escapeCsvField(value: string): string {
-  const s = String(value ?? "");
-  if (/[",\r\n]/.test(s)) {
-    return `"${s.replace(/"/g, '""')}"`;
-  }
-  return s;
 }
 
 /**
@@ -46,20 +40,8 @@ export function downloadAllPromptsAsCsv(prompts: PromptRecordForExport[]): void 
   }
 
   const csv = promptsToCsv(prompts);
-  const now = new Date();
-  const date = now.toISOString().slice(0, 10);
-  const time = now.toTimeString().slice(0, 5).replace(":", "");
-  const filename = `all-prompts-${date}-${time}.csv`;
-
+  const filename = `all-prompts-${filenameTimestamp()}.csv`;
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-
+  downloadBlob(blob, filename);
   toast.success("Prompts exported as CSV");
 }

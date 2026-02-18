@@ -1,14 +1,12 @@
 import { toast } from "sonner";
 import type { ArchitectureRecord } from "@/types/architecture";
 import { architectureRecordToMarkdown } from "@/lib/architecture-to-markdown";
-
-/**
- * Sanitize a string for use in a filename: replace unsafe chars with underscore, limit length.
- */
-function safeNameForFile(name: string, maxLength = 60): string {
-  const sanitized = name.replace(/[^\w\s-]/g, "_").replace(/\s+/g, "-").trim();
-  return sanitized.slice(0, maxLength) || "architecture";
-}
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
+import {
+  safeNameForFile,
+  filenameTimestamp,
+  triggerFileDownload,
+} from "@/lib/download-helpers";
 
 /**
  * Download an architecture record as a markdown file.
@@ -21,20 +19,24 @@ export function downloadArchitectureRecord(record: ArchitectureRecord): void {
     return;
   }
 
-  const segment = safeNameForFile(record.name);
-  const now = new Date();
-  const date = now.toISOString().slice(0, 10);
-  const time = now.toTimeString().slice(0, 5).replace(":", "");
-  const filename = `architecture-${segment}-${date}-${time}.md`;
+  const segment = safeNameForFile(record.name, "architecture");
+  const filename = `architecture-${segment}-${filenameTimestamp()}.md`;
 
-  const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  triggerFileDownload(markdown, filename, "text/markdown;charset=utf-8");
   toast.success("Architecture downloaded");
+}
+
+/**
+ * Copy an architecture record as markdown to the clipboard.
+ * Same format as download. Returns false and shows toast when nothing to copy.
+ */
+export async function copyArchitectureRecordToClipboard(
+  record: ArchitectureRecord
+): Promise<boolean> {
+  const markdown = architectureRecordToMarkdown(record);
+  if (!markdown.trim()) {
+    toast.info("Nothing to copy");
+    return false;
+  }
+  return copyTextToClipboard(markdown);
 }

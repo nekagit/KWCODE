@@ -1,6 +1,8 @@
 import type { ShortcutGroup } from "@/data/keyboard-shortcuts";
 import { KEYBOARD_SHORTCUT_GROUPS } from "@/data/keyboard-shortcuts";
 import { toast } from "sonner";
+import { filenameTimestamp, triggerFileDownload } from "@/lib/download-helpers";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 
 /**
  * Format keyboard shortcut groups as plain text (for clipboard).
@@ -57,20 +59,16 @@ export function formatKeyboardShortcutsAsMarkdown(
  */
 export function downloadKeyboardShortcutsAsMarkdown(): void {
   const markdown = formatKeyboardShortcutsAsMarkdown();
-  const now = new Date();
-  const date = now.toISOString().slice(0, 10);
-  const time = now.toTimeString().slice(0, 5).replace(":", "");
-  const filename = `keyboard-shortcuts-${date}-${time}.md`;
-
-  const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-
+  const filename = `keyboard-shortcuts-${filenameTimestamp()}.md`;
+  triggerFileDownload(markdown, filename, "text/markdown;charset=utf-8");
   toast.success("Keyboard shortcuts exported as Markdown");
+}
+
+/**
+ * Copy the keyboard shortcuts list to the clipboard as Markdown.
+ * Same format as downloadKeyboardShortcutsAsMarkdown: # Keyboard shortcuts, then per-group tables.
+ */
+export async function copyKeyboardShortcutsAsMarkdownToClipboard(): Promise<boolean> {
+  const markdown = formatKeyboardShortcutsAsMarkdown();
+  return copyTextToClipboard(markdown);
 }

@@ -74,6 +74,8 @@ export interface RunActions {
   stopRun: (runId: string) => Promise<void>;
   /** Called when a run exits (e.g. from Tauri); no-op if queue not used. */
   runNextInQueue: (runId: string) => void;
+  /** Clear all queued temp-ticket jobs (fast dev, debug, etc.). */
+  clearPendingTempTicketQueue: () => void;
   runImplementAll: (projectPath: string, promptContent?: string) => Promise<string | null>;
   /** Run one Implement All run per slot (1–3) with distinct prompt and label; used when tickets are in queue. */
   runImplementAllForTickets: (
@@ -757,6 +759,8 @@ export const useRunStore = create<RunStore>()((set, get) => ({
 
   clearTerminalOutputHistory: () => set({ terminalOutputHistory: [] }),
 
+  clearPendingTempTicketQueue: () => set({ pendingTempTicketQueue: [] }),
+
   setIsTauriEnv: (v) =>
     set((s) => ({
       isTauriEnv: typeof v === "function" ? v(s.isTauriEnv) : v,
@@ -826,6 +830,7 @@ export function useRunState() {
       stopScript: s.stopScript,
       stopRun: s.stopRun,
       runNextInQueue: s.runNextInQueue,
+      clearPendingTempTicketQueue: s.clearPendingTempTicketQueue,
       runImplementAll: s.runImplementAll,
       stopAllImplementAll: s.stopAllImplementAll,
       clearImplementAllLogs: s.clearImplementAllLogs,

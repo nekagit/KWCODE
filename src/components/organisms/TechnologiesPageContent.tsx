@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { Copy, Cpu, Download, FolderOpen, Loader2, Pencil, RefreshCw, Save, Layout, Server, Wrench } from "lucide-react";
+import { Copy, Cpu, Download, FileText, FolderOpen, Loader2, Pencil, RefreshCw, Save, Layout, Server, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { Breadcrumb } from "@/components/shared/Breadcrumb";
 import { SingleContentPage } from "@/components/organisms/SingleContentPage";
@@ -19,7 +19,11 @@ import { getOrganismClasses } from "./organism-classes";
 import { getTechLogoUrl } from "@/lib/tech-logos";
 import { copyTechStackToClipboard } from "@/lib/copy-tech-stack";
 import { copyTechnologiesFolderPath } from "@/lib/copy-technologies-folder-path";
-import { downloadTechStack } from "@/lib/download-tech-stack";
+import {
+  copyTechStackAsMarkdownToClipboard,
+  downloadTechStack,
+  downloadTechStackAsMarkdown,
+} from "@/lib/download-tech-stack";
 import { openTechnologiesFolderInFileManager } from "@/lib/open-technologies-folder";
 
 const c = getOrganismClasses("TechnologiesPageContent.tsx");
@@ -276,11 +280,31 @@ export function TechnologiesPageContent() {
                       <Button
                         variant="outline"
                         size="sm"
+                        onClick={() => copyTechStackAsMarkdownToClipboard(techStack)}
+                        aria-label="Copy tech stack as Markdown to clipboard"
+                        title="Copy as Markdown (same structure as Download as Markdown)"
+                      >
+                        <FileText className="size-4 mr-1.5" />
+                        Copy as Markdown
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => downloadTechStack(techStack)}
                         aria-label="Export tech stack as JSON"
                       >
                         <Download className="size-4 mr-1.5" />
                         Export
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => downloadTechStackAsMarkdown(techStack)}
+                        aria-label="Download tech stack as Markdown"
+                        title="Download as Markdown (same structure as export)"
+                      >
+                        <FileText className="size-4 mr-1.5" />
+                        Download as Markdown
                       </Button>
                     </>
                   )}

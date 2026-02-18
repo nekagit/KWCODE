@@ -1,4 +1,6 @@
 import { toast } from "sonner";
+import { filenameTimestamp, triggerFileDownload } from "@/lib/download-helpers";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 
 export interface PromptRecordForExport {
   id: number;
@@ -62,21 +64,24 @@ export function downloadAllPromptsAsMarkdown(prompts: PromptRecordForExport[]): 
 
   const exportedAt = new Date().toISOString();
   const markdown = promptsToMarkdown(prompts, exportedAt);
-
-  const now = new Date();
-  const date = now.toISOString().slice(0, 10);
-  const time = now.toTimeString().slice(0, 5).replace(":", "");
-  const filename = `all-prompts-${date}-${time}.md`;
-
-  const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-
+  const filename = `all-prompts-${filenameTimestamp()}.md`;
+  triggerFileDownload(markdown, filename, "text/markdown;charset=utf-8");
   toast.success("Prompts exported as Markdown");
+}
+
+/**
+ * Copy all general prompt records to the clipboard as Markdown.
+ * Same format as downloadAllPromptsAsMarkdown (heading, timestamp, per-prompt sections).
+ * Empty list shows a toast and returns false.
+ */
+export async function copyAllPromptsAsMarkdownToClipboard(
+  prompts: PromptRecordForExport[]
+): Promise<boolean> {
+  if (prompts.length === 0) {
+    toast.info("No prompts to copy");
+    return false;
+  }
+  const exportedAt = new Date().toISOString();
+  const markdown = promptsToMarkdown(prompts, exportedAt);
+  return copyTextToClipboard(markdown);
 }

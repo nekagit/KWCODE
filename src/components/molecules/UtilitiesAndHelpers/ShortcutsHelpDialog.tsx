@@ -20,6 +20,7 @@ import { KEYBOARD_SHORTCUT_GROUPS } from "@/data/keyboard-shortcuts";
 import {
   formatKeyboardShortcutsAsPlainText,
   downloadKeyboardShortcutsAsMarkdown,
+  copyKeyboardShortcutsAsMarkdownToClipboard,
 } from "@/lib/export-keyboard-shortcuts";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 import { Keyboard, Copy, Download } from "lucide-react";
@@ -86,6 +87,18 @@ export function ShortcutsHelpDialog({ open, onOpenChange }: ShortcutsHelpDialogP
           >
             <Copy className="h-4 w-4" aria-hidden />
             Copy list
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => copyKeyboardShortcutsAsMarkdownToClipboard()}
+            className="gap-2"
+            title="Copy as Markdown (same format as Download)"
+            aria-label="Copy keyboard shortcuts as Markdown"
+          >
+            <Copy className="h-4 w-4" aria-hidden />
+            Copy as Markdown
           </Button>
           <Button
             type="button"

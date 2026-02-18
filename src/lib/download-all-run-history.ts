@@ -1,5 +1,6 @@
 import type { TerminalOutputHistoryEntry } from "@/types/run";
 import { toast } from "sonner";
+import { filenameTimestamp, downloadBlob } from "@/lib/download-helpers";
 
 const SEPARATOR = "\n\n";
 const RUN_HEADER_PREFIX = "=== Run: ";
@@ -30,20 +31,8 @@ export function downloadAllRunHistory(entries: TerminalOutputHistoryEntry[]): vo
   // UI shows newest first; for the file we use chronological (oldest first) by reversing.
   const reversed = [...entries].reverse();
   const body = reversed.map(formatEntry).join(SEPARATOR);
-  const now = new Date();
-  const date = now.toISOString().slice(0, 10);
-  const time = now.toTimeString().slice(0, 5).replace(":", "");
-  const filename = `run-history-${date}-${time}.txt`;
-
+  const filename = `run-history-${filenameTimestamp()}.txt`;
   const blob = new Blob([body], { type: "text/plain;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-
+  downloadBlob(blob, filename);
   toast.success("History exported");
 }

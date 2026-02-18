@@ -6,6 +6,7 @@ import {
   isImplementAllRun,
   parseTicketNumberFromRunLabel,
   formatElapsed,
+  formatDurationMs,
 } from "../run-helpers";
 
 describe("isImplementAllRun", () => {
@@ -147,5 +148,25 @@ describe("formatElapsed", () => {
   it("treats non-finite values (Infinity, -Infinity) as 0", () => {
     expect(formatElapsed(Number.POSITIVE_INFINITY)).toBe("0s");
     expect(formatElapsed(Number.NEGATIVE_INFINITY)).toBe("0s");
+  });
+});
+
+describe("formatDurationMs", () => {
+  it("returns empty string for undefined or negative", () => {
+    expect(formatDurationMs(undefined)).toBe("");
+    expect(formatDurationMs(-1)).toBe("");
+    expect(formatDurationMs(-1000)).toBe("");
+  });
+
+  it("formats milliseconds as Xs for under 60s (rounded)", () => {
+    expect(formatDurationMs(0)).toBe("0s");
+    expect(formatDurationMs(45000)).toBe("45s");
+    expect(formatDurationMs(500)).toBe("1s");
+    expect(formatDurationMs(499)).toBe("0s");
+  });
+
+  it("formats 60s+ as m:ss", () => {
+    expect(formatDurationMs(60000)).toBe("1:00");
+    expect(formatDurationMs(125000)).toBe("2:05");
   });
 });

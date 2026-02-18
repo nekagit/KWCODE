@@ -764,7 +764,7 @@
       "text-xs font-medium text-muted-foreground/90 mb-2",
       "h-[120px] w-full surface-card border-border p-3",
       "font-mono text-xs whitespace-pre-wrap break-all text-muted-foreground/90",
-      "shrink-0 w-8 rounded px-1.5 py-0.5 text-center tabular-nums ${className}"
+      "shrink-0 w-8 rounded px-1.5 py-0.5 text-center tabular-nums font-medium"
     ],
     "TabAndContentSections/ProjectIdeasTab.tsx": [
       "mt-4 space-y-6",

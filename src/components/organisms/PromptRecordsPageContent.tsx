@@ -30,13 +30,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, RefreshCw, RotateCcw, Search, X } from "lucide-react";
+import { FileText, Loader2, RefreshCw, RotateCcw, Search, X } from "lucide-react";
 import { getOrganismClasses } from "./organism-classes";
 import { downloadAllPromptsAsJson } from "@/lib/download-all-prompts-json";
 import { downloadAllPromptsAsCsv } from "@/lib/download-all-prompts-csv";
-import { downloadAllPromptsAsMarkdown } from "@/lib/download-all-prompts-md";
+import {
+  copyAllPromptsAsMarkdownToClipboard,
+  downloadAllPromptsAsMarkdown,
+} from "@/lib/download-all-prompts-md";
+import {
+  copyAllCursorPromptsAsMarkdownToClipboard,
+  downloadAllCursorPromptsAsMarkdown,
+} from "@/lib/download-all-cursor-prompts-md";
 import { downloadAllCursorPromptsAsJson } from "@/lib/download-all-cursor-prompts-json";
-import { downloadAllCursorPromptsAsMarkdown } from "@/lib/download-all-cursor-prompts-md";
+import { downloadAllCursorPromptsAsCsv } from "@/lib/download-all-cursor-prompts-csv";
 
 const c = getOrganismClasses("PromptRecordsPageContent.tsx");
 
@@ -535,6 +542,26 @@ export function PromptRecordsPageContent() {
                   >
                     Export MD
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => copyAllCursorPromptsAsMarkdownToClipboard()}
+                    disabled={cursorPromptFiles.length === 0}
+                    aria-label="Copy all .cursor prompts as Markdown"
+                    title="Copy as Markdown (same format as Export MD)"
+                  >
+                    <FileText className="size-3.5 mr-1.5" aria-hidden />
+                    Copy as Markdown
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => downloadAllCursorPromptsAsCsv()}
+                    disabled={cursorPromptFiles.length === 0}
+                    aria-label="Export all .cursor prompts as CSV"
+                  >
+                    Export CSV
+                  </Button>
                 </div>
                 <CursorPromptFilesTable
                   files={cursorPromptFiles}
@@ -564,6 +591,17 @@ export function PromptRecordsPageContent() {
                         aria-label="Export all general prompts as Markdown"
                       >
                         Export MD
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8"
+                        onClick={() => copyAllPromptsAsMarkdownToClipboard(generalPrompts)}
+                        aria-label="Copy all general prompts as Markdown"
+                        title="Copy as Markdown (same format as Export MD)"
+                      >
+                        <FileText className="size-3.5 mr-1.5" aria-hidden />
+                        Copy as Markdown
                       </Button>
                       <Button
                         variant="outline"

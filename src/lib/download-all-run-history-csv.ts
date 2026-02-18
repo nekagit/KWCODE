@@ -1,28 +1,8 @@
 import type { TerminalOutputHistoryEntry } from "@/types/run";
 import { toast } from "sonner";
-
-/**
- * Escape a CSV field: wrap in double-quotes if it contains comma, newline, or double-quote;
- * double any internal double-quotes.
- */
-function escapeCsvField(value: string): string {
-  const s = String(value ?? "");
-  if (/[",\r\n]/.test(s)) {
-    return `"${s.replace(/"/g, '""')}"`;
-  }
-  return s;
-}
-
-/**
- * Format duration milliseconds as human-readable (e.g. "2:34" or "45s").
- */
-function formatDurationMs(ms: number | undefined): string {
-  if (ms === undefined || ms < 0) return "";
-  if (ms < 60_000) return `${Math.round(ms / 1000)}s`;
-  const sec = Math.floor(ms / 1000) % 60;
-  const min = Math.floor(ms / 60_000);
-  return `${min}:${sec.toString().padStart(2, "0")}`;
-}
+import { filenameTimestamp, downloadBlob } from "@/lib/download-helpers";
+import { escapeCsvField } from "@/lib/csv-helpers";
+import { formatDurationMs } from "@/lib/run-helpers";
 
 /**
  * Download the full terminal output history as a CSV file.
@@ -52,21 +32,8 @@ export function downloadAllRunHistoryCsv(
       return `${timestamp},${label},${slot},${exitCode},${duration},${output}`;
     });
   const csv = [header, ...rows].join("\n");
-
-  const now = new Date();
-  const date = now.toISOString().slice(0, 10);
-  const time = now.toTimeString().slice(0, 5).replace(":", "");
-  const filename = `run-history-${date}-${time}.csv`;
-
+  const filename = `run-history-${filenameTimestamp()}.csv`;
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-
+  downloadBlob(blob, filename);
   toast.success("History exported as CSV");
 }

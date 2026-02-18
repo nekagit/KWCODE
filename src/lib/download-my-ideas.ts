@@ -1,5 +1,6 @@
 import type { IdeaRecord } from "@/types/idea";
 import { toast } from "sonner";
+import { filenameTimestamp, triggerFileDownload } from "@/lib/download-helpers";
 
 /**
  * Download the current "My ideas" list as a single JSON file.
@@ -17,22 +18,8 @@ export function downloadMyIdeasAsJson(ideas: IdeaRecord[]): void {
     exportedAt: new Date().toISOString(),
     ideas,
   };
-
   const json = JSON.stringify(payload, null, 2);
-  const now = new Date();
-  const date = now.toISOString().slice(0, 10);
-  const time = now.toTimeString().slice(0, 5).replace(":", "");
-  const filename = `my-ideas-${date}-${time}.json`;
-
-  const blob = new Blob([json], { type: "application/json;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-
+  const filename = `my-ideas-${filenameTimestamp()}.json`;
+  triggerFileDownload(json, filename, "application/json;charset=utf-8");
   toast.success("Ideas exported as JSON");
 }

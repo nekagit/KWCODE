@@ -12,10 +12,12 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { downloadArchitectureRecord } from "@/lib/download-architecture-record";
+import {
+  downloadArchitectureRecord,
+  copyArchitectureRecordToClipboard,
+} from "@/lib/download-architecture-record";
 import { downloadArchitectureRecordAsJson } from "@/lib/download-architecture-record-json";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
-import { architectureRecordToMarkdown } from "@/lib/architecture-to-markdown";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import { ArchitectureDetailsDisplay } from "@/components/atoms/architecture/ArchitectureDetailsDisplay";
 import { getClasses } from "@/components/molecules/tailwind-molecules";
@@ -69,11 +71,12 @@ export function ArchitectureViewDialog({
             </Button>
             <Button
               variant="outline"
-              onClick={() => copyTextToClipboard(architectureRecordToMarkdown(viewItem))}
-              title="Copy architecture as Markdown"
+              onClick={() => copyArchitectureRecordToClipboard(viewItem)}
+              title="Copy as Markdown"
+              aria-label="Copy architecture as Markdown"
             >
               <Copy className={classes[0]} />
-              Copy
+              Copy as Markdown
             </Button>
             <Button
               variant="outline"

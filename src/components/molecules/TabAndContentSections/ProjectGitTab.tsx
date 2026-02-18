@@ -16,6 +16,7 @@ import { Dialog } from "@/components/shared/Dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getClasses } from "@/components/molecules/tailwind-molecules";
+import { cn } from "@/lib/utils";
 const classes = getClasses("TabAndContentSections/ProjectGitTab.tsx");
 
 interface ProjectGitTabProps {
@@ -346,39 +347,56 @@ export function ProjectGitTab({ project, projectId }: ProjectGitTabProps) {
           )}
         </div>
 
-        {/* Changed files — primary focus */}
-        <Card className={classes[37]}>
-          <h3 className={classes[47]}>Changed files</h3>
-          {changedFiles.length > 0 ? (
-            <ScrollArea className={classes[48]}>
-              <ul className={classes[49]}>
-                {changedFiles.map((line, i) => {
-                  const status = line.slice(0, 2);
-                  const path = line.slice(2).trim() || line;
-                  const { label, className } = getStatusStyle(status);
-                  return (
-                    <li
-                      key={i}
-                      className={classes[50]}
-                    >
-                      <span
-                        className={classes[84]}
-                        title={status === "??" ? "Untracked" : status.includes("M") ? "Modified" : status.includes("D") ? "Deleted" : status.includes("A") ? "Added" : status.includes("R") ? "Renamed" : status.includes("U") ? "Unmerged" : "Changed"}
-                      >
-                        {label}
-                      </span>
-                      <span className={classes[51]}>{path}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </ScrollArea>
-          ) : (
-            <div className={classes[52]}>
-              No changed files
+        {/* Changed files — primary focus: bigger, colorful overview */}
+        <div className="rounded-xl border-2 border-amber-500/20 bg-gradient-to-br from-card via-card to-amber-500/5 shadow-sm overflow-hidden">
+          <Card className={cn(classes[37], "border-0 shadow-none bg-transparent p-5")}>
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+              <h3 className="text-base font-semibold text-foreground">Changed files</h3>
+              {changedFiles.length > 0 && (
+                <div className="flex flex-wrap items-center gap-3 text-xs">
+                  <span className="font-medium text-muted-foreground">
+                    {changedFiles.length} file{changedFiles.length !== 1 ? "s" : ""} changed
+                  </span>
+                  <span className="flex items-center gap-1.5 text-muted-foreground/90" title="Modified · Added · Deleted · Untracked">
+                    <span className="rounded px-1.5 py-0.5 bg-amber-500/15 text-amber-600 dark:text-amber-400 font-medium">M</span>
+                    <span className="rounded px-1.5 py-0.5 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-medium">A</span>
+                    <span className="rounded px-1.5 py-0.5 bg-destructive/15 text-destructive font-medium">D</span>
+                    <span className="rounded px-1.5 py-0.5 bg-muted text-muted-foreground font-medium">??</span>
+                  </span>
+                </div>
+              )}
             </div>
-          )}
-        </Card>
+            {changedFiles.length > 0 ? (
+              <ScrollArea className={cn(classes[48], "min-h-[280px] h-[42vh] max-h-[520px] rounded-md border border-border/60 bg-muted/20")}>
+                <ul className={classes[49]}>
+                  {changedFiles.map((line, i) => {
+                    const status = line.slice(0, 2);
+                    const path = line.slice(2).trim() || line;
+                    const { label, className: statusClassName } = getStatusStyle(status);
+                    return (
+                      <li
+                        key={i}
+                        className={classes[50]}
+                      >
+                        <span
+                          className={cn("shrink-0 w-8 rounded px-1.5 py-0.5 text-center tabular-nums font-medium", statusClassName)}
+                          title={status === "??" ? "Untracked" : status.includes("M") ? "Modified" : status.includes("D") ? "Deleted" : status.includes("A") ? "Added" : status.includes("R") ? "Renamed" : status.includes("U") ? "Unmerged" : "Changed"}
+                        >
+                          {label}
+                        </span>
+                        <span className={classes[51]}>{path}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </ScrollArea>
+            ) : (
+              <div className={cn(classes[52], "min-h-[120px] flex items-center justify-center rounded-md border border-dashed border-border/60 bg-muted/10")}>
+                No changed files
+              </div>
+            )}
+          </Card>
+        </div>
 
         {/* Additional information — collapsible */}
         <Accordion type="single" collapsible className={classes[53]}>

@@ -1,4 +1,5 @@
 import { toast } from "sonner";
+import { filenameTimestamp, triggerFileDownload } from "@/lib/download-helpers";
 
 export interface PromptRecordForExport {
   id: number;
@@ -25,22 +26,8 @@ export function downloadAllPromptsAsJson(prompts: PromptRecordForExport[]): void
     exportedAt: new Date().toISOString(),
     prompts,
   };
-
   const json = JSON.stringify(payload, null, 2);
-  const now = new Date();
-  const date = now.toISOString().slice(0, 10);
-  const time = now.toTimeString().slice(0, 5).replace(":", "");
-  const filename = `all-prompts-${date}-${time}.json`;
-
-  const blob = new Blob([json], { type: "application/json;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-
+  const filename = `all-prompts-${filenameTimestamp()}.json`;
+  triggerFileDownload(json, filename, "application/json;charset=utf-8");
   toast.success("Prompts exported as JSON");
 }

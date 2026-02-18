@@ -488,14 +488,18 @@ pub fn get_plan_kanban_state_for_project(conn: &Connection, project_id: &str) ->
     Ok(serde_json::json!({ "inProgressIds": ids }))
 }
 
+const GENERAL_DEVELOPMENT_NAME: &str = "General Development";
+const GENERAL_DEVELOPMENT_SLUG: &str = "general-development";
+
 pub fn get_milestones_for_project(conn: &Connection, project_id: &str) -> Result<Vec<serde_json::Value>, String> {
+    let project_id = project_id.trim();
     let mut stmt = conn
         .prepare(
             "SELECT id, project_id, name, slug, content, created_at, updated_at FROM milestones WHERE project_id = ?1 ORDER BY name ASC",
         )
         .map_err(|e| e.to_string())?;
     let rows = stmt
-        .query_map(rusqlite::params![project_id.trim()], |row| {
+        .query_map(rusqlite::params![project_id], |row| {
             Ok(serde_json::json!({
                 "id": row.get::<_, i64>(0)?,
                 "project_id": row.get::<_, String>(1)?,
@@ -510,6 +514,37 @@ pub fn get_milestones_for_project(conn: &Connection, project_id: &str) -> Result
     let mut out = vec![];
     for row in rows {
         out.push(row.map_err(|e| e.to_string())?);
+    }
+    let has_general = out.iter().any(|v| v.get("name").and_then(|n| n.as_str()) == Some(GENERAL_DEVELOPMENT_NAME));
+    if !has_general {
+        let now = chrono::Utc::now().to_rfc3339();
+        conn.execute(
+            "INSERT INTO milestones (project_id, name, slug, content, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            rusqlite::params![project_id, GENERAL_DEVELOPMENT_NAME, GENERAL_DEVELOPMENT_SLUG, None::<String>, &now, &now],
+        )
+        .map_err(|e| e.to_string())?;
+        let mut stmt2 = conn
+            .prepare(
+                "SELECT id, project_id, name, slug, content, created_at, updated_at FROM milestones WHERE project_id = ?1 ORDER BY name ASC",
+            )
+            .map_err(|e| e.to_string())?;
+        let rows2 = stmt2
+            .query_map(rusqlite::params![project_id], |row| {
+                Ok(serde_json::json!({
+                    "id": row.get::<_, i64>(0)?,
+                    "project_id": row.get::<_, String>(1)?,
+                    "name": row.get::<_, String>(2)?,
+                    "slug": row.get::<_, String>(3)?,
+                    "content": row.get::<_, Option<String>>(4)?,
+                    "created_at": row.get::<_, String>(5)?,
+                    "updated_at": row.get::<_, String>(6)?,
+                }))
+            })
+            .map_err(|e| e.to_string())?;
+        out = vec![];
+        for row in rows2 {
+            out.push(row.map_err(|e| e.to_string())?);
+        }
     }
     Ok(out)
 }

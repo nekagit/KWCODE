@@ -21,7 +21,7 @@ import { ThreeTabResourcePageContent } from "@/components/organisms/ThreeTabReso
 import { getOrganismClasses } from "./organism-classes";
 import { downloadMyIdeasAsJson } from "@/lib/download-my-ideas";
 import { downloadMyIdeasAsCsv } from "@/lib/download-my-ideas-csv";
-import { downloadMyIdeasAsMarkdown } from "@/lib/download-my-ideas-md";
+import { downloadMyIdeasAsMarkdown, copyAllMyIdeasMarkdownToClipboard } from "@/lib/download-my-ideas-md";
 import { copyIdeasFolderPath } from "@/lib/copy-ideas-folder-path";
 import { openIdeasFolderInFileManager } from "@/lib/open-ideas-folder";
 import { IdeaCategory, IdeaRecord } from "@/types/idea";
@@ -408,6 +408,22 @@ export function IdeasPageContent() {
             >
               <FileText className="size-4 shrink-0" aria-hidden />
               <span className="hidden sm:inline">Export MD</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                copyAllMyIdeasMarkdownToClipboard(
+                  trimmedFilterQuery ? filteredMyIdeas : sortedMyIdeas
+                )
+              }
+              className="h-9 gap-2"
+              aria-label="Copy my ideas as Markdown"
+              title="Copy as Markdown (same format as Export MD)"
+            >
+              <Copy className="size-4 shrink-0" aria-hidden />
+              <span className="hidden sm:inline">Copy as Markdown</span>
             </Button>
             <Button
               type="button"

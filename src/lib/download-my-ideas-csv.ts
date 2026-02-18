@@ -1,17 +1,7 @@
 import type { IdeaRecord } from "@/types/idea";
 import { toast } from "sonner";
-
-/**
- * Escape a CSV field: wrap in double-quotes if it contains comma, newline, or double-quote;
- * double any internal double-quotes.
- */
-function escapeCsvField(value: string): string {
-  const s = String(value ?? "");
-  if (/[",\r\n]/.test(s)) {
-    return `"${s.replace(/"/g, '""')}"`;
-  }
-  return s;
-}
+import { filenameTimestamp, downloadBlob } from "@/lib/download-helpers";
+import { escapeCsvField } from "@/lib/csv-helpers";
 
 /**
  * Build CSV content for the given ideas.
@@ -46,21 +36,8 @@ export function downloadMyIdeasAsCsv(ideas: IdeaRecord[]): void {
   }
 
   const csv = ideasToCsv(ideas);
-
-  const now = new Date();
-  const date = now.toISOString().slice(0, 10);
-  const time = now.toTimeString().slice(0, 5).replace(":", "");
-  const filename = `my-ideas-${date}-${time}.csv`;
-
+  const filename = `my-ideas-${filenameTimestamp()}.csv`;
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-
+  downloadBlob(blob, filename);
   toast.success("Ideas exported as CSV");
 }

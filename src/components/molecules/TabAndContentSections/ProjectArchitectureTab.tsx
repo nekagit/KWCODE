@@ -1,9 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Building2, RotateCcw, Search, X } from "lucide-react";
+import { Building2, Download, FileText, RotateCcw, Search, X } from "lucide-react";
 import type { Project } from "@/types/project";
+import type { ArchitectureRecord } from "@/types/architecture";
 import { ProjectCategoryHeader } from "@/components/shared/ProjectCategoryHeader";
+import {
+  downloadProjectArchitecturesAsMarkdown,
+  copyProjectArchitecturesAsMarkdownToClipboard,
+} from "@/lib/download-project-architectures-md";
 import { ProjectArchitectureListItem } from "@/components/atoms/list-items/ProjectArchitectureListItem";
 import { GridContainer } from "@/components/shared/GridContainer";
 import { getClasses } from "@/components/molecules/tailwind-molecules";
@@ -89,8 +94,19 @@ export function ProjectArchitectureTab({
     return list;
   }, [filteredArchitectures, sortOrder]);
 
+  /** Full architecture records for export (same order as sortedArchitectures). Only set when project.architectures is resolved. */
+  const fullArchitecturesForExport = useMemo((): ArchitectureRecord[] => {
+    const raw = project.architectures;
+    if (!Array.isArray(raw) || raw.length === 0) return [];
+    const fullList = raw as ArchitectureRecord[];
+    return sortedArchitectures
+      .map((display) => fullList.find((a) => a.id === display.id))
+      .filter((a): a is ArchitectureRecord => a != null && typeof (a as ArchitectureRecord).category === "string");
+  }, [project.architectures, sortedArchitectures]);
+
   const showEmpty = architectures.length === 0;
   const showFilterRow = architectures.length > 0;
+  const showExportButtons = fullArchitecturesForExport.length > 0;
   const showEmptyFilterState = trimmedFilterQuery.length > 0 && filteredArchitectures.length === 0;
 
   return (
@@ -161,6 +177,34 @@ export function ProjectArchitectureTab({
             <span className="text-sm text-muted-foreground whitespace-nowrap">
               Showing {filteredArchitectures.length} of {architectures.length} architectures
             </span>
+          ) : null}
+          {showExportButtons ? (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => downloadProjectArchitecturesAsMarkdown(fullArchitecturesForExport)}
+                className="h-8 gap-1.5"
+                aria-label="Download architectures as Markdown"
+                title="Download as Markdown (same format as single architecture export)"
+              >
+                <Download className="size-3.5" aria-hidden />
+                Download as Markdown
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => copyProjectArchitecturesAsMarkdownToClipboard(fullArchitecturesForExport)}
+                className="h-8 gap-1.5"
+                aria-label="Copy architectures as Markdown to clipboard"
+                title="Copy as Markdown (same format as Download as Markdown)"
+              >
+                <FileText className="size-3.5" aria-hidden />
+                Copy as Markdown
+              </Button>
+            </>
           ) : null}
         </div>
       )}

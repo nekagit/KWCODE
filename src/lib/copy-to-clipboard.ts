@@ -1,7 +1,32 @@
 import { toast } from "sonner";
 
 /**
+ * Fallback copy using a temporary textarea and document.execCommand('copy').
+ * Used when navigator.clipboard is unavailable (e.g. non-HTTPS, some iframes).
+ * Returns true if execCommand('copy') succeeded, false otherwise.
+ */
+function copyViaExecCommand(text: string): boolean {
+  if (typeof document === "undefined" || !document.body) return false;
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "absolute";
+  textarea.style.left = "-9999px";
+  document.body.appendChild(textarea);
+  textarea.select();
+  textarea.setSelectionRange(0, text.length);
+  let ok = false;
+  try {
+    ok = document.execCommand("copy");
+  } finally {
+    document.body.removeChild(textarea);
+  }
+  return ok;
+}
+
+/**
  * Copy text to the clipboard and show a success or error toast.
+ * Uses navigator.clipboard when available; falls back to execCommand('copy') otherwise.
  * Returns true if the copy succeeded, false otherwise.
  */
 export async function copyTextToClipboard(text: string): Promise<boolean> {
@@ -10,11 +35,20 @@ export async function copyTextToClipboard(text: string): Promise<boolean> {
     return false;
   }
   try {
-    await navigator.clipboard.writeText(text);
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      toast.success("Copied to clipboard");
+      return true;
+    }
+  } catch {
+    // Clipboard API rejected (e.g. permission); use fallback
+  }
+  // Fallback when clipboard is undefined or writeText threw
+  const fallbackOk = copyViaExecCommand(text);
+  if (fallbackOk) {
     toast.success("Copied to clipboard");
     return true;
-  } catch {
-    toast.error("Failed to copy");
-    return false;
   }
+  toast.error("Failed to copy");
+  return false;
 }

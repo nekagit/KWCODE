@@ -1,4 +1,6 @@
 import { toast } from "sonner";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
+import { filenameTimestamp, triggerFileDownload } from "@/lib/download-helpers";
 
 export interface CursorPromptFileWithContent {
   relativePath: string;
@@ -14,8 +16,12 @@ function escapeMarkdownHeading(text: string): string {
 
 /**
  * Build one markdown document with all .cursor prompt files.
+ * Exported for unit tests and reuse by download/copy.
  */
-function cursorPromptsToMarkdown(files: CursorPromptFileWithContent[], exportedAt: string): string {
+export function buildCursorPromptsMarkdown(
+  files: CursorPromptFileWithContent[],
+  exportedAt: string
+): string {
   const lines: string[] = [
     "# All .cursor Prompts (*.prompt.md)",
     "",
@@ -57,25 +63,36 @@ export async function downloadAllCursorPromptsAsMarkdown(): Promise<void> {
     }
 
     const exportedAt = new Date().toISOString();
-    const markdown = cursorPromptsToMarkdown(files, exportedAt);
-
-    const now = new Date();
-    const date = now.toISOString().slice(0, 10);
-    const time = now.toTimeString().slice(0, 5).replace(":", "");
-    const filename = `all-cursor-prompts-${date}-${time}.md`;
-
-    const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
+    const markdown = buildCursorPromptsMarkdown(files, exportedAt);
+    const filename = `all-cursor-prompts-${filenameTimestamp()}.md`;
+    triggerFileDownload(markdown, filename, "text/markdown;charset=utf-8");
     toast.success(".cursor prompts exported as Markdown");
   } catch (e) {
     toast.error(e instanceof Error ? e.message : "Export failed");
+  }
+}
+
+/**
+ * Copy all .cursor *.prompt.md files to the clipboard as Markdown.
+ * Same format as downloadAllCursorPromptsAsMarkdown (heading, timestamp, per-file sections).
+ * Fetches content from /api/data/cursor-prompt-files-contents.
+ * Empty list shows a toast and returns false.
+ */
+export async function copyAllCursorPromptsAsMarkdownToClipboard(): Promise<boolean> {
+  try {
+    const res = await fetch("/api/data/cursor-prompt-files-contents");
+    if (!res.ok) throw new Error("Failed to load .cursor prompts");
+    const data = (await res.json()) as { files?: CursorPromptFileWithContent[] };
+    const files = Array.isArray(data.files) ? data.files : [];
+    if (files.length === 0) {
+      toast.info("No .cursor prompts to copy");
+      return false;
+    }
+    const exportedAt = new Date().toISOString();
+    const markdown = buildCursorPromptsMarkdown(files, exportedAt);
+    return copyTextToClipboard(markdown);
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : "Copy failed");
+    return false;
   }
 }

@@ -1,12 +1,10 @@
 import type { TerminalOutputHistoryEntry } from "@/types/run";
-
-/**
- * Sanitize a string for use in a filename: replace unsafe chars with underscore, limit length.
- */
-function safeLabelForFile(label: string, maxLength = 60): string {
-  const sanitized = label.replace(/[^\w\s-]/g, "_").replace(/\s+/g, "-").trim();
-  return sanitized.slice(0, maxLength) || "run";
-}
+import {
+  safeFilenameSegment,
+  filenameTimestamp,
+  downloadBlob,
+} from "@/lib/download-helpers";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 
 /**
  * Format a single history entry as Markdown: heading, metadata, fenced code block for output.
@@ -37,30 +35,43 @@ function formatEntryAsMarkdown(entry: TerminalOutputHistoryEntry): string {
 }
 
 /**
+ * Build the full Markdown string for a single run (section + exported timestamp).
+ * Used by both download and copy. Pass optional exportedAt for deterministic tests.
+ */
+export function buildSingleRunMarkdown(
+  entry: TerminalOutputHistoryEntry,
+  exportedAt?: string
+): string {
+  const at = exportedAt ?? new Date().toISOString();
+  return [
+    formatEntryAsMarkdown(entry).trim(),
+    "",
+    `Exported at ${at}.`,
+  ].join("\n");
+}
+
+/**
  * Download a single run history entry as a Markdown file.
  * Format: ## Run: label, metadata, fenced code block (same as in "Download all as Markdown").
  * Filename: run-{label}-{YYYY-MM-DD-HHmm}.md
  */
 export function downloadRunAsMarkdown(entry: TerminalOutputHistoryEntry): void {
-  const segment = safeLabelForFile(entry.label);
-  const now = new Date();
-  const date = now.toISOString().slice(0, 10);
-  const time = now.toTimeString().slice(0, 5).replace(":", "");
-  const filename = `run-${segment}-${date}-${time}.md`;
-
-  const body = [
-    formatEntryAsMarkdown(entry).trim(),
-    "",
-    `Exported at ${now.toISOString()}.`,
-  ].join("\n");
+  const segment = safeFilenameSegment(entry.label, "run");
+  const filename = `run-${segment}-${filenameTimestamp()}.md`;
+  const body = buildSingleRunMarkdown(entry);
 
   const blob = new Blob([body], { type: "text/markdown;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  downloadBlob(blob, filename);
+}
+
+/**
+ * Copy a single run history entry to the clipboard as Markdown.
+ * Same format as downloadRunAsMarkdown: ## Run: label, metadata, fenced code block.
+ * Returns a Promise that resolves to true if copy succeeded, false otherwise.
+ */
+export async function copyRunAsMarkdownToClipboard(
+  entry: TerminalOutputHistoryEntry
+): Promise<boolean> {
+  const body = buildSingleRunMarkdown(entry);
+  return copyTextToClipboard(body);
 }

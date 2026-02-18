@@ -1,12 +1,10 @@
 import { toast } from "sonner";
-
-/**
- * Sanitize a string for use in a filename: replace unsafe chars with underscore, limit length.
- */
-function safeTitleForFile(title: string, maxLength = 60): string {
-  const sanitized = title.replace(/[^\w\s-]/g, "_").replace(/\s+/g, "-").trim();
-  return sanitized.slice(0, maxLength) || "prompt";
-}
+import {
+  safeNameForFile,
+  filenameTimestamp,
+  triggerFileDownload,
+} from "@/lib/download-helpers";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 
 /**
  * Download a prompt record as a markdown file.
@@ -17,21 +15,24 @@ export function downloadPromptRecord(title: string, content: string): void {
     toast.info("Nothing to download");
     return;
   }
-
-  const segment = safeTitleForFile(title);
-  const now = new Date();
-  const date = now.toISOString().slice(0, 10);
-  const time = now.toTimeString().slice(0, 5).replace(":", "");
-  const filename = `prompt-${segment}-${date}-${time}.md`;
-
-  const blob = new Blob([content], { type: "text/markdown;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  const segment = safeNameForFile(title, "prompt");
+  const filename = `prompt-${segment}-${filenameTimestamp()}.md`;
+  triggerFileDownload(content, filename, "text/markdown;charset=utf-8");
   toast.success("Prompt downloaded");
+}
+
+/**
+ * Copy a prompt record as formatted markdown to the clipboard.
+ * Format: "# {title}\n\n{content}". Empty content shows a toast and returns false.
+ */
+export async function copyPromptRecordToClipboard(
+  title: string,
+  content: string
+): Promise<boolean> {
+  if (content == null || String(content).trim() === "") {
+    toast.info("Nothing to copy");
+    return false;
+  }
+  const markdown = `# ${title}\n\n${content}`;
+  return copyTextToClipboard(markdown);
 }
