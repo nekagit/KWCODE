@@ -35,6 +35,19 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   return text ? (JSON.parse(text) as T) : (undefined as T);
 }
 
+/** Tauri: invoke(cmd, args). Browser: fetchJson(url, init). Use for CRUD endpoints that map 1:1. */
+async function tauriOrFetch<T>(
+  tauriCmd: string,
+  tauriArgs: Record<string, unknown>,
+  fetchUrl: string,
+  fetchInit?: RequestInit
+): Promise<T> {
+  if (isTauri) {
+    return invoke<T>(tauriCmd, tauriArgs);
+  }
+  return fetchJson<T>(fetchUrl, fetchInit);
+}
+
 export type ResolvedProject = Project & {
   prompts: unknown[];
   tickets: unknown[];
@@ -45,18 +58,11 @@ export type ResolvedProject = Project & {
 
 /** Get one project with resolved prompts, tickets, ideas, designs, architectures. In Tauri uses same sources as dashboard (SQLite + JSON) so counts match "All data". */
 export async function getProjectResolved(id: string): Promise<ResolvedProject> {
-  if (isTauri) {
-    return invoke("get_project_resolved", { id });
-  } else {
-    return fetchJson<ResolvedProject>(`/api/data/projects/${id}?resolve=1`);
-  }
+  return tauriOrFetch<ResolvedProject>("get_project_resolved", { id }, `/api/data/projects/${id}?resolve=1`);
 }
 
 export async function listProjects(): Promise<Project[]> {
-  if (isTauri) {
-    return invoke<Project[]>("list_projects", {});
-  }
-  return fetchJson<Project[]>("/api/data/projects");
+  return tauriOrFetch<Project[]>("list_projects", {}, "/api/data/projects");
 }
 
 export async function createProject(body: CreateProjectBody): Promise<Project> {
@@ -74,42 +80,28 @@ export async function createProject(body: CreateProjectBody): Promise<Project> {
       }),
     }).catch(() => {});
     // #endregion
-    return invoke("create_project", { project: body });
-  } else {
-    return fetchJson<Project>("/api/data/projects", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
   }
+  return tauriOrFetch<Project>("create_project", { project: body }, "/api/data/projects", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
 }
 
 export async function updateProject(id: string, body: Partial<CreateProjectBody>): Promise<Project> {
-  if (isTauri) {
-    return invoke("update_project", { id, project: body });
-  } else {
-    return fetchJson<Project>(`/api/data/projects/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-  }
+  return tauriOrFetch<Project>("update_project", { id, project: body }, `/api/data/projects/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
 }
 
 export async function deleteProject(id: string): Promise<void> {
-  if (isTauri) {
-    return invoke("delete_project", { id });
-  } else {
-    return fetchJson<void>(`/api/data/projects/${id}`, { method: "DELETE" });
-  }
+  return tauriOrFetch<void>("delete_project", { id }, `/api/data/projects/${id}`, { method: "DELETE" });
 }
 
 export async function getProjectExport(id: string, category: keyof ResolvedProject): Promise<string> {
-  if (isTauri) {
-    return invoke("get_project_export", { id, category });
-  } else {
-    return fetchJson<string>(`/api/data/projects/${id}/export/${category}`);
-  }
+  return tauriOrFetch<string>("get_project_export", { id, category }, `/api/data/projects/${id}/export/${category}`);
 }
 
 /** Full project export as a single JSON string (project + prompts, tickets, ideas, designs, architectures). For backup or download. */

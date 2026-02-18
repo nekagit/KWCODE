@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { invoke, isTauri } from "@/lib/tauri";
 import { listProjects } from "@/lib/api-projects";
+import { getDashboardMetrics } from "@/lib/api-dashboard-metrics";
 import { getRecentProjectIds } from "@/lib/recent-projects";
 import { useDashboardFocusFilterShortcut } from "@/lib/dashboard-focus-filter-shortcut";
 import type { Project } from "@/types/project";
@@ -30,13 +31,6 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-
-async function fetchMetrics(): Promise<DashboardMetrics> {
-  if (isTauri) return invoke<DashboardMetrics>("get_dashboard_metrics");
-  const res = await fetch("/api/data/dashboard-metrics");
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
-}
 
 const entityLinks = [
   { href: "/projects", label: "Projects", icon: Folders, color: "text-blue-600 dark:text-blue-400" },
@@ -172,7 +166,7 @@ export function DashboardOverview({ setActiveProjects }: DashboardOverviewProps 
     let cancelled = false;
     setLoading(true);
     setError(null);
-    Promise.all([fetchMetrics(), listProjects()])
+    Promise.all([getDashboardMetrics(), listProjects()])
       .then(([m, p]) => {
         if (!cancelled) {
           setMetrics(m);

@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, MessageSquare, Folders, FolderOpen, FolderPlus, FolderSearch, Lightbulb, Cpu, LayoutGrid, Settings, Moon, Sun, Keyboard, Loader2, RefreshCw, RotateCw, X, Activity, BookOpen, Printer, ChevronUp, ChevronDown, Focus, ClipboardList, Copy, HardDrive, Trash2, Square, Code2, Terminal, RotateCcw, PanelLeft, TestTube2, ExternalLink, Flag, FolderGit2, ListTodo, Palette, Building2 } from "lucide-react";
+import { LayoutDashboard, MessageSquare, Folders, Folder, FolderOpen, FolderPlus, FolderSearch, Lightbulb, Cpu, LayoutGrid, Settings, Moon, Sun, Keyboard, Loader2, RefreshCw, RotateCw, X, Activity, BookOpen, Printer, ChevronUp, ChevronDown, Focus, ClipboardList, Copy, HardDrive, Trash2, Square, Code2, Terminal, RotateCcw, PanelLeft, TestTube2, ExternalLink, Flag, FolderGit2, ListTodo, Palette, Building2 } from "lucide-react";
 import { useQuickActions } from "@/context/quick-actions-context";
 import { useUITheme } from "@/context/ui-theme";
 import { isValidUIThemeId } from "@/data/ui-theme-templates";
@@ -24,6 +24,7 @@ import { copyAppDataFolderPath } from "@/lib/copy-app-data-folder-path";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 import { openAppDataFolderInFileManager } from "@/lib/open-app-data-folder";
 import { openDocumentationFolderInFileManager } from "@/lib/open-documentation-folder";
+import { openProjectFolderInFileManager } from "@/lib/open-project-folder";
 import { openProjectInEditor } from "@/lib/open-project-in-editor";
 import { openProjectInSystemTerminal } from "@/lib/open-project-in-terminal";
 import { listProjects } from "@/lib/api-projects";
@@ -360,6 +361,24 @@ export function CommandPalette() {
     closePalette();
   }, [activeProjects, router, closePalette]);
 
+  const handleOpenFirstProjectInFileManager = useCallback(async () => {
+    if (!activeProjects.length) {
+      toast.info("Select a project first");
+      router.push("/projects");
+      closePalette();
+      return;
+    }
+    const list = projects ?? (await listProjects().catch(() => []));
+    const proj = list?.find((p) => p.repoPath === activeProjects[0]);
+    if (!proj) {
+      toast.info("Open a project first");
+      closePalette();
+      return;
+    }
+    await openProjectFolderInFileManager(proj.repoPath);
+    closePalette();
+  }, [activeProjects, projects, router, closePalette]);
+
   const handleStopAllRuns = useCallback(async () => {
     if (runningRuns.length === 0) {
       toast.info("No runs in progress");
@@ -401,6 +420,7 @@ export function CommandPalette() {
       { label: "Go to first project", icon: FolderOpen, onSelect: goToFirstProject },
       { label: "Open first project in Cursor", icon: Code2, onSelect: handleOpenFirstProjectInCursor },
       { label: "Open first project in Terminal", icon: Terminal, onSelect: handleOpenFirstProjectInTerminal },
+      { label: "Open first project in file manager", icon: Folder, onSelect: handleOpenFirstProjectInFileManager },
       { label: "Stop all runs", icon: Square, onSelect: handleStopAllRuns },
       { label: "Clear run history", icon: Trash2, onSelect: handleClearRunHistory },
       { label: "Remove last run from history", icon: Trash2, onSelect: handleRemoveLastRun },
@@ -439,7 +459,7 @@ export function CommandPalette() {
       });
     }
     return entries;
-  }, [handleRefreshData, goToRun, goToTesting, goToMilestones, goToVersioning, goToPlanner, goToDesign, goToArchitecture, goToFirstProject, closePalette, openShortcutsModal, handleClearRunHistory, handleRemoveLastRun, handleRestoreRunHistoryFilters, handleSwitchToLightMode, handleSwitchToDarkMode, handleOpenFirstProjectInCursor, handleOpenFirstProjectInTerminal, handleStopAllRuns, handleCheckApiHealth, handleCopyAppInfo, handleCopyFirstProjectPath, handleCopyDataDirectoryPath, handleOpenAppDataFolder, handleOpenDocumentationFolder]);
+  }, [handleRefreshData, goToRun, goToTesting, goToMilestones, goToVersioning, goToPlanner, goToDesign, goToArchitecture, goToFirstProject, closePalette, openShortcutsModal, handleClearRunHistory, handleRemoveLastRun, handleRestoreRunHistoryFilters, handleSwitchToLightMode, handleSwitchToDarkMode, handleOpenFirstProjectInCursor, handleOpenFirstProjectInTerminal, handleOpenFirstProjectInFileManager, handleStopAllRuns, handleCheckApiHealth, handleCopyAppInfo, handleCopyFirstProjectPath, handleCopyDataDirectoryPath, handleOpenAppDataFolder, handleOpenDocumentationFolder]);
   const projectEntries: CommandPaletteEntry[] = useMemo(() => {
     if (!projects || projects.length === 0) return [];
     const recentIds = getRecentProjectIds();

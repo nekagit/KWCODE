@@ -2,7 +2,6 @@ import { toast } from "sonner";
 import { filenameTimestamp, downloadBlob } from "@/lib/download-helpers";
 import { escapeCsvField } from "@/lib/csv-helpers";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
-import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 
 export interface PromptRecordForExport {
   id: number;
@@ -46,27 +45,6 @@ export function downloadAllPromptsAsCsv(prompts: PromptRecordForExport[]): void 
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
   downloadBlob(blob, filename);
   toast.success("Prompts exported as CSV");
-}
-
-/**
- * Copy all general prompt records to the clipboard as CSV.
- * Same columns as downloadAllPromptsAsCsv.
- */
-export async function copyAllPromptsAsCsvToClipboard(
-  prompts: PromptRecordForExport[]
-): Promise<boolean> {
-  if (prompts.length === 0) {
-    toast.info("No prompts to export");
-    return false;
-  }
-  const csv = promptsToCsv(prompts);
-  const ok = await copyTextToClipboard(csv);
-  if (ok) {
-    toast.success("Prompts copied as CSV");
-  } else {
-    toast.error("Failed to copy to clipboard");
-  }
-  return ok;
 }
 
 /**

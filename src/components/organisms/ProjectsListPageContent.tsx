@@ -228,7 +228,7 @@ export function ProjectsListPageContent() {
         onDiscoverFolders={() => setDiscoverOpen(true)}
       />
       <DiscoverFoldersDialog
-        open={discoverOpen}
+        isOpen={discoverOpen}
         onClose={() => setDiscoverOpen(false)}
         onAdded={refetch}
       />

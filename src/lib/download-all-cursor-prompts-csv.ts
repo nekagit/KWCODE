@@ -2,7 +2,6 @@ import { toast } from "sonner";
 import { filenameTimestamp, downloadBlob } from "@/lib/download-helpers";
 import { escapeCsvField } from "@/lib/csv-helpers";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
-import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 
 export interface CursorPromptFileWithContent {
   relativePath: string;
@@ -86,31 +85,6 @@ export async function copyAllCursorPromptsAsCsvToClipboard(): Promise<boolean> {
     return ok;
   } catch (e) {
     toast.error(e instanceof Error ? e.message : "Copy failed");
-    return false;
-  }
-}
-
-/**
- * Copy all .cursor *.prompt.md files to the clipboard as CSV.
- * Same columns as downloadAllCursorPromptsAsCsv.
- */
-export async function copyAllCursorPromptsAsCsvToClipboard(): Promise<boolean> {
-  try {
-    const files = await fetchCursorPromptFiles();
-    if (files.length === 0) {
-      toast.info("No .cursor prompts to export");
-      return false;
-    }
-    const csv = cursorPromptsToCsv(files);
-    const ok = await copyTextToClipboard(csv);
-    if (ok) {
-      toast.success(".cursor prompts copied as CSV");
-    } else {
-      toast.error("Failed to copy to clipboard");
-    }
-    return ok;
-  } catch (e) {
-    toast.error(e instanceof Error ? e.message : "Export failed");
     return false;
   }
 }

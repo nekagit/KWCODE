@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, type RefObject } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { type RefObject } from "react";
+import { useProjectTabFocusFilterShortcut } from "@/lib/project-tab-focus-filter-shortcut";
 
 /**
  * On a project's Design tab (/projects/[id]?tab=design), pressing "/" focuses the
@@ -11,26 +11,5 @@ import { usePathname, useSearchParams } from "next/navigation";
 export function useProjectDesignFocusFilterShortcut(
   inputRef: RefObject<HTMLInputElement | null>
 ): void {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  useEffect(() => {
-    const match = pathname?.match(/^\/projects\/([^/]+)$/);
-    if (!match || match[1] === "new") return;
-    if (searchParams?.get("tab") !== "design") return;
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== "/") return;
-      const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-
-      const el = inputRef.current;
-      if (!el) return;
-      e.preventDefault();
-      el.focus();
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [pathname, searchParams, inputRef]);
+  useProjectTabFocusFilterShortcut(inputRef, "design");
 }

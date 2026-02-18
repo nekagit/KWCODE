@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { invoke, isTauri } from "@/lib/tauri";
+import { getDashboardMetrics } from "@/lib/api-dashboard-metrics";
 import type { DashboardMetrics } from "@/types/dashboard";
 import {
   Ticket,
@@ -26,15 +26,6 @@ const metricConfig: Array<{
     { key: "all_projects_count", label: "All projects", icon: Folder, iconClassName: "text-muted-foreground" },
   ];
 
-async function fetchMetrics(): Promise<DashboardMetrics> {
-  if (isTauri) {
-    return invoke<DashboardMetrics>("get_dashboard_metrics");
-  }
-  const res = await fetch("/api/data/dashboard-metrics");
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
-}
-
 export function DashboardMetricsCards({ className }: { className?: string }) {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,7 +35,7 @@ export function DashboardMetricsCards({ className }: { className?: string }) {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    fetchMetrics()
+    getDashboardMetrics()
       .then((data) => {
         if (!cancelled) setMetrics(data);
       })

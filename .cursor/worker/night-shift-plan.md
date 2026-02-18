@@ -2,6 +2,184 @@
 
 ---
 
+## Night Shift Plan — 2025-02-18 (This run: Refactor — Dashboard metrics API module)
+
+### Chosen Feature
+
+**Refactor: Single module for dashboard metrics API** — Dashboard metrics are fetched with the same dual-mode logic (Tauri invoke vs fetch) in both `DashboardOverview.tsx` and `DashboardMetricsCards.tsx`. Extract a single `getDashboardMetrics()` in `src/lib/api-dashboard-metrics.ts` and use it from both components. Behaviour unchanged; removes duplication and gives one place for the dashboard-metrics contract.
+
+### Approach
+
+- **New `src/lib/api-dashboard-metrics.ts`**: Export `getDashboardMetrics(): Promise<DashboardMetrics>`. Internal: if `isTauri` return `invoke<DashboardMetrics>("get_dashboard_metrics", {})`; else GET `/api/data/dashboard-metrics`, same error handling as current (e.g. `!res.ok` → throw with response text).
+- **DashboardOverview.tsx**: Remove local `fetchMetrics`; import `getDashboardMetrics` from `@/lib/api-dashboard-metrics` and use it where `fetchMetrics` was used.
+- **DashboardMetricsCards.tsx**: Same — remove local `fetchMetrics`, import `getDashboardMetrics`, use it.
+- **ADR** `.cursor/adr/0194-refactor-api-dashboard-metrics.md`. Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/api-dashboard-metrics.ts` — `getDashboardMetrics()` dual-mode fetch.
+- `.cursor/adr/0194-refactor-api-dashboard-metrics.md` — ADR for this refactor.
+
+### Files to Touch (minimise)
+
+- `src/components/molecules/DashboardsAndViews/DashboardOverview.tsx` — use `getDashboardMetrics` instead of local `fetchMetrics`.
+- `src/components/molecules/CardsAndDisplay/DashboardMetricsCards.tsx` — use `getDashboardMetrics` instead of local `fetchMetrics`.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [ ] Create `src/lib/api-dashboard-metrics.ts` with `getDashboardMetrics()`.
+- [ ] Refactor DashboardOverview and DashboardMetricsCards to use it.
+- [ ] Add ADR `.cursor/adr/0194-refactor-api-dashboard-metrics.md`.
+- [ ] Run `npm run verify` and fix any failures.
+- [ ] Update this plan with Outcome section.
+
+### Outcome
+
+_To be filled after implementation._
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Refactor — api-projects dual-mode helper)
+
+### Chosen Feature
+
+**Refactor: api-projects dual-mode helper** — `src/lib/api-projects.ts` repeats the same pattern in six places: `if (isTauri) return invoke(...); else return fetchJson(...)`. Extracting a single internal helper `tauriOrFetch<T>(tauriCmd, tauriArgs, fetchUrl, fetchInit?)` reduces duplication, keeps behaviour identical, and makes the Tauri-vs-API dual-mode contract explicit in one place. No new features; refactor only.
+
+### Approach
+
+- **api-projects.ts**: Add internal helper `tauriOrFetch<T>(tauriCmd, tauriArgs, fetchUrl, fetchInit?)` that returns `invoke<T>(tauriCmd, tauriArgs)` when `isTauri` and `fetchJson<T>(fetchUrl, fetchInit)` otherwise. Replace the six duplicated branches in `getProjectResolved`, `listProjects`, `createProject` (keep agent-log block then call helper), `updateProject`, `deleteProject`, and `getProjectExport` with single-line calls. Leave `getFullProjectExport` and other functions unchanged (different browser behaviour or no simple mapping).
+- **ADR** `.cursor/adr/0193-refactor-api-projects-dual-mode-helper.md`. Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0193-refactor-api-projects-dual-mode-helper.md` — ADR for this refactor.
+
+### Files to Touch (minimise)
+
+- `src/lib/api-projects.ts` — add `tauriOrFetch` helper and refactor six functions to use it.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add internal `tauriOrFetch<T>` helper and refactor getProjectResolved, listProjects, createProject, updateProject, deleteProject, getProjectExport to use it.
+- [x] Add ADR .cursor/adr/0193-refactor-api-projects-dual-mode-helper.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built**
+
+- **Refactor: api-projects dual-mode helper** — In `src/lib/api-projects.ts`, an internal helper `tauriOrFetch<T>(tauriCmd, tauriArgs, fetchUrl, fetchInit?)` was added. It returns `invoke<T>(tauriCmd, tauriArgs)` when `isTauri` and `fetchJson<T>(fetchUrl, fetchInit)` otherwise. Six functions were refactored to use it: `getProjectResolved`, `listProjects`, `createProject` (agent-log block kept, then single helper call), `updateProject`, `deleteProject`, and `getProjectExport`. Behaviour is unchanged; duplication is reduced and the Tauri-vs-API contract is explicit in one place.
+
+**Files created**
+
+- `.cursor/adr/0193-refactor-api-projects-dual-mode-helper.md` — ADR for this refactor.
+
+**Files touched**
+
+- `src/lib/api-projects.ts` — added `tauriOrFetch` helper; refactored six functions to call it.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+**Developer note**
+
+- Run **`npm run verify`** locally to confirm tests, build, and lint pass. No API or type changes; existing callers and tests should pass unchanged.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Command palette — Open first project in file manager)
+
+### Chosen Feature
+
+**Command palette: "Open first project in file manager"** — The app has "Open first project in Cursor" and "Open first project in Terminal" in the command palette (ADR 0147). The project header and project card already offer "Open folder" via `openProjectFolderInFileManager(repoPath)`. Keyboard-first users had no way to open the first active project's folder in the system file manager from anywhere. Adding "Open first project in file manager" reuses the existing lib and completes the trio (Cursor, Terminal, File manager). Real, additive UX that would show up in a changelog.
+
+### Approach
+
+- **CommandPalette.tsx**: Add handler `handleOpenFirstProjectInFileManager`: same pattern as `handleOpenFirstProjectInCursor` / `handleOpenFirstProjectInTerminal` — if no `activeProjects.length`, toast "Select a project first", `router.push("/projects")`, close palette; else resolve first project (projects ?? listProjects()), get `repoPath`, call `openProjectFolderInFileManager(repoPath)` from `@/lib/open-project-folder`, close palette. Add action entry "Open first project in file manager" with Folder icon (distinct from FolderOpen used for Go to first project / Open documentation folder).
+- **keyboard-shortcuts.ts**: Add one entry in the Command palette group: "Open first project in file manager".
+- **ADR** `.cursor/adr/0193-command-palette-open-first-project-in-file-manager.md`. Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `.cursor/adr/0193-command-palette-open-first-project-in-file-manager.md` — ADR for this feature.
+
+### Files to Touch (minimise)
+
+- `src/components/shared/CommandPalette.tsx` — add handler, import openProjectFolderInFileManager and Folder, action entry.
+- `src/data/keyboard-shortcuts.ts` — add Command palette group entry.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add handleOpenFirstProjectInFileManager and "Open first project in file manager" entry in CommandPalette (Folder icon).
+- [x] Add "Open first project in file manager" to keyboard-shortcuts.ts Command palette group.
+- [x] Add ADR .cursor/adr/0193-command-palette-open-first-project-in-file-manager.md.
+- [ ] Run npm run verify and fix any failures (run locally).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built**
+
+- **Command palette: "Open first project in file manager"** — From the Command palette (⌘K / Ctrl+K), users can select "Open first project in file manager" (Folder icon). The app resolves the first active project (same as "Open first project in Cursor" / "Open first project in Terminal"), then calls `openProjectFolderInFileManager(proj.repoPath)` from `@/lib/open-project-folder`, opening the project folder in the system file manager (Finder / Explorer). If no project is selected, "Select a project first" is shown and the app navigates to `/projects`; if the project is not in the list, "Open a project first" is shown. Completes the trio with Cursor and Terminal.
+
+**Files created**
+
+- `.cursor/adr/0193-command-palette-open-first-project-in-file-manager.md` — ADR for this feature.
+
+**Files touched**
+
+- `src/components/shared/CommandPalette.tsx` — added `Folder` import, `openProjectFolderInFileManager` import, `handleOpenFirstProjectInFileManager` callback (resolve first project, call openProjectFolderInFileManager), and action entry "Open first project in file manager" after "Open first project in Terminal"; added handler to useMemo deps.
+- `src/data/keyboard-shortcuts.ts` — added Command palette group entry "Open first project in file manager".
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+**Developer note**
+
+- Run **`npm run verify`** locally to confirm tests, build, and lint pass. To try: open the command palette (⌘K), type e.g. "file manager" or "open first", select "Open first project in file manager" — with at least one active project that has a repo path set, the project folder should open in the system file manager.
+
+---
+
+## Night Shift Plan — 2025-02-18 (This run: Refactor — Unify project-tab focus-filter hooks)
+
+### Chosen Feature
+
+**Refactor: Unify project-tab "/" focus-filter hooks** — Three hooks (`useProjectDesignFocusFilterShortcut`, `useProjectArchitectureFocusFilterShortcut`, `useRunHistoryFocusFilterShortcut`) duplicate the same logic: on project detail page with a given `tab` query, "/" focuses an input. Extract shared implementation into one module and have the three hooks delegate to it. Behaviour unchanged; reduces duplication and keeps a single place for path/tab/keydown logic.
+
+### Approach
+
+- **New `src/lib/project-tab-focus-filter-shortcut.ts`**: Implement `useProjectTabFocusFilterShortcut(inputRef, tab: 'design' | 'architecture' | 'worker')` with the shared pathname/searchParams/keydown logic (path `/projects/[id]`, not "new", tab from searchParams; "/" focuses input unless in input/textarea/select).
+- **project-design-focus-filter-shortcut.ts**: Call and re-export behaviour via `useProjectTabFocusFilterShortcut(inputRef, 'design')` so existing imports remain valid.
+- **project-architecture-focus-filter-shortcut.ts**: Same with `'architecture'`.
+- **run-history-focus-filter-shortcut.ts**: Same with `'worker'`.
+- **ADR** `.cursor/adr/0192-refactor-unify-project-tab-focus-filter-hooks.md`. Run `npm run verify` and fix any failures.
+
+### Files to Create
+
+- `src/lib/project-tab-focus-filter-shortcut.ts` — shared hook `useProjectTabFocusFilterShortcut(inputRef, tab)`.
+- `.cursor/adr/0192-refactor-unify-project-tab-focus-filter-hooks.md` — ADR for this refactor.
+
+### Files to Touch (minimise)
+
+- `src/lib/project-design-focus-filter-shortcut.ts` — delegate to shared hook with `'design'`.
+- `src/lib/project-architecture-focus-filter-shortcut.ts` — delegate to shared hook with `'architecture'`.
+- `src/lib/run-history-focus-filter-shortcut.ts` — delegate to shared hook with `'worker'`.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [ ] Create `src/lib/project-tab-focus-filter-shortcut.ts` with `useProjectTabFocusFilterShortcut(inputRef, tab)`.
+- [ ] Refactor project-design, project-architecture, run-history hooks to use shared hook.
+- [ ] Add ADR `.cursor/adr/0192-refactor-unify-project-tab-focus-filter-hooks.md`.
+- [ ] Run `npm run verify` and fix any failures.
+- [ ] Update this plan with Outcome section.
+
+### Outcome
+
+_(To be filled after implementation.)_
+
+---
+
 ## Night Shift Plan — 2025-02-18 (This run: Dashboard tab — Select all / Deselect all)
 
 ### Chosen Feature

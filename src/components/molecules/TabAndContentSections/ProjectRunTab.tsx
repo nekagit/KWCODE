@@ -214,6 +214,61 @@ function WorkerGeneralQueueSection({
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   Rebuild app — run npm run build:desktop in Terminal (macOS, run via tauri dev)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function WorkerRebuildDesktopSection() {
+  const runBuildDesktop = useRunStore((s) => s.runBuildDesktop);
+  const isTauriEnv = useRunStore((s) => s.isTauriEnv);
+  const [running, setRunning] = useState(false);
+
+  const handleRebuild = useCallback(async () => {
+    setRunning(true);
+    try {
+      const ok = await runBuildDesktop();
+      if (ok) {
+        toast.success("Terminal opened; build running. App will be copied to Desktop when done.");
+      } else {
+        toast.error("Failed to start build (see error).");
+      }
+    } finally {
+      setRunning(false);
+    }
+  }, [runBuildDesktop]);
+
+  if (isTauriEnv !== true) return null;
+
+  return (
+    <div className="rounded-2xl surface-card border border-border/50 overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+        <div className="flex items-center gap-2.5">
+          <div className="flex items-center justify-center size-7 rounded-lg bg-slate-500/10">
+            <MonitorUp className="size-3.5 text-slate-400" />
+          </div>
+          <div>
+            <h3 className="text-xs font-semibold text-foreground tracking-tight">Rebuild and put on Desktop</h3>
+            <p className="text-[10px] text-muted-foreground normal-case">
+              Open Terminal and run <code className="rounded bg-muted px-0.5">npm run build:desktop</code> (run this app via <code className="rounded bg-muted px-0.5">tauri dev</code> so the project root is correct).
+            </p>
+          </div>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 text-xs gap-1.5"
+          disabled={running}
+          onClick={handleRebuild}
+          title="Open Terminal and run build:desktop"
+        >
+          {running ? <Loader2 className="size-3.5 animate-spin" /> : <MonitorUp className="size-3.5" />}
+          Rebuild and put on Desktop
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    Night shift — 3 agents run same prompt in a loop until stopped
    ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -379,7 +434,7 @@ function WorkerNightShiftSection({
           }
           setNightShiftCircleState(true, next, 0);
           const nextPrompt = await buildPromptForPhase(next);
-          for (const i of [1, 2, 3]) {
+          for (const i of [1, 2, 3] as const) {
             runTempTicket(projectPath, nextPrompt, nightShiftCircleRunLabel(i, next), {
               isNightShift: true,
               isNightShiftCircle: true,
@@ -829,6 +884,9 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
     <div className="flex flex-col gap-5">
       {/* ═══ Status Bar ═══ */}
       <WorkerStatusBar />
+
+      {/* ═══ Rebuild app and put on Desktop ═══ */}
+      <WorkerRebuildDesktopSection />
 
       {/* ═══ Night shift — 3 agents, same prompt, loop until stop ═══ */}
       <WorkerNightShiftSection projectId={projectId} projectPath={project.repoPath?.trim() ?? ""} />

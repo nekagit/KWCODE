@@ -1,7 +1,6 @@
 import { toast } from "sonner";
 import { filenameTimestamp, triggerFileDownload } from "@/lib/download-helpers";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
-import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 
 export interface CursorPromptFileWithContent {
   relativePath: string;
@@ -77,35 +76,6 @@ export async function copyAllCursorPromptsAsJsonToClipboard(): Promise<boolean> 
     return ok;
   } catch (e) {
     toast.error(e instanceof Error ? e.message : "Copy failed");
-    return false;
-  }
-}
-
-/**
- * Copy all .cursor *.prompt.md files to the clipboard as pretty-printed JSON.
- * Same payload as downloadAllCursorPromptsAsJson.
- */
-export async function copyAllCursorPromptsAsJsonToClipboard(): Promise<boolean> {
-  try {
-    const files = await fetchCursorPromptFiles();
-    if (files.length === 0) {
-      toast.info("No .cursor prompts to export");
-      return false;
-    }
-    const payload = {
-      exportedAt: new Date().toISOString(),
-      files,
-    };
-    const json = JSON.stringify(payload, null, 2);
-    const ok = await copyTextToClipboard(json);
-    if (ok) {
-      toast.success(".cursor prompts copied as JSON");
-    } else {
-      toast.error("Failed to copy to clipboard");
-    }
-    return ok;
-  } catch (e) {
-    toast.error(e instanceof Error ? e.message : "Export failed");
     return false;
   }
 }

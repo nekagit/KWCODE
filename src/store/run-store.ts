@@ -97,6 +97,8 @@ export interface RunActions {
   runNpmScript: (projectPath: string, scriptName: string) => Promise<string | null>;
   /** Run an npm script in the system Terminal (macOS only). Returns true if opened. */
   runNpmScriptInExternalTerminal: (projectPath: string, scriptName: string) => Promise<boolean>;
+  /** Open Terminal and run npm run build:desktop in current dir (macOS; use when running via tauri dev). */
+  runBuildDesktop: () => Promise<boolean>;
   setFloatingTerminalRunId: (id: string | null) => void;
   setFloatingTerminalMinimized: (minimized: boolean) => void;
   clearFloatingTerminal: () => void;
@@ -686,6 +688,17 @@ export const useRunStore = create<RunStore>()((set, get) => ({
     }
   },
 
+  runBuildDesktop: async () => {
+    set({ error: null });
+    try {
+      await invoke("run_build_desktop");
+      return true;
+    } catch (e) {
+      set({ error: e instanceof Error ? e.message : String(e) });
+      return false;
+    }
+  },
+
   setFloatingTerminalRunId: (id) => set({ floatingTerminalRunId: id }),
 
   setFloatingTerminalMinimized: (minimized) => set({ floatingTerminalMinimized: minimized }),
@@ -829,6 +842,7 @@ export function useRunState() {
       setSelectedRunId: s.setSelectedRunId,
 
       refreshData: s.refreshData,
+      lastRefreshedAt: s.lastRefreshedAt,
       runScript: s.runScript,
       runWithParams: s.runWithParams,
       stopScript: s.stopScript,
@@ -848,6 +862,7 @@ export function useRunState() {
       runSetupPrompt: s.runSetupPrompt,
       runTempTicket: s.runTempTicket,
       runNpmScript: s.runNpmScript,
+      runBuildDesktop: s.runBuildDesktop,
       setLocalUrl: s.setLocalUrl,
       floatingTerminalRunId: s.floatingTerminalRunId,
       setFloatingTerminalRunId: s.setFloatingTerminalRunId,

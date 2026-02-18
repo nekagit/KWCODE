@@ -66,6 +66,7 @@ export const KEYBOARD_SHORTCUT_GROUPS: ShortcutGroup[] = [
       { keys: "⌘K / Ctrl+K", description: "Go to first project" },
       { keys: "⌘K / Ctrl+K", description: "Open first project in Cursor" },
       { keys: "⌘K / Ctrl+K", description: "Open first project in Terminal" },
+      { keys: "⌘K / Ctrl+K", description: "Open first project in file manager" },
       { keys: "⌘K / Ctrl+K", description: "Stop all runs" },
       { keys: "⌘K / Ctrl+K", description: "Clear run history" },
       { keys: "⌘K / Ctrl+K", description: "Remove last run from history" },
