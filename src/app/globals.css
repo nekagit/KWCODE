@@ -581,6 +581,29 @@
   }
 }
 
+/* Skip to main content: visually hidden until focused (WCAG 2.1, ADR 0129) */
+.skip-to-main-content {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  z-index: 10000;
+  padding: 0.75rem 1rem;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  border-radius: 0.375rem;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  transition: left 0.15s ease-out;
+}
+.skip-to-main-content:focus {
+  left: 0.5rem;
+  top: 0.5rem;
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring));
+}
+
 /* --- Root loading overlay: kwcode branded (raindrops only) --- */
 @keyframes kwcode-rain-fall {
   from {
@@ -644,5 +667,47 @@
     opacity: 0;
     transform: translate(calc(var(--star-dx, 100vw) * 1.05),
         calc(var(--star-dy, -30vh) * 1.05)) scale(0.5);
+  }
+}
+
+/* --- Prefers-reduced-motion: honor OS/browser setting (design.md, ADR 0126) --- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* --- Print-friendly layout (ADR 0184, 0227): hide sidebar, chrome, and [data-print-hide] --- */
+@media print {
+  [data-print-hide] {
+    display: none !important;
+  }
+
+  .app-shell aside {
+    display: none !important;
+  }
+
+  .app-shell > a.skip-to-main-content,
+  .app-shell > div[role="status"] {
+    display: none !important;
+  }
+
+  .app-shell > div.fixed {
+    display: none !important;
+  }
+
+  .app-shell #main-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow: visible !important;
   }
 }

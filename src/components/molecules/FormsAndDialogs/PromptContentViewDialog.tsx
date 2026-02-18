@@ -9,8 +9,10 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Copy, Check } from "lucide-react";
-import { toast } from "sonner";
+import { Copy, Check, Download, Hash, FileJson } from "lucide-react";
+import { downloadPromptRecord } from "@/lib/download-prompt-record";
+import { downloadPromptRecordAsJson } from "@/lib/download-prompt-record-json";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 
 export type PromptForView = {
   id: number;
@@ -31,13 +33,13 @@ export function PromptContentViewDialog({
 }: PromptContentViewDialogProps) {
   const [copied, setCopied] = useState(false);
 
-  const copyContent = useCallback(() => {
+  const copyContent = useCallback(async () => {
     if (!prompt?.content) return;
-    navigator.clipboard.writeText(prompt.content).then(() => {
+    const ok = await copyTextToClipboard(prompt.content);
+    if (ok) {
       setCopied(true);
-      toast.success("Prompt copied to clipboard");
       setTimeout(() => setCopied(false), 2000);
-    });
+    }
   }, [prompt?.content]);
 
   if (!prompt) return null;
@@ -54,6 +56,15 @@ export function PromptContentViewDialog({
           </pre>
         </div>
         <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => copyTextToClipboard(String(prompt.id))}
+            title="Copy prompt ID"
+            aria-label="Copy prompt ID"
+          >
+            <Hash className="h-4 w-4" />
+            <span className="ml-2">Copy ID</span>
+          </Button>
           <Button variant="outline" onClick={copyContent}>
             {copied ? (
               <Check className="h-4 w-4 text-green-600" />
@@ -61,6 +72,22 @@ export function PromptContentViewDialog({
               <Copy className="h-4 w-4" />
             )}
             <span className="ml-2">{copied ? "Copied" : "Copy prompt"}</span>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => downloadPromptRecord(prompt.title, prompt.content)}
+          >
+            <Download className="h-4 w-4" />
+            <span className="ml-2">Download</span>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => downloadPromptRecordAsJson({ id: prompt.id, title: prompt.title, content: prompt.content })}
+            title="Download as JSON"
+            aria-label="Download as JSON"
+          >
+            <FileJson className="h-4 w-4" />
+            <span className="ml-2">Download as JSON</span>
           </Button>
         </DialogFooter>
       </DialogContent>

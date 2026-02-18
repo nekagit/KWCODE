@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -49,6 +49,7 @@ import { SectionCard, MetadataBadge, CountBadge } from "@/components/shared/Disp
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -64,7 +65,10 @@ import {
   ANALYZE_QUEUE_PATH,
 } from "@/lib/api-projects";
 import { ANALYZE_JOB_IDS, getPromptPath, getOutputPath } from "@/lib/cursor-paths";
+import { recordProjectVisit } from "@/lib/recent-projects";
+import { useSetPageTitle } from "@/context/page-title-context";
 import { toast } from "sonner";
+import { Breadcrumb } from "@/components/shared/Breadcrumb";
 
 /**
  * Each tab’s dedicated .md in .cursor, updated by agent -p using current project data.
@@ -93,6 +97,12 @@ const TAB_ROW_2 = [
   { value: "git", label: "Versioning", icon: FolderGit2, color: "text-amber-400", activeGlow: "shadow-amber-500/10" },
 ] as const;
 
+/** Valid tab values for URL ?tab= (deep link). */
+const VALID_PROJECT_TABS = new Set([
+  ...TAB_ROW_1.map((t) => t.value),
+  ...TAB_ROW_2.map((t) => t.value),
+]);
+
 export type ProjectDetailsPageContentProps = {
   /** When set (e.g. from /projects?open=id), use this id instead of route params. Used by Tauri to avoid navigating to /projects/[id]. */
   overrideProjectId?: string;
@@ -104,7 +114,9 @@ export function ProjectDetailsPageContent(props: ProjectDetailsPageContentProps 
   const { overrideProjectId, onBack } = props;
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const projectId = overrideProjectId ?? (params?.id as string) ?? "";
+  const tabFromUrl = searchParams?.get("tab") ?? null;
   // #region agent log
   React.useEffect(() => {
     if (isTauri) {
@@ -126,11 +138,21 @@ export function ProjectDetailsPageContent(props: ProjectDetailsPageContentProps 
       }),
     }).catch(() => {});
   }, [projectId]);
+  // Record project visit for command palette "recent" ordering
+  useEffect(() => {
+    if (projectId) recordProjectVisit(projectId);
+  }, [projectId]);
   // #endregion
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("worker");
+  // Sync active tab from URL ?tab= when valid (deep link; one-way: URL → tab).
+  useEffect(() => {
+    if (tabFromUrl && (VALID_PROJECT_TABS as Set<string>).has(tabFromUrl)) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [projectId, tabFromUrl]);
   const [initializing, setInitializing] = useState(false);
   const [analyzingAll, setAnalyzingAll] = useState(false);
   const [analyzingStep, setAnalyzingStep] = useState(0);
@@ -142,14 +164,23 @@ export function ProjectDetailsPageContent(props: ProjectDetailsPageContentProps 
   const [docsRefreshKey, setDocsRefreshKey] = useState(0);
   const [controlTabRefreshKey, setControlTabRefreshKey] = useState(0);
   const [projectIds, setProjectIds] = useState<string[]>([]);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const mountedRef = useRef(true);
+  const setPageTitle = useSetPageTitle();
   useEffect(() => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
     };
   }, []);
+
+  // Dynamic document title for project detail (accessibility and tab/bookmark clarity).
+  useEffect(() => {
+    const title = project?.name ?? "Project";
+    setPageTitle(title);
+    return () => setPageTitle(null);
+  }, [project?.name, setPageTitle]);
 
   // When Analyze runs via Worker (analyze-doc), refresh doc tabs when the run completes.
   useEffect(() => {
@@ -329,6 +360,13 @@ export function ProjectDetailsPageContent(props: ProjectDetailsPageContentProps 
           <div className="absolute top-1/2 right-1/4 size-24 rounded-full bg-violet-500/[0.04] blur-2xl pointer-events-none" />
 
           <div className="relative z-10 flex flex-col gap-5">
+            <Breadcrumb
+              items={[
+                { label: "Projects", href: "/projects" },
+                { label: project.name ?? "Project" },
+              ]}
+              className="mb-0.5"
+            />
             {/* Top bar: back + delete */}
             <div className="flex items-center justify-between">
               {onBack ? (
@@ -353,22 +391,41 @@ export function ProjectDetailsPageContent(props: ProjectDetailsPageContentProps 
                 variant="ghost"
                 size="sm"
                 className="text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-all duration-200 gap-1.5"
-                onClick={async () => {
-                  if (
-                    confirm(
-                      "Are you sure you want to delete this project?"
-                    )
-                  ) {
-                    await deleteProject(projectId);
-                    if (onBack) onBack();
-                    else router.replace("/projects");
-                  }
-                }}
+                onClick={() => setDeleteConfirmOpen(true)}
               >
                 <Trash2 className="size-3.5" />
                 <span className="text-xs">Delete</span>
               </Button>
             </div>
+
+            {/* Delete project confirmation (same pattern as ProjectHeader, ADR 0130 / 0189) */}
+            <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Delete project?</DialogTitle>
+                </DialogHeader>
+                <p className="text-sm text-muted-foreground">
+                  This project will be removed from the app. This cannot be undone.
+                </p>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={async () => {
+                      await deleteProject(projectId);
+                      setDeleteConfirmOpen(false);
+                      toast.success("Project deleted");
+                      if (onBack) onBack();
+                      else router.replace("/projects");
+                    }}
+                  >
+                    Delete project
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
 
             {/* Project Title & Description */}
             <div className="space-y-2.5">
@@ -908,6 +965,33 @@ export function ProjectDetailsPageContent(props: ProjectDetailsPageContentProps 
               </>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete project?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            This project will be removed from the app. This cannot be undone.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                await deleteProject(projectId);
+                setDeleteConfirmOpen(false);
+                toast.success("Project deleted");
+                if (onBack) onBack();
+                else router.replace("/projects");
+              }}
+            >
+              Delete project
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </ErrorBoundary>

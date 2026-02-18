@@ -93,4 +93,4 @@ _What was built, which files were created, what a developer needs to know to use
 
 ---
 
-*Edit `.cursor/8. worker/night-shift.md` to change what night shift agents do.*
+*Edit `.cursor/8. worker/night-shift.prompt.md` to change what night shift agents do.*

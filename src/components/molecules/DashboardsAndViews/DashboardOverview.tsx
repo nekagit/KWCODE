@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { invoke, isTauri } from "@/lib/tauri";
 import { listProjects } from "@/lib/api-projects";
+import { getRecentProjectIds } from "@/lib/recent-projects";
 import type { Project } from "@/types/project";
 import type { DashboardMetrics } from "@/types/dashboard";
 import {
@@ -171,6 +172,21 @@ export function DashboardOverview() {
     return () => { cancelled = true; };
   }, []);
 
+  // All hooks must run unconditionally (before any early return) to satisfy Rules of Hooks.
+  const projectsForDisplay = useMemo(() => {
+    const recentIds = getRecentProjectIds();
+    const list = [...projects];
+    list.sort((a, b) => {
+      const ai = recentIds.indexOf(a.id);
+      const bi = recentIds.indexOf(b.id);
+      if (ai === -1 && bi === -1) return a.name.localeCompare(b.name);
+      if (ai === -1) return 1;
+      if (bi === -1) return -1;
+      return ai - bi;
+    });
+    return list.slice(0, 6);
+  }, [projects]);
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -196,6 +212,7 @@ export function DashboardOverview() {
   }
 
   const m = metrics!;
+
   const statItems = [
     { value: m.all_projects_count, label: "Projects", icon: FolderOpen },
     { value: m.tickets_count, label: "Tickets", icon: Ticket },
@@ -292,7 +309,7 @@ export function DashboardOverview() {
           </Card>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {projects.slice(0, 6).map((project) => (
+            {projectsForDisplay.map((project) => (
               <ProjectCard key={project.id} project={project} />
             ))}
           </div>

@@ -112,6 +112,16 @@ export async function getProjectExport(id: string, category: keyof ResolvedProje
   }
 }
 
+/** Full project export as a single JSON string (project + prompts, tickets, ideas, designs, architectures). For backup or download. */
+export async function getFullProjectExport(id: string): Promise<string> {
+  if (isTauri) {
+    return invoke<string>("get_project_export", { id, category: "project" });
+  } else {
+    const payload = await fetchJson<unknown>(`/api/data/projects/${id}/export`);
+    return JSON.stringify(payload, null, 2);
+  }
+}
+
 /**
  * Read a file from the project repo (e.g. .cursor/7. planner/tickets.md).
  * In Tauri pass repoPath; in browser uses projectId.
@@ -267,7 +277,7 @@ export async function listProjectFiles(
 
 /**
  * Initializes a project: in Tauri (desktop), unzips project_template.zip into the project root
- * so you get the full Next.js starter. In browser, copies .cursor_template into .cursor as before.
+ * so you get the full Next.js starter. In browser, copies the init template into .cursor.
  */
 export async function initializeProjectRepo(projectId: string, repoPath: string): Promise<void> {
   if (isTauri) {
@@ -279,12 +289,12 @@ export async function initializeProjectRepo(projectId: string, repoPath: string)
   const res = await fetch(`${base}/api/data/cursor-init-template`);
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error((err as { error?: string }).error || "Failed to load .cursor_template template");
+    throw new Error((err as { error?: string }).error || "Failed to load template");
   }
   const json = (await res.json()) as { files?: Record<string, string> };
   files = json.files ?? {};
   if (Object.keys(files).length === 0) {
-    throw new Error(".cursor_template folder is empty or not found");
+    throw new Error("Template folder is empty or not found");
   }
   for (const [relativePath, content] of Object.entries(files)) {
     const normalized = relativePath.replace(/\\/g, "/");

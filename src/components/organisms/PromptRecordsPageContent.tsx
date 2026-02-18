@@ -10,6 +10,7 @@ import { useRunState } from "@/context/run-state";
 import { isTauri } from "@/lib/tauri";
 import { useRunStore, registerRunCompleteHandler } from "@/store/run-store";
 import type { Project } from "@/types/project";
+import { Breadcrumb } from "@/components/shared/Breadcrumb";
 import { PromptRecordActionButtons } from "@/components/molecules/ControlsAndButtons/PromptRecordActionButtons";
 import { PromptRecordTable } from "@/components/molecules/ListsAndTables/PromptRecordTable";
 import {
@@ -19,8 +20,23 @@ import {
 import { PromptRecordFormDialog } from "@/components/molecules/FormsAndDialogs/PromptRecordFormDialog";
 import { GeneratePromptRecordDialog } from "@/components/molecules/FormsAndDialogs/GeneratePromptRecordDialog";
 import { PromptContentViewDialog } from "@/components/molecules/FormsAndDialogs/PromptContentViewDialog";
-import { toast } from "sonner"; // Added import for toast, if not already imported elsewhere
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Loader2, RefreshCw, RotateCcw, Search, X } from "lucide-react";
 import { getOrganismClasses } from "./organism-classes";
+import { downloadAllPromptsAsJson } from "@/lib/download-all-prompts-json";
+import { downloadAllPromptsAsCsv } from "@/lib/download-all-prompts-csv";
+import { downloadAllPromptsAsMarkdown } from "@/lib/download-all-prompts-md";
+import { downloadAllCursorPromptsAsJson } from "@/lib/download-all-cursor-prompts-json";
+import { downloadAllCursorPromptsAsMarkdown } from "@/lib/download-all-cursor-prompts-md";
 
 const c = getOrganismClasses("PromptRecordsPageContent.tsx");
 
@@ -66,6 +82,9 @@ export function PromptRecordsPageContent() {
   const [viewingPrompt, setViewingPrompt] = useState<PromptRecordRecord | null>(null);
   const [cursorPromptFiles, setCursorPromptFiles] = useState<CursorPromptFileEntry[]>([]);
   const [cursorPromptFilesLoading, setCursorPromptFilesLoading] = useState(true);
+  const [filterQuery, setFilterQuery] = useState("");
+  const [promptSort, setPromptSort] = useState<"newest" | "oldest" | "title-asc" | "title-desc">("newest");
+  const [refreshing, setRefreshing] = useState(false);
   const cancelledRef = useRef(false);
   const searchParams = useSearchParams();
 
@@ -126,6 +145,24 @@ export function PromptRecordsPageContent() {
     };
   }, [fetchFullPromptRecords, fetchProjects, fetchCursorPromptFiles]);
 
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    setError(null);
+    try {
+      await Promise.all([
+        fetchFullPromptRecords(),
+        fetchProjects(),
+        fetchCursorPromptFiles(),
+        refreshData(),
+      ]);
+      toast.success("Prompts refreshed");
+    } catch {
+      toast.error("Refresh failed");
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchFullPromptRecords, fetchProjects, fetchCursorPromptFiles, refreshData, setError]);
+
   // Pre-select project tab when opening from project page (e.g. /prompts?projectId=...)
   useEffect(() => {
     const projectId = searchParams.get("projectId");
@@ -140,6 +177,37 @@ export function PromptRecordsPageContent() {
     const withPrompts = projects.filter((p) => (p.promptIds?.length ?? 0) > 0);
     return { generalPrompts: general, projectsWithPrompts: withPrompts };
   }, [fullPromptRecords, projects]);
+
+  const trimmedFilterQuery = filterQuery.trim().toLowerCase();
+  const filteredGeneralPrompts = useMemo(
+    () =>
+      !trimmedFilterQuery
+        ? generalPrompts
+        : generalPrompts.filter((p) =>
+            (p.title ?? "").toLowerCase().includes(trimmedFilterQuery)
+          ),
+    [generalPrompts, trimmedFilterQuery]
+  );
+
+  const sortedGeneralPrompts = useMemo(() => {
+    const list = [...filteredGeneralPrompts];
+    const dateTs = (p: PromptRecordRecord) => {
+      const raw = p.created_at ?? p.updated_at ?? "";
+      if (!raw) return 0;
+      const t = Date.parse(raw);
+      return Number.isFinite(t) ? t : 0;
+    };
+    if (promptSort === "newest") {
+      list.sort((a, b) => dateTs(b) - dateTs(a) || a.id - b.id);
+    } else if (promptSort === "oldest") {
+      list.sort((a, b) => dateTs(a) - dateTs(b) || a.id - b.id);
+    } else if (promptSort === "title-asc") {
+      list.sort((a, b) => (a.title ?? "").localeCompare(b.title ?? "", undefined, { sensitivity: "base" }) || a.id - b.id);
+    } else {
+      list.sort((a, b) => (b.title ?? "").localeCompare(a.title ?? "", undefined, { sensitivity: "base" }) || a.id - b.id);
+    }
+    return list;
+  }, [filteredGeneralPrompts, promptSort]);
 
   const openCreate = useCallback(() => {
     setFormId(undefined);
@@ -341,7 +409,6 @@ export function PromptRecordsPageContent() {
   const canEdit = selectedPromptRecordIds.length === 1;
 
   const handleViewCursorPromptFile = useCallback(async (entry: CursorPromptFileEntry) => {
-    if (entry.source !== ".cursor") return;
     try {
       const res = await fetch(
         `/api/data/cursor-doc?path=${encodeURIComponent(entry.relativePath)}`
@@ -383,6 +450,13 @@ export function PromptRecordsPageContent() {
 
   return (
     <div className={c["0"]}>
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", href: "/" },
+          { label: "Prompts" },
+        ]}
+        className="mb-3"
+      />
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
@@ -403,12 +477,27 @@ export function PromptRecordsPageContent() {
                 page.
               </CardDescription>
             </div>
-            <PromptRecordActionButtons // Corrected component name
-              openCreate={openCreate}
-              openEdit={openEdit}
-              setGenerateOpen={setGenerateOpen}
-              canEdit={canEdit}
-            />
+            <div className="flex items-center gap-2">
+              <PromptRecordActionButtons
+                openCreate={openCreate}
+                openEdit={openEdit}
+                setGenerateOpen={setGenerateOpen}
+                canEdit={canEdit}
+              />
+              <Button
+                variant="outline"
+                disabled={refreshing}
+                onClick={handleRefresh}
+                aria-label="Refresh prompts"
+              >
+                {refreshing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+                Refresh
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -426,6 +515,27 @@ export function PromptRecordsPageContent() {
                 ))}
               </TabsList>
               <TabsContent value={CURSOR_PROMPTS_TAB} className="mt-4 focus-visible:outline-none">
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                  <span className="text-sm text-muted-foreground mr-2">Export all .cursor prompts:</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => downloadAllCursorPromptsAsJson()}
+                    disabled={cursorPromptFiles.length === 0}
+                    aria-label="Export all .cursor prompts as JSON"
+                  >
+                    Export JSON
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => downloadAllCursorPromptsAsMarkdown()}
+                    disabled={cursorPromptFiles.length === 0}
+                    aria-label="Export all .cursor prompts as Markdown"
+                  >
+                    Export MD
+                  </Button>
+                </div>
                 <CursorPromptFilesTable
                   files={cursorPromptFiles}
                   loading={cursorPromptFilesLoading}
@@ -434,17 +544,115 @@ export function PromptRecordsPageContent() {
                 />
               </TabsContent>
               <TabsContent value={GENERAL_TAB} className="mt-4 focus-visible:outline-none">
-                <PromptRecordTable
-                  fullPromptRecords={generalPrompts}
-                  selectedPromptRecordIds={selectedPromptRecordIds}
-                  setSelectedPromptRecordIds={setSelectedPromptRecordIds}
-                  handleDelete={handleDelete}
-                  setEditOpen={setEditOpen}
-                  setFormId={setFormId}
-                  setFormTitle={setFormTitle}
-                  setFormContent={setFormContent}
-                  onViewPrompt={setViewingPrompt}
-                />
+                {generalPrompts.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-3 mb-3">
+                    <div className="flex flex-wrap items-center gap-2 mr-2" role="group" aria-label="Export all general prompts">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8"
+                        onClick={() => downloadAllPromptsAsJson(generalPrompts)}
+                        aria-label="Export all general prompts as JSON"
+                      >
+                        Export JSON
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8"
+                        onClick={() => downloadAllPromptsAsMarkdown(generalPrompts)}
+                        aria-label="Export all general prompts as Markdown"
+                      >
+                        Export MD
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8"
+                        onClick={() => downloadAllPromptsAsCsv(generalPrompts)}
+                        aria-label="Export all general prompts as CSV"
+                      >
+                        Export CSV
+                      </Button>
+                    </div>
+                    <div className="relative flex-1 max-w-xs">
+                      <Search
+                        className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none"
+                        aria-hidden
+                      />
+                      <Input
+                        type="text"
+                        placeholder="Filter by title…"
+                        value={filterQuery}
+                        onChange={(e) => setFilterQuery(e.target.value)}
+                        className="pl-8 h-8 text-sm"
+                        aria-label="Filter prompts by title"
+                      />
+                    </div>
+                    <Select value={promptSort} onValueChange={(v) => setPromptSort(v as typeof promptSort)}>
+                      <SelectTrigger className="h-8 w-[140px] text-xs" aria-label="Sort prompts">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="newest">Newest first</SelectItem>
+                        <SelectItem value="oldest">Oldest first</SelectItem>
+                        <SelectItem value="title-asc">Title A–Z</SelectItem>
+                        <SelectItem value="title-desc">Title Z–A</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {(trimmedFilterQuery || promptSort !== "newest") && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setFilterQuery("");
+                          setPromptSort("newest");
+                        }}
+                        className="h-8 gap-1.5"
+                        aria-label="Reset filters"
+                      >
+                        <RotateCcw className="size-3.5" aria-hidden />
+                        Reset filters
+                      </Button>
+                    )}
+                    {trimmedFilterQuery && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setFilterQuery("")}
+                        className="h-8 gap-1.5"
+                        aria-label="Clear filter"
+                      >
+                        <X className="size-3.5" aria-hidden />
+                        Clear
+                      </Button>
+                    )}
+                    {trimmedFilterQuery && (
+                      <span className="text-sm text-muted-foreground whitespace-nowrap">
+                        Showing {filteredGeneralPrompts.length} of {generalPrompts.length} prompts
+                      </span>
+                    )}
+                  </div>
+                )}
+                {trimmedFilterQuery && filteredGeneralPrompts.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-6 text-center">
+                    No prompts match &quot;{filterQuery.trim()}&quot;.
+                  </p>
+                ) : (
+                  <PromptRecordTable
+                    fullPromptRecords={sortedGeneralPrompts}
+                    selectedPromptRecordIds={selectedPromptRecordIds}
+                    setSelectedPromptRecordIds={setSelectedPromptRecordIds}
+                    handleDelete={handleDelete}
+                    setEditOpen={setEditOpen}
+                    setFormId={setFormId}
+                    setFormTitle={setFormTitle}
+                    setFormContent={setFormContent}
+                    onViewPrompt={setViewingPrompt}
+                  />
+                )}
               </TabsContent>
               {projectsWithPrompts.map((p) => (
                 <TabsContent key={p.id} value={p.id} className="mt-4 focus-visible:outline-none">

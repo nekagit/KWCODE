@@ -19,6 +19,9 @@ export interface PromptRecordItem {
   content: string;
 }
 
+/** Night shift Circle phases (order: refactor → test → debugging → implement → create). */
+export type NightShiftCirclePhase = "refactor" | "test" | "debugging" | "implement" | "create";
+
 /** Metadata for post-run actions (write file, parse and notify). Used by temp tickets. */
 export interface RunMeta {
   projectId?: string;
@@ -43,6 +46,10 @@ export interface RunMeta {
   gitRefAtStart?: string;
   /** Night shift run: replenish with same prompt when this run exits (if night shift still active). */
   isNightShift?: boolean;
+  /** Night shift Circle run: this run is part of a Circle phase batch. */
+  isNightShiftCircle?: boolean;
+  /** Which Circle phase this run belongs to (refactor, test, debugging, implement, create). */
+  circlePhase?: NightShiftCirclePhase;
 }
 
 export interface Run {
@@ -76,6 +83,8 @@ export interface TerminalOutputHistoryEntry {
   timestamp: string;
   exitCode?: number;
   slot?: 1 | 2 | 3;
+  /** Elapsed time in milliseconds (run doneAt - startedAt). Optional for backwards compatibility. */
+  durationMs?: number;
 }
 
 export interface FileEntry {

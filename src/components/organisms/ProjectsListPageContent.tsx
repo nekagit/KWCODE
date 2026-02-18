@@ -1,15 +1,28 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Project } from "@/types/project";
 import { invoke, isTauri } from "@/lib/tauri";
 import { listProjects, deleteProject } from "@/lib/api-projects";
+import { toast } from "sonner";
+import { Search, X, RotateCcw } from "lucide-react";
+import { getRecentProjectIds } from "@/lib/recent-projects";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Breadcrumb } from "@/components/shared/Breadcrumb";
 import { ProjectsHeader } from "@/components/molecules/LayoutAndNavigation/ProjectsHeader";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 import { NoProjectsFoundCard } from "@/components/molecules/CardsAndDisplay/NoProjectsFoundCard";
 import { ProjectLoadingState } from "@/components/molecules/UtilitiesAndHelpers/ProjectLoadingState";
-import { ProjectListContainer } from "@/components/molecules/ListsAndTables/ProjectListContainer";
+import { ProjectCard } from "@/components/molecules/CardsAndDisplay/ProjectCard";
 import { ProjectDetailsPageContent } from "@/components/organisms/ProjectDetailsPageContent";
 import { getOrganismClasses } from "./organism-classes";
 
@@ -23,6 +36,48 @@ export function ProjectsListPageContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [seeding, setSeeding] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  type SortOrder = "asc" | "desc" | "recent";
+  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+  const trimmedQuery = searchQuery.trim().toLowerCase();
+  const filteredProjects = useMemo(
+    () =>
+      !trimmedQuery
+        ? projects
+        : projects.filter((p) => p.name.toLowerCase().includes(trimmedQuery)),
+    [projects, trimmedQuery]
+  );
+  const displayList = useMemo(() => {
+    const list = [...filteredProjects];
+    if (sortOrder === "recent") {
+      const recentIds = getRecentProjectIds();
+      list.sort((a, b) => {
+        const ai = recentIds.indexOf(a.id);
+        const bi = recentIds.indexOf(b.id);
+        if (ai === -1 && bi === -1) return a.name.localeCompare(b.name);
+        if (ai === -1) return 1;
+        if (bi === -1) return -1;
+        return ai - bi;
+      });
+    } else {
+      list.sort((a, b) =>
+        sortOrder === "asc"
+          ? a.name.localeCompare(b.name)
+          : b.name.localeCompare(a.name)
+      );
+    }
+    return list;
+  }, [filteredProjects, sortOrder]);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    listProjects()
+      .then((data: Project[]) => setProjects(Array.isArray(data) ? data : []))
+      .then(() => toast.success("Projects refreshed"))
+      .catch(() => toast.error("Refresh failed"))
+      .finally(() => setRefreshing(false));
+  }, []);
 
   const refetch = useCallback(() => {
     listProjects()
@@ -41,6 +96,22 @@ export function ProjectsListPageContent() {
       setError(e instanceof Error ? e.message : String(e));
     }
   };
+
+  const handleOpenProject = useCallback(
+    (project: Project) => {
+      if (isTauri) {
+        invoke("frontend_debug_log", {
+          location: "ProjectsListPageContent.tsx:onClick",
+          message: "project link click",
+          data: { projectId: project.id, hasId: !!project.id },
+        }).catch(() => {});
+        router.push(`/projects?open=${encodeURIComponent(project.id)}`);
+      } else {
+        router.push(`/projects/${project.id}`);
+      }
+    },
+    [router]
+  );
 
   const seedTemplateProject = async () => {
     setSeeding(true);
@@ -96,9 +167,18 @@ export function ProjectsListPageContent() {
 
   return (
     <div className={c["0"]}>
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", href: "/" },
+          { label: "Projects" },
+        ]}
+        className="mb-3"
+      />
       <ProjectsHeader
         seeding={seeding}
         seedTemplateProject={seedTemplateProject}
+        onRefresh={handleRefresh}
+        refreshing={refreshing}
       />
 
       {error && (
@@ -120,89 +200,90 @@ export function ProjectsListPageContent() {
       ) : (
         <section className={c["1"]} data-testid="projects-list">
           <h2 className={c["2"]}>Your projects</h2>
-          <ProjectListContainer>
-            <ul className={c["3"]}>
-              {projects.map((project) => (
-                <li key={project.id} className={c["4"]}>
-                  <div
-                    role="link"
-                    tabIndex={0}
-                    className={c["5"]}
-                    onClick={() => {
-                      // #region agent log
-                      const logClick = () => {
-                        if (isTauri) {
-                          invoke("frontend_debug_log", {
-                            location: "ProjectsListPageContent.tsx:onClick",
-                            message: "project link click",
-                            data: { projectId: project.id, hasId: !!project.id },
-                          }).catch(() => {});
-                        }
-                        fetch("http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            location: "ProjectsListPageContent.tsx:onClick",
-                            message: "project link click",
-                            data: { projectId: project.id, hasId: !!project.id },
-                            timestamp: Date.now(),
-                            hypothesisId: "H1",
-                          }),
-                        }).catch(() => {});
-                      };
-                      logClick();
-                      // #endregion
-                      if (isTauri) {
-                        router.push(`/projects?open=${encodeURIComponent(project.id)}`);
-                      } else {
-                        router.push(`/projects/${project.id}`);
-                      }
-                      // #region agent log
-                      if (isTauri) {
-                        invoke("frontend_debug_log", {
-                          location: "ProjectsListPageContent.tsx:afterNav",
-                          message: "navigation triggered",
-                          data: { projectId: project.id, openParam: true },
-                        }).catch(() => {});
-                      }
-                      fetch("http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          location: "ProjectsListPageContent.tsx:afterPush",
-                          message: "navigation triggered",
-                          data: { projectId: project.id },
-                          timestamp: Date.now(),
-                          hypothesisId: "H2",
-                        }),
-                      }).catch(() => {});
-                      // #endregion
-                    }}
-                    onKeyDown={(e: React.KeyboardEvent) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        if (isTauri) {
-                          router.push(`/projects?open=${encodeURIComponent(project.id)}`);
-                        } else {
-                          router.push(`/projects/${project.id}`);
-                        }
-                      }
-                    }}
-                  >
-                    {project.name}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={(e: React.MouseEvent) => handleDelete(project.id, e)}
-                    className={c["6"]}
-                    title="Delete project"
-                  >
-                    Delete
-                  </button>
+          <div className="flex flex-wrap items-center gap-3 mb-4">
+            <div className="relative flex-1 max-w-xs">
+              <Search
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none"
+                aria-hidden
+              />
+              <Input
+                type="text"
+                placeholder="Filter by name…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8 h-8 text-sm"
+                aria-label="Filter projects by name"
+              />
+            </div>
+            {trimmedQuery && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setSearchQuery("")}
+                className="h-8 gap-1.5"
+                aria-label="Clear filter"
+              >
+                <X className="size-3.5" aria-hidden />
+                Clear
+              </Button>
+            )}
+            <Select
+              value={sortOrder}
+              onValueChange={(v) => setSortOrder(v as SortOrder)}
+            >
+              <SelectTrigger className="w-[10rem] h-8 text-xs" aria-label="Sort order">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="asc" className="text-xs">A–Z</SelectItem>
+                <SelectItem value="desc" className="text-xs">Z–A</SelectItem>
+                <SelectItem value="recent" className="text-xs">Recently opened</SelectItem>
+              </SelectContent>
+            </Select>
+            {(trimmedQuery || sortOrder !== "asc") && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSearchQuery("");
+                  setSortOrder("asc");
+                }}
+                className="h-8 gap-1.5 text-xs"
+                aria-label="Reset filters"
+              >
+                <RotateCcw className="size-3.5" aria-hidden />
+                Reset filters
+              </Button>
+            )}
+            {trimmedQuery && (
+              <span className="text-sm text-muted-foreground whitespace-nowrap">
+                Showing {filteredProjects.length} of {projects.length} projects
+              </span>
+            )}
+          </div>
+          {displayList.length > 0 ? (
+            <ul
+              className={c["grid"]}
+              role="list"
+              aria-label="Project cards"
+            >
+              {displayList.map((project) => (
+                <li key={project.id}>
+                  <ProjectCard
+                    project={project}
+                    onOpen={() => handleOpenProject(project)}
+                    onDelete={(e) => handleDelete(project.id, e)}
+                  />
                 </li>
               ))}
             </ul>
-          </ProjectListContainer>
+          ) : (
+            <p className="text-sm text-muted-foreground py-4">
+              No projects match &quot;{searchQuery.trim()}&quot;.
+            </p>
+          )}
         </section>
       )}
     </div>

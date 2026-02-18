@@ -6,10 +6,9 @@ export const dynamic = "force-static";
 
 const ROOT = process.cwd();
 const CURSOR_DIR = path.join(ROOT, ".cursor");
-const CURSOR_TEMPLATE_DIR = path.join(ROOT, ".cursor_template");
 
 export type CursorPromptFileEntry = {
-  /** Relative path from .cursor or .cursor_template (e.g. "1. project/prompts/design.prompt.md") */
+  /** Relative path from .cursor (e.g. "1. project/prompts/design.prompt.md") */
   relativePath: string;
   /** Full path under root (e.g. ".cursor/1. project/prompts/design.prompt.md") */
   path: string;
@@ -19,15 +18,9 @@ export type CursorPromptFileEntry = {
   size: number;
   /** ISO date string of mtime */
   updatedAt: string;
-  /** ".cursor" or ".cursor_template" */
-  source: ".cursor" | ".cursor_template";
 };
 
-function walkPromptMdFiles(
-  dir: string,
-  prefix: string,
-  source: ".cursor" | ".cursor_template"
-): CursorPromptFileEntry[] {
+function walkPromptMdFiles(dir: string, prefix: string): CursorPromptFileEntry[] {
   const results: CursorPromptFileEntry[] = [];
   if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) return results;
 
@@ -37,18 +30,15 @@ function walkPromptMdFiles(
     const relativePath = prefix ? `${prefix}/${entry.name}` : entry.name;
 
     if (entry.isDirectory()) {
-      results.push(
-        ...walkPromptMdFiles(fullPath, relativePath, source)
-      );
+      results.push(...walkPromptMdFiles(fullPath, relativePath));
     } else if (entry.isFile() && entry.name.toLowerCase().endsWith(".prompt.md")) {
       const stat = fs.statSync(fullPath);
       results.push({
         relativePath,
-        path: source === ".cursor" ? `.cursor/${relativePath}` : `.cursor_template/${relativePath}`,
+        path: `.cursor/${relativePath}`,
         name: entry.name,
         size: stat.size,
         updatedAt: stat.mtime.toISOString(),
-        source,
       });
     }
   }
@@ -56,14 +46,12 @@ function walkPromptMdFiles(
 }
 
 /**
- * GET: List all *.prompt.md files under .cursor and .cursor_template.
- * Used by the Prompts page "Cursor prompts" tab to keep the table in sync with the repo.
+ * GET: List all *.prompt.md files under .cursor.
+ * Used by the Prompts page ".cursor prompts" tab to keep the table in sync with the repo.
  */
 export async function GET() {
   try {
-    const fromCursor = walkPromptMdFiles(CURSOR_DIR, "", ".cursor");
-    const fromTemplate = walkPromptMdFiles(CURSOR_TEMPLATE_DIR, "", ".cursor_template");
-    const files: CursorPromptFileEntry[] = [...fromCursor, ...fromTemplate].sort((a, b) =>
+    const files = walkPromptMdFiles(CURSOR_DIR, "").sort((a, b) =>
       a.path.localeCompare(b.path)
     );
     return NextResponse.json({ files });

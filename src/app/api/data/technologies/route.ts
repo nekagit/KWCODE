@@ -8,7 +8,6 @@ export const dynamic = "force-static";
 
 const ROOT = process.cwd();
 const CURSOR_TECH = path.join(ROOT, ".cursor", "technologies");
-const CURSOR_TEMPLATE_TECH = path.join(ROOT, ".cursor_template", "technologies");
 /** Project template tech stack: folder (if extracted) or inside project_template.zip */
 const PROJECT_TEMPLATE_TECH_DIR = path.join(ROOT, "project_template", ".cursor", "technologies");
 const PROJECT_TEMPLATE_ZIP = path.join(ROOT, "project_template.zip");
@@ -72,21 +71,19 @@ function readProjectTemplateTech(): Record<string, string> {
   return out;
 }
 
-/** GET: return { files: { "tech-stack.json": "...", ... } } from .cursor/technologies, .cursor_template/technologies, and project_template (folder or zip). */
+/** GET: return { files: { "tech-stack.json": "...", ... } } from .cursor/technologies and project_template (folder or zip). */
 export async function GET() {
   try {
     const cursorFiles = listFiles(CURSOR_TECH);
-    const templateFiles = listFiles(CURSOR_TEMPLATE_TECH);
     const projectTemplateTech = readProjectTemplateTech();
     const projectTemplateFilenames = Object.keys(projectTemplateTech);
     const allFilenames = [
-      ...new Set([...cursorFiles, ...templateFiles, ...projectTemplateFilenames]),
+      ...new Set([...cursorFiles, ...projectTemplateFilenames]),
     ];
     const files: Record<string, string> = {};
     for (const name of allFilenames) {
       const content =
         readFileContent(CURSOR_TECH, name) ??
-        readFileContent(CURSOR_TEMPLATE_TECH, name) ??
         projectTemplateTech[name] ??
         null;
       if (content != null) files[name] = content;

@@ -1,14 +1,29 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
-import { Lightbulb } from "lucide-react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { Copy, FileJson, FileText, FolderOpen, Lightbulb, Loader2, RefreshCw, RotateCcw, Search, Table, X } from "lucide-react";
 import { toast } from "sonner";
+import { Breadcrumb } from "@/components/shared/Breadcrumb";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { IdeaTemplateCard } from "@/components/molecules/CardsAndDisplay/IdeaTemplateCard";
 import { MyIdeasCard } from "@/components/molecules/CardsAndDisplay/MyIdeasCard";
 import { AiGeneratedIdeasCard } from "@/components/molecules/CardsAndDisplay/AiGeneratedIdeasCard";
 import { IdeaFormDialog } from "@/components/molecules/FormsAndDialogs/IdeaFormDialog";
 import { ThreeTabResourcePageContent } from "@/components/organisms/ThreeTabResourcePageContent";
 import { getOrganismClasses } from "./organism-classes";
+import { downloadMyIdeasAsJson } from "@/lib/download-my-ideas";
+import { downloadMyIdeasAsCsv } from "@/lib/download-my-ideas-csv";
+import { downloadMyIdeasAsMarkdown } from "@/lib/download-my-ideas-md";
+import { copyIdeasFolderPath } from "@/lib/copy-ideas-folder-path";
+import { openIdeasFolderInFileManager } from "@/lib/open-ideas-folder";
 import { IdeaCategory, IdeaRecord } from "@/types/idea";
 
 const c = getOrganismClasses("IdeasPageContent.tsx");
@@ -53,7 +68,49 @@ export function IdeasPageContent() {
   const [formCategory, setFormCategory] = useState<IdeaCategory>("other");
   const [formId, setFormId] = useState<number | undefined>(undefined);
   const [saveLoading, setSaveLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [ideaSort, setIdeaSort] = useState<"newest" | "oldest" | "title-asc" | "title-desc">("newest");
+  const [filterQuery, setFilterQuery] = useState("");
   const cancelledRef = useRef(false);
+
+  const sortedMyIdeas = useMemo(() => {
+    const list = [...myIdeas];
+    const dateTs = (idea: IdeaRecord) => {
+      const raw = idea.created_at ?? idea.updated_at ?? "";
+      if (!raw) return 0;
+      const t = Date.parse(raw);
+      return Number.isFinite(t) ? t : 0;
+    };
+    if (ideaSort === "newest") {
+      list.sort((a, b) => dateTs(b) - dateTs(a) || a.id - b.id);
+    } else if (ideaSort === "oldest") {
+      list.sort((a, b) => dateTs(a) - dateTs(b) || a.id - b.id);
+    } else if (ideaSort === "title-asc") {
+      list.sort(
+        (a, b) =>
+          (a.title ?? "").localeCompare(b.title ?? "", undefined, { sensitivity: "base" }) ||
+          a.id - b.id
+      );
+    } else {
+      list.sort(
+        (a, b) =>
+          (b.title ?? "").localeCompare(a.title ?? "", undefined, { sensitivity: "base" }) ||
+          a.id - b.id
+      );
+    }
+    return list;
+  }, [myIdeas, ideaSort]);
+
+  const trimmedFilterQuery = filterQuery.trim().toLowerCase();
+  const filteredMyIdeas = useMemo(
+    () =>
+      !trimmedFilterQuery
+        ? sortedMyIdeas
+        : sortedMyIdeas.filter((idea) =>
+            (idea.title ?? "").toLowerCase().includes(trimmedFilterQuery)
+          ),
+    [sortedMyIdeas, trimmedFilterQuery]
+  );
 
   const loadIdeas = useCallback(async () => {
     try {
@@ -200,6 +257,17 @@ export function IdeasPageContent() {
     [loadIdeas]
   );
 
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await loadIdeas();
+    } catch {
+      toast.error("Refresh failed");
+    } finally {
+      setRefreshing(false);
+    }
+  }, [loadIdeas]);
+
   const config = {
     title: "Business ideas",
     description: "SaaS, IaaS, PaaS, websites, webapps, webshops — templates, AI-generated, or your own.",
@@ -210,6 +278,10 @@ export function IdeasPageContent() {
 
   const resource = {
     myIdeas,
+    sortedMyIdeas,
+    filteredMyIdeas,
+    filterQuery,
+    trimmedFilterQuery,
     loading,
     createOpen,
     setCreateOpen,
@@ -234,9 +306,171 @@ export function IdeasPageContent() {
   };
 
   return (
-    <ThreeTabResourcePageContent
-      config={config}
-      resource={resource}
+    <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 pb-12">
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", href: "/" },
+          { label: "Ideas" },
+        ]}
+      />
+      <div className="flex flex-col gap-4 sm:gap-5">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+          <div className="relative flex-1 min-w-[180px] max-w-xs">
+            <Search
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none"
+              aria-hidden
+            />
+            <Input
+              type="text"
+              placeholder="Filter My ideas by title…"
+              value={filterQuery}
+              onChange={(e) => setFilterQuery(e.target.value)}
+              className="pl-8 h-9 text-sm"
+              aria-label="Filter My ideas by title"
+            />
+          </div>
+          <Select
+            value={ideaSort}
+            onValueChange={(v) => setIdeaSort(v as typeof ideaSort)}
+          >
+            <SelectTrigger
+              className="h-9 w-[140px] text-xs"
+              aria-label="Sort My ideas"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest first</SelectItem>
+              <SelectItem value="oldest">Oldest first</SelectItem>
+              <SelectItem value="title-asc">Title A–Z</SelectItem>
+              <SelectItem value="title-desc">Title Z–A</SelectItem>
+            </SelectContent>
+          </Select>
+          {trimmedFilterQuery ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setFilterQuery("")}
+              className="h-9 gap-1.5"
+              aria-label="Clear filter"
+            >
+              <X className="size-3.5" aria-hidden />
+              Clear
+            </Button>
+          ) : null}
+          {(trimmedFilterQuery || ideaSort !== "newest") && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setFilterQuery("");
+                setIdeaSort("newest");
+              }}
+              className="h-9 gap-1.5 text-xs"
+              aria-label="Reset filters"
+            >
+              <RotateCcw className="size-3.5" aria-hidden />
+              Reset filters
+            </Button>
+          )}
+          {trimmedFilterQuery ? (
+            <span className="text-sm text-muted-foreground whitespace-nowrap">
+              Showing {filteredMyIdeas.length} of {sortedMyIdeas.length} ideas
+            </span>
+          ) : null}
+        </div>
+        <div className="flex flex-wrap items-center gap-3 border-t border-border/50 pt-4">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3" role="group" aria-label="Export">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => downloadMyIdeasAsJson(myIdeas)}
+              className="h-9 gap-2"
+              aria-label="Export my ideas as JSON"
+            >
+              <FileJson className="size-4 shrink-0" aria-hidden />
+              <span className="hidden sm:inline">Export JSON</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                downloadMyIdeasAsMarkdown(
+                  trimmedFilterQuery ? filteredMyIdeas : sortedMyIdeas
+                )
+              }
+              className="h-9 gap-2"
+              aria-label="Export my ideas as Markdown"
+            >
+              <FileText className="size-4 shrink-0" aria-hidden />
+              <span className="hidden sm:inline">Export MD</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                downloadMyIdeasAsCsv(
+                  trimmedFilterQuery ? filteredMyIdeas : sortedMyIdeas
+                )
+              }
+              className="h-9 gap-2"
+              aria-label="Export my ideas as CSV"
+            >
+              <Table className="size-4 shrink-0" aria-hidden />
+              <span className="hidden sm:inline">Export CSV</span>
+            </Button>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3" role="group" aria-label="Folder actions">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => copyIdeasFolderPath()}
+              className="h-9 gap-2"
+              aria-label="Copy ideas folder path"
+            >
+              <Copy className="size-4 shrink-0" aria-hidden />
+              <span className="hidden sm:inline">Copy path</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => openIdeasFolderInFileManager()}
+              className="h-9 gap-2"
+              aria-label="Open ideas folder in file manager"
+            >
+              <FolderOpen className="size-4 shrink-0" aria-hidden />
+              <span className="hidden sm:inline">Open folder</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={refreshing}
+              onClick={handleRefresh}
+              className="h-9 gap-2"
+              aria-label="Refresh ideas"
+            >
+              {refreshing ? (
+                <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
+              ) : (
+                <RefreshCw className="size-4 shrink-0" aria-hidden />
+              )}
+              <span className="hidden sm:inline">Refresh</span>
+            </Button>
+          </div>
+        </div>
+      </div>
+      <ThreeTabResourcePageContent
+        embedded
+        config={config}
+        resource={resource}
       renderTemplatesTab={(r) => (
         <IdeaTemplateCard
           TEMPLATE_IDEAS={r.TEMPLATE_IDEAS}
@@ -247,16 +481,22 @@ export function IdeasPageContent() {
       renderAiTab={(r) => (
         <AiGeneratedIdeasCard CATEGORY_LABELS={r.CATEGORY_LABELS} addToMyIdeas={r.addToMyIdeas} />
       )}
-      renderMineTab={(r) => (
-        <MyIdeasCard
-          myIdeas={r.myIdeas}
-          loading={r.loading}
-          openCreate={r.openCreate}
-          openEdit={r.openEdit}
-          handleDelete={r.handleDelete}
-          CATEGORY_LABELS={r.CATEGORY_LABELS}
-        />
-      )}
+      renderMineTab={(r) =>
+        r.trimmedFilterQuery && r.filteredMyIdeas.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-6 text-center">
+            No ideas match &quot;{r.filterQuery.trim()}&quot;.
+          </p>
+        ) : (
+          <MyIdeasCard
+            myIdeas={r.filteredMyIdeas}
+            loading={r.loading}
+            openCreate={r.openCreate}
+            openEdit={r.openEdit}
+            handleDelete={r.handleDelete}
+            CATEGORY_LABELS={r.CATEGORY_LABELS}
+          />
+        )
+      }
       renderDialogs={(r) => (
         <>
           <IdeaFormDialog
@@ -291,6 +531,7 @@ export function IdeasPageContent() {
           />
         </>
       )}
-    />
+      />
+    </div>
   );
 }

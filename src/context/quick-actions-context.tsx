@@ -10,11 +10,13 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import ConfigurationPage from "@/app/configuration/page";
+import { ShortcutsHelpDialog } from "@/components/molecules/UtilitiesAndHelpers/ShortcutsHelpDialog";
 
 type QuickModal = "config" | null;
 
 interface QuickActionsContextValue {
   openConfigModal: () => void;
+  openShortcutsModal: () => void;
 }
 
 const QuickActionsContext = createContext<QuickActionsContextValue | null>(null);
@@ -89,16 +91,30 @@ export function QuickActionsFAB() {
 
 export function QuickActionsProvider({ children }: { children: React.ReactNode }) {
   const [modal, setModal] = useState<QuickModal>(null);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   const openConfigModal = useCallback(() => setModal("config"), []);
+  const openShortcutsModal = useCallback(() => setShortcutsOpen(true), []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.shiftKey && e.key === "?") {
+        const tag = (e.target as HTMLElement)?.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+        e.preventDefault();
+        setShortcutsOpen((open) => !open);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const value: QuickActionsContextValue = {
     openConfigModal,
+    openShortcutsModal,
   };
 
-  const closeModal = useCallback(() => {
-    setModal(null);
-  }, []);
+  const closeModal = useCallback(() => setModal(null), []);
 
   return (
     <QuickActionsContext.Provider value={value}>
@@ -113,6 +129,11 @@ export function QuickActionsProvider({ children }: { children: React.ReactNode }
           </ScrollArea>
         </DialogContent>
       </Dialog>
+
+      <ShortcutsHelpDialog
+        open={shortcutsOpen}
+        onOpenChange={setShortcutsOpen}
+      />
     </QuickActionsContext.Provider>
   );
 }

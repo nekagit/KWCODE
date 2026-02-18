@@ -12,10 +12,19 @@ export const PROJECT_ROOT = `${CURSOR}/1. project`;
 export const PLANNER_ROOT = `${CURSOR}/7. planner`;
 
 // ─── Worker (8. worker) & Agents (2. agents) ─────────────────────────────
-export const WORKER_IMPLEMENT_ALL_PROMPT_PATH = `${CURSOR}/8. worker/implement-all.md`;
-export const WORKER_FIX_BUG_PROMPT_PATH = `${CURSOR}/8. worker/fix-bug.md`;
+/** All worker prompts use .prompt.md so they appear in the Prompts page table. */
+export const WORKER_IMPLEMENT_ALL_PROMPT_PATH = `${CURSOR}/8. worker/implement-all.prompt.md`;
+export const WORKER_FIX_BUG_PROMPT_PATH = `${CURSOR}/8. worker/fix-bug.prompt.md`;
 /** Night shift: 3 agents run this prompt in a loop; edit this file to change the prompt. */
-export const WORKER_NIGHT_SHIFT_PROMPT_PATH = `${CURSOR}/8. worker/night-shift.md`;
+export const WORKER_NIGHT_SHIFT_PROMPT_PATH = `${CURSOR}/8. worker/night-shift.prompt.md`;
+/** Night shift Circle / badges: per-phase prompts (refactor, test, debugging, implement, create). Edit these files to adapt behaviour. */
+export const WORKER_NIGHT_SHIFT_PHASE_PROMPT_PATHS = {
+  refactor: `${CURSOR}/8. worker/refactor.prompt.md`,
+  test: `${CURSOR}/8. worker/test.prompt.md`,
+  debugging: `${CURSOR}/8. worker/debugging.prompt.md`,
+  implement: `${CURSOR}/8. worker/implement.prompt.md`,
+  create: `${CURSOR}/8. worker/create.prompt.md`,
+} as const;
 export const AGENTS_ROOT = `${CURSOR}/2. agents`;
 
 /** Analyze job ids used by the worker queue and analyze-all flow. */

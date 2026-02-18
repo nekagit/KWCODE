@@ -96,10 +96,11 @@ export function RunStoreHydration() {
         const isNightShiftExit = run?.meta?.isNightShift === true;
         const runNotFoundAssumeNightShift = run === undefined;
         if (isNightShiftExit || runNotFoundAssumeNightShift) {
-          const slot = (run?.meta?.isNightShift ? run.slot : null) ?? 1;
+          const slot = run?.slot ?? 1;
+          const exitingRun = run ?? null;
           (async () => {
             try {
-              await state.nightShiftReplenishCallback!(slot);
+              await state.nightShiftReplenishCallback!(slot, exitingRun);
             } catch (err) {
               console.error("[night-shift] replenish failed:", err);
               toast.error("Night shift replenish failed. Check console.");
@@ -111,6 +112,10 @@ export function RunStoreHydration() {
       // Append to terminal output history (all completed runs)
       if (run) {
         const output = run.logLines.join("\n");
+        const durationMs =
+          run.startedAt != null && run.doneAt != null && run.doneAt >= run.startedAt
+            ? run.doneAt - run.startedAt
+            : undefined;
         store.addTerminalOutputToHistory({
           runId: run.runId,
           label: run.label,
@@ -118,7 +123,16 @@ export function RunStoreHydration() {
           timestamp: new Date().toISOString(),
           exitCode: exit_code,
           slot: run.slot,
+          durationMs,
         });
+        // Visible toast for sighted users (RunStatusAnnouncer handles screen readers).
+        const label = run.label.trim() || "Run";
+        const success = exit_code === undefined || exit_code === 0;
+        if (success) {
+          toast.success(`Run ${label} completed successfully.`);
+        } else {
+          toast.error(`Run ${label} failed.`);
+        }
       }
 
       if (run?.meta) {

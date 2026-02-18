@@ -1,20 +1,19 @@
 "use client";
 
-
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { invoke, isTauri } from "@/lib/tauri";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRunState } from "@/context/run-state";
 import { listProjects } from "@/lib/api-projects";
 import type { Project } from "@/types/project";
 import { ProjectsTabContent } from "@/components/molecules/TabAndContentSections/ProjectsTabContent";
 import { AllDataTabContent } from "@/components/molecules/TabAndContentSections/AllDataTabContent";
 import { DatabaseDataTabContent } from "@/components/molecules/TabAndContentSections/DatabaseDataTabContent";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { DashboardTabContent } from "@/components/molecules/TabAndContentSections/DashboardTabContent";
 import { PromptsTabContent } from "@/components/molecules/TabAndContentSections/PromptsTabContent";
 import { getOrganismClasses } from "./organism-classes";
+import { toast } from "sonner";
 
 import type { Ticket, TicketRow, TicketStatus } from "@/types/ticket";
 
@@ -31,9 +30,12 @@ interface IdeaRecord {
   source?: string;
 }
 
+const DASHBOARD_TAB_VALUES = ["dashboard", "projects", "prompts", "all", "data"] as const;
+const DASHBOARD_TAB_STORAGE_KEY = "kwcode-dashboard-tab";
+
 function tabFromParams(searchParams: ReturnType<typeof useSearchParams> | null): string {
   const t = searchParams?.get("tab") ?? null;
-  return (t && ["dashboard", "projects", "prompts", "all", "data"].includes(t) ? t : "dashboard") as string;
+  return (t && DASHBOARD_TAB_VALUES.includes(t as (typeof DASHBOARD_TAB_VALUES)[number]) ? t : "dashboard") as string;
 }
 
 export function HomePageContent() {
@@ -41,6 +43,7 @@ export function HomePageContent() {
   const router = useRouter();
   const tab = tabFromParams(searchParams);
   const navigateToTab = (t: string) => router.push("/?tab=" + t);
+
   const {
     allProjects,
     activeProjects,
@@ -53,6 +56,7 @@ export function HomePageContent() {
     runningRuns,
     runWithParams,
     isTauriEnv,
+    refreshData,
   } = useRunState();
 
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -140,16 +144,19 @@ export function HomePageContent() {
     await saveTickets(tickets.filter((t) => t.id !== id));
   };
 
+  const handleTabChange = useCallback(
+    (v: string) => {
+      try {
+        if (typeof window !== "undefined") localStorage.setItem(DASHBOARD_TAB_STORAGE_KEY, v);
+      } catch (_) {}
+      navigateToTab(v);
+    },
+    [navigateToTab]
+  );
+
   return (
-    <Tabs value={tab} onValueChange={(v) => navigateToTab(v as string)} className={c["0"]} data-testid="home-page-tabs">
+    <Tabs value={tab} onValueChange={handleTabChange} className={c["0"]} data-testid="home-page-tabs">
       <div className={c["1"]}>
-        <div className={c["2"]}>
-        </div>
-
-        <ScrollArea className={c["3"]}>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
-
         <TabsContent value="dashboard" className={c["4"]}>
           <DashboardTabContent />
         </TabsContent>

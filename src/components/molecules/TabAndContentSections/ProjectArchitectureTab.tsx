@@ -1,11 +1,22 @@
 "use client";
 
-import { Building2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Building2, RotateCcw, Search, X } from "lucide-react";
 import type { Project } from "@/types/project";
 import { ProjectCategoryHeader } from "@/components/shared/ProjectCategoryHeader";
 import { ProjectArchitectureListItem } from "@/components/atoms/list-items/ProjectArchitectureListItem";
 import { GridContainer } from "@/components/shared/GridContainer";
 import { getClasses } from "@/components/molecules/tailwind-molecules";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 const classes = getClasses("TabAndContentSections/ProjectArchitectureTab.tsx");
 
 /** Resolved architecture shape (when project is loaded with resolve=1). */
@@ -16,6 +27,15 @@ interface ResolvedArchitectureItem {
   category?: string;
 }
 
+/** Normalized item for display and filtering (id, name, description). */
+interface ArchitectureDisplayItem {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+type ArchitectureSortOrder = "name-asc" | "name-desc";
+
 interface ProjectArchitectureTabProps {
   project: Project & { architectures?: unknown[] };
   projectId: string;
@@ -23,15 +43,55 @@ interface ProjectArchitectureTabProps {
   showHeader?: boolean;
 }
 
+function getArchitecturesToShow(project: Project & { architectures?: unknown[] }): ArchitectureDisplayItem[] {
+  const resolvedList = Array.isArray(project.architectures) ? (project.architectures as ResolvedArchitectureItem[]) : [];
+  const ids = project.architectureIds ?? [];
+  if (resolvedList.length > 0) {
+    return resolvedList.map((arch) => ({
+      id: arch.id,
+      name: arch.name ?? arch.id,
+      description: arch.description,
+    }));
+  }
+  return ids.map((id) => ({ id, name: id, description: undefined }));
+}
+
 export function ProjectArchitectureTab({
   project,
   projectId,
   showHeader = true,
 }: ProjectArchitectureTabProps) {
-  const resolvedList = Array.isArray(project.architectures) ? (project.architectures as ResolvedArchitectureItem[]) : [];
-  const useResolved = resolvedList.length > 0;
-  const ids = project.architectureIds ?? [];
-  const showEmpty = !useResolved && ids.length === 0;
+  const architectures = useMemo(() => getArchitecturesToShow(project), [project]);
+  const [filterQuery, setFilterQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState<ArchitectureSortOrder>("name-asc");
+
+  const trimmedFilterQuery = filterQuery.trim().toLowerCase();
+  const filteredArchitectures = useMemo(
+    () =>
+      !trimmedFilterQuery
+        ? architectures
+        : architectures.filter((arch) => {
+            const name = (arch.name ?? "").toLowerCase();
+            const desc = (arch.description ?? "").toLowerCase();
+            const id = (arch.id ?? "").toLowerCase();
+            return name.includes(trimmedFilterQuery) || desc.includes(trimmedFilterQuery) || id.includes(trimmedFilterQuery);
+          }),
+    [architectures, trimmedFilterQuery]
+  );
+
+  const sortedArchitectures = useMemo(() => {
+    const list = [...filteredArchitectures];
+    list.sort((a, b) => {
+      const cmp = (a.name ?? a.id).localeCompare(b.name ?? b.id, undefined, { sensitivity: "base" });
+      if (cmp !== 0) return sortOrder === "name-asc" ? cmp : -cmp;
+      return (a.id ?? "").localeCompare(b.id ?? "", undefined, { sensitivity: "base" });
+    });
+    return list;
+  }, [filteredArchitectures, sortOrder]);
+
+  const showEmpty = architectures.length === 0;
+  const showFilterRow = architectures.length > 0;
+  const showEmptyFilterState = trimmedFilterQuery.length > 0 && filteredArchitectures.length === 0;
 
   return (
     <div className={classes[0]}>
@@ -43,25 +103,85 @@ export function ProjectArchitectureTab({
         />
       )}
 
+      {showFilterRow && (
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <div className="relative flex-1 min-w-[160px] max-w-xs">
+            <Search
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none"
+              aria-hidden
+            />
+            <Input
+              type="text"
+              placeholder="Filter architectures by name…"
+              value={filterQuery}
+              onChange={(e) => setFilterQuery(e.target.value)}
+              className="pl-8 h-8 text-sm"
+              aria-label="Filter architectures by name"
+            />
+          </div>
+          <Select value={sortOrder} onValueChange={(v) => setSortOrder(v as ArchitectureSortOrder)}>
+            <SelectTrigger className="h-8 w-[130px] text-sm" aria-label="Sort architectures by name">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="name-asc" className="text-sm">Name A–Z</SelectItem>
+              <SelectItem value="name-desc" className="text-sm">Name Z–A</SelectItem>
+            </SelectContent>
+          </Select>
+          {trimmedFilterQuery ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setFilterQuery("")}
+              className="h-8 gap-1.5"
+              aria-label="Clear filter"
+            >
+              <X className="size-3.5" aria-hidden />
+              Clear
+            </Button>
+          ) : null}
+          {trimmedFilterQuery || sortOrder !== "name-asc" ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setFilterQuery("");
+                setSortOrder("name-asc");
+              }}
+              className="h-8 gap-1.5"
+              aria-label="Reset filters"
+            >
+              <RotateCcw className="size-3.5" aria-hidden />
+              Reset filters
+            </Button>
+          ) : null}
+          {trimmedFilterQuery ? (
+            <span className="text-sm text-muted-foreground whitespace-nowrap">
+              Showing {filteredArchitectures.length} of {architectures.length} architectures
+            </span>
+          ) : null}
+        </div>
+      )}
+
       {showEmpty ? (
         <div className="min-h-[140px] rounded-xl border border-border/40 bg-white dark:bg-card" />
+      ) : showEmptyFilterState ? (
+        <div className="min-h-[140px] rounded-xl border border-border/40 bg-white dark:bg-card flex items-center justify-center p-6">
+          <p className="text-sm text-muted-foreground">
+            No architectures match &quot;{filterQuery.trim()}&quot;.
+          </p>
+        </div>
       ) : (
         <GridContainer>
-          {useResolved
-            ? resolvedList.map((arch) => (
-                <ProjectArchitectureListItem
-                  key={arch.id}
-                  architecture={{ id: arch.id, name: arch.name, description: arch.description }}
-                  projectId={projectId}
-                />
-              ))
-            : ids.map((architectureId) => (
-                <ProjectArchitectureListItem
-                  key={architectureId}
-                  architecture={{ id: architectureId, name: architectureId }}
-                  projectId={projectId}
-                />
-              ))}
+          {sortedArchitectures.map((arch) => (
+            <ProjectArchitectureListItem
+              key={arch.id}
+              architecture={{ id: arch.id, name: arch.name, description: arch.description }}
+              projectId={projectId}
+            />
+          ))}
         </GridContainer>
       )}
     </div>

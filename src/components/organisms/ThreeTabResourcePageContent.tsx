@@ -24,6 +24,8 @@ export interface ThreeTabResourcePageContentProps<TResource> {
   /** Optional content rendered between header and tabs (e.g. ideas.md accordion). */
   renderAboveTabs?: (resource: TResource) => React.ReactNode;
   renderDialogs?: (resource: TResource) => React.ReactNode;
+  /** When true, omit outer container/padding (parent provides it). */
+  embedded?: boolean;
 }
 
 export function ThreeTabResourcePageContent<TResource>({
@@ -34,9 +36,10 @@ export function ThreeTabResourcePageContent<TResource>({
   renderMineTab,
   renderAboveTabs,
   renderDialogs,
+  embedded = false,
 }: ThreeTabResourcePageContentProps<TResource>) {
   return (
-    <div className={c["0"]} data-shared-ui>
+    <div className={embedded ? c["1"] : c["0"]} data-shared-ui>
       <PageHeader
         title={config.title}
         description={config.description}

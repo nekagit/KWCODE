@@ -2,8 +2,16 @@ import React, { useCallback, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Pencil, Trash2, Copy, Check, Eye } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Pencil, Trash2, Copy, Check, Eye, Hash } from "lucide-react";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 import { toast } from "sonner";
 
 type PromptRecord = {
@@ -40,6 +48,19 @@ export const PromptTableRow: React.FC<PromptTableRowProps> = ({
   onViewPrompt,
 }) => {
   const [copied, setCopied] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+
+  const handleCopyId = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (p.id == null || p.id === undefined) {
+        toast.error("No prompt ID to copy");
+        return;
+      }
+      copyTextToClipboard(String(p.id));
+    },
+    [p.id]
+  );
 
   const handleCopy = useCallback(
     (e: React.MouseEvent) => {
@@ -106,6 +127,17 @@ export const PromptTableRow: React.FC<PromptTableRowProps> = ({
             size="sm"
             variant="ghost"
             className="h-8 w-8 p-0"
+            title="Copy prompt ID"
+            aria-label="Copy prompt ID"
+            onClick={handleCopyId}
+          >
+            <Hash className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-8 w-8 p-0"
             title="Copy prompt"
             onClick={handleCopy}
           >
@@ -143,12 +175,36 @@ export const PromptTableRow: React.FC<PromptTableRowProps> = ({
             variant="ghost"
             className="h-8 w-8 p-0 text-destructive hover:text-destructive"
             title="Delete prompt"
-            onClick={() => handleDelete(p.id)}
+            onClick={() => setDeleteConfirmOpen(true)}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
         </ButtonGroup>
       </TableCell>
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete prompt?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            This prompt will be removed. This cannot be undone.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                handleDelete(p.id);
+                setDeleteConfirmOpen(false);
+              }}
+            >
+              Delete prompt
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </TableRow>
   );
 };

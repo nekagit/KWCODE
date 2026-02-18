@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from "react";
 import type { Project } from "@/types/project";
+import type { NightShiftCirclePhase } from "@/types/run";
 import { readProjectFileOrEmpty, listProjectFiles } from "@/lib/api-projects";
 import { invoke, isTauri } from "@/lib/tauri";
 import {
@@ -10,7 +11,7 @@ import {
   type TodosKanbanData,
   type ParsedTicket,
 } from "@/lib/todos-kanban";
-import { WORKER_IMPLEMENT_ALL_PROMPT_PATH, WORKER_FIX_BUG_PROMPT_PATH, WORKER_NIGHT_SHIFT_PROMPT_PATH, AGENTS_ROOT } from "@/lib/cursor-paths";
+import { WORKER_IMPLEMENT_ALL_PROMPT_PATH, WORKER_FIX_BUG_PROMPT_PATH, WORKER_NIGHT_SHIFT_PROMPT_PATH, WORKER_NIGHT_SHIFT_PHASE_PROMPT_PATHS, AGENTS_ROOT } from "@/lib/cursor-paths";
 import {
   buildKanbanContextBlock,
   combinePromptRecordWithKanban,
@@ -18,7 +19,9 @@ import {
 } from "@/lib/analysis-prompt";
 import { EmptyState, LoadingState } from "@/components/shared/EmptyState";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useRunStore } from "@/store/run-store";
 import { toast } from "sonner";
 import {
@@ -42,9 +45,30 @@ import {
   Trash2,
   ChevronDown,
   Moon,
+  Hash,
+  Copy,
+  Download,
+  FileJson,
+  FileText,
+  FileSpreadsheet,
+  Search,
+  X,
+  RotateCcw,
+  RotateCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { isImplementAllRun, parseTicketNumberFromRunLabel } from "@/lib/run-helpers";
+import { isImplementAllRun, parseTicketNumberFromRunLabel, formatElapsed } from "@/lib/run-helpers";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
+import { downloadRunOutput } from "@/lib/download-run-output";
+import { downloadRunAsJson } from "@/lib/download-run-as-json";
+import { downloadRunAsMarkdown } from "@/lib/download-run-as-md";
+import { downloadRunAsCsv } from "@/lib/download-run-as-csv";
+import { copyAllRunHistoryToClipboard } from "@/lib/copy-all-run-history";
+import { downloadAllRunHistory } from "@/lib/download-all-run-history";
+import { downloadAllRunHistoryCsv } from "@/lib/download-all-run-history-csv";
+import { downloadAllRunHistoryJson } from "@/lib/download-all-run-history-json";
+import { downloadAllRunHistoryMarkdown } from "@/lib/download-all-run-history-md";
+import { getRunHistoryPreferences, setRunHistoryPreferences, DEFAULT_RUN_HISTORY_PREFERENCES } from "@/lib/run-history-preferences";
 import { StatusPill } from "@/components/shared/DisplayPrimitives";
 import { TerminalSlot } from "@/components/shared/TerminalSlot";
 import { KanbanTicketCard } from "@/components/molecules/Kanban/KanbanTicketCard";
@@ -60,9 +84,17 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 /** Load concatenated content of all .md files in .cursor/2. agents for appending to terminal-agent prompts. */
 async function loadAllAgentsContent(projectId: string, repoPath: string): Promise<string> {
@@ -82,7 +114,7 @@ async function loadAllAgentsContent(projectId: string, repoPath: string): Promis
   }
 }
 
-/** Fallback when project has no .cursor/8. worker/fix-bug.md */
+/** Fallback when project has no .cursor/8. worker/fix-bug.prompt.md */
 const DEBUG_ASSISTANT_PROMPT_FALLBACK = `You are a debugging assistant in the current workspace. The user has pasted error/log output below. Identify the root cause, apply the fix in this workspace (edit files, run commands), and state what you fixed. Work only in this repo; be specific. If logs refer to another path, say so.
 
 ERROR/LOG INFORMATION:
@@ -181,6 +213,59 @@ function WorkerGeneralQueueSection({
    Night shift — 3 agents run same prompt in a loop until stopped
    ═══════════════════════════════════════════════════════════════════════════ */
 
+const NIGHT_SHIFT_BADGES = [
+  { id: "refactor", label: "Refactor" },
+  { id: "test", label: "Test" },
+  { id: "debugging", label: "Debugging" },
+  { id: "implement", label: "Implement" },
+  { id: "create", label: "Create" },
+] as const;
+
+/** Fallback one-line prompt when phase file is missing or empty. */
+const NIGHT_SHIFT_PHASE_FALLBACK: Record<NightShiftCirclePhase, string> = {
+  refactor: "Focus on refactoring: improve structure, naming, and patterns without changing behaviour. Prefer small, safe steps.\n\n",
+  test: "Focus on testing: add or extend tests (unit/integration) for the chosen feature. Ensure coverage and clear assertions.\n\n",
+  debugging: "Focus on debugging: reproduce, isolate, and fix the issue. Add minimal logging if needed; verify the fix.\n\n",
+  implement: "Focus on implementation: build the feature end-to-end. Prefer new files; wire into existing code only where necessary. This phase is for extending existing features and code.\n\n",
+  create: "Focus on creating: add something new (component, route, utility, or module). Prefer new files and clear boundaries. This phase is for adding new features and new code.\n\n",
+};
+
+/** Load phase prompt from .cursor/8. worker/{phase}.md; fallback to default if missing or empty. */
+async function loadPhasePrompt(
+  projectId: string,
+  projectPath: string,
+  phase: NightShiftCirclePhase
+): Promise<string> {
+  const path = WORKER_NIGHT_SHIFT_PHASE_PROMPT_PATHS[phase];
+  const content = (await readProjectFileOrEmpty(projectId, path, projectPath))?.trim() ?? "";
+  return content ? content + "\n\n" : NIGHT_SHIFT_PHASE_FALLBACK[phase];
+}
+
+/** Circle phase order: refactor → test → debugging → implement → create; null after create = end. */
+const CIRCLE_PHASE_ORDER: NightShiftCirclePhase[] = ["refactor", "test", "debugging", "implement", "create"];
+function nextCirclePhase(phase: NightShiftCirclePhase): NightShiftCirclePhase | null {
+  const i = CIRCLE_PHASE_ORDER.indexOf(phase);
+  if (i < 0 || i >= CIRCLE_PHASE_ORDER.length - 1) return null;
+  return CIRCLE_PHASE_ORDER[i + 1] ?? null;
+}
+
+/** Build badge block from selected badges (loads prompts from .cursor/8. worker/{id}.md) and optional extra instructions. */
+async function buildBadgeAndInstructionsBlock(
+  projectId: string,
+  projectPath: string,
+  badges: Record<string, boolean>,
+  extraInstructions: string
+): Promise<string> {
+  let block = "";
+  for (const b of NIGHT_SHIFT_BADGES) {
+    if (badges[b.id]) block += await loadPhasePrompt(projectId, projectPath, b.id as NightShiftCirclePhase);
+  }
+  if (extraInstructions.trim()) {
+    block += "\n\n## Additional instructions\n\n" + extraInstructions.trim() + "\n\n";
+  }
+  return block;
+}
+
 function WorkerNightShiftSection({
   projectId,
   projectPath,
@@ -192,7 +277,20 @@ function WorkerNightShiftSection({
   const nightShiftActive = useRunStore((s) => s.nightShiftActive);
   const setNightShiftActive = useRunStore((s) => s.setNightShiftActive);
   const setNightShiftReplenishCallback = useRunStore((s) => s.setNightShiftReplenishCallback);
+  const nightShiftCircleMode = useRunStore((s) => s.nightShiftCircleMode);
+  const nightShiftCirclePhase = useRunStore((s) => s.nightShiftCirclePhase);
+  const setNightShiftCircleState = useRunStore((s) => s.setNightShiftCircleState);
+  const incrementNightShiftCircleCompleted = useRunStore((s) => s.incrementNightShiftCircleCompleted);
+  const getState = useRunStore.getState;
   const [starting, setStarting] = useState(false);
+  const [badges, setBadges] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(NIGHT_SHIFT_BADGES.map((b) => [b.id, false]))
+  );
+  const [extraInstructions, setExtraInstructions] = useState("");
+
+  const toggleBadge = useCallback((id: string) => {
+    setBadges((prev) => ({ ...prev, [id]: !prev[id] }));
+  }, []);
 
   const handleStart = useCallback(async () => {
     if (!projectPath?.trim()) return;
@@ -201,18 +299,20 @@ function WorkerNightShiftSection({
       const basePrompt =
         (await readProjectFileOrEmpty(projectId, WORKER_NIGHT_SHIFT_PROMPT_PATH, projectPath))?.trim() ?? "";
       if (!basePrompt) {
-        toast.error("Night shift prompt is empty. Add content to .cursor/8. worker/night-shift.md");
+        toast.error("Night shift prompt is empty. Add content to .cursor/8. worker/night-shift.prompt.md");
         return;
       }
+      const badgeBlock = await buildBadgeAndInstructionsBlock(projectId, projectPath, badges, extraInstructions);
       const agentsBlock = await loadAllAgentsContent(projectId, projectPath);
-      const promptContent = (basePrompt + agentsBlock).trim();
+      const promptContent = (basePrompt + badgeBlock + agentsBlock).trim();
       setNightShiftActive(true);
       setNightShiftReplenishCallback(async (slot: 1 | 2 | 3) => {
         const base =
           (await readProjectFileOrEmpty(projectId, WORKER_NIGHT_SHIFT_PROMPT_PATH, projectPath))?.trim() ?? "";
         if (base) {
           const agents = await loadAllAgentsContent(projectId, projectPath);
-          runTempTicket(projectPath, (base + agents).trim(), `Night shift (Terminal ${slot})`, {
+          const full = (base + badgeBlock + agents).trim();
+          runTempTicket(projectPath, full, `Night shift (Terminal ${slot})`, {
             isNightShift: true,
           });
         }
@@ -226,13 +326,90 @@ function WorkerNightShiftSection({
     } finally {
       setStarting(false);
     }
-  }, [projectId, projectPath, runTempTicket, setNightShiftActive, setNightShiftReplenishCallback]);
+  }, [projectId, projectPath, badges, extraInstructions, runTempTicket, setNightShiftActive, setNightShiftReplenishCallback]);
+
+  const handleCircleStart = useCallback(async () => {
+    if (!projectPath?.trim()) return;
+    setStarting(true);
+    try {
+      const basePrompt =
+        (await readProjectFileOrEmpty(projectId, WORKER_NIGHT_SHIFT_PROMPT_PATH, projectPath))?.trim() ?? "";
+      if (!basePrompt) {
+        toast.error("Night shift prompt is empty. Add content to .cursor/8. worker/night-shift.prompt.md");
+        return;
+      }
+      setNightShiftCircleState(true, "refactor", 0);
+      setNightShiftActive(true);
+      const refactorBadgeBlock = await buildBadgeAndInstructionsBlock(projectId, projectPath, { refactor: true }, extraInstructions);
+      const agentsBlock = await loadAllAgentsContent(projectId, projectPath);
+      const promptContent = (basePrompt + refactorBadgeBlock + agentsBlock).trim();
+      setNightShiftReplenishCallback(async (slot: 1 | 2 | 3, exitingRun?: { meta?: { isNightShiftCircle?: boolean; circlePhase?: NightShiftCirclePhase } } | null) => {
+        const state = getState();
+        if (exitingRun?.meta?.isNightShiftCircle && exitingRun?.meta?.circlePhase === state.nightShiftCirclePhase) {
+          incrementNightShiftCircleCompleted();
+        }
+        const s = getState();
+        const phase = s.nightShiftCirclePhase;
+        const completed = s.nightShiftCircleCompletedInPhase;
+        if (phase == null) return;
+        const buildPromptForPhase = async (p: NightShiftCirclePhase) => {
+          const base =
+            (await readProjectFileOrEmpty(projectId, WORKER_NIGHT_SHIFT_PROMPT_PATH, projectPath))?.trim() ?? "";
+          const phasePrompt = await loadPhasePrompt(projectId, projectPath, p);
+          const instructionsPart = extraInstructions.trim() ? "\n\n## Additional instructions\n\n" + extraInstructions.trim() + "\n\n" : "";
+          const agents = await loadAllAgentsContent(projectId, projectPath);
+          return (base + phasePrompt + instructionsPart + agents).trim();
+        };
+        if (completed >= 3) {
+          const next = nextCirclePhase(phase);
+          if (next === null) {
+            setNightShiftCircleState(false, null, 0);
+            setNightShiftActive(false);
+            setNightShiftReplenishCallback(null);
+            toast.success("Circle finished: all phases done.");
+            return;
+          }
+          setNightShiftCircleState(true, next, 0);
+          const nextPrompt = await buildPromptForPhase(next);
+          for (const i of [1, 2, 3]) {
+            runTempTicket(projectPath, nextPrompt, `Night shift (Terminal ${i})`, {
+              isNightShift: true,
+              isNightShiftCircle: true,
+              circlePhase: next,
+            });
+          }
+          toast.success(`Circle: ${next} (3 agents).`);
+        } else {
+          const currentPrompt = await buildPromptForPhase(phase);
+          runTempTicket(projectPath, currentPrompt, `Night shift (Terminal ${slot})`, {
+            isNightShift: true,
+            isNightShiftCircle: true,
+            circlePhase: phase,
+          });
+        }
+      });
+      for (const slot of [1, 2, 3] as const) {
+        runTempTicket(projectPath, promptContent, `Night shift (Terminal ${slot})`, {
+          isNightShift: true,
+          isNightShiftCircle: true,
+          circlePhase: "refactor",
+        });
+      }
+      toast.success("Circle started: Refactor (3 agents).");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to start Circle");
+      setNightShiftCircleState(false, null, 0);
+    } finally {
+      setStarting(false);
+    }
+  }, [projectId, projectPath, extraInstructions, runTempTicket, setNightShiftActive, setNightShiftReplenishCallback, setNightShiftCircleState, incrementNightShiftCircleCompleted, getState]);
 
   const handleStop = useCallback(() => {
     setNightShiftActive(false);
     setNightShiftReplenishCallback(null);
+    setNightShiftCircleState(false, null, 0);
     toast.success("Night shift stopped. Current runs will finish; no new runs will start.");
-  }, [setNightShiftActive, setNightShiftReplenishCallback]);
+  }, [setNightShiftActive, setNightShiftReplenishCallback, setNightShiftCircleState]);
 
   return (
     <div className="rounded-2xl surface-card border border-border/50 overflow-hidden">
@@ -244,7 +421,7 @@ function WorkerNightShiftSection({
           <div>
             <h3 className="text-xs font-semibold text-foreground tracking-tight">Night shift</h3>
             <p className="text-[10px] text-muted-foreground normal-case">
-              Prompt from .cursor/8. worker/night-shift.md runs on 3 agents; when one finishes, the same prompt runs again until you stop. Edit that file to change the prompt.
+              Prompt from .cursor/8. worker/night-shift.prompt.md runs on 3 agents; when one finishes, the same prompt runs again until you stop. Edit that file to change the prompt.
             </p>
           </div>
         </div>
@@ -261,20 +438,87 @@ function WorkerNightShiftSection({
               Stop
             </Button>
           ) : (
-            <Button
-              variant="default"
-              size="sm"
-              className="h-8 text-xs gap-1.5 bg-indigo-600 hover:bg-indigo-700"
-              disabled={!projectPath?.trim() || starting}
-              onClick={handleStart}
-              title="Start 3 agents with same prompt in a loop"
-            >
-              {starting ? <Loader2 className="size-3.5 animate-spin" /> : <Play className="size-3.5" />}
-              Start
-            </Button>
+            <>
+              <Button
+                variant="default"
+                size="sm"
+                className="h-8 text-xs gap-1.5 bg-indigo-600 hover:bg-indigo-700"
+                disabled={!projectPath?.trim() || starting}
+                onClick={handleStart}
+                title="Start 3 agents with same prompt in a loop"
+              >
+                {starting ? <Loader2 className="size-3.5 animate-spin" /> : <Play className="size-3.5" />}
+                Start
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs gap-1.5 border-indigo-500/50 text-indigo-600 hover:bg-indigo-500/10"
+                disabled={!projectPath?.trim() || starting}
+                onClick={handleCircleStart}
+                title="Run Refactor → Test → Debugging → Implement → Create (3 agents per phase)"
+              >
+                <RotateCw className="size-3.5" />
+                Circle
+              </Button>
+            </>
           )}
         </div>
       </div>
+      {(!nightShiftActive || nightShiftCircleMode) && (
+        <>
+          <div className="px-5 pb-2">
+            <span className="text-[10px] text-muted-foreground">
+              {nightShiftCircleMode ? "Circle phase:" : "Mode (click to toggle):"}
+            </span>
+            <div className="flex flex-wrap gap-1.5 mt-1.5">
+              {NIGHT_SHIFT_BADGES.map((b) => {
+                const selected = nightShiftCircleMode ? b.id === nightShiftCirclePhase : !!badges[b.id];
+                return (
+                  <Badge
+                    key={b.id}
+                    variant={selected ? "default" : "outline"}
+                    className={cn(
+                      "text-xs font-medium transition-colors",
+                      nightShiftCircleMode ? "cursor-default" : "cursor-pointer hover:bg-muted/60",
+                      selected
+                        ? "bg-indigo-600 text-white hover:bg-indigo-700 hover:text-white"
+                        : nightShiftCircleMode ? "" : "hover:bg-muted/60"
+                    )}
+                    onClick={nightShiftCircleMode ? undefined : () => toggleBadge(b.id)}
+                    role={nightShiftCircleMode ? undefined : "button"}
+                    tabIndex={nightShiftCircleMode ? undefined : 0}
+                    onKeyDown={
+                      nightShiftCircleMode
+                        ? undefined
+                        : (e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              toggleBadge(b.id);
+                            }
+                          }
+                    }
+                  >
+                    {b.label}
+                  </Badge>
+                );
+              })}
+            </div>
+          </div>
+          {!nightShiftActive && (
+            <div className="px-5 pb-4">
+              <label className="text-[10px] text-muted-foreground block mb-1">Extra instructions</label>
+              <Textarea
+                placeholder="Optional: add instructions that are appended to the prompt for this run."
+                value={extraInstructions}
+                onChange={(e) => setExtraInstructions(e.target.value)}
+                className="min-h-[60px] text-xs resize-y"
+                rows={2}
+              />
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
@@ -630,10 +874,77 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
 
 const OUTPUT_PREVIEW_LEN = 80;
 
+type HistorySortOrder = "newest" | "oldest" | "shortest" | "longest";
+type ExitStatusFilter = "all" | "success" | "failed";
+type DateRangeFilter = "all" | "24h" | "7d" | "30d";
+type SlotFilter = "all" | "1" | "2" | "3";
+
+const MS_24H = 24 * 60 * 60 * 1000;
+const MS_7D = 7 * MS_24H;
+const MS_30D = 30 * MS_24H;
+
 function WorkerHistorySection() {
   const history = useRunStore((s) => s.terminalOutputHistory);
   const clearTerminalOutputHistory = useRunStore((s) => s.clearTerminalOutputHistory);
+  const removeTerminalOutputFromHistory = useRunStore((s) => s.removeTerminalOutputFromHistory);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
+  const [filterQuery, setFilterQuery] = useState("");
+  const [exitStatusFilter, setExitStatusFilter] = useState<ExitStatusFilter>(() => getRunHistoryPreferences().exitStatusFilter);
+  const [dateRangeFilter, setDateRangeFilter] = useState<DateRangeFilter>(() => getRunHistoryPreferences().dateRangeFilter);
+  const [slotFilter, setSlotFilter] = useState<SlotFilter>(() => getRunHistoryPreferences().slotFilter);
+  const [sortOrder, setSortOrder] = useState<HistorySortOrder>(() => getRunHistoryPreferences().sortOrder);
+  useEffect(() => {
+    setRunHistoryPreferences({ sortOrder, exitStatusFilter, dateRangeFilter, slotFilter });
+  }, [sortOrder, exitStatusFilter, dateRangeFilter, slotFilter]);
+  const trimmedQuery = filterQuery.trim().toLowerCase();
+  const isNonDefaultPreferences =
+    sortOrder !== DEFAULT_RUN_HISTORY_PREFERENCES.sortOrder ||
+    exitStatusFilter !== DEFAULT_RUN_HISTORY_PREFERENCES.exitStatusFilter ||
+    dateRangeFilter !== DEFAULT_RUN_HISTORY_PREFERENCES.dateRangeFilter ||
+    slotFilter !== DEFAULT_RUN_HISTORY_PREFERENCES.slotFilter;
+  const filteredHistory = useMemo(() => {
+    const byLabel = !trimmedQuery
+      ? history
+      : history.filter((h) => h.label.toLowerCase().includes(trimmedQuery));
+    let byStatus = byLabel;
+    if (exitStatusFilter === "success") byStatus = byLabel.filter((h) => h.exitCode === 0);
+    else if (exitStatusFilter === "failed") byStatus = byLabel.filter((h) => h.exitCode !== undefined && h.exitCode !== 0);
+    let byDate = byStatus;
+    if (dateRangeFilter !== "all") {
+      const now = Date.now();
+      const cutoff = dateRangeFilter === "24h" ? now - MS_24H : dateRangeFilter === "7d" ? now - MS_7D : now - MS_30D;
+      byDate = byStatus.filter((h) => {
+        try {
+          const t = new Date(h.timestamp).getTime();
+          return Number.isFinite(t) && t >= cutoff;
+        } catch {
+          return false;
+        }
+      });
+    }
+    if (slotFilter === "all") return byDate;
+    const slotNum = Number(slotFilter) as 1 | 2 | 3;
+    return byDate.filter((h) => h.slot === slotNum);
+  }, [history, trimmedQuery, exitStatusFilter, dateRangeFilter, slotFilter]);
+  const displayHistory = useMemo(() => {
+    if (sortOrder === "oldest") return [...filteredHistory].reverse();
+    if (sortOrder === "shortest") {
+      return [...filteredHistory].sort((a, b) => {
+        const am = a.durationMs ?? Infinity;
+        const bm = b.durationMs ?? Infinity;
+        return am - bm;
+      });
+    }
+    if (sortOrder === "longest") {
+      return [...filteredHistory].sort((a, b) => {
+        const am = a.durationMs ?? -1;
+        const bm = b.durationMs ?? -1;
+        return bm - am;
+      });
+    }
+    return filteredHistory;
+  }, [filteredHistory, sortOrder]);
   const entry = expandedId ? history.find((e) => e.id === expandedId) : null;
 
   const formatTime = (iso: string) => {
@@ -655,20 +966,77 @@ function WorkerHistorySection() {
           <div>
             <h3 className="text-xs font-semibold text-foreground tracking-tight">History</h3>
             <p className="text-[10px] text-muted-foreground normal-case">
-              Outputs of completed agent runs (newest first)
+              Outputs of completed agent runs
             </p>
           </div>
         </div>
         {history.length > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => clearTerminalOutputHistory()}
-            className="gap-1.5 text-xs h-8 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10"
-          >
-            <Trash2 className="size-3" />
-            Clear history
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => copyAllRunHistoryToClipboard(displayHistory)}
+              className="gap-1.5 text-xs h-8 rounded-lg text-muted-foreground hover:text-foreground"
+              title="Copy visible run history to clipboard"
+              aria-label="Copy visible run history to clipboard"
+            >
+              <Copy className="size-3" />
+              Copy all
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => downloadAllRunHistory(displayHistory)}
+              className="gap-1.5 text-xs h-8 rounded-lg text-muted-foreground hover:text-foreground"
+              title="Export visible run history as one file"
+              aria-label="Export visible run history as one file"
+            >
+              <Download className="size-3" />
+              Download all
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => downloadAllRunHistoryCsv(displayHistory)}
+              className="gap-1.5 text-xs h-8 rounded-lg text-muted-foreground hover:text-foreground"
+              title="Export visible run history as CSV"
+              aria-label="Export visible run history as CSV"
+            >
+              <Download className="size-3" />
+              Download as CSV
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => downloadAllRunHistoryJson(displayHistory)}
+              className="gap-1.5 text-xs h-8 rounded-lg text-muted-foreground hover:text-foreground"
+              title="Export visible run history as JSON"
+              aria-label="Export visible run history as JSON"
+            >
+              <FileJson className="size-3" />
+              Download as JSON
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => downloadAllRunHistoryMarkdown(displayHistory)}
+              className="gap-1.5 text-xs h-8 rounded-lg text-muted-foreground hover:text-foreground"
+              title="Export visible run history as Markdown"
+              aria-label="Export visible run history as Markdown"
+            >
+              <FileText className="size-3" />
+              Download as Markdown
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setClearConfirmOpen(true)}
+              className="gap-1.5 text-xs h-8 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10"
+            >
+              <Trash2 className="size-3" />
+              Clear history
+            </Button>
+          </div>
         )}
       </div>
       <div className="px-4 pb-4">
@@ -677,7 +1045,122 @@ function WorkerHistorySection() {
             No runs yet. Completed terminal runs will appear here.
           </p>
         ) : (
-          <div className="rounded-lg border border-border/40 overflow-hidden">
+          <>
+            <div className="flex flex-wrap items-center gap-3 mb-3">
+              <div className="relative flex-1 min-w-[160px] max-w-xs">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" aria-hidden />
+                <Input
+                  type="text"
+                  placeholder="Filter by label…"
+                  value={filterQuery}
+                  onChange={(e) => setFilterQuery(e.target.value)}
+                  className="pl-8 h-8 text-xs"
+                  aria-label="Filter run history by label"
+                />
+              </div>
+              {trimmedQuery && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFilterQuery("")}
+                  className="h-8 gap-1.5 text-xs"
+                  aria-label="Clear filter"
+                >
+                  <X className="size-3.5" aria-hidden />
+                  Clear
+                </Button>
+              )}
+              <Select value={exitStatusFilter} onValueChange={(v) => setExitStatusFilter(v as ExitStatusFilter)}>
+                <SelectTrigger className="h-8 w-[110px] text-xs" aria-label="Filter run history by status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="text-xs">All</SelectItem>
+                  <SelectItem value="success" className="text-xs">Success</SelectItem>
+                  <SelectItem value="failed" className="text-xs">Failed</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={sortOrder} onValueChange={(v) => setSortOrder(v as HistorySortOrder)}>
+                <SelectTrigger className="h-8 min-w-[140px] w-[140px] text-xs" aria-label="Sort run history">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest" className="text-xs">Newest first</SelectItem>
+                  <SelectItem value="oldest" className="text-xs">Oldest first</SelectItem>
+                  <SelectItem value="shortest" className="text-xs">Shortest first</SelectItem>
+                  <SelectItem value="longest" className="text-xs">Longest first</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={dateRangeFilter} onValueChange={(v) => setDateRangeFilter(v as DateRangeFilter)}>
+                <SelectTrigger className="h-8 w-[140px] text-xs" aria-label="Filter run history by date range">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="text-xs">All time</SelectItem>
+                  <SelectItem value="24h" className="text-xs">Last 24 hours</SelectItem>
+                  <SelectItem value="7d" className="text-xs">Last 7 days</SelectItem>
+                  <SelectItem value="30d" className="text-xs">Last 30 days</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={slotFilter} onValueChange={(v) => setSlotFilter(v as SlotFilter)}>
+                <SelectTrigger className="h-8 w-[100px] text-xs" aria-label="Filter run history by slot">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="text-xs">All slots</SelectItem>
+                  <SelectItem value="1" className="text-xs">Slot 1</SelectItem>
+                  <SelectItem value="2" className="text-xs">Slot 2</SelectItem>
+                  <SelectItem value="3" className="text-xs">Slot 3</SelectItem>
+                </SelectContent>
+              </Select>
+              {(trimmedQuery || exitStatusFilter !== "all" || dateRangeFilter !== "all" || slotFilter !== "all") && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setFilterQuery("");
+                    setExitStatusFilter("all");
+                    setDateRangeFilter("all");
+                    setSlotFilter("all");
+                  }}
+                  className="h-8 gap-1.5 text-xs"
+                  aria-label="Reset all filters"
+                >
+                  <RotateCcw className="size-3.5" aria-hidden />
+                  Reset filters
+                </Button>
+              )}
+              {isNonDefaultPreferences && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSortOrder(DEFAULT_RUN_HISTORY_PREFERENCES.sortOrder);
+                    setExitStatusFilter(DEFAULT_RUN_HISTORY_PREFERENCES.exitStatusFilter);
+                    setDateRangeFilter(DEFAULT_RUN_HISTORY_PREFERENCES.dateRangeFilter);
+                    setSlotFilter(DEFAULT_RUN_HISTORY_PREFERENCES.slotFilter);
+                    setRunHistoryPreferences(DEFAULT_RUN_HISTORY_PREFERENCES);
+                    toast.success("Preferences restored to defaults.");
+                  }}
+                  className="h-8 gap-1.5 text-xs"
+                  aria-label="Restore default sort and filter preferences"
+                  title="Restore default sort and filter preferences (and persist)"
+                >
+                  <RotateCcw className="size-3.5" aria-hidden />
+                  Restore defaults
+                </Button>
+              )}
+              {(trimmedQuery || exitStatusFilter !== "all" || dateRangeFilter !== "all" || slotFilter !== "all") && (
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  Showing {filteredHistory.length} of {history.length} runs
+                </span>
+              )}
+            </div>
+            {filteredHistory.length > 0 ? (
+            <div className="rounded-lg border border-border/40 overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow className="border-border/60 hover:bg-transparent">
@@ -685,12 +1168,13 @@ function WorkerHistorySection() {
                   <TableHead className="min-w-[160px]">Label</TableHead>
                   <TableHead className="w-14">Slot</TableHead>
                   <TableHead className="w-14">Exit</TableHead>
+                  <TableHead className="w-16">Duration</TableHead>
                   <TableHead>Output (preview)</TableHead>
-                  <TableHead className="w-16 text-right">View</TableHead>
+                  <TableHead className="min-w-[120px] text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {history.map((h) => {
+                {displayHistory.map((h) => {
                   const preview = h.output.trim().slice(0, OUTPUT_PREVIEW_LEN);
                   const hasMore = h.output.trim().length > OUTPUT_PREVIEW_LEN;
                   return (
@@ -714,26 +1198,130 @@ function WorkerHistorySection() {
                           </span>
                         ) : "—"}
                       </TableCell>
+                      <TableCell className="text-xs text-muted-foreground font-mono whitespace-nowrap">
+                        {h.durationMs != null && h.durationMs >= 0
+                          ? h.durationMs < 1000
+                            ? "<1s"
+                            : formatElapsed(h.durationMs / 1000)
+                          : "—"}
+                      </TableCell>
                       <TableCell className="text-xs text-muted-foreground font-mono max-w-[280px] truncate" title={preview}>
                         {preview}{hasMore ? "…" : ""}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-2 text-xs gap-1 opacity-70 group-hover:opacity-100"
-                          onClick={() => setExpandedId(h.id)}
-                        >
-                          <ChevronDown className="size-3 rotate-[-90deg]" />
-                          Full
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs gap-1 opacity-70 group-hover:opacity-100"
+                            onClick={() => copyTextToClipboard(h.id)}
+                            title="Copy run ID"
+                          >
+                            <Hash className="size-3" />
+                            Copy ID
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs gap-1 opacity-70 group-hover:opacity-100"
+                            onClick={() => copyTextToClipboard(h.output)}
+                            title="Copy output"
+                          >
+                            <Copy className="size-3" />
+                            Copy
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs gap-1 opacity-70 group-hover:opacity-100"
+                            onClick={() => downloadRunOutput(h.output, h.label)}
+                            title="Download output as file"
+                          >
+                            <Download className="size-3" />
+                            Download
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs gap-1 opacity-70 group-hover:opacity-100"
+                            onClick={() => downloadRunAsJson(h)}
+                            title="Export run as JSON"
+                          >
+                            <FileJson className="size-3" />
+                            JSON
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs gap-1 opacity-70 group-hover:opacity-100"
+                            onClick={() => downloadRunAsMarkdown(h)}
+                            title="Export run as Markdown"
+                          >
+                            <FileText className="size-3" />
+                            MD
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs gap-1 opacity-70 group-hover:opacity-100"
+                            onClick={() => downloadRunAsCsv(h)}
+                            title="Export run as CSV"
+                          >
+                            <FileSpreadsheet className="size-3" />
+                            CSV
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs gap-1 opacity-70 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+                            onClick={() => {
+                              removeTerminalOutputFromHistory(h.id);
+                              toast.success("Run removed from history");
+                            }}
+                            title="Remove from history"
+                          >
+                            <Trash2 className="size-3" />
+                            Remove
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs gap-1 opacity-70 group-hover:opacity-100"
+                            onClick={() => setExpandedId(h.id)}
+                          >
+                            <ChevronDown className="size-3 rotate-[-90deg]" />
+                            Full
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
                 })}
               </TableBody>
             </Table>
-          </div>
+            </div>
+            ) : trimmedQuery ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                No runs match &quot;{filterQuery.trim()}&quot;.
+              </p>
+            ) : dateRangeFilter !== "all" ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                No runs in this date range.
+              </p>
+            ) : exitStatusFilter === "success" ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                No successful runs.
+              </p>
+            ) : exitStatusFilter === "failed" ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                No failed runs.
+              </p>
+            ) : slotFilter !== "all" ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                No runs in Slot {slotFilter}.
+              </p>
+            ) : null}
+          </>
         )}
       </div>
 
@@ -745,10 +1333,115 @@ function WorkerHistorySection() {
             </DialogTitle>
           </DialogHeader>
           {entry && (
-            <pre className="flex-1 overflow-auto rounded-lg bg-muted/50 p-4 text-xs font-mono whitespace-pre-wrap border border-border/40">
-              {entry.output || "(no output)"}
-            </pre>
+            <>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => copyTextToClipboard(entry.id)}
+                  title="Copy run ID"
+                  aria-label="Copy run ID to clipboard"
+                >
+                  <Hash className="size-3.5" />
+                  Copy run ID
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => copyTextToClipboard(entry.output || "")}
+                >
+                  <Copy className="size-3.5" />
+                  Copy output
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => downloadRunOutput(entry.output || "", entry.label)}
+                >
+                  <Download className="size-3.5" />
+                  Download output
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => downloadRunAsJson(entry)}
+                  title="Export run as JSON"
+                >
+                  <FileJson className="size-3.5" />
+                  Export JSON
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => downloadRunAsMarkdown(entry)}
+                  title="Export run as Markdown"
+                >
+                  <FileText className="size-3.5" />
+                  Export Markdown
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => downloadRunAsCsv(entry)}
+                  title="Export run as CSV"
+                >
+                  <FileSpreadsheet className="size-3.5" />
+                  Export CSV
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-muted-foreground hover:text-destructive"
+                  onClick={() => {
+                    removeTerminalOutputFromHistory(entry.id);
+                    setExpandedId(null);
+                    toast.success("Run removed from history");
+                  }}
+                  title="Remove from history"
+                >
+                  <Trash2 className="size-3.5" />
+                  Remove from history
+                </Button>
+              </div>
+              <pre className="flex-1 overflow-auto rounded-lg bg-muted/50 p-4 text-xs font-mono whitespace-pre-wrap border border-border/40">
+                {entry.output || "(no output)"}
+              </pre>
+            </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={clearConfirmOpen} onOpenChange={setClearConfirmOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Clear run history?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            {history.length === 1
+              ? "1 run will be removed from history. This cannot be undone."
+              : `${history.length} runs will be removed from history. This cannot be undone.`}
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setClearConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                clearTerminalOutputHistory();
+                setClearConfirmOpen(false);
+                toast.success("History cleared");
+              }}
+            >
+              Clear history
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

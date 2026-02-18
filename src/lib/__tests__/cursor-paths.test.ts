@@ -50,10 +50,10 @@ describe("cursor-paths constants", () => {
 
   it("worker and agents paths are under .cursor", () => {
     expect(WORKER_IMPLEMENT_ALL_PROMPT_PATH).toContain(".cursor");
-    expect(WORKER_IMPLEMENT_ALL_PROMPT_PATH).toContain("implement-all.md");
+    expect(WORKER_IMPLEMENT_ALL_PROMPT_PATH).toContain("implement-all.prompt.md");
     expect(WORKER_FIX_BUG_PROMPT_PATH).toContain(".cursor");
-    expect(WORKER_FIX_BUG_PROMPT_PATH).toContain("fix-bug.md");
-    expect(WORKER_NIGHT_SHIFT_PROMPT_PATH).toContain("night-shift.md");
+    expect(WORKER_FIX_BUG_PROMPT_PATH).toContain("fix-bug.prompt.md");
+    expect(WORKER_NIGHT_SHIFT_PROMPT_PATH).toContain("night-shift.prompt.md");
     expect(AGENTS_ROOT).toBe(".cursor/2. agents");
   });
 

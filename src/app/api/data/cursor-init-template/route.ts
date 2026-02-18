@@ -26,14 +26,14 @@ function readDirRecursive(dir: string, baseDir: string): Record<string, string> 
   return out;
 }
 
-/** GET: returns all files under .cursor_template as { files: { "agents/frontend-dev.md": "content...", ... } } for copying to project as .cursor/ */
+/** GET: returns all files under the template dir as { files: { "agents/frontend-dev.md": "content...", ... } } for copying to project as .cursor/ */
 export async function GET() {
   try {
     const cwd = process.cwd();
     const templateRoot = path.resolve(cwd, TEMPLATE_DIR);
     if (!fs.existsSync(templateRoot) || !fs.statSync(templateRoot).isDirectory()) {
       return NextResponse.json(
-        { error: `Template folder ${TEMPLATE_DIR} not found` },
+        { error: "Template folder not found" },
         { status: 404 }
       );
     }

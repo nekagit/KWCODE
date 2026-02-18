@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { Cpu, Loader2, Pencil, Save, Layout, Server, Wrench } from "lucide-react";
+import { Copy, Cpu, Download, FolderOpen, Loader2, Pencil, RefreshCw, Save, Layout, Server, Wrench } from "lucide-react";
 import { toast } from "sonner";
+import { Breadcrumb } from "@/components/shared/Breadcrumb";
 import { SingleContentPage } from "@/components/organisms/SingleContentPage";
 import { SectionCard } from "@/components/shared/DisplayPrimitives";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,10 @@ import {
 } from "@/components/ui/dialog";
 import { getOrganismClasses } from "./organism-classes";
 import { getTechLogoUrl } from "@/lib/tech-logos";
+import { copyTechStackToClipboard } from "@/lib/copy-tech-stack";
+import { copyTechnologiesFolderPath } from "@/lib/copy-technologies-folder-path";
+import { downloadTechStack } from "@/lib/download-tech-stack";
+import { openTechnologiesFolderInFileManager } from "@/lib/open-technologies-folder";
 
 const c = getOrganismClasses("TechnologiesPageContent.tsx");
 
@@ -93,19 +98,25 @@ export function TechnologiesPageContent() {
   const [editPath, setEditPath] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [saving, setSaving] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const cancelledRef = useRef(false);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (): Promise<boolean> => {
     try {
       const res = await fetch("/api/data/technologies");
       if (!res.ok) throw new Error(await res.text());
       const data = (await res.json()) as { files?: Record<string, string> };
-      if (!cancelledRef.current) setFiles(data.files ?? {});
+      if (!cancelledRef.current) {
+        setFiles(data.files ?? {});
+        setError(null);
+      }
+      return true;
     } catch (e) {
       if (!cancelledRef.current) {
         setError(e instanceof Error ? e.message : "Failed to load");
         setFiles({});
       }
+      return false;
     } finally {
       if (!cancelledRef.current) setLoading(false);
     }
@@ -155,14 +166,69 @@ export function TechnologiesPageContent() {
     }
   }, [editPath, editContent, closeEdit]);
 
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const ok = await load();
+      if (!ok) toast.error("Refresh failed");
+    } finally {
+      setRefreshing(false);
+    }
+  }, [load]);
+
   const techStack = parseTechStack(files["tech-stack.json"]);
   const librariesMd = files["libraries.md"] ?? "";
   const sourcesMd = files["sources.md"] ?? "";
 
   return (
-    <SingleContentPage
+    <div className="space-y-0">
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", href: "/" },
+          { label: "Technologies" },
+        ]}
+        className="mb-3"
+      />
+      <div className="mb-3 flex justify-end gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => copyTechnologiesFolderPath()}
+          aria-label="Copy technologies folder path"
+        >
+          <Copy className="h-4 w-4 mr-1.5" aria-hidden />
+          Copy path
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => openTechnologiesFolderInFileManager()}
+          aria-label="Open technologies folder in file manager"
+        >
+          <FolderOpen className="h-4 w-4 mr-1.5" aria-hidden />
+          Open folder
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={refreshing}
+          onClick={handleRefresh}
+          aria-label="Refresh technologies"
+        >
+          {refreshing ? (
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+          ) : (
+            <RefreshCw className="h-4 w-4" aria-hidden />
+          )}
+          <span className="ml-2">Refresh</span>
+        </Button>
+      </div>
+      <SingleContentPage
       title="Technologies"
-      description="Preferred tech stack, libraries, and open source sources for future projects. Shown from .cursor/technologies/, .cursor_template/technologies/, or project_template (folder or project_template.zip)."
+      description="Preferred tech stack, libraries, and open source sources for future projects. Shown from .cursor/technologies/ or project_template (folder or project_template.zip)."
       icon={<Cpu className={c["0"] ?? "size-5 text-primary/90"} />}
       layout="card"
       error={error}
@@ -184,15 +250,41 @@ export function TechnologiesPageContent() {
                   </p>
                 )}
               </div>
-              {files["tech-stack.json"] != null && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => openEdit("tech-stack.json")}
-                >
-                  <Pencil className="size-4 mr-1.5" />
-                  Edit
-                </Button>
+              {(files["tech-stack.json"] != null || techStack) && (
+                <div className="flex flex-wrap items-center gap-2">
+                  {files["tech-stack.json"] != null && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openEdit("tech-stack.json")}
+                    >
+                      <Pencil className="size-4 mr-1.5" />
+                      Edit
+                    </Button>
+                  )}
+                  {techStack && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyTechStackToClipboard(techStack)}
+                        aria-label="Copy tech stack as JSON to clipboard"
+                      >
+                        <Copy className="size-4 mr-1.5" />
+                        Copy
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => downloadTechStack(techStack)}
+                        aria-label="Export tech stack as JSON"
+                      >
+                        <Download className="size-4 mr-1.5" />
+                        Export
+                      </Button>
+                    </>
+                  )}
+                </div>
               )}
             </div>
             {techStack ? (
@@ -203,7 +295,7 @@ export function TechnologiesPageContent() {
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                No tech-stack.json found. Add one in .cursor/technologies/, .cursor_template/technologies/, or use the project template (project_template.zip or project_template/.cursor/technologies/).
+                No tech-stack.json found. Add one in .cursor/technologies/ or use the project template (project_template.zip or project_template/.cursor/technologies/).
               </p>
             )}
           </div>
@@ -294,5 +386,6 @@ export function TechnologiesPageContent() {
         </DialogContent>
       </Dialog>
     </SingleContentPage>
+    </div>
   );
 }

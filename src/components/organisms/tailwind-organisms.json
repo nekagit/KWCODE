@@ -33,12 +33,9 @@
   "ProjectDetailsPageContent.tsx": {},
   "ProjectsListPageContent.tsx": {
     "0": "space-y-6",
-    "1": "space-y-4",
+    "1": "w-full space-y-4",
     "2": "text-lg font-semibold tracking-tight text-foreground/90",
-    "3": "space-y-1 rounded-xl border border-border/70 bg-card/90 backdrop-blur-sm p-4 shadow-sm",
-    "4": "flex items-center justify-between gap-3 py-2.5 px-3.5 rounded-xl hover:bg-accent/50 transition-all duration-200 group border border-transparent hover:border-border/50",
-    "5": "flex-1 min-w-0 truncate font-medium text-foreground hover:text-primary transition-colors",
-    "6": "text-xs text-muted-foreground hover:text-destructive opacity-70 group-hover:opacity-100 transition-all duration-200"
+    "grid": "w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 list-none p-0 m-0"
   },
   "PromptRecordsPageContent.tsx": {
     "0": "space-y-6",
@@ -77,7 +74,8 @@
     "1": "space-y-6"
   },
   "ThreeTabResourcePageContent.tsx": {
-    "0": "min-h-screen bg-background space-y-8 pb-20 container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 animate-fade-in"
+    "0": "min-h-screen bg-background space-y-8 pb-20 container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 animate-fade-in",
+    "1": "space-y-8 pb-12 animate-fade-in"
   },
   "TicketBoard.tsx": {
     "0": "rounded-xl border border-border/60 bg-card/50 backdrop-blur-sm min-h-80 flex flex-col shadow-sm",

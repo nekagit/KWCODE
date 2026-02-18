@@ -1,19 +1,15 @@
 "use client";
 
-import Link from "next/link";
 import { Card } from "@/components/shared/Card";
 import { Button } from "@/components/ui/button";
-import { Folders, MessageSquare, Ticket as TicketIcon, Lightbulb, Palette } from "lucide-react";
-import type { Project } from "@/types/project";
+import { Folders, MessageSquare, Lightbulb, Palette, LayoutGrid } from "lucide-react";
 import type { PromptRecord } from "@/types/prompt";
-import type { TicketRow } from "@/types/ticket";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import { AllProjectsDisplayList } from "@/components/molecules/Displays/AllProjectsDisplayList";
 import { PromptsDisplayList } from "@/components/molecules/Displays/PromptsDisplayList";
-import { TicketsDisplayList } from "@/components/molecules/Displays/TicketsDisplayList";
-
 import { IdeasDisplayList } from "@/components/molecules/Displays/IdeasDisplayList";
 import { getClasses } from "@/components/molecules/tailwind-molecules";
+
 const classes = getClasses("TabAndContentSections/AllDataTabContent.tsx");
 
 interface AllDataTabContentProps {
@@ -37,19 +33,30 @@ export function AllDataTabContent({
   prompts,
   selectedPromptRecordIds,
   setSelectedPromptRecordIds,
-  tickets,
   ideas,
   ideasLoading,
 }: AllDataTabContentProps) {
   return (
     <div className={classes[0]}>
-      <div>
-        <h2 className={classes[1]}>Database</h2>
-        <p className={classes[2]}>
-          Combined view: projects, prompts, tickets, ideas, and design. Use this as the big project page.
-        </p>
-      </div>
+      {/* Page header: clear identity, not form-like */}
+      <header
+        className="rounded-2xl border border-border/70 bg-gradient-to-br from-muted/40 via-background to-primary/5 dark:from-muted/30 dark:to-primary/10 p-5 mb-6 shadow-sm"
+        aria-label="Database overview"
+      >
+        <div className="flex items-start gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 border border-primary/20">
+            <LayoutGrid className="h-5 w-5 text-primary" aria-hidden />
+          </div>
+          <div className="min-w-0">
+            <h2 className={classes[1]}>Database</h2>
+            <p className={classes[2]}>
+              Combined view: projects, prompts, ideas, and design. Your central data hub.
+            </p>
+          </div>
+        </div>
+      </header>
 
+      {/* Section cards in a single responsive grid */}
       <div className={classes[3]}>
         <Card
           title={
@@ -75,7 +82,7 @@ export function AllDataTabContent({
           title={
             <>
               <MessageSquare className={classes[5]} />
-              PromptRecords
+              Prompt records
             </>
           }
           subtitle={`${prompts.length} prompts`}
@@ -85,11 +92,8 @@ export function AllDataTabContent({
             selectedPromptIds={selectedPromptRecordIds}
             setSelectedPromptIds={setSelectedPromptRecordIds}
           />
-          <p className={classes[6]}>Select prompts for Run. Edit on PromptRecords page.</p>
+          <p className={classes[6]}>Select prompts for Run. Edit on Prompts page.</p>
         </Card>
-      </div>
-
-      <div className={classes[3]}>
         <Card
           title={
             <>
@@ -108,9 +112,9 @@ export function AllDataTabContent({
               Design
             </>
           }
-          subtitle="Design config and markdown spec"
+          subtitle="Layout, colors, typography"
         >
-          <p className={classes[15]}>
+          <p className={classes[9]}>
             Configure page layout, colors, typography, and sections. Generate markdown for implementation.
           </p>
         </Card>

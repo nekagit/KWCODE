@@ -6,11 +6,18 @@ import { TerminalStatusBadge } from "@/components/molecules/Display/TerminalStat
 import { SidebarNavigation } from "@/components/organisms/SidebarNavigation";
 import { SidebarToggle } from "@/components/molecules/ControlsAndButtons/SidebarToggle";
 import { useRunState } from "@/context/run-state";
+import { PageTitleProvider } from "@/context/page-title-context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { FloatingTerminalDialog } from "@/components/shared/FloatingTerminalDialog";
 import { TerminalRunDock } from "@/components/shared/TerminalRunDock";
+import { CommandPalette } from "@/components/shared/CommandPalette";
+import { SkipToMainContent } from "@/components/shared/SkipToMainContent";
+import { RunStatusAnnouncer } from "@/components/shared/RunStatusAnnouncer";
+import { BackToTop } from "@/components/shared/BackToTop";
+import { SidebarVersion } from "@/components/shared/SidebarVersion";
 
 const SIDEBAR_STORAGE_KEY = "kwcode-sidebar-width";
+const SIDEBAR_COLLAPSED_STORAGE_KEY = "kwcode-sidebar-collapsed";
 const SIDEBAR_MIN = 160;
 const SIDEBAR_MAX = 400;
 const SIDEBAR_DEFAULT = 192; // w-48
@@ -24,6 +31,12 @@ function getStoredSidebarWidth(): number {
   return Number.isFinite(n) ? Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, n)) : SIDEBAR_DEFAULT;
 }
 
+function getStoredSidebarCollapsed(): boolean {
+  if (typeof window === "undefined") return false;
+  const stored = localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY);
+  return stored === "true";
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -31,6 +44,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setSidebarWidth(getStoredSidebarWidth());
   }, []);
+  useEffect(() => {
+    setSidebarCollapsed(getStoredSidebarCollapsed());
+  }, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, String(sidebarCollapsed));
+    } catch (_) {}
+  }, [sidebarCollapsed]);
+
+  // Scroll main content to top on route change (fresh-page experience; instant scroll for reduced-motion)
+  useEffect(() => {
+    const main = document.getElementById("main-content");
+    if (main) main.scrollTop = 0;
+  }, [pathname]);
+
   const [isResizing, setIsResizing] = useState(false);
   const resizeStartX = useRef(0);
   const resizeStartWidth = useRef(SIDEBAR_DEFAULT);
@@ -69,6 +97,41 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
   }, [isResizing]);
 
+  // Toggle sidebar: ⌘B (Mac) / Ctrl+B (Windows/Linux); skip when focus in input/textarea/select
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      const isMac = typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+      const toggleSidebar =
+        isMac ? e.metaKey && e.key === "b" : e.ctrlKey && e.key === "b";
+      if (toggleSidebar) {
+        e.preventDefault();
+        setSidebarCollapsed((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  // Scroll main content to top: ⌘ Home (Mac) / Ctrl+Home (Windows/Linux); skip when focus in input/textarea/select
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (e.key !== "Home") return;
+      const isMac = typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+      const scrollToTop = isMac ? e.metaKey : e.ctrlKey;
+      if (scrollToTop) {
+        e.preventDefault();
+        const main = document.getElementById("main-content");
+        if (main) main.scrollTop = 0;
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   const currentWidth = sidebarCollapsed ? SIDEBAR_COLLAPSED : sidebarWidth;
 
   const {
@@ -79,9 +142,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   } = useRunState();
 
   return (
-    <div className="flex h-screen overflow-hidden relative bg-transparent">
-      {/* Running terminals widget */}
-
+    <PageTitleProvider>
+    <div className="app-shell flex h-screen overflow-hidden relative bg-transparent">
+      <SkipToMainContent />
+      <RunStatusAnnouncer />
       {/* Sidebar: expandable and resizable. useSearchParams only inside Suspense so shell never suspends. */}
       <aside
         className="flex shrink-0 flex-col border-r border-border/60 bg-sidebar h-screen overflow-hidden relative"
@@ -112,9 +176,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <SidebarNavigation sidebarCollapsed={sidebarCollapsed} />
         </div>
 
-        {/* Toggle footer */}
-        <div className={`shrink-0 px-2 py-2 border-t border-border/40 ${sidebarCollapsed ? "flex justify-center" : ""
+        {/* Version + Toggle footer */}
+        <div className={`shrink-0 border-t border-border/40 ${sidebarCollapsed ? "flex flex-col items-center px-2 py-2" : "px-2 py-2"
           }`}>
+          <SidebarVersion collapsed={sidebarCollapsed} />
           <SidebarToggle
             sidebarCollapsed={sidebarCollapsed}
             setSidebarCollapsed={setSidebarCollapsed}
@@ -132,8 +197,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         )}
       </aside>
 
-      {/* Main content: scrollable, subtle depth */}
-      <main className="main-content-area flex-1 flex flex-col min-w-0 min-h-0 overflow-auto p-6 md:p-8 lg:p-10 xl:p-12 shadow-[inset_1px_0_0_0_hsl(var(--border)/0.25)]">
+      {/* Main content: scrollable, subtle depth; id + tabIndex for skip-link target */}
+      <main id="main-content" tabIndex={-1} className="main-content-area flex-1 flex flex-col min-w-0 min-h-0 overflow-auto p-6 md:p-8 lg:p-10 xl:p-12 shadow-[inset_1px_0_0_0_hsl(var(--border)/0.25)]">
         <Suspense
           fallback={
             <div className="min-h-[60vh] flex items-center justify-center" aria-hidden>
@@ -149,10 +214,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </Suspense>
       </main>
 
+      {/* Back to top: visible when main content is scrolled down; click scrolls to top */}
+      <BackToTop />
       {/* Run circles dock (bottom-right): one circle per run; click opens floating terminal */}
       <TerminalRunDock />
       {/* Floating terminal dialog: shows output for the selected run */}
       <FloatingTerminalDialog />
+      {/* Global command palette: ⌘K / Ctrl+K */}
+      <CommandPalette />
     </div>
+    </PageTitleProvider>
   );
 }

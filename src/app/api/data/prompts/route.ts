@@ -16,6 +16,8 @@ function findDataDir(): string {
 
 const DATA_DIR = findDataDir();
 const PROMPTS_FILE = path.join(DATA_DIR, "prompts-export.json");
+const ROOT = process.cwd();
+const CURSOR_PROMPTS_FILE = path.join(ROOT, ".cursor", "prompt-records.json");
 
 export interface PromptRecordRecord {
   id: number;
@@ -27,15 +29,31 @@ export interface PromptRecordRecord {
   updated_at?: string | null;
 }
 
-function readPromptRecords(): PromptRecordRecord[] {
+function readFromFile(filePath: string): PromptRecordRecord[] {
   try {
-    if (!fs.existsSync(PROMPTS_FILE)) return [];
-    const raw = fs.readFileSync(PROMPTS_FILE, "utf-8");
+    if (!fs.existsSync(filePath)) return [];
+    const raw = fs.readFileSync(filePath, "utf-8");
     const arr = JSON.parse(raw);
-    return Array.isArray(arr) ? arr : [];
+    if (!Array.isArray(arr)) return [];
+    return arr.filter(
+      (p): p is PromptRecordRecord =>
+        p != null && typeof p === "object" && typeof p.id === "number" && typeof p.title === "string"
+    );
   } catch {
     return [];
   }
+}
+
+function readPromptRecords(): PromptRecordRecord[] {
+  const fromExport = readFromFile(PROMPTS_FILE);
+  const fromCursor = readFromFile(CURSOR_PROMPTS_FILE);
+  const byId = new Map<number, PromptRecordRecord>();
+  for (const p of fromExport) byId.set(Number(p.id), { ...p });
+  for (const p of fromCursor) {
+    const id = Number(p.id);
+    if (!byId.has(id)) byId.set(id, { ...p });
+  }
+  return Array.from(byId.values()).sort((a, b) => a.id - b.id);
 }
 
 function writePromptRecords(prompts: PromptRecordRecord[]): void {
@@ -57,7 +75,8 @@ export async function GET() {
   }
 }
 
-/** POST: create or update a prompt. Body: { id?: number, title: string, content: string, category?: string } */
+/** POST: create or update a prompt. Body: { id?: number, title: string, content: string, category?: string }.
+ * Only writes to prompts-export.json; .cursor/prompt-records.json is read-only for this API. */
 export async function POST(request: NextRequest) {
   try {
     const parsed = await parseAndValidate(request, createPromptRecordSchema);
@@ -68,7 +87,7 @@ export async function POST(request: NextRequest) {
     const content = body.content;
     const category = body.category ?? null;
 
-    const prompts = readPromptRecords();
+    const prompts = readFromFile(PROMPTS_FILE);
     const existingId = body.id;
     const now = new Date().toISOString();
 

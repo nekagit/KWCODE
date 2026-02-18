@@ -312,9 +312,9 @@
       "space-y-4"
     ],
     "CardsAndDisplay/ThemePreviewCard.tsx": [
-      "px-4 pt-4 pb-2",
-      "px-4 pb-4 space-y-3",
-      "block px-4 py-3 text-[11px] line-clamp-2"
+      "px-6 pt-5 pb-3",
+      "px-6 pb-5 space-y-3",
+      "block px-6 py-4 text-[11px] line-clamp-2"
     ],
     "CardsAndDisplay/TicketCard.tsx": [
       "flex items-center justify-between w-full",
@@ -375,7 +375,7 @@
       "h-24 surface-card bg-muted/40 p-3 font-mono text-xs"
     ],
     "Displays/AllProjectsDisplayList.tsx": [
-      "h-[200px] surface-card p-3",
+      "h-[200px] surface-card p-5",
       "space-y-1",
       "flex items-center gap-2 text-sm",
       "truncate font-mono",
@@ -390,7 +390,7 @@
     ],
     "Displays/IdeasDisplayList.tsx": [
       "h-[200px] w-full rounded",
-      "h-[200px] surface-card p-3",
+      "h-[200px] surface-card p-5",
       "space-y-2 text-sm",
       "surface-card p-3 bg-muted/20",
       "font-medium truncate",
@@ -420,7 +420,7 @@
       "mt-1 whitespace-pre-wrap break-all text-muted-foreground/90"
     ],
     "Displays/PromptsDisplayList.tsx": [
-      "h-[200px] surface-card p-3",
+      "h-[200px] surface-card p-5",
       "space-y-1 text-sm",
       "flex items-center gap-2",
       "truncate"

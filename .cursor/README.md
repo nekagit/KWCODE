@@ -14,8 +14,8 @@ This folder is the **project-specific** `.cursor/` for KWCode. It was created fr
 ### Use agents
 
 - **Assign to tickets:** When generating or editing a ticket, the app lists all `.cursor/2. agents/*.md` (backend-dev, frontend-dev, solution-architect, tester, documentation-writer). Assign one or more; they are used when running Implement All.
-- **Run tab:** Load `.cursor/8. worker/implement-all.md` as the base prompt; per-ticket agents are loaded from `.cursor/2. agents/`. Move tickets to "In progress" in the Kanban, then click **Implement All**.
-- **Night shift:** When running without a ticket, the app loads `.cursor/8. worker/night-shift.md`. Edit that file to change what night-shift agents do (e.g. pick TODOs, improve tests, small docs fixes).
+- **Run tab:** Load `.cursor/8. worker/implement-all.prompt.md` as the base prompt; per-ticket agents are loaded from `.cursor/2. agents/`. Move tickets to "In progress" in the Kanban, then click **Implement All**.
+- **Night shift:** When running without a ticket, the app loads `.cursor/8. worker/night-shift.prompt.md`. Edit that file to change what night-shift agents do (e.g. pick TODOs, improve tests, small docs fixes).
 
 ### Manage milestones and tickets
 
@@ -56,7 +56,7 @@ Numbered entity folders (prompts use `.prompt.md` suffix; outputs use the same f
 | **adr/** | Architecture decision records |
 | **7. planner/** | tickets.md, features.md, kanban-state.json; ticket-templates/, ai-suggestions/ |
 | **milestones/** | mvp/feature/release templates; 01–05 numbered milestones |
-| **8. worker/** | implement-all.md (Run tab base prompt), night-shift.md (no-ticket runs), fix-bug.md; queue/ and workflows in worker/ |
+| **8. worker/** | *.prompt.md (implement-all, night-shift, fix-bug, refactor, test, debugging, implement, create); queue/ and workflows in worker/ |
 | **documentation/** | setup-guide, development-guide, architecture-overview, api-reference, best practices |
 
 Planner (7. planner), worker, agents, adr, technologies.
@@ -70,7 +70,5 @@ Planner (7. planner), worker, agents, adr, technologies.
 - `.cursor/7. planner/kanban-state.json` — in-progress ticket ids
 - `.cursor/7. planner/features.md` — feature roadmap
 - `.cursor/2. agents/*.md` — agent list
-- `.cursor/8. worker/implement-all.md` — Run tab (Implement All) base prompt; `.cursor/worker/queue/` for analyze queue
-- `.cursor/8. worker/fix-bug.md` — Run tab (Fix bug) prompt
-- `.cursor/8. worker/night-shift.md` — Run tab (Night shift) prompt when no ticket is selected
+- `.cursor/8. worker/*.prompt.md` — Run tab prompts (implement-all, night-shift, fix-bug, refactor, test, debugging, implement, create); all appear on Prompts page; `.cursor/worker/queue/` for analyze queue
 - `.cursor/2. setup/frontend.json`, `.cursor/2. setup/backend.json` — Frontend/Backend tabs

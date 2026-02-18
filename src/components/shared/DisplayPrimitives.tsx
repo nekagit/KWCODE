@@ -38,7 +38,7 @@ export function SectionCard({
     return (
         <div
             className={cn(
-                "rounded-xl border border-border/40 bg-card/60 backdrop-blur-sm p-5 transition-all duration-300",
+                "rounded-xl border border-border/40 bg-card/60 backdrop-blur-sm p-6 transition-all duration-300",
                 ACCENT_STYLES[accentColor],
                 className
             )}

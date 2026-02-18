@@ -739,6 +739,12 @@ fn frontend_debug_log(location: String, message: String, data: Option<serde_json
     }
 }
 
+/// Returns the app version (from Cargo.toml package version) for display in Configuration and support.
+#[tauri::command]
+fn get_app_version(app: AppHandle) -> Result<String, String> {
+    Ok(app.package_info().version.to_string())
+}
+
 /// Navigate the webview by setting window.location.href via eval. We never parse the URL in Rust nor call w.navigate(),
 /// so the user never sees "The string did not match the expected pattern" (url crate / WebView).
 #[tauri::command]
@@ -947,13 +953,13 @@ fn list_cursor_folder(project_path: String) -> Result<Vec<FileEntry>, String> {
     Ok(entries)
 }
 
-/// Read all files under .cursor_template (relative to app/project root) and return a map of relative path -> content for Initialize.
+/// Read all files under the init template dir (relative to app/project root) and return a map of relative path -> content for Initialize.
 #[tauri::command]
 fn get_cursor_init_template() -> Result<std::collections::HashMap<String, String>, String> {
     let root = project_root()?;
     let template_dir = root.join(".cursor_template");
     if !template_dir.exists() || !template_dir.is_dir() {
-        return Err(".cursor_template folder not found".to_string());
+        return Err("Template folder not found".to_string());
     }
     let mut out = std::collections::HashMap::new();
     fn collect(
@@ -2554,6 +2560,185 @@ async fn run_npm_script_in_external_terminal(project_path: String, script_name: 
     }
 }
 
+/// Opens one system terminal (Terminal.app on macOS) with the project path as the current working directory.
+/// On non-macOS returns an error; same as open_implement_all_in_system_terminal and run_npm_script_in_external_terminal.
+#[tauri::command]
+fn open_project_in_system_terminal(project_path: String) -> Result<(), String> {
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = project_path;
+        return Err("Open in terminal is only supported on macOS.".to_string());
+    }
+    #[cfg(target_os = "macos")]
+    {
+        let dir = Path::new(project_path.trim())
+            .canonicalize()
+            .map_err(|e| format!("Project path invalid: {}", e))?;
+        if !dir.is_dir() {
+            return Err("Project path is not a directory".to_string());
+        }
+        let path_str = dir.to_string_lossy();
+        let path_escaped = path_str.replace('\'', "'\\''");
+        let shell_cmd = format!("cd '{}'", path_escaped);
+        let as_escaped = shell_cmd.replace('\\', "\\\\").replace('"', "\\\"");
+        let script = format!(
+            "tell application \"Terminal\" to do script \"{}\"",
+            as_escaped
+        );
+        Command::new("osascript")
+            .arg("-e")
+            .arg(&script)
+            .spawn()
+            .map_err(|e| format!("Failed to open Terminal: {}", e))?;
+        Ok(())
+    }
+}
+
+/// Opens the given directory in the system file manager (Finder on macOS, Explorer on Windows, xdg-open on Linux).
+/// Caller must ensure `dir` exists and is a directory.
+fn open_dir_in_file_manager(dir: &Path) -> Result<(), String> {
+    let path_str = dir.to_string_lossy();
+
+    #[cfg(target_os = "macos")]
+    {
+        Command::new("open")
+            .arg(path_str.as_ref())
+            .spawn()
+            .map_err(|e| format!("Failed to open in Finder: {}", e))?;
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        let path_win = path_str.replace('/', "\\");
+        Command::new("explorer")
+            .arg(&path_win)
+            .spawn()
+            .map_err(|e| format!("Failed to open in Explorer: {}", e))?;
+    }
+
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+    {
+        Command::new("xdg-open")
+            .arg(path_str.as_ref())
+            .spawn()
+            .map_err(|e| format!("Failed to open in file manager: {}", e))?;
+    }
+
+    Ok(())
+}
+
+/// Opens the given path in the system file manager (Finder on macOS, Explorer on Windows, xdg-open on Linux).
+#[tauri::command]
+fn open_path_in_file_manager(path: String) -> Result<(), String> {
+    let path = path.trim();
+    if path.is_empty() {
+        return Err("Path is empty".to_string());
+    }
+    let dir = Path::new(path)
+        .canonicalize()
+        .map_err(|e| format!("Invalid path: {}", e))?;
+    if !dir.is_dir() {
+        return Err("Path is not a directory".to_string());
+    }
+    open_dir_in_file_manager(&dir)
+}
+
+/// Opens the app repo's .cursor/documentation folder (or .cursor if documentation subfolder is missing) in the system file manager.
+#[tauri::command]
+fn open_documentation_folder() -> Result<(), String> {
+    let root = project_root()?;
+    let doc_dir = root.join(".cursor").join("documentation");
+    let cursor_dir = root.join(".cursor");
+    let to_open = if doc_dir.is_dir() {
+        doc_dir
+    } else if cursor_dir.is_dir() {
+        cursor_dir
+    } else {
+        return Err("Documentation folder (.cursor/documentation or .cursor) not found.".to_string());
+    };
+    open_dir_in_file_manager(&to_open)
+}
+
+/// Returns the app repo's .cursor/documentation folder path (or .cursor if documentation subfolder is missing). Used for copy-to-clipboard (ADR 0215).
+#[tauri::command]
+fn get_documentation_folder_path() -> Result<String, String> {
+    let root = project_root()?;
+    let doc_dir = root.join(".cursor").join("documentation");
+    let cursor_dir = root.join(".cursor");
+    let to_open = if doc_dir.is_dir() {
+        doc_dir
+    } else if cursor_dir.is_dir() {
+        cursor_dir
+    } else {
+        return Err("Documentation folder (.cursor/documentation or .cursor) not found.".to_string());
+    };
+    Ok(to_open.to_string_lossy().to_string())
+}
+
+/// Opens the app repo's .cursor/technologies folder (or .cursor if technologies subfolder is missing) in the system file manager.
+#[tauri::command]
+fn open_technologies_folder() -> Result<(), String> {
+    let root = project_root()?;
+    let tech_dir = root.join(".cursor").join("technologies");
+    let cursor_dir = root.join(".cursor");
+    let to_open = if tech_dir.is_dir() {
+        tech_dir
+    } else if cursor_dir.is_dir() {
+        cursor_dir
+    } else {
+        return Err("Technologies folder (.cursor/technologies or .cursor) not found.".to_string());
+    };
+    open_dir_in_file_manager(&to_open)
+}
+
+/// Returns the app repo's .cursor/technologies folder path (or .cursor if technologies subfolder is missing). Used for copy-to-clipboard (ADR 0216).
+#[tauri::command]
+fn get_technologies_folder_path() -> Result<String, String> {
+    let root = project_root()?;
+    let tech_dir = root.join(".cursor").join("technologies");
+    let cursor_dir = root.join(".cursor");
+    let path = if tech_dir.is_dir() {
+        tech_dir
+    } else if cursor_dir.is_dir() {
+        cursor_dir
+    } else {
+        return Err("Technologies folder (.cursor/technologies or .cursor) not found.".to_string());
+    };
+    Ok(path.to_string_lossy().to_string())
+}
+
+/// Opens the app repo's .cursor/0. ideas folder (or .cursor if that subfolder is missing) in the system file manager.
+#[tauri::command]
+fn open_ideas_folder() -> Result<(), String> {
+    let root = project_root()?;
+    let ideas_dir = root.join(".cursor").join("0. ideas");
+    let cursor_dir = root.join(".cursor");
+    let to_open = if ideas_dir.is_dir() {
+        ideas_dir
+    } else if cursor_dir.is_dir() {
+        cursor_dir
+    } else {
+        return Err("Ideas folder (.cursor/0. ideas or .cursor) not found.".to_string());
+    };
+    open_dir_in_file_manager(&to_open)
+}
+
+/// Returns the path to the ideas folder (.cursor/0. ideas or .cursor) for clipboard copy (ADR 0219).
+#[tauri::command]
+fn get_ideas_folder_path() -> Result<String, String> {
+    let root = project_root()?;
+    let ideas_dir = root.join(".cursor").join("0. ideas");
+    let cursor_dir = root.join(".cursor");
+    let path = if ideas_dir.is_dir() {
+        ideas_dir
+    } else if cursor_dir.is_dir() {
+        cursor_dir
+    } else {
+        return Err("Ideas folder (.cursor/0. ideas or .cursor) not found.".to_string());
+    };
+    Ok(path.to_string_lossy().to_string())
+}
+
 #[tauri::command]
 async fn run_implement_all(
     app: AppHandle,
@@ -2942,6 +3127,14 @@ pub fn run() {
             run_implement_all,
             run_run_terminal_agent,
             open_implement_all_in_system_terminal,
+            open_project_in_system_terminal,
+            open_path_in_file_manager,
+            open_documentation_folder,
+            get_documentation_folder_path,
+            open_technologies_folder,
+            get_technologies_folder_path,
+            open_ideas_folder,
+            get_ideas_folder_path,
             list_running_runs,
             stop_run,
             stop_script,
@@ -2950,6 +3143,7 @@ pub fn run() {
             get_february_dir_config_path,
             get_dashboard_metrics,
             frontend_debug_log,
+            get_app_version,
             navigate_webview_to
         ])
         .run(tauri::generate_context!())

@@ -21,7 +21,6 @@ export type CursorPromptFileEntry = {
   name: string;
   size: number;
   updatedAt: string;
-  source: ".cursor" | ".cursor_template";
 };
 
 function formatSize(bytes: number): string {
@@ -59,8 +58,7 @@ export function CursorPromptFilesTable({
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm text-muted-foreground">
           All <code className="rounded bg-muted px-1 py-0.5 text-xs">*.prompt.md</code> files under{" "}
-          <code className="rounded bg-muted px-1 py-0.5 text-xs">.cursor</code> and{" "}
-          <code className="rounded bg-muted px-1 py-0.5 text-xs">.cursor_template</code>. Kept in sync with the repo.
+          <code className="rounded bg-muted px-1 py-0.5 text-xs">.cursor</code>. Kept in sync with the repo.
         </p>
         <Button
           variant="outline"
@@ -78,7 +76,6 @@ export function CursorPromptFilesTable({
           <TableRow>
             <TableHead className="w-[40%]">Path</TableHead>
             <TableHead className="hidden sm:table-cell">Name</TableHead>
-            <TableHead className="w-24">Source</TableHead>
             <TableHead className="hidden md:table-cell w-20">Size</TableHead>
             <TableHead className="hidden lg:table-cell w-24">Updated</TableHead>
             <TableHead className="w-24 text-right">Actions</TableHead>
@@ -93,29 +90,18 @@ export function CursorPromptFilesTable({
             </TableRow>
           ) : files.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className={classes[0] ?? "text-muted-foreground text-center py-8"}>
-                No <code className="rounded bg-muted px-1 py-0.5 text-xs">.prompt.md</code> files found in .cursor or .cursor_template.
+              <TableCell colSpan={5} className={classes[0] ?? "text-muted-foreground text-center py-8"}>
+                No <code className="rounded bg-muted px-1 py-0.5 text-xs">.prompt.md</code> files found in .cursor.
               </TableCell>
             </TableRow>
           ) : (
             files.map((entry) => (
-              <TableRow key={`${entry.source}-${entry.relativePath}`}>
+              <TableRow key={entry.relativePath}>
                 <TableCell className="font-mono text-xs truncate max-w-[200px]" title={entry.path}>
                   {entry.path}
                 </TableCell>
                 <TableCell className="hidden sm:table-cell font-mono text-xs">
                   {entry.name}
-                </TableCell>
-                <TableCell>
-                  <span
-                    className={
-                      entry.source === ".cursor"
-                        ? "text-xs font-medium text-foreground"
-                        : "text-xs text-muted-foreground"
-                    }
-                  >
-                    {entry.source === ".cursor" ? ".cursor" : "template"}
-                  </span>
                 </TableCell>
                 <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
                   {formatSize(entry.size)}
@@ -124,19 +110,15 @@ export function CursorPromptFilesTable({
                   {formatUpdatedAt(entry.updatedAt)}
                 </TableCell>
                 <TableCell className="text-right">
-                  {entry.source === ".cursor" ? (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8"
-                      onClick={() => onView(entry)}
-                    >
-                      <FileText className="h-4 w-4" />
-                      <span className="ml-1.5 sr-only sm:not-sr-only">View</span>
-                    </Button>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">—</span>
-                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8"
+                    onClick={() => onView(entry)}
+                  >
+                    <FileText className="h-4 w-4" />
+                    <span className="ml-1.5 sr-only sm:not-sr-only">View</span>
+                  </Button>
                 </TableCell>
               </TableRow>
             ))

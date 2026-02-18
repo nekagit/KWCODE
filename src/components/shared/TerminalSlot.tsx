@@ -1,9 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Loader2, CheckCircle2, Circle, Terminal, ExternalLink } from "lucide-react";
+import { Loader2, CheckCircle2, Circle, Terminal, ExternalLink, Copy, Download } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
+import { downloadRunOutput } from "@/lib/download-run-output";
+import { toast } from "sonner";
 import { formatElapsed } from "@/lib/run-helpers";
 import type { RunInfo } from "@/types/run";
 
@@ -146,6 +150,34 @@ export function TerminalSlot({
                 </div>
 
                 <div className="flex items-center gap-2">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-1.5 text-[10px] gap-1 text-muted-foreground hover:text-foreground"
+                        onClick={() => copyTextToClipboard(displayLogLines.join("\n"))}
+                        title="Copy output to clipboard"
+                    >
+                        <Copy className="size-3" />
+                        Copy
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-1.5 text-[10px] gap-1 text-muted-foreground hover:text-foreground"
+                        onClick={() => {
+                            const text = displayLogLines.join("\n");
+                            if (!text.trim()) {
+                                toast.info("No output to download.");
+                                return;
+                            }
+                            const label = run?.label?.trim() || `Terminal ${slotIndex + 1}`;
+                            downloadRunOutput(text, label);
+                        }}
+                        title="Download output as file"
+                    >
+                        <Download className="size-3" />
+                        Download
+                    </Button>
                     {run?.localUrl && (
                         <a
                             href={run.localUrl}

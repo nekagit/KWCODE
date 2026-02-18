@@ -13,6 +13,7 @@ import {
   type RunInfo,
   type RunMeta,
   type TerminalOutputHistoryEntry,
+  type NightShiftCirclePhase,
 } from "@/types/run";
 
 export interface RunState {
@@ -41,8 +42,12 @@ export interface RunState {
   terminalOutputHistory: TerminalOutputHistoryEntry[];
   /** Night shift: 3 agents run same prompt in a loop until stopped. */
   nightShiftActive: boolean;
-  /** Called when a night-shift run exits to enqueue one more job (replenish). */
-  nightShiftReplenishCallback: ((slot: 1 | 2 | 3) => Promise<void>) | null;
+  /** Called when a night-shift run exits to enqueue one more job (replenish). Receives slot and optionally the exiting run (for Circle phase logic). */
+  nightShiftReplenishCallback: ((slot: 1 | 2 | 3, exitingRun?: RunInfo | null) => Promise<void>) | null;
+  /** Night shift Circle: mode on/off, current phase, completed count in current phase (0–3). */
+  nightShiftCircleMode: boolean;
+  nightShiftCirclePhase: NightShiftCirclePhase | null;
+  nightShiftCircleCompletedInPhase: number;
 }
 
 export interface RunActions {
@@ -98,6 +103,8 @@ export interface RunActions {
   archiveImplementAllLogs: () => void;
   /** Append a completed run's output to terminal output history (called from hydration on script-exited). */
   addTerminalOutputToHistory: (entry: Omit<TerminalOutputHistoryEntry, "id">) => void;
+  /** Remove a single run from terminal output history by id. */
+  removeTerminalOutputFromHistory: (id: string) => void;
   clearTerminalOutputHistory: () => void;
   getTimingForRun: () => Record<string, number>;
   // Hydration/setters used by RunStoreHydration
@@ -108,7 +115,9 @@ export interface RunActions {
   setPromptRecords: (v: PromptRecordItem[]) => void;
   addPrompt: (title: string, content: string) => void;
   setNightShiftActive: (active: boolean) => void;
-  setNightShiftReplenishCallback: (cb: ((slot: 1 | 2 | 3) => Promise<void>) | null) => void;
+  setNightShiftReplenishCallback: (cb: ((slot: 1 | 2 | 3, exitingRun?: RunInfo | null) => Promise<void>) | null) => void;
+  setNightShiftCircleState: (mode: boolean, phase: NightShiftCirclePhase | null, completed: number) => void;
+  incrementNightShiftCircleCompleted: () => void;
 }
 
 export type RunStore = RunState & RunActions;
@@ -222,6 +231,9 @@ const initialState: RunState = {
   terminalOutputHistory: [],
   nightShiftActive: false,
   nightShiftReplenishCallback: null,
+  nightShiftCircleMode: false,
+  nightShiftCirclePhase: null,
+  nightShiftCircleCompletedInPhase: 0,
 };
 
 const TERMINAL_HISTORY_MAX = 100;
@@ -738,6 +750,11 @@ export const useRunStore = create<RunStore>()((set, get) => ({
     });
   },
 
+  removeTerminalOutputFromHistory: (id) =>
+    set((s) => ({
+      terminalOutputHistory: s.terminalOutputHistory.filter((e) => e.id !== id),
+    })),
+
   clearTerminalOutputHistory: () => set({ terminalOutputHistory: [] }),
 
   setIsTauriEnv: (v) =>
@@ -769,6 +786,14 @@ export const useRunStore = create<RunStore>()((set, get) => ({
 
   setNightShiftActive: (active) => set({ nightShiftActive: active }),
   setNightShiftReplenishCallback: (cb) => set({ nightShiftReplenishCallback: cb }),
+  setNightShiftCircleState: (mode, phase, completed) =>
+    set({
+      nightShiftCircleMode: mode,
+      nightShiftCirclePhase: phase,
+      nightShiftCircleCompletedInPhase: completed,
+    }),
+  incrementNightShiftCircleCompleted: () =>
+    set((s) => ({ nightShiftCircleCompletedInPhase: s.nightShiftCircleCompletedInPhase + 1 })),
 }));
 
 /** Hook with same API as legacy useRunState from context. Use anywhere run state is needed. */
@@ -808,6 +833,7 @@ export function useRunState() {
       archivedImplementAllLogs: s.archivedImplementAllLogs,
       terminalOutputHistory: s.terminalOutputHistory,
       addTerminalOutputToHistory: s.addTerminalOutputToHistory,
+      removeTerminalOutputFromHistory: s.removeTerminalOutputFromHistory,
       clearTerminalOutputHistory: s.clearTerminalOutputHistory,
       getTimingForRun: s.getTimingForRun,
       runSetupPrompt: s.runSetupPrompt,
