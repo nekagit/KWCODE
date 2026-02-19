@@ -8,12 +8,7 @@ import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import { getClasses } from "@/components/molecules/tailwind-molecules";
 const classes = getClasses("LayoutAndNavigation/ProjectsHeader.tsx");
 
-interface ProjectsHeaderProps {
-  /** Reserved for future use. */
-  _?: never;
-}
-
-export function ProjectsHeader(_props?: ProjectsHeaderProps) {
+export function ProjectsHeader() {
   return (
     <div className={classes[0]}>
       <PageHeader

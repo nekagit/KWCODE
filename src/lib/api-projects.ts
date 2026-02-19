@@ -267,17 +267,22 @@ export async function listProjectFiles(
   return json.files;
 }
 
-const DEFAULT_MAX_RECURSIVE_FILES = 3000;
+const DEFAULT_MAX_RECURSIVE_FILES = 100_000;
+
+export type ListAllProjectFilePathsResult = {
+  paths: string[];
+  truncated: boolean;
+};
 
 /**
  * Recursively list all file paths under a project root (directories are traversed, only file paths returned).
- * Respects maxFiles to avoid freezing on very large repos.
+ * Respects maxFiles to avoid freezing on very large repos. Returns truncated: true when the count hit the limit.
  */
 export async function listAllProjectFilePaths(
   projectId: string,
   repoPath: string,
   options?: { maxFiles?: number }
-): Promise<string[]> {
+): Promise<ListAllProjectFilePathsResult> {
   const maxFiles = options?.maxFiles ?? DEFAULT_MAX_RECURSIVE_FILES;
   const paths: string[] = [];
 
@@ -296,16 +301,17 @@ export async function listAllProjectFilePaths(
   }
 
   await walk("");
-  return paths.sort((a, b) => a.localeCompare(b));
+  const sorted = paths.sort((a, b) => a.localeCompare(b));
+  return { paths: sorted, truncated: sorted.length >= maxFiles };
 }
 
 /**
- * Initializes a project: in Tauri (desktop), unzips project_template.zip into the project root
- * so you get the full Next.js starter. In browser, copies the init template into .cursor.
+ * Initializes a project: in Tauri (desktop), unzips .cursor_init.zip into the project as .cursor
+ * (merge: only add missing files if .cursor exists). In browser, copies the init template into .cursor.
  */
 export async function initializeProjectRepo(projectId: string, repoPath: string): Promise<void> {
   if (isTauri) {
-    await invoke("unzip_project_template", { targetPath: repoPath });
+    await invoke("unzip_cursor_init", { targetPath: repoPath, mergeIfExists: true });
     return;
   }
   let files: Record<string, string>;
@@ -326,6 +332,19 @@ export async function initializeProjectRepo(projectId: string, repoPath: string)
     const cursorPath = `.cursor/${normalized}`;
     await writeProjectFile(projectId, cursorPath, content, repoPath);
   }
+}
+
+/**
+ * Starter: in Tauri, unzips project_template.zip into the project root, then .cursor_init.zip as .cursor (merge).
+ * In browser, same as Initialize (cursor-init-template only; no project template unzip).
+ */
+export async function applyStarterToProject(projectId: string, repoPath: string): Promise<void> {
+  if (isTauri) {
+    await invoke("unzip_project_template", { targetPath: repoPath });
+    await invoke("unzip_cursor_init", { targetPath: repoPath, mergeIfExists: true });
+    return;
+  }
+  await initializeProjectRepo(projectId, repoPath);
 }
 
 const DEFAULT_TAURI_API_BASE = "http://127.0.0.1:4000";

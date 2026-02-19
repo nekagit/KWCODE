@@ -50,6 +50,8 @@ export interface RunMeta {
   isNightShiftCircle?: boolean;
   /** Which Circle phase this run belongs to (refactor, test, debugging, implement, create). */
   circlePhase?: NightShiftCirclePhase;
+  /** When set, this job reuses an existing placeholder run (e.g. Ask) so the run appears in the terminal section immediately. */
+  placeholderRunId?: string;
 }
 
 export interface Run {

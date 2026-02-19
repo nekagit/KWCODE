@@ -1052,15 +1052,27 @@ fn get_cursor_init_template() -> Result<std::collections::HashMap<String, String
     Ok(out)
 }
 
-/// Unzip project_template.zip (next to app/project root) into target_path. Strips a single top-level
-/// directory (e.g. project_template/) so the template contents land at target_path root.
-#[tauri::command]
-fn unzip_project_template(target_path: String) -> Result<(), String> {
+/// Resolve project_template.zip: try bundled resource first, then project root (for dev).
+fn resolve_project_template_zip(app: &AppHandle) -> Result<PathBuf, String> {
+    if let Ok(path) = app.path().resolve("project_template.zip", BaseDirectory::Resource) {
+        if path.exists() && path.is_file() {
+            return Ok(path);
+        }
+    }
     let root = project_root()?;
     let zip_path = root.join("project_template.zip");
-    if !zip_path.exists() || !zip_path.is_file() {
-        return Err("project_template.zip not found next to the app".to_string());
+    if zip_path.exists() && zip_path.is_file() {
+        Ok(zip_path)
+    } else {
+        Err("project_template.zip not found (bundle resource or next to app)".to_string())
     }
+}
+
+/// Unzip project_template.zip (from bundle resource or next to app) into target_path. Strips a single top-level
+/// directory (e.g. project_template/) so the template contents land at target_path root.
+#[tauri::command]
+fn unzip_project_template(app: AppHandle, target_path: String) -> Result<(), String> {
+    let zip_path = resolve_project_template_zip(&app)?;
     let target = PathBuf::from(target_path.trim());
     if !target.exists() || !target.is_dir() {
         return Err("Target path does not exist or is not a directory".to_string());
@@ -1111,6 +1123,92 @@ fn unzip_project_template(target_path: String) -> Result<(), String> {
         if entry.is_dir() {
             std::fs::create_dir_all(&out_path).map_err(|e| e.to_string())?;
         } else {
+            if let Some(parent) = out_path.parent() {
+                std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+            }
+            let mut buf = Vec::new();
+            entry.read_to_end(&mut buf).map_err(|e| e.to_string())?;
+            std::fs::write(&out_path, &buf).map_err(|e| e.to_string())?;
+        }
+    }
+    Ok(())
+}
+
+/// Resolve .cursor_init.zip: try bundled resource first (cursor_init.zip), then project root for dev.
+fn resolve_cursor_init_zip(app: &AppHandle) -> Result<PathBuf, String> {
+    if let Ok(path) = app.path().resolve("cursor_init.zip", BaseDirectory::Resource) {
+        if path.exists() && path.is_file() {
+            return Ok(path);
+        }
+    }
+    if let Ok(root) = project_root() {
+        let zip_path = root.join(".cursor_init.zip");
+        if zip_path.exists() && zip_path.is_file() {
+            return Ok(zip_path);
+        }
+    }
+    Err(".cursor_init.zip not found (bundle resource or next to app)".to_string())
+}
+
+/// Unzip .cursor_init.zip into target_path/.cursor/. Strips a single top-level directory (e.g. cursor_init/).
+/// If merge_if_exists is true and a destination file already exists, skip it (only add missing files/folders).
+#[tauri::command]
+fn unzip_cursor_init(app: AppHandle, target_path: String, merge_if_exists: bool) -> Result<(), String> {
+    let zip_path = resolve_cursor_init_zip(&app)?;
+    let target_base = PathBuf::from(target_path.trim());
+    if !target_base.exists() || !target_base.is_dir() {
+        return Err("Target path does not exist or is not a directory".to_string());
+    }
+    let cursor_dir = target_base.join(".cursor");
+
+    let file = std::fs::File::open(&zip_path).map_err(|e| e.to_string())?;
+    let mut archive = zip::ZipArchive::new(file).map_err(|e| e.to_string())?;
+
+    let mut prefix: Option<String> = None;
+    for i in 0..archive.len() {
+        let entry = archive.by_index(i).map_err(|e| e.to_string())?;
+        let name = entry.name().replace('\\', "/").trim_end_matches('/').to_string();
+        if name.is_empty() || name.contains("..") {
+            continue;
+        }
+        if let Some(first) = name.split('/').next() {
+            let seg = format!("{}/", first);
+            match &prefix {
+                None => prefix = Some(seg),
+                Some(p) if p == &seg => {}
+                _ => {
+                    prefix = None;
+                    break;
+                }
+            }
+        }
+    }
+    let strip_prefix = prefix.filter(|p| !p.is_empty());
+
+    for i in 0..archive.len() {
+        let mut entry = archive.by_index(i).map_err(|e| e.to_string())?;
+        let raw_name = entry.name().replace('\\', "/");
+        let name = raw_name.trim_end_matches('/');
+        if name.is_empty() || name.contains("..") {
+            continue;
+        }
+        let relative = match &strip_prefix {
+            Some(p) if name.starts_with(p) => name.strip_prefix(p).unwrap_or(name),
+            _ => name,
+        };
+        let relative = relative.trim_start_matches('/');
+        if relative.is_empty() {
+            continue;
+        }
+        let out_path = cursor_dir.join(relative);
+        if entry.is_dir() {
+            if !out_path.exists() {
+                std::fs::create_dir_all(&out_path).map_err(|e| e.to_string())?;
+            }
+        } else {
+            if merge_if_exists && out_path.exists() {
+                continue;
+            }
             if let Some(parent) = out_path.parent() {
                 std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
             }
@@ -3301,6 +3399,7 @@ pub fn run() {
             list_cursor_folder,
             get_cursor_init_template,
             unzip_project_template,
+            unzip_cursor_init,
             write_spec_file,
             archive_cursor_file,
             get_git_info,

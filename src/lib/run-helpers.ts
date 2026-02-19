@@ -5,7 +5,7 @@
 
 import type { RunInfo } from "@/types/run";
 
-/** Check whether a run is an Implement All, Ticket, Analyze doc, Debug, Fast dev, or Night shift run (shown in terminal slots). */
+/** Check whether a run is an Implement All, Ticket, Analyze doc, Debug, Fast dev, Ask, or Night shift run (shown in terminal slots). */
 export const isImplementAllRun = (r: { label: string }) =>
     r.label === "Implement All" ||
     r.label.startsWith("Implement All (") ||
@@ -13,6 +13,7 @@ export const isImplementAllRun = (r: { label: string }) =>
     r.label.startsWith("Analyze:") ||
     r.label.startsWith("Debug:") ||
     r.label.startsWith("Fast dev:") ||
+    r.label.startsWith("Ask:") ||
     r.label.startsWith("Night shift");
 
 /** Parse ticket number from run label e.g. "Ticket #3: My title" → 3. Returns null if not a ticket run. */

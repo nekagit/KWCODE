@@ -71,6 +71,7 @@ export function ProjectGitTab({ project, projectId }: ProjectGitTabProps) {
   const [commitDialogOpen, setCommitDialogOpen] = useState(false);
   const [commitMessage, setCommitMessage] = useState("");
   const [allProjectFiles, setAllProjectFiles] = useState<string[] | null>(null);
+  const [allProjectFilesTruncated, setAllProjectFilesTruncated] = useState(false);
   const [allProjectFilesLoading, setAllProjectFilesLoading] = useState(false);
   const [allProjectFilesError, setAllProjectFilesError] = useState<string | null>(null);
   const [projectFilesFilterQuery, setProjectFilesFilterQuery] = useState("");
@@ -172,13 +173,15 @@ export function ProjectGitTab({ project, projectId }: ProjectGitTabProps) {
     setAllProjectFilesLoading(true);
     setAllProjectFilesError(null);
     try {
-      const paths = await listAllProjectFilePaths(projectId, repoPath);
+      const { paths, truncated } = await listAllProjectFilePaths(projectId, repoPath);
       if (cancelledAllFilesRef.current) return;
       setAllProjectFiles(paths);
+      setAllProjectFilesTruncated(truncated);
     } catch (e) {
       if (!cancelledAllFilesRef.current) {
         setAllProjectFilesError(e instanceof Error ? e.message : String(e));
         setAllProjectFiles(null);
+        setAllProjectFilesTruncated(false);
       }
     } finally {
       if (!cancelledAllFilesRef.current) setAllProjectFilesLoading(false);
@@ -533,6 +536,11 @@ export function ProjectGitTab({ project, projectId }: ProjectGitTabProps) {
                 <span className="ml-1.5">Refresh</span>
               </Button>
             </div>
+            {allProjectFilesTruncated && (
+              <p className="text-sm text-amber-600 dark:text-amber-400 mb-2">
+                Showing first {allProjectFiles?.length ?? 0} files (limit reached; project may have more).
+              </p>
+            )}
             {allProjectFiles && allProjectFiles.length > 0 && (
               <div className="mb-3">
                 <Input

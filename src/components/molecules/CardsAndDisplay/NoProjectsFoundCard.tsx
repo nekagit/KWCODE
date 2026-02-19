@@ -9,12 +9,7 @@ import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import { getClasses } from "@/components/molecules/tailwind-molecules";
 const classes = getClasses("CardsAndDisplay/NoProjectsFoundCard.tsx");
 
-interface NoProjectsFoundCardProps {
-  /** Reserved for future use. */
-  _?: never;
-}
-
-export function NoProjectsFoundCard(_props?: NoProjectsFoundCardProps) {
+export function NoProjectsFoundCard() {
   return (
     <Card
       footerButtons={

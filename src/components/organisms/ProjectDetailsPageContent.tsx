@@ -59,6 +59,7 @@ import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import { Input } from "@/components/ui/input";
 import {
   initializeProjectRepo,
+  applyStarterToProject,
   writeAnalyzeQueue,
   readAnalyzeQueue,
   runAnalyzeQueueProcessing,
@@ -166,6 +167,7 @@ export function ProjectDetailsPageContent(props: ProjectDetailsPageContentProps 
     setActiveTab(saved);
   }, [projectId, tabFromUrl]);
   const [initializing, setInitializing] = useState(false);
+  const [startering, setStartering] = useState(false);
   const [analyzingAll, setAnalyzingAll] = useState(false);
   const [analyzingStep, setAnalyzingStep] = useState(0);
   const [viewRunningOpen, setViewRunningOpen] = useState(false);
@@ -443,13 +445,14 @@ export function ProjectDetailsPageContent(props: ProjectDetailsPageContentProps 
             <div className="space-y-2.5">
               <div className="flex items-center gap-2">
                 {prevId ? (
-                  <Link
-                    href={`/projects/${prevId}`}
+                  <button
+                    type="button"
+                    onClick={() => router.push(activeTab ? `/projects/${prevId}?tab=${activeTab}` : `/projects/${prevId}`)}
                     className="shrink-0 rounded-lg p-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
                     aria-label="Previous project"
                   >
                     <ArrowLeft className="size-5" />
-                  </Link>
+                  </button>
                 ) : (
                   <span className="shrink-0 rounded-lg p-2 text-muted-foreground/40 cursor-not-allowed" aria-hidden>
                     <ArrowLeft className="size-5" />
@@ -459,13 +462,14 @@ export function ProjectDetailsPageContent(props: ProjectDetailsPageContentProps 
                   {project.name}
                 </h1>
                 {nextId ? (
-                  <Link
-                    href={`/projects/${nextId}`}
+                  <button
+                    type="button"
+                    onClick={() => router.push(activeTab ? `/projects/${nextId}?tab=${activeTab}` : `/projects/${nextId}`)}
                     className="shrink-0 rounded-lg p-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
                     aria-label="Next project"
                   >
                     <ArrowRight className="size-5" />
-                  </Link>
+                  </button>
                 ) : (
                   <span className="shrink-0 rounded-lg p-2 text-muted-foreground/40 cursor-not-allowed" aria-hidden>
                     <ArrowRight className="size-5" />
@@ -522,7 +526,7 @@ export function ProjectDetailsPageContent(props: ProjectDetailsPageContentProps 
                       setInitializing(true);
                       try {
                         await initializeProjectRepo(projectId, project.repoPath!);
-                        toast.success("Project initialized with Next.js starter!");
+                        toast.success("Project initialized with .cursor from template.");
                         fetchProject(); // Refresh to show new files
                       } catch (err) {
                         toast.error(err instanceof Error ? err.message : "Failed to initialize");
@@ -531,6 +535,7 @@ export function ProjectDetailsPageContent(props: ProjectDetailsPageContentProps 
                       }
                     }}
                     disabled={initializing}
+                    title="Unzip .cursor_init.zip into this project as .cursor (merge if .cursor exists)"
                   >
                     {initializing ? (
                       <Loader2 className="size-3 animate-spin" />
@@ -538,6 +543,36 @@ export function ProjectDetailsPageContent(props: ProjectDetailsPageContentProps 
                       <Sparkles className="size-3 text-amber-400" />
                     )}
                     {initializing ? "Initializing..." : "Initialize"}
+                  </Button>
+                )}
+                {/* Starter Button: project template + .cursor_init */}
+                {project.repoPath && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2.5 text-[10px] font-semibold uppercase tracking-wider gap-1.5 border-primary/20 hover:bg-primary/5 hover:border-primary/40 transition-all duration-300 shadow-sm"
+                    onClick={async () => {
+                      if (startering) return;
+                      setStartering(true);
+                      try {
+                        await applyStarterToProject(projectId, project.repoPath!);
+                        toast.success("Starter applied: project template and .cursor.");
+                        fetchProject();
+                      } catch (err) {
+                        toast.error(err instanceof Error ? err.message : "Failed to apply starter");
+                      } finally {
+                        setStartering(false);
+                      }
+                    }}
+                    disabled={startering}
+                    title="Unzip project_template.zip then .cursor_init.zip as .cursor (merge)"
+                  >
+                    {startering ? (
+                      <Loader2 className="size-3 animate-spin" />
+                    ) : (
+                      <Sparkles className="size-3 text-amber-400" />
+                    )}
+                    {startering ? "Applying..." : "Starter"}
                   </Button>
                 )}
                 {/* Analyze all: enqueue 8 jobs into worker queue and process 3 at a time */}
@@ -580,7 +615,7 @@ export function ProjectDetailsPageContent(props: ProjectDetailsPageContentProps 
                           String(msg).toLowerCase().includes("prompt not found");
                         if (isPromptNotFound) {
                           toast.error("Prompt file(s) missing", {
-                            description: "Click Initialize (above) to unzip the Next.js starter into this project, then try again.",
+                            description: "Click Initialize or Starter (above) to add .cursor from template, then try again.",
                             duration: 10000,
                           });
                         } else {

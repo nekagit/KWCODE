@@ -34,7 +34,9 @@
   },
   "bundle": {
     "resources": {
-      "../script/worker/run_terminal_agent.sh": "run_terminal_agent.sh"
+      "../script/worker/run_terminal_agent.sh": "run_terminal_agent.sh",
+      "../.cursor_init.zip": "cursor_init.zip",
+      "../project_template.zip": "project_template.zip"
     }
   },
   "plugins": {}

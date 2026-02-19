@@ -93,6 +93,8 @@ export interface RunActions {
     label: string,
     meta?: RunMeta
   ) => Promise<string | null>;
+  /** Add a placeholder Ask run so it appears in the terminal section immediately; pass returned runId as meta.placeholderRunId to runTempTicket. Returns null if no free slot. */
+  addPlaceholderAskRun: (label: string) => string | null;
   /** Run an npm script in the project directory (e.g. npm run dev). Tauri only. */
   runNpmScript: (projectPath: string, scriptName: string) => Promise<string | null>;
   /** Run an npm script in the system Terminal (macOS only). Returns true if opened. */
@@ -156,25 +158,41 @@ function processTempTicketQueue(
 ): void {
   const state = get();
   if (state.pendingTempTicketQueue.length === 0) return;
-  const slot = getNextFreeSlotOrNull(state.runningRuns);
-  if (slot === null) return;
   const job = state.pendingTempTicketQueue[0];
-  set((s) => ({ pendingTempTicketQueue: s.pendingTempTicketQueue.slice(1) }));
+  const placeholderRunId = job.meta?.placeholderRunId;
+  let tempId: string;
 
-  const tempId = `pending-${Date.now()}-${slot}-${Math.random().toString(36).slice(2, 9)}`;
-  const placeholder: RunInfo = {
-    runId: tempId,
-    label: job.label,
-    logLines: [],
-    status: "running",
-    startedAt: Date.now(),
-    slot,
-    meta: job.meta ?? undefined,
-  };
-  set((s) => ({
-    runningRuns: [...s.runningRuns, placeholder],
-    selectedRunId: tempId,
-  }));
+  if (placeholderRunId) {
+    const existing = state.runningRuns.find((r) => r.runId === placeholderRunId);
+    if (!existing?.slot) {
+      set((s) => ({ pendingTempTicketQueue: s.pendingTempTicketQueue.slice(1) }));
+      processTempTicketQueue(get, set);
+      return;
+    }
+    tempId = placeholderRunId;
+  } else {
+    const slot = getNextFreeSlotOrNull(state.runningRuns);
+    if (slot === null) return;
+    tempId = `pending-${Date.now()}-${slot}-${Math.random().toString(36).slice(2, 9)}`;
+    const placeholder: RunInfo = {
+      runId: tempId,
+      label: job.label,
+      logLines: [],
+      status: "running",
+      startedAt: Date.now(),
+      slot,
+      meta: job.meta ?? undefined,
+    };
+    set((s) => ({
+      pendingTempTicketQueue: s.pendingTempTicketQueue.slice(1),
+      runningRuns: [...s.runningRuns, placeholder],
+      selectedRunId: tempId,
+    }));
+  }
+
+  if (placeholderRunId) {
+    set((s) => ({ pendingTempTicketQueue: s.pendingTempTicketQueue.slice(1) }));
+  }
 
   (async () => {
     try {
@@ -595,6 +613,25 @@ export const useRunStore = create<RunStore>()((set, get) => ({
     }));
     processTempTicketQueue(get, set);
     return "queued";
+  },
+
+  addPlaceholderAskRun: (label): string | null => {
+    const slot = getNextFreeSlotOrNull(get().runningRuns);
+    if (slot === null) return null;
+    const runId = `ask-placeholder-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    const placeholder: RunInfo = {
+      runId,
+      label,
+      logLines: [],
+      status: "running",
+      startedAt: Date.now(),
+      slot,
+    };
+    set((s) => ({
+      runningRuns: [...s.runningRuns, placeholder],
+      selectedRunId: runId,
+    }));
+    return runId;
   },
 
   runNextInQueue: () => {

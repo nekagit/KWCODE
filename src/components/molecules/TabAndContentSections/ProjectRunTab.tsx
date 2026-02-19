@@ -47,7 +47,6 @@ import {
   Trash2,
   ChevronDown,
   Moon,
-  Hash,
   Copy,
   Download,
   FileJson,
@@ -61,13 +60,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isImplementAllRun, parseTicketNumberFromRunLabel, formatElapsed } from "@/lib/run-helpers";
-import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
-import { downloadRunOutput } from "@/lib/download-run-output";
-import { downloadRunAsJson, copyRunAsJsonToClipboard } from "@/lib/download-run-as-json";
-import { downloadRunAsMarkdown, copyRunAsMarkdownToClipboard } from "@/lib/download-run-as-md";
 import { copySingleRunAsPlainTextToClipboard } from "@/lib/copy-single-run-as-plain-text";
 import { downloadSingleRunAsPlainText } from "@/lib/download-single-run-as-plain-text";
-import { downloadRunAsCsv, copyRunAsCsvToClipboard } from "@/lib/download-run-as-csv";
 import { copyAllRunHistoryToClipboard } from "@/lib/copy-all-run-history";
 import { downloadAllRunHistory } from "@/lib/download-all-run-history";
 import { downloadAllRunHistoryCsv, copyAllRunHistoryCsvToClipboard } from "@/lib/download-all-run-history-csv";
@@ -1464,110 +1458,6 @@ function WorkerHistorySection() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-7 px-2 text-xs gap-1 opacity-70 group-hover:opacity-100"
-                            onClick={() => copyTextToClipboard(h.id)}
-                            title="Copy run ID"
-                          >
-                            <Hash className="size-3" />
-                            Copy ID
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs gap-1 opacity-70 group-hover:opacity-100"
-                            onClick={() => copyTextToClipboard(h.output)}
-                            title="Copy output"
-                          >
-                            <Copy className="size-3" />
-                            Copy
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs gap-1 opacity-70 group-hover:opacity-100"
-                            onClick={() => downloadRunOutput(h.output, h.label)}
-                            title="Download output as file"
-                          >
-                            <Download className="size-3" />
-                            Download
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs gap-1 opacity-70 group-hover:opacity-100"
-                            onClick={() => downloadRunAsJson(h)}
-                            title="Export run as JSON"
-                          >
-                            <FileJson className="size-3" />
-                            JSON
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs gap-1 opacity-70 group-hover:opacity-100"
-                            onClick={() => downloadRunAsMarkdown(h)}
-                            title="Export run as Markdown"
-                          >
-                            <FileText className="size-3" />
-                            MD
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs gap-1 opacity-70 group-hover:opacity-100"
-                            onClick={() => void copyRunAsMarkdownToClipboard(h)}
-                            title="Copy run as Markdown (same format as Export MD)"
-                            aria-label="Copy run as Markdown to clipboard"
-                          >
-                            <FileText className="size-3" />
-                            Copy MD
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs gap-1 opacity-70 group-hover:opacity-100"
-                            onClick={() => copySingleRunAsPlainTextToClipboard(h)}
-                            title="Copy run as plain text (same format as Copy all)"
-                            aria-label="Copy run as plain text to clipboard"
-                          >
-                            <Copy className="size-3" />
-                            Copy plain
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs gap-1 opacity-70 group-hover:opacity-100"
-                            onClick={() => void copyRunAsJsonToClipboard(h)}
-                            title="Copy run as JSON (same data as Export JSON)"
-                            aria-label="Copy run as JSON to clipboard"
-                          >
-                            <Copy className="size-3" />
-                            Copy JSON
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs gap-1 opacity-70 group-hover:opacity-100"
-                            onClick={() => void copyRunAsCsvToClipboard(h)}
-                            title="Copy run as CSV (same data as Export CSV)"
-                            aria-label="Copy run as CSV to clipboard"
-                          >
-                            <Copy className="size-3" />
-                            Copy CSV
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs gap-1 opacity-70 group-hover:opacity-100"
-                            onClick={() => downloadRunAsCsv(h)}
-                            title="Export run as CSV"
-                          >
-                            <FileSpreadsheet className="size-3" />
-                            CSV
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
                             className="h-7 px-2 text-xs gap-1 opacity-70 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
                             onClick={() => {
                               removeTerminalOutputFromHistory(h.id);
@@ -1633,109 +1523,6 @@ function WorkerHistorySection() {
           {entry && (
             <>
               <div className="flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => copyTextToClipboard(entry.id)}
-                  title="Copy run ID"
-                  aria-label="Copy run ID to clipboard"
-                >
-                  <Hash className="size-3.5" />
-                  Copy run ID
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => copyTextToClipboard(entry.output || "")}
-                >
-                  <Copy className="size-3.5" />
-                  Copy output
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => downloadRunOutput(entry.output || "", entry.label)}
-                >
-                  <Download className="size-3.5" />
-                  Download output
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => downloadRunAsJson(entry)}
-                  title="Export run as JSON"
-                >
-                  <FileJson className="size-3.5" />
-                  Export JSON
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => downloadRunAsMarkdown(entry)}
-                  title="Export run as Markdown"
-                >
-                  <FileText className="size-3.5" />
-                  Export Markdown
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => void copyRunAsMarkdownToClipboard(entry)}
-                  title="Copy as Markdown (same format as Export Markdown)"
-                  aria-label="Copy run as Markdown to clipboard"
-                >
-                  <FileText className="size-3.5" />
-                  Copy as Markdown
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => copySingleRunAsPlainTextToClipboard(entry)}
-                  title="Copy as plain text (same format as Copy all)"
-                  aria-label="Copy run as plain text to clipboard"
-                >
-                  <Copy className="size-3.5" />
-                  Copy as plain text
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => void copyRunAsJsonToClipboard(entry)}
-                  title="Copy as JSON (same data as Export JSON)"
-                  aria-label="Copy run as JSON to clipboard"
-                >
-                  <Copy className="size-3.5" />
-                  Copy as JSON
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => void copyRunAsCsvToClipboard(entry)}
-                  title="Copy as CSV (same data as Export CSV)"
-                  aria-label="Copy run as CSV to clipboard"
-                >
-                  <Copy className="size-3.5" />
-                  Copy as CSV
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => downloadRunAsCsv(entry)}
-                  title="Export run as CSV"
-                >
-                  <FileSpreadsheet className="size-3.5" />
-                  Export CSV
-                </Button>
                 <Button
                   variant="outline"
                   size="sm"
@@ -1936,6 +1723,7 @@ const ASK_ONLY_PROMPT_PREFIX = "You are in ask-only mode. Do NOT create, modify,
 
 function WorkerAskingSection({ projectId, projectPath }: { projectId: string; projectPath: string }) {
   const runTempTicket = useRunStore((s) => s.runTempTicket);
+  const addPlaceholderAskRun = useRunStore((s) => s.addPlaceholderAskRun);
   const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -1949,16 +1737,17 @@ function WorkerAskingSection({ projectId, projectPath }: { projectId: string; pr
       toast.error("Project path is missing. Set the project repo path in project details.");
       return;
     }
+    const labelSuffix = text.length > 40 ? `${text.slice(0, 37)}…` : text;
+    const label = `Ask: ${labelSuffix}`;
+    const placeholderRunId = addPlaceholderAskRun(label);
+    setQuestion("");
     setLoading(true);
     try {
       const agentsBlock = await loadAllAgentsContent(projectId, projectPath);
       const fullPrompt = ASK_ONLY_PROMPT_PREFIX + text + agentsBlock;
-      const labelSuffix = text.length > 40 ? `${text.slice(0, 37)}…` : text;
-      const label = `Ask: ${labelSuffix}`;
-      const runId = await runTempTicket(projectPath.trim(), fullPrompt, label);
+      const runId = await runTempTicket(projectPath.trim(), fullPrompt, label, placeholderRunId ? { placeholderRunId } : undefined);
       if (runId) {
-        toast.success(runId === "queued" ? "Added to queue. Agent will start when a slot is free." : "Agent started. Check the terminal below.");
-        setQuestion("");
+        toast.success(placeholderRunId ? "Agent started. Check the terminal below." : "Added to queue. Agent will start when a slot is free.");
       } else {
         toast.error("Failed to start agent.");
       }

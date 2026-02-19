@@ -1332,6 +1332,11 @@ export function CommandPalette() {
       closePalette();
       return;
     }
+    if (!proj.repoPath) {
+      toast.info("This project has no repo path");
+      closePalette();
+      return;
+    }
     try {
       const info = await invoke<GitInfo>("get_git_info", {
         projectPath: proj.repoPath.trim(),
