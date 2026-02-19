@@ -1,5 +1,6 @@
 "use client";
 
+/** My Test Practices Card component. */
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/shared/Card";
 import { getClasses } from "@/components/molecules/tailwind-molecules";

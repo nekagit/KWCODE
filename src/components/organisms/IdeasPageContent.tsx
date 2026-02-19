@@ -1,5 +1,6 @@
 "use client";
 
+/** Ideas Page Content component. */
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { Copy, FileJson, FileText, FolderOpen, Lightbulb, Loader2, RefreshCw, RotateCcw, Search, Table, X } from "lucide-react";
 import { toast } from "sonner";

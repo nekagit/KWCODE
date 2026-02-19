@@ -1,5 +1,6 @@
 "use client";
 
+/** Run History Stats Card component. */
 import type { TerminalOutputHistoryEntry } from "@/types/run";
 import { computeRunHistoryStats, formatRunHistoryStatsSummary } from "@/lib/run-history-stats";
 import { copyRunHistoryStatsSummaryToClipboard } from "@/lib/copy-run-history-stats-summary";

@@ -1,3 +1,6 @@
+/**
+ * Download a single design record as Markdown. Used by project Design tab and command palette.
+ */
 import { toast } from "sonner";
 import type { DesignRecord } from "@/types/design";
 import {

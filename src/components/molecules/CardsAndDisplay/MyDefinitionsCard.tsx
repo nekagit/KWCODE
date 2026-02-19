@@ -1,5 +1,6 @@
 "use client";
 
+/** My Definitions Card component. */
 import { Card } from "@/components/shared/Card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2 } from "lucide-react";

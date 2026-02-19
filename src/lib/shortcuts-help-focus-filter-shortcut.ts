@@ -1,5 +1,6 @@
 "use client";
 
+/** Shortcuts Help dialog: "/" and FOCUS_FILTER_EVENT focus the dialog filter. Used by ShortcutsHelpDialog. */
 import { useEffect, type RefObject } from "react";
 import { FOCUS_FILTER_EVENT } from "@/lib/focus-filter-event";
 

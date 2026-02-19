@@ -1,5 +1,6 @@
 "use client";
 
+/** Project Design Tab component. */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Copy, Download, FileJson, FileText, Palette, RotateCcw, Search, X } from "lucide-react";
 import type { Project } from "@/types/project";

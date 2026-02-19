@@ -1,3 +1,4 @@
+/** Button Component component. */
 import React from 'react';
 import { Button, ButtonProps } from "@/components/ui/button";
 import { LucideIcon } from 'lucide-react';

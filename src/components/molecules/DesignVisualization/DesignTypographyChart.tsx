@@ -1,5 +1,6 @@
 "use client";
 
+/** Design Typography Chart component. */
 import type { DesignTypography } from "@/types/design";
 
 interface DesignTypographyChartProps {

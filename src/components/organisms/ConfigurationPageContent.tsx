@@ -1,5 +1,6 @@
 "use client";
 
+/** Configuration Page Content component. */
 import { useCallback, useEffect, useState } from "react";
 import {
   isValidUIThemeId,

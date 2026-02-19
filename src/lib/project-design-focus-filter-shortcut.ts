@@ -1,5 +1,6 @@
 "use client";
 
+/** Project Design tab: "/" focuses the designs filter. Used by project Design tab. */
 import { type RefObject } from "react";
 import { useProjectTabFocusFilterShortcut } from "@/lib/project-tab-focus-filter-shortcut";
 

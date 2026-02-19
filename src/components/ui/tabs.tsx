@@ -1,5 +1,6 @@
 "use client"
 
+/** Tabs primitive (Radix). Used by molecules and organisms. */
 import * as React from "react"
 import * as TabsPrimitive from "@radix-ui/react-tabs"
 

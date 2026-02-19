@@ -1,3 +1,4 @@
+/** Ticket Management Card component. */
 import { ReactNode } from "react";
 import { Card } from "@/components/shared/Card";
 import { TitleWithIcon } from "@/components/atoms/headers/TitleWithIcon";

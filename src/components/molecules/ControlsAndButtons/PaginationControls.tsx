@@ -1,3 +1,4 @@
+/** Pagination Controls component. */
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { type Table } from "@tanstack/react-table";

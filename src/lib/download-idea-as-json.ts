@@ -1,3 +1,6 @@
+/**
+ * Download a single idea as JSON. Used by Ideas page and command palette.
+ */
 import { toast } from "sonner";
 import type { IdeaRecord } from "@/types/idea";
 import {

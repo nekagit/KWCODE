@@ -1,5 +1,6 @@
 "use client";
 
+/** Ideas Doc Accordion component. */
 import { useState, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";

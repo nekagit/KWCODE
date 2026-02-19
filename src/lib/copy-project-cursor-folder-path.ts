@@ -1,3 +1,6 @@
+/**
+ * Builds project .cursor path and copies it to the clipboard. Tauri only.
+ */
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 import { toast } from "sonner";
 

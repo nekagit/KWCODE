@@ -1,3 +1,4 @@
+/** Add Ticket Accordion component. */
 import { Accordion } from "@/components/shared/Accordion";
 import { TicketFormFields } from "@/components/atoms/forms/TicketFormFields";
 import type { TicketStatus } from "@/types/ticket";

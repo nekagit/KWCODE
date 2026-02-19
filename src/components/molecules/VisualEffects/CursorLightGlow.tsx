@@ -1,3 +1,4 @@
+/** Cursor Light Glow component. */
 import { getClasses } from "@/components/molecules/tailwind-molecules";
 const classes = getClasses("VisualEffects/CursorLightGlow.tsx");
 type CursorLightGlowProps = {

@@ -1,3 +1,6 @@
+/**
+ * Template ideas (predefined SaaS, webapp, etc.) for the Ideas page and prompts.
+ */
 /** Idea category for template ideas (matches IdeaRecord) */
 export type TemplateIdeaCategory =
   | "saas"

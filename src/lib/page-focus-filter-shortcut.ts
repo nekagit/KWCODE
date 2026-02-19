@@ -1,5 +1,8 @@
 "use client";
 
+/**
+ * Shared hook: "/" and FOCUS_FILTER_EVENT focus the filter input when pathname matches. Used by Dashboard, Projects, Prompts, Ideas, Technologies.
+ */
 import { useEffect, type RefObject } from "react";
 import { usePathname } from "next/navigation";
 import { FOCUS_FILTER_EVENT } from "@/lib/focus-filter-event";

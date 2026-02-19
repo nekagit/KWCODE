@@ -1,3 +1,4 @@
+/** Ticket Board component. */
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { TicketBoardLayout } from "@/components/molecules/LayoutAndNavigation/TicketBoardLayout";

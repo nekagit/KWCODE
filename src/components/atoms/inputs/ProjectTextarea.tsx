@@ -1,3 +1,4 @@
+/** Project Textarea component. */
 import { LabeledTextarea } from "@/components/shared/LabeledTextarea";
 
 interface ProjectTextareaProps {

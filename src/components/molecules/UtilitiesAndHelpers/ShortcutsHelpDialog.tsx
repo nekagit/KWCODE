@@ -1,5 +1,6 @@
 "use client";
 
+/** Shortcuts Help Dialog component. */
 import { useState, useMemo, useRef } from "react";
 import { useShortcutsHelpFocusFilterShortcut } from "@/lib/shortcuts-help-focus-filter-shortcut";
 import {

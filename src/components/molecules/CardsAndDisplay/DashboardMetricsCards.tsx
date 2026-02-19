@@ -1,5 +1,6 @@
 "use client";
 
+/** Dashboard Metrics Cards component. */
 import { useEffect, useState } from "react";
 import { getDashboardMetrics } from "@/lib/api-dashboard-metrics";
 import type { DashboardMetrics } from "@/types/dashboard";

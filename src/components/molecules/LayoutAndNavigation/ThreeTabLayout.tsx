@@ -1,5 +1,6 @@
 "use client";
 
+/** Three Tab Layout component. */
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getClasses } from "@/components/molecules/tailwind-molecules";

@@ -1,5 +1,6 @@
 "use client";
 
+/** Sidebar Theme Label component. */
 import { useUITheme } from "@/context/ui-theme";
 import { getUIThemeById, isValidUIThemeId } from "@/data/ui-theme-templates";
 

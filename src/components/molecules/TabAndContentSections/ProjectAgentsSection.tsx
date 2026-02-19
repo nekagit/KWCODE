@@ -1,5 +1,6 @@
 "use client";
 
+/** Project Agents Section component. */
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Bot, Loader2, FileText } from "lucide-react";
 import { listProjectFiles, readProjectFile, type FileEntry } from "@/lib/api-projects";

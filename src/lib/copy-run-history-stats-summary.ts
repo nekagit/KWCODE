@@ -1,3 +1,6 @@
+/**
+ * Copies run history stats summary (counts, duration) to the clipboard.
+ */
 import type { TerminalOutputHistoryEntry } from "@/types/run";
 import { computeRunHistoryStats, formatRunHistoryStatsSummary } from "@/lib/run-history-stats";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";

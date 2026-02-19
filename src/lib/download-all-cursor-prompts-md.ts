@@ -1,3 +1,6 @@
+/**
+ * Export all Cursor prompts as Markdown. Used by command palette and export toolbar.
+ */
 import { toast } from "sonner";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 import { filenameTimestamp, triggerFileDownload } from "@/lib/download-helpers";

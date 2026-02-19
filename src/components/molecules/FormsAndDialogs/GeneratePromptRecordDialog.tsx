@@ -1,5 +1,6 @@
 "use client";
 
+/** Generate Prompt Record Dialog component. */
 import { Dialog } from "@/components/shared/Dialog";
 import { GeneratedContentForm } from "@/components/molecules/FormsAndDialogs/GeneratedContentForm";
 import { PromptGeneratorForm } from "@/components/atoms/forms/PromptRecordGeneratorForm";

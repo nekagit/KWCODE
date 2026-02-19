@@ -1,5 +1,6 @@
 "use client";
 
+/** Run Controls component. */
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import { StartButton } from "@/components/atoms/buttons/StartButton";
 import { StopButton } from "@/components/atoms/buttons/StopButton";

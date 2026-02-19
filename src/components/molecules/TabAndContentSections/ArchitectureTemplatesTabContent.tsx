@@ -1,3 +1,4 @@
+/** Architecture Templates Tab Content component. */
 import { ArchitectureCategory } from "@/types/architecture";
 import { ArchitectureTemplateCard } from "@/components/molecules/CardsAndDisplay/ArchitectureTemplateCard.tsx";
 import { getClasses } from "@/components/molecules/tailwind-molecules";

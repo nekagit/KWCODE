@@ -1,5 +1,6 @@
 "use client";
 
+/** Planner Files Section component. */
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ListTodo } from "lucide-react";
 import { listProjectFiles, readProjectFileOrEmpty, type FileEntry } from "@/lib/api-projects";

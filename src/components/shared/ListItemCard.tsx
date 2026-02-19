@@ -1,3 +1,4 @@
+/** List Item Card component. */
 import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

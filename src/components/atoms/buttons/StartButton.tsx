@@ -1,3 +1,4 @@
+/** Start Button component. */
 import { ButtonComponent } from "@/components/shared/ButtonComponent";
 import { Play } from "lucide-react";
 

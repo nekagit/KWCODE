@@ -1,3 +1,6 @@
+/**
+ * Export all Cursor prompts as CSV. Used by command palette and export toolbar.
+ */
 import { toast } from "sonner";
 import { filenameTimestamp, downloadBlob } from "@/lib/download-helpers";
 import { escapeCsvField } from "@/lib/csv-helpers";

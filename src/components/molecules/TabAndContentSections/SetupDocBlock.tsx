@@ -1,5 +1,6 @@
 "use client";
 
+/** Setup Doc Block component. */
 import { useState, useEffect, useCallback, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";

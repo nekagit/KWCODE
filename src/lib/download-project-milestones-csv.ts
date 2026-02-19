@@ -1,3 +1,6 @@
+/**
+ * Export project milestones as CSV. Used by Milestones tab and command palette.
+ */
 import { toast } from "sonner";
 import type { MilestoneRecord } from "@/types/milestone";
 import { filenameTimestamp, downloadBlob } from "@/lib/download-helpers";

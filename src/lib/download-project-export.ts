@@ -1,3 +1,6 @@
+/**
+ * Download full project export (JSON). Used by project detail and command palette.
+ */
 import { getFullProjectExport } from "@/lib/api-projects";
 import { safeFilenameSegment, downloadBlob } from "@/lib/download-helpers";
 

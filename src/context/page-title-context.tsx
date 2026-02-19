@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * Page title context: syncs document title with pathname and optional search params.
+ * Used by the root layout to set "Page — KWCode" per route.
+ */
 import {
   createContext,
   useCallback,

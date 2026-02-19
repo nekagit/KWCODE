@@ -1,3 +1,4 @@
+/** Kanban Column Header component. */
 import React from "react";
 import {
   ListTodo,

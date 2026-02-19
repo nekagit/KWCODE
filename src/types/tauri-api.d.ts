@@ -1,3 +1,4 @@
+/** Ambient declarations for Tauri API (dialog, invoke, getVersion). */
 declare module "@tauri-apps/api/dialog" {
   export function open(options?: { directory?: boolean; multiple?: boolean; title?: string }): Promise<string | string[] | null>;
 }

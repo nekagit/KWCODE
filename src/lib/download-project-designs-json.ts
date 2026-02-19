@@ -1,3 +1,6 @@
+/**
+ * Export project designs as JSON. Used by project Design tab and command palette.
+ */
 import { toast } from "sonner";
 import type { DesignRecord } from "@/types/design";
 import { filenameTimestamp, triggerFileDownload } from "@/lib/download-helpers";

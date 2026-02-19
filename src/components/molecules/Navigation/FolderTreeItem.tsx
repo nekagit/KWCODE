@@ -1,3 +1,4 @@
+/** Folder Tree Item component. */
 import { ChevronDown, ChevronRight, Folder, FolderOpen } from "lucide-react";
 import { getClasses } from "@/components/molecules/tailwind-molecules";
 const classes = getClasses("Navigation/FolderTreeItem.tsx");

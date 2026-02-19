@@ -1,5 +1,6 @@
 "use client";
 
+/** Terminal Run Dock component. */
 import React from "react";
 import { Square, X } from "lucide-react";
 import { useRunStore } from "@/store/run-store";

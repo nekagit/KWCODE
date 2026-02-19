@@ -1,5 +1,6 @@
 "use client";
 
+/** Design Sample Preview component. */
 import { useMemo } from "react";
 import { designConfigToSampleHtml } from "@/lib/design-config-to-html";
 import type { DesignConfig } from "@/types/design";

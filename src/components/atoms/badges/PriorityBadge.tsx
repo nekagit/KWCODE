@@ -1,3 +1,4 @@
+/** Priority Badge component. */
 import { BadgeComponent } from "@/components/shared/BadgeComponent";
 
 interface PriorityBadgeProps {

@@ -1,5 +1,6 @@
 "use client";
 
+/** Prompt Records Page Content component. */
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

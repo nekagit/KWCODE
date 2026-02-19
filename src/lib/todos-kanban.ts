@@ -1,6 +1,8 @@
 /**
- * Parsed ticket from .cursor/7. planner/tickets.md (checklist item).
+ * Parse and build Kanban data from .cursor/7. planner/tickets.md and API tickets.
+ * Used by planner tab and export; supports mark-as-done and column mapping.
  */
+/** Parsed ticket from .cursor/7. planner/tickets.md (checklist item). */
 export type ParsedTicket = {
   id: string;
   number: number;

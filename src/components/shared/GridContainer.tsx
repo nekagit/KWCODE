@@ -1,3 +1,4 @@
+/** Grid Container component. */
 import React from 'react';
 import sharedClasses from './shared-classes';
 

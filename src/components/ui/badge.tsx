@@ -1,3 +1,4 @@
+/** Badge primitive with variants. Used for status and labels. */
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 

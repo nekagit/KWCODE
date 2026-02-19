@@ -1,3 +1,6 @@
+/**
+ * Tauri detection and invoke/listen helpers. Used by run-store and components to call Rust commands or fall back to fetch in browser.
+ */
 /** Detect Tauri at runtime (WebView has __TAURI_INTERNALS__ or __TAURI__) or via env (when dev server is started with NEXT_PUBLIC_IS_TAURI=true). */
 function detectTauri(): boolean {
   if (typeof window === "undefined") return process.env.NEXT_PUBLIC_IS_TAURI === "true";

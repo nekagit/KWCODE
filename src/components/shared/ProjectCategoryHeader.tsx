@@ -1,3 +1,4 @@
+/** Project Category Header component. */
 import React from "react";
 import sharedClasses from './shared-classes';
 import type { Project } from "@/types/project";

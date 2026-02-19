@@ -1,5 +1,6 @@
 "use client";
 
+/** Project Control Tab component. */
 import { useState, useCallback, useEffect } from "react";
 import { ClipboardList, Loader2, FileText, Flag, Lightbulb, CheckCircle2, XCircle, Archive } from "lucide-react";
 import { EmptyState } from "@/components/shared/EmptyState";

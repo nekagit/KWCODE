@@ -1,3 +1,4 @@
+/** Data Table Layout component. */
 import {
   flexRender,
   type Table as ReactTable,

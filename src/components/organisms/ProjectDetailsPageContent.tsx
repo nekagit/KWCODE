@@ -1,5 +1,8 @@
 "use client";
 
+/**
+ * Project detail page content: tabs (Overview, Worker, Git, Tickets, etc.) and prev/next navigation.
+ */
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";

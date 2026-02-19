@@ -1,3 +1,4 @@
+/** Ticket Actions Menu component. */
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,

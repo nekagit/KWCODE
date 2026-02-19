@@ -1,5 +1,6 @@
 "use client";
 
+/** All Data Tab Content component. */
 import { Card } from "@/components/shared/Card";
 import { Button } from "@/components/ui/button";
 import { Folders, MessageSquare, Lightbulb, Palette, LayoutGrid, CheckSquare, Square } from "lucide-react";

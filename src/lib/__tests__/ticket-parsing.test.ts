@@ -1,3 +1,4 @@
+/** Unit tests for ticket-parsing: normalizeTicketParsed, extractTicketJsonFromStdout. */
 import { describe, it, expect } from "vitest";
 import { normalizeTicketParsed, extractTicketJsonFromStdout } from "../ticket-parsing";
 

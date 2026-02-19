@@ -1,5 +1,6 @@
 "use client";
 
+/** Architecture Template Card component. */
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/shared/Card";
 import { TitleWithIcon } from "@/components/atoms/headers/TitleWithIcon";

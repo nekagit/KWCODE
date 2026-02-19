@@ -1,5 +1,6 @@
 "use client";
 
+/** cursor-files-tree component. */
 import { useState, useMemo } from "react";
 import { FolderTreeItem } from "@/components/molecules/Navigation/FolderTreeItem";
 import { FileTreeItem } from "@/components/molecules/Navigation/FileTreeItem";

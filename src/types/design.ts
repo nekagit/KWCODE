@@ -1,3 +1,6 @@
+/**
+ * Design types: page templates, sections, colors, typography, and layout config.
+ */
 /** Page type templates for web product design */
 export type PageTemplateId =
   | "landing"

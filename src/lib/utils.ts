@@ -1,3 +1,6 @@
+/**
+ * Shared utilities: cn() for class names, humanizeAgentId, getApiErrorMessage, and focus helpers.
+ */
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 

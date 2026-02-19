@@ -1,5 +1,6 @@
 "use client";
 
+/** index component. */
 import type { DesignConfig } from "@/types/design";
 import { DesignColorPalette } from "./DesignColorPalette";
 import { DesignTypographyChart } from "./DesignTypographyChart";

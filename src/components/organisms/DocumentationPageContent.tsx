@@ -1,5 +1,6 @@
 "use client";
 
+/** Documentation Page Content component. */
 import { useCallback, useState } from "react";
 import { BookOpen, Copy, FileJson, FileText, FolderOpen, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";

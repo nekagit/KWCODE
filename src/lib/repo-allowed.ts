@@ -1,3 +1,6 @@
+/**
+ * Repo path allowlist for API access: only repos under app dir or sibling of app dir.
+ */
 import path from "path";
 
 /**

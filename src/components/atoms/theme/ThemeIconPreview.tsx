@@ -1,3 +1,4 @@
+/** Theme Icon Preview component. */
 import React from 'react';
 import type { UIThemeTemplate } from "@/data/ui-theme-templates";
 import { Check, AlertTriangle, Trash2, Info, Sparkles } from "lucide-react";

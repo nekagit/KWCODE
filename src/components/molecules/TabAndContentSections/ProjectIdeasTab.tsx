@@ -1,5 +1,6 @@
 "use client";
 
+/** Project Ideas Tab component. */
 import { useState, useCallback } from "react";
 import { Lightbulb } from "lucide-react";
 import type { Project } from "@/types/project";

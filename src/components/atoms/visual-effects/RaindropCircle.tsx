@@ -1,3 +1,4 @@
+/** Raindrop Circle component. */
 import { scatter } from "@/lib/utils";
 
 type RaindropCircleProps = {

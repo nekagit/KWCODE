@@ -1,3 +1,4 @@
+/** Flying Star Item component. */
 import { scatter } from "@/lib/utils";
 
 type FlyingStarItemProps = {

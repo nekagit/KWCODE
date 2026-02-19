@@ -1,3 +1,6 @@
+/**
+ * Export project tickets as JSON. Used by Tickets tab and command palette.
+ */
 import { toast } from "sonner";
 import type { ParsedTicket } from "@/lib/todos-kanban";
 import { filenameTimestamp, triggerFileDownload } from "@/lib/download-helpers";

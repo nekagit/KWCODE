@@ -1,3 +1,4 @@
+/** Code Block component. */
 import React from 'react';
 
 interface CodeBlockProps {

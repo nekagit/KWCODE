@@ -1,5 +1,6 @@
 "use client";
 
+/** Idea Template Card component. */
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/shared/Card";
 import { IdeaTemplateListItem } from "@/components/atoms/list-items/IdeaTemplateListItem"; // Updated import

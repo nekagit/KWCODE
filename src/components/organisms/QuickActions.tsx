@@ -1,3 +1,4 @@
+/** Quick Actions component. */
 import { useRouter } from "next/navigation";
 import { QuickActionCard } from "@/components/molecules/CardsAndDisplay/QuickActionCard";
 import { QuickActionButtons } from "@/components/molecules/ControlsAndButtons/QuickActionButtons";

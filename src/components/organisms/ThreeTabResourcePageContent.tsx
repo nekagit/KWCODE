@@ -1,5 +1,6 @@
 "use client";
 
+/** Three Tab Resource Page Content component. */
 import React from "react";
 import { PageHeader } from "@/components/molecules/LayoutAndNavigation/PageHeader";
 import { ThreeTabLayout } from "@/components/molecules/LayoutAndNavigation/ThreeTabLayout";

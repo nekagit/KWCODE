@@ -1,3 +1,4 @@
+/** List item for an AI-generated architecture. */
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Copy } from "lucide-react";

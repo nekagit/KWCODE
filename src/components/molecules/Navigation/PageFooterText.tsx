@@ -1,3 +1,4 @@
+/** Page Footer Text component. */
 import React from 'react';
 import Link from "next/link";
 import { getClasses } from "@/components/molecules/tailwind-molecules";

@@ -1,5 +1,6 @@
 "use client";
 
+/** Architecture View Dialog component. */
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, Download, Copy, Hash, FileJson } from "lucide-react";

@@ -1,3 +1,4 @@
+/** Kwcode Branding component. */
 import { LoadingPulseDot } from "@/components/atoms/visual-effects/LoadingPulseDot";
 import { getClasses } from "@/components/molecules/tailwind-molecules";
 const classes = getClasses("Display/KwcodeBranding.tsx");

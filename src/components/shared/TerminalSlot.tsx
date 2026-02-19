@@ -1,5 +1,6 @@
 "use client";
 
+/** Terminal Slot component. */
 import { useState, useEffect, useRef } from "react";
 import { Loader2, CheckCircle2, Circle, Terminal, ExternalLink, Copy, Download } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";

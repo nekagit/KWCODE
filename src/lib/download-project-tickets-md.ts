@@ -1,3 +1,6 @@
+/**
+ * Export project tickets as Markdown. Used by Tickets tab and command palette.
+ */
 import { toast } from "sonner";
 import type { ParsedTicket } from "@/lib/todos-kanban";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";

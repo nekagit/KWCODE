@@ -1,3 +1,6 @@
+/**
+ * Opens the project in Cursor or VS Code. Tauri only.
+ */
 import { invoke, isTauri } from "@/lib/tauri";
 import { toast } from "sonner";
 

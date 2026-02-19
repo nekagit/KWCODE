@@ -1,3 +1,6 @@
+/**
+ * Static page and design templates for the Design tab (landing, dashboard, etc.).
+ */
 import type { PageTemplate, DesignConfig, DesignSection, DesignColors, DesignTypography, DesignLayout } from "@/types/design";
 
 export const PAGE_TEMPLATES: PageTemplate[] = [

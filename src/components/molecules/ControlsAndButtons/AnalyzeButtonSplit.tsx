@@ -1,5 +1,6 @@
 "use client";
 
+/** Analyze Button Split component. */
 import { useState, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";

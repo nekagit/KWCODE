@@ -1,3 +1,4 @@
+/** Stat Badge component. */
 import { BadgeComponent } from "@/components/shared/BadgeComponent";
 import { LucideIcon } from 'lucide-react';
 

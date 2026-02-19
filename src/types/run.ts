@@ -1,3 +1,6 @@
+/**
+ * Run types: timing defaults, run state, terminal history, night-shift phases, and RunMeta.
+ */
 export const DEFAULT_TIMING = {
   sleep_after_open_project: 4,
   sleep_after_window_focus: 1.5,

@@ -1,3 +1,6 @@
+/**
+ * Export projects list as CSV. Used by command palette and Projects page.
+ */
 import { toast } from "sonner";
 import type { Project } from "@/types/project";
 import { filenameTimestamp, downloadBlob } from "@/lib/download-helpers";

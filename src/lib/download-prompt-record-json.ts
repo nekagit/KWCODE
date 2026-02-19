@@ -1,3 +1,6 @@
+/**
+ * Download a single prompt record as JSON. Used by Prompts tab and command palette.
+ */
 import { toast } from "sonner";
 import {
   safeFilenameSegment,

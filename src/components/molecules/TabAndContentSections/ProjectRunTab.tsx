@@ -1,5 +1,6 @@
 "use client";
 
+/** Project Run Tab component. */
 import { useState, useCallback, useEffect, useMemo, useRef, Fragment } from "react";
 import type { Project } from "@/types/project";
 import type { NightShiftCirclePhase } from "@/types/run";

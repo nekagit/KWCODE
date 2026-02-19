@@ -1,5 +1,6 @@
 "use client";
 
+/** Curated Practices Card component. */
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/shared/Card";
 import { CuratedPracticeListItem } from "@/components/atoms/list-items/CuratedPracticeListItem";

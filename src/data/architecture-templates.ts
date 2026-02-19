@@ -1,3 +1,6 @@
+/**
+ * Static architecture templates (DDD, microservices, etc.) for the Architecture tab.
+ */
 import type { ArchitectureTemplate, ArchitectureCategory } from "@/types/architecture";
 
 export const ARCHITECTURE_TEMPLATES: ArchitectureTemplate[] = [

@@ -1,3 +1,6 @@
+/**
+ * No-op Tauri invoke/listen/open for environments where Tauri is not available (e.g. Next dev server).
+ */
 export const invoke = async <T>(cmd: string, args?: Record<string, unknown>): Promise<T> => {
   console.warn(`Tauri 'invoke' API not available in this environment. Command: ${cmd}`);
   return Promise.reject(new Error(`Tauri 'invoke' API not available. Command: ${cmd}`));

@@ -1,5 +1,8 @@
 "use client";
 
+/**
+ * Root app shell: sidebar, main content, terminal dock, command palette, and layout providers.
+ */
 import { useState, useRef, useCallback, useEffect, Suspense } from "react";
 import { usePathname } from "next/navigation";
 import { TerminalStatusBadge } from "@/components/molecules/Display/TerminalStatusBadge";

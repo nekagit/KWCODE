@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * Hydrates the run store: Tauri detection, initial data load, and event listeners.
+ * Mount once in the root layout.
+ */
 import { useEffect, useRef } from "react";
 import { listen, invoke, isTauri } from "@/lib/tauri";
 import { writeProjectFile } from "@/lib/api-projects";

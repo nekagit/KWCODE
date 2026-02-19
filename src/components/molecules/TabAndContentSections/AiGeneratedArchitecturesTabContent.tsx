@@ -1,3 +1,4 @@
+/** Ai Generated Architectures Tab Content component. */
 import { ArchitectureCategory } from "@/types/architecture";
 import { AiGeneratedArchitecturesCard } from "@/components/molecules/CardsAndDisplay/AiGeneratedArchitecturesCard.tsx";
 import { getClasses } from "@/components/molecules/tailwind-molecules";

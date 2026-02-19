@@ -1,3 +1,4 @@
+/** GET /api/version — returns app version for browser mode. */
 import { NextResponse } from "next/server";
 import path from "node:path";
 import { promises as fs } from "node:fs";

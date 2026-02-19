@@ -1,3 +1,6 @@
+/**
+ * Fetch ideas and download as JSON/MD or copy. Used by command palette and Ideas export.
+ */
 import type { IdeaRecord } from "@/types/idea";
 import { toast } from "sonner";
 import { filenameTimestamp, triggerFileDownload } from "@/lib/download-helpers";

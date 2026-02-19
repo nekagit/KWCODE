@@ -1,5 +1,6 @@
 "use client";
 
+/** Prompt Content View Dialog component. */
 import { useState, useCallback } from "react";
 import {
   Dialog,

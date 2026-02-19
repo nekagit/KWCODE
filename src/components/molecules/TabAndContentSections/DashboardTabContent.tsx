@@ -1,5 +1,6 @@
 "use client";
 
+/** Dashboard Tab Content component. */
 import { useCallback, useState } from "react";
 import { SimpleDashboard } from "@/components/molecules/DashboardsAndViews/SimpleDashboard";
 import { getClasses } from "@/components/molecules/tailwind-molecules";

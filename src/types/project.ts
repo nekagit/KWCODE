@@ -1,3 +1,6 @@
+/**
+ * Project types: entity categories, project aggregate, and related payloads.
+ */
 /** Optional categorization for an entity within a project (phase, step, organization, etc.). */
 export interface EntityCategory {
   phase?: string;

@@ -1,3 +1,4 @@
+/** List item for a definition (architecture/design). */
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { FileText, Pencil, Trash2 } from "lucide-react";

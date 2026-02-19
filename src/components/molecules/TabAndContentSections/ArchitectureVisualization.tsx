@@ -1,5 +1,6 @@
 "use client";
 
+/** Architecture Visualization component. */
 import { useMemo } from "react";
 import { MermaidDiagram } from "./MermaidDiagram";
 

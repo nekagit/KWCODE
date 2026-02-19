@@ -1,5 +1,6 @@
 "use client";
 
+/** No Projects Found Card component. */
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Folders, Plus } from "lucide-react";

@@ -1,5 +1,6 @@
 "use client";
 
+/** Design Color Palette component. */
 import type { DesignColors } from "@/types/design";
 
 const COLOR_ENTRIES: { key: keyof DesignColors; label: string }[] = [

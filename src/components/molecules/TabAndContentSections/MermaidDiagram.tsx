@@ -1,5 +1,6 @@
 "use client";
 
+/** Mermaid Diagram component. */
 import { useId, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 

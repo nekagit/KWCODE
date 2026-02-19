@@ -1,3 +1,4 @@
+/** My Definitions Tab Content component. */
 import { ArchitectureRecord, ArchitectureCategory } from "@/types/architecture";
 import { MyDefinitionsCard } from "@/components/molecules/CardsAndDisplay/MyDefinitionsCard.tsx";
 import { getClasses } from "@/components/molecules/tailwind-molecules";

@@ -1,5 +1,6 @@
 "use client";
 
+/** Project Git Tab component. */
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";

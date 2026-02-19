@@ -1,3 +1,4 @@
+/** Test Template List Item component. */
 import React, { useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

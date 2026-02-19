@@ -1,3 +1,6 @@
+/**
+ * Download testing document as Markdown. Used by Testing page and command palette.
+ */
 import { toast } from "sonner";
 import { triggerFileDownload, filenameTimestamp } from "@/lib/download-helpers";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";

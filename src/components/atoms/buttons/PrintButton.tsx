@@ -1,5 +1,6 @@
 "use client";
 
+/** Print button: triggers browser print. Used in toolbar and command palette. */
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
 import { cn } from "@/lib/utils";

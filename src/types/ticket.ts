@@ -1,3 +1,6 @@
+/**
+ * Ticket types: status, TicketRow, and Ticket alias for the ticket UI and API.
+ */
 export type TicketStatus = "backlog" | "in_progress" | "done" | "blocked";
 
 export interface TicketRow {

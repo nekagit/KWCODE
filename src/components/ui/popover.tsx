@@ -1,5 +1,6 @@
 "use client"
 
+/** Popover primitive (Radix). Used for dropdowns and floating content. */
 import * as React from "react"
 import * as PopoverPrimitive from "@radix-ui/react-popover"
 

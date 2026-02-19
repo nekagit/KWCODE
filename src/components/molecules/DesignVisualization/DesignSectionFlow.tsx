@@ -1,5 +1,6 @@
 "use client";
 
+/** Design Section Flow component. */
 import type { DesignSection } from "@/types/design";
 import { ChevronDown } from "lucide-react";
 

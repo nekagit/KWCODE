@@ -1,5 +1,6 @@
 "use client";
 
+/** Theme Selector component. */
 import { useCallback } from "react";
 import {
   UI_THEME_TEMPLATES,

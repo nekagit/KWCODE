@@ -1,5 +1,6 @@
 "use client";
 
+/** Project Run tab: "/" focuses the run history filter input. Used by ProjectRunTab. */
 import { type RefObject } from "react";
 import { useProjectTabFocusFilterShortcut } from "@/lib/project-tab-focus-filter-shortcut";
 

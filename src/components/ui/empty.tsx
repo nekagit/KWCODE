@@ -1,3 +1,4 @@
+/** Empty state placeholder. Used when lists or content are empty. */
 import * as React from "react"
 
 import { cn } from "@/lib/utils"

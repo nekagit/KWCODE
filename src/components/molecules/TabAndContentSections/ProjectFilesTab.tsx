@@ -1,5 +1,6 @@
 "use client";
 
+/** Project Files Tab component. */
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
     Folder,

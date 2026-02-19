@@ -1,3 +1,4 @@
+/** Ticket Board Layout component. */
 import { ReactNode } from "react";
 import { Card } from "@/components/shared/Card";
 import { Ticket as TicketIcon } from "lucide-react";

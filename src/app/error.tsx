@@ -1,5 +1,6 @@
 "use client";
 
+/** error component. */
 import { useEffect } from "react";
 
 export default function Error({

@@ -1,5 +1,6 @@
 "use client";
 
+/** Loading Screen Page Content component. */
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Copy, ExternalLink } from "lucide-react";

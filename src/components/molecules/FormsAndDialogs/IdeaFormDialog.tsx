@@ -1,5 +1,6 @@
 "use client";
 
+/** Idea Form Dialog component. */
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { Dialog } from "@/components/shared/Dialog";

@@ -1,3 +1,6 @@
+/**
+ * Placeholder proxy API route. Add proxy logic here if needed.
+ */
 import { NextApiRequest, NextApiResponse } from 'next';
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {

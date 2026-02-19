@@ -1,3 +1,4 @@
+/** Prompts Tab Content component. */
 import { PromptRecordSelectionCard } from "@/components/molecules/CardsAndDisplay/PromptRecordSelectionCard";
 import type { PromptRecord } from "@/types/prompt";
 import { getClasses } from "@/components/molecules/tailwind-molecules";

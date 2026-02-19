@@ -1,3 +1,4 @@
+/** Ticket Card component. */
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";

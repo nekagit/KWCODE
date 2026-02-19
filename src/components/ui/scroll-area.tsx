@@ -1,5 +1,6 @@
 "use client"
 
+/** Scroll area primitive (Radix). Used for scrollable regions. */
 import * as React from "react"
 import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area"
 

@@ -1,5 +1,6 @@
 "use client";
 
+/** Theme Preview Card component. */
 import type { UIThemeTemplate } from "@/data/ui-theme-templates";
 import { useUITheme } from "@/context/ui-theme";
 import ThemeNameHeader from "@/components/atoms/headers/ThemeNameHeader";

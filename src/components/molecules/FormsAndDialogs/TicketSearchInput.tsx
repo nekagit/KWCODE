@@ -1,3 +1,4 @@
+/** Ticket Search Input component. */
 import { Input } from "@/components/ui/input";
 import { type Table } from "@tanstack/react-table";
 import { getClasses } from "@/components/molecules/tailwind-molecules";

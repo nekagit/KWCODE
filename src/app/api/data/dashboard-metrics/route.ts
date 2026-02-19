@@ -1,3 +1,4 @@
+/** route component. */
 import { NextResponse } from "next/server";
 import { promises as fs } from "node:fs";
 import path from "node:path";

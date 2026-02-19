@@ -1,5 +1,6 @@
 "use client";
 
+/** root-loading-overlay component. */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { RainEffect } from "@/components/molecules/VisualEffects/RainEffect";
 import { CursorLightGlow } from "@/components/molecules/VisualEffects/CursorLightGlow";

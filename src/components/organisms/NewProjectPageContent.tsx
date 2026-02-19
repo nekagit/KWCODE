@@ -1,5 +1,6 @@
 "use client";
 
+/** New Project Page Content component. */
 import { NewProjectForm } from "@/components/molecules/FormsAndDialogs/NewProjectForm";
 import { SingleContentPage } from "@/components/organisms/SingleContentPage";
 import { Breadcrumb } from "@/components/shared/Breadcrumb";

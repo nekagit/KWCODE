@@ -1,5 +1,6 @@
 "use client";
 
+/** Cursor Prompt Files Table component. */
 import React from "react";
 import {
   Table,

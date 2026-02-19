@@ -1,3 +1,4 @@
+/** route component. */
 import { NextRequest, NextResponse } from "next/server";
 import { getDb, type ImplementationLogRow } from "@/lib/db";
 

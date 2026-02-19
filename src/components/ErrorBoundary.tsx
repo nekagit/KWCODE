@@ -1,5 +1,6 @@
 "use client";
 
+/** Error Boundary component. */
 import React, { Component, type ReactNode } from "react";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";
 

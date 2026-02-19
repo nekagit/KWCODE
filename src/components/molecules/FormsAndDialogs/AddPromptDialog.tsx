@@ -1,5 +1,6 @@
 "use client";
 
+/** Add Prompt Dialog component. */
 import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog as SharedDialog } from "@/components/shared/Dialog";

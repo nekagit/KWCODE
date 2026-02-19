@@ -1,5 +1,6 @@
 "use client";
 
+/** New Project Form component. */
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";

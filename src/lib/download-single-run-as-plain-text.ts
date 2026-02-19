@@ -1,3 +1,6 @@
+/**
+ * Download a single run entry as plain text file. Used by Run tab History and command palette.
+ */
 import type { TerminalOutputHistoryEntry } from "@/types/run";
 import { toast } from "sonner";
 import { triggerFileDownload, safeFilenameSegment, filenameTimestamp } from "@/lib/download-helpers";

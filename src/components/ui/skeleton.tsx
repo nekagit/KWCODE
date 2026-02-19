@@ -1,3 +1,4 @@
+/** Skeleton placeholder for loading states. */
 import { cn } from "@/lib/utils"
 
 function Skeleton({

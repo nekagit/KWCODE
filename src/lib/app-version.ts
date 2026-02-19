@@ -1,3 +1,6 @@
+/**
+ * App version: Tauri get_app_version or GET /api/version. Used by copy-app-version and footer.
+ */
 import { invoke, isTauri } from "@/lib/tauri";
 
 /**

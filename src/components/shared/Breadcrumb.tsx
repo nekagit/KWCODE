@@ -1,5 +1,6 @@
 "use client";
 
+/** Breadcrumb component. */
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 

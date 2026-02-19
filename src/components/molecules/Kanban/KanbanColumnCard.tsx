@@ -1,3 +1,4 @@
+/** Kanban Column Card component. */
 import React from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { KanbanColumnHeader } from "./KanbanColumnHeader";

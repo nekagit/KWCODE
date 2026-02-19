@@ -1,3 +1,4 @@
+/** Generic Textarea With Label component. */
 import React from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { FormField } from '@/components/shared/FormField';

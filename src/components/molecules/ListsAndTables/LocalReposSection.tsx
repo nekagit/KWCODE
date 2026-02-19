@@ -1,5 +1,6 @@
 "use client";
 
+/** Local Repos Section component. */
 import { useState, useEffect } from "react";
 import { FolderOpen } from "lucide-react";
 import { invoke, isTauri } from "@/lib/tauri";

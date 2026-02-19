@@ -1,5 +1,6 @@
 "use client";
 
+/** Relative Time With Tooltip component. */
 import {
   Tooltip,
   TooltipContent,

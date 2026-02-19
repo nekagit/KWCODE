@@ -1,3 +1,4 @@
+/** Theme Color Swatches component. */
 import React from 'react';
 import type { UIThemeTemplate } from "@/data/ui-theme-templates";
 import { Badge } from "@/components/ui/badge";

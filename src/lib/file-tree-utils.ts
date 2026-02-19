@@ -1,3 +1,6 @@
+/**
+ * Builds a Cursor-style file tree from flat file lists; used by versioning and project file views.
+ */
 import { type CursorFileEntry, type CursorTreeFolder, type CursorTreeFile, type CursorTreeNode } from "@/types/file-tree";
 import { normalizePath } from "@/lib/utils";
 

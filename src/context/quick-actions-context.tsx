@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * Quick-actions context: config and shortcuts modals, add-prompt action.
+ * Provides openConfigModal, openShortcutsModal, and add-prompt handling for the app shell.
+ */
 import React, { createContext, useCallback, useContext, useState, useEffect, Suspense } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";

@@ -1,3 +1,6 @@
+/**
+ * Idea types: category and IdeaRecord for the Ideas page and API.
+ */
 export type IdeaCategory = "saas" | "iaas" | "paas" | "website" | "webapp" | "webshop" | "other";
 
 export type IdeaRecord = {

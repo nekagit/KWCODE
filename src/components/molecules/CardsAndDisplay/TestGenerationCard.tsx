@@ -1,5 +1,6 @@
 "use client";
 
+/** Test Generation Card component. */
 import { Card } from "@/components/shared/Card";
 import { Input } from "@/components/ui/input";
 import { Sparkles } from "lucide-react";

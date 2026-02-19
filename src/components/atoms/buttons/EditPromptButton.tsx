@@ -1,3 +1,4 @@
+/** Edit Prompt Button component. */
 import React from 'react';
 import { Pencil } from "lucide-react";
 import { ButtonComponent } from "@/components/shared/ButtonComponent";

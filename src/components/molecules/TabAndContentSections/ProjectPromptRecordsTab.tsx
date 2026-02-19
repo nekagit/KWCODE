@@ -1,5 +1,6 @@
 "use client";
 
+/** Project Prompt Records Tab component. */
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus, MessageSquare } from "lucide-react";

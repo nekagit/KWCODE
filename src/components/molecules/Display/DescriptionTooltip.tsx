@@ -1,3 +1,4 @@
+/** Description Tooltip component. */
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { getClasses } from "@/components/molecules/tailwind-molecules";
 const classes = getClasses("Display/DescriptionTooltip.tsx");

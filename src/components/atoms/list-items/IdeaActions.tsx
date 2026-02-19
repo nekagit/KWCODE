@@ -1,5 +1,6 @@
 "use client";
 
+/** Action buttons for an idea (edit, delete, generate). */
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";

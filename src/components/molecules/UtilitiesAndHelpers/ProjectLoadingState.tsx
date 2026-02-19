@@ -1,3 +1,4 @@
+/** Project Loading State component. */
 import { Loader2 } from "lucide-react";
 import { getClasses } from "@/components/molecules/tailwind-molecules";
 const classes = getClasses("UtilitiesAndHelpers/ProjectLoadingState.tsx");

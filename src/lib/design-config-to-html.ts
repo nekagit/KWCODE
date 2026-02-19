@@ -1,3 +1,6 @@
+/**
+ * Renders design config (sections, colors, typography) to HTML for preview and export.
+ */
 import type { DesignConfig, DesignSection } from "@/types/design";
 
 function escapeHtml(s: string): string {

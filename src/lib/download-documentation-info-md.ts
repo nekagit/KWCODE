@@ -1,3 +1,6 @@
+/**
+ * Download documentation info as Markdown. Used by command palette.
+ */
 import { toast } from "sonner";
 import {
   filenameTimestamp,

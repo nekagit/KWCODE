@@ -1,5 +1,6 @@
 "use client";
 
+/** Technologies page: "/" focuses the filter input. Used by TechnologiesPageContent. */
 import { type RefObject } from "react";
 import { usePageFocusFilterShortcut } from "@/lib/page-focus-filter-shortcut";
 

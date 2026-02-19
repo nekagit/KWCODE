@@ -1,5 +1,6 @@
 "use client";
 
+/** Coverage Dashboard component. */
 import { Card } from "@/components/shared/Card";
 import { BarChart3 } from "lucide-react";
 import { CoverageMetricCard } from "@/components/molecules/CardsAndDisplay/CoverageMetricCard";

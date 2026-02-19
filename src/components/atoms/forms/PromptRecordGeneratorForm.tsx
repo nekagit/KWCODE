@@ -1,3 +1,4 @@
+/** Prompt Record Generator Form component. */
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { GenericTextareaWithLabel } from "@/components/shared/GenericTextareaWithLabel";

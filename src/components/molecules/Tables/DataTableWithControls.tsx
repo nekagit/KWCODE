@@ -1,3 +1,4 @@
+/** Data Table With Controls component. */
 import type { ColumnDef } from "@tanstack/react-table";
 import type { Table as ReactTable } from "@tanstack/react-table";
 import { DataTableLayout } from "@/components/molecules/Tables/DataTableLayout";

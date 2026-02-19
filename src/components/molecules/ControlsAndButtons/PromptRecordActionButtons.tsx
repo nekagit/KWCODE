@@ -1,5 +1,6 @@
 "use client";
 
+/** Prompt Record Action Buttons component. */
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
 import { CreatePromptRecordButton } from "@/components/atoms/buttons/CreatePromptButton";
 import { EditPromptButton } from "@/components/atoms/buttons/EditPromptButton";

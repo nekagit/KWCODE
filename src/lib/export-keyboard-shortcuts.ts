@@ -1,3 +1,6 @@
+/**
+ * Export keyboard shortcuts as text or file for download/copy. Used by command palette and Configuration.
+ */
 import type { ShortcutGroup } from "@/data/keyboard-shortcuts";
 import { KEYBOARD_SHORTCUT_GROUPS } from "@/data/keyboard-shortcuts";
 import { toast } from "sonner";

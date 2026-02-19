@@ -1,3 +1,6 @@
+/**
+ * Converts architecture records to Markdown for export and project spec.
+ */
 import type { ArchitectureRecord } from "@/types/architecture";
 
 /** Full architecture record to .md for Project Spec export. */

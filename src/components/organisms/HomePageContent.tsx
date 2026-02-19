@@ -1,5 +1,6 @@
 "use client";
 
+/** Home Page Content component. */
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { invoke, isTauri } from "@/lib/tauri";

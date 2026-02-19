@@ -1,3 +1,4 @@
+/** Input primitive. Used in forms. */
 import * as React from "react"
 
 import { cn } from "@/lib/utils"

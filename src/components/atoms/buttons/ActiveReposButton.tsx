@@ -1,3 +1,4 @@
+/** Active Repos Button component. */
 import React from 'react';
 import { Folders } from "lucide-react";
 import { ButtonComponent } from "@/components/shared/ButtonComponent";

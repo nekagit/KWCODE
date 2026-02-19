@@ -1,5 +1,6 @@
 "use client";
 
+/** Technologies Page Content component. */
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { Copy, Cpu, Download, FileText, FolderOpen, Loader2, Pencil, RefreshCw, Save, Layout, Search, Server, Wrench, X } from "lucide-react";
 import { toast } from "sonner";

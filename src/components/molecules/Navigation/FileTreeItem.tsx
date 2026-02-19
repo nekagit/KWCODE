@@ -1,3 +1,4 @@
+/** File Tree Item component. */
 import { Button } from "@/components/ui/button";
 import { FileText, Plus } from "lucide-react";
 import { type CursorFileEntry } from "@/types/file-tree";

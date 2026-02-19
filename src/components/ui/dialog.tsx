@@ -1,5 +1,6 @@
 "use client";
 
+/** Dialog/modal primitive (Radix). Used for modals and sheets. */
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { XIcon } from "lucide-react";

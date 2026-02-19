@@ -1,3 +1,4 @@
+/** Project Checkbox Item component. */
 import React from 'react';
 import { CheckboxComponent } from "@/components/shared/CheckboxComponent";
 

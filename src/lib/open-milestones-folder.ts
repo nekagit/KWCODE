@@ -1,3 +1,6 @@
+/**
+ * Opens the app milestones folder in the system file manager. Tauri only.
+ */
 import { invoke, isTauri } from "@/lib/tauri";
 import { toast } from "sonner";
 

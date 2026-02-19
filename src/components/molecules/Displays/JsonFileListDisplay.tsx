@@ -1,3 +1,4 @@
+/** Json File List Display component. */
 import React from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Braces } from "lucide-react";

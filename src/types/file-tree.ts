@@ -1,3 +1,6 @@
+/**
+ * Types for Cursor-style file tree (folders, files) used in versioning and project file views.
+ */
 export type CursorFileEntry = { name: string; path: string };
 
 export type CursorTreeFolder = {

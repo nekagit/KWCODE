@@ -1,5 +1,6 @@
 "use client";
 
+/** Themed Page Layout component. */
 import React from "react";
 import { Card } from "@/components/shared/Card";
 import { ErrorDisplay } from "@/components/shared/ErrorDisplay";

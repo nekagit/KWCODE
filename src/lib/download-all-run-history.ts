@@ -1,3 +1,6 @@
+/**
+ * Download full run history as a single plain-text file. Used by Run tab and command palette.
+ */
 import type { TerminalOutputHistoryEntry } from "@/types/run";
 import { toast } from "sonner";
 import { filenameTimestamp, downloadBlob } from "@/lib/download-helpers";

@@ -1,3 +1,4 @@
+/** Moon Graphic component. */
 import { getClasses } from "@/components/molecules/tailwind-molecules";
 const classes = getClasses("VisualEffects/MoonGraphic.tsx");
 export function MoonGraphic() {

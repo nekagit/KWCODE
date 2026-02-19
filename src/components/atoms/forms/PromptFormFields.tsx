@@ -1,3 +1,4 @@
+/** Prompt Form Fields component. */
 import React from 'react';
 import { GenericInputWithLabel } from "@/components/shared/GenericInputWithLabel";
 import { GenericTextareaWithLabel } from "@/components/shared/GenericTextareaWithLabel";

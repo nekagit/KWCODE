@@ -1,3 +1,4 @@
+/** Card primitive. Used by molecules for cards and panels. */
 import * as React from "react"
 
 import { cn } from "@/lib/utils"

@@ -1,3 +1,4 @@
+/** Checkbox Component component. */
 import React from 'react';
 import sharedClasses from './shared-classes';
 import { Checkbox } from "@/components/ui/checkbox";

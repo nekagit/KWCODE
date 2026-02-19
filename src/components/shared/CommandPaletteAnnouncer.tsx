@@ -1,5 +1,6 @@
 "use client";
 
+/** Command Palette Announcer component. */
 import { useState, useEffect, useRef } from "react";
 
 const ANNOUNCE_MESSAGE = "Command palette opened. Type to search.";

@@ -1,3 +1,4 @@
+/** Generate Kanban Prompt Section component. */
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles, Wand2, ClipboardCopy } from "lucide-react";

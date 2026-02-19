@@ -1,3 +1,4 @@
+/** Create Prompt Button component. */
 import React from 'react';
 import { Plus } from "lucide-react";
 import { ButtonComponent } from "@/components/shared/ButtonComponent";

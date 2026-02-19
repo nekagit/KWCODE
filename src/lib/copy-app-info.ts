@@ -1,3 +1,6 @@
+/**
+ * Copies app info (version, data path, etc.) as text or JSON to the clipboard.
+ */
 import { invoke, isTauri } from "@/lib/tauri";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 

@@ -1,3 +1,4 @@
+/** Stop Button component. */
 import { ButtonComponent } from "@/components/shared/ButtonComponent";
 import { Square } from "lucide-react";
 

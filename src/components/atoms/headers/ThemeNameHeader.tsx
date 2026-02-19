@@ -1,3 +1,4 @@
+/** Theme Name Header component. */
 import React from 'react';
 
 interface ThemeNameHeaderProps {

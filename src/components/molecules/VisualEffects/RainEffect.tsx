@@ -1,3 +1,4 @@
+/** Rain Effect component. */
 import { RaindropCircle } from "@/components/atoms/visual-effects/RaindropCircle";
 import { getClasses } from "@/components/molecules/tailwind-molecules";
 const classes = getClasses("VisualEffects/RainEffect.tsx");

@@ -1,3 +1,4 @@
+/** Nav Link Item component. */
 import Link from "next/link";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { type LucideIcon } from "lucide-react";

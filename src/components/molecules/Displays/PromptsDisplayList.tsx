@@ -1,3 +1,4 @@
+/** Prompts Display List component. */
 import React from 'react';
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";

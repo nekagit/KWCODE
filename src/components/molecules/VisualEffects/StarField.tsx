@@ -1,3 +1,4 @@
+/** Star Field component. */
 import { FlyingStarItem } from "@/components/atoms/visual-effects/FlyingStarItem";
 import { getClasses } from "@/components/molecules/tailwind-molecules";
 const classes = getClasses("VisualEffects/StarField.tsx");

@@ -1,3 +1,6 @@
+/**
+ * Export versioning (changed files) as CSV or copy to clipboard. Used by Versioning tab and command palette.
+ */
 import { toast } from "sonner";
 import { triggerFileDownload, filenameTimestamp } from "@/lib/download-helpers";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";

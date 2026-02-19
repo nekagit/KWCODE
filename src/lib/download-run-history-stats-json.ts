@@ -1,3 +1,6 @@
+/**
+ * Export run history stats as JSON. Used by Run tab and command palette.
+ */
 import type { TerminalOutputHistoryEntry } from "@/types/run";
 import { computeRunHistoryStats, formatRunHistoryStatsSummary } from "@/lib/run-history-stats";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";

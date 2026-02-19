@@ -1,5 +1,6 @@
 "use client";
 
+/** Convert To Milestones Dialog component. */
 import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog as SharedDialog } from "@/components/shared/Dialog";

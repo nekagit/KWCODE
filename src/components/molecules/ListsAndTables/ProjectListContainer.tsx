@@ -1,3 +1,4 @@
+/** Project List Container component. */
 import React, { ReactNode } from "react";
 import { GridContainer } from "@/components/shared/GridContainer";
 

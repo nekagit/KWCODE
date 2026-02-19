@@ -1,3 +1,6 @@
+/**
+ * Opens the project path in the system terminal. Tauri only.
+ */
 import { invoke, isTauri } from "@/lib/tauri";
 import { toast } from "sonner";
 

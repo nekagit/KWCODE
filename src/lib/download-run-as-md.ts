@@ -1,3 +1,6 @@
+/**
+ * Download a single run entry as Markdown. Used by Run tab History and command palette.
+ */
 import type { TerminalOutputHistoryEntry } from "@/types/run";
 import {
   safeFilenameSegment,

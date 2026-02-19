@@ -1,5 +1,6 @@
 "use client";
 
+/** Project detail tabs: "/" and FOCUS_FILTER_EVENT focus the active tab's filter. Used by project tab components. */
 import { useEffect, type RefObject } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { FOCUS_FILTER_EVENT } from "@/lib/focus-filter-event";

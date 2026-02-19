@@ -1,5 +1,6 @@
 "use client";
 
+/** Project Architecture tab: "/" focuses the architectures filter. Used by project Architecture tab. */
 import { type RefObject } from "react";
 import { useProjectTabFocusFilterShortcut } from "@/lib/project-tab-focus-filter-shortcut";
 

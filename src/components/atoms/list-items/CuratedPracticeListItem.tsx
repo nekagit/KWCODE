@@ -1,3 +1,4 @@
+/** List item for a curated practice in Testing page. */
 import React from 'react';
 
 interface CuratedPracticeListItemProps {

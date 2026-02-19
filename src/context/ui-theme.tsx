@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * UI theme context: light/dark and custom themes from ui-theme-templates.
+ * Persists selection and applies theme variables to the document.
+ */
 import {
   createContext,
   useCallback,

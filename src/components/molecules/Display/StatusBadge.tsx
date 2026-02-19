@@ -1,3 +1,4 @@
+/** Status Badge component. */
 import { Badge } from "@/components/ui/badge";
 import { type TicketStatus } from "@/types/ticket";
 import { getClasses } from "@/components/molecules/tailwind-molecules";

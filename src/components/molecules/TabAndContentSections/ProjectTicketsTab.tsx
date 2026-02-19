@@ -1,5 +1,6 @@
 "use client";
 
+/** Project Tickets Tab component. */
 import { useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";

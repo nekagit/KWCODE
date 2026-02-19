@@ -1,5 +1,6 @@
 "use client";
 
+/** Projects List Page Content component. */
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Project } from "@/types/project";

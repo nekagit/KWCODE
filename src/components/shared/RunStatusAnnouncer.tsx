@@ -1,5 +1,6 @@
 "use client";
 
+/** Run Status Announcer component. */
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { useRunStore } from "@/store/run-store";

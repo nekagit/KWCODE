@@ -1,3 +1,4 @@
+/** Theme Button Preview component. */
 import React from 'react';
 import type { UIThemeTemplate } from "@/data/ui-theme-templates";
 import { Button } from "@/components/ui/button";

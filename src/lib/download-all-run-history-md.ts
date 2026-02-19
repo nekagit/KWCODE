@@ -1,3 +1,6 @@
+/**
+ * Export full run history as Markdown. Used by Run tab and command palette.
+ */
 import type { TerminalOutputHistoryEntry } from "@/types/run";
 import { toast } from "sonner";
 import { filenameTimestamp, downloadBlob } from "@/lib/download-helpers";

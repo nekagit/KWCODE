@@ -1,3 +1,6 @@
+/**
+ * Download a single architecture record as JSON. Used by project Architecture tab and command palette.
+ */
 import { toast } from "sonner";
 import type { ArchitectureRecord } from "@/types/architecture";
 import {

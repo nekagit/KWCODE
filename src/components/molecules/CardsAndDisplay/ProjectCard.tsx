@@ -1,5 +1,6 @@
 "use client";
 
+/** Project Card component. */
 import type { Project } from "@/types/project";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

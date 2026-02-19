@@ -1,3 +1,6 @@
+/**
+ * Copies full run history (all entries) as plain text to the clipboard.
+ */
 import type { TerminalOutputHistoryEntry } from "@/types/run";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 import { toast } from "sonner";

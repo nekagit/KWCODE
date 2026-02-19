@@ -1,3 +1,6 @@
+/**
+ * Copies the app version string to the clipboard. Used by command palette and bug-report flows.
+ */
 import { getAppVersion } from "@/lib/app-version";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 

@@ -1,3 +1,6 @@
+/**
+ * Copies the planner folder path (.cursor/7. planner) to the clipboard. Tauri only.
+ */
 import { invoke, isTauri } from "@/lib/tauri";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 import { toast } from "sonner";

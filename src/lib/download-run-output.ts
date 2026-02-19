@@ -1,3 +1,6 @@
+/**
+ * Download run terminal output as a plain text file. Used by Run tab and command palette.
+ */
 import {
   safeFilenameSegment,
   filenameTimestamp,

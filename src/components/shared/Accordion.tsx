@@ -1,3 +1,4 @@
+/** Accordion component. */
 import React, { useState } from 'react';
 import sharedClasses from './shared-classes';
 

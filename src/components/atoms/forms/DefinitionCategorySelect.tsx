@@ -1,3 +1,4 @@
+/** Definition Category Select component. */
 import React from 'react';
 import {
   Select,

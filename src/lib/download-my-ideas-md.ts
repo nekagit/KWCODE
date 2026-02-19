@@ -1,3 +1,6 @@
+/**
+ * Export My Ideas as Markdown. Used by command palette and Ideas page.
+ */
 import type { IdeaRecord } from "@/types/idea";
 import { toast } from "sonner";
 import { filenameTimestamp, triggerFileDownload } from "@/lib/download-helpers";

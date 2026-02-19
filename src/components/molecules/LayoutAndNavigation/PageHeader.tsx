@@ -1,3 +1,4 @@
+/** Page Header component. */
 import React from 'react';
 import { getClasses } from "@/components/molecules/tailwind-molecules";
 const classes = getClasses("LayoutAndNavigation/PageHeader.tsx");

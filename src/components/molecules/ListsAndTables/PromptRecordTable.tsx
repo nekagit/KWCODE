@@ -1,5 +1,6 @@
 "use client";
 
+/** Prompt Record Table component. */
 import React from 'react';
 import { TableHead, TableHeader, TableRow, TableBody, TableCell, Table } from "@/components/ui/table";
 import { PromptTableRow } from "@/components/atoms/list-items/PromptTableRow";

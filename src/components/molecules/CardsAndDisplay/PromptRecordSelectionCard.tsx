@@ -1,5 +1,6 @@
 "use client";
 
+/** Prompt Record Selection Card component. */
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageSquare } from "lucide-react";
 import { Card } from "@/components/shared/Card";

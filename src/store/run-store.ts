@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * Zustand run store: terminal runs, projects list, queue, night-shift, and Tauri integration.
+ * Hydrated by RunStoreHydration; consumed by run tab, worker, and layout.
+ */
 import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { invoke, isTauri, runRunTerminalAgentPayload } from "@/lib/tauri";

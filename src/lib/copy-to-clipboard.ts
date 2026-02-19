@@ -1,3 +1,6 @@
+/**
+ * Clipboard copy with navigator.clipboard or execCommand fallback. Shows toast unless silent.
+ */
 import { toast } from "sonner";
 
 /**

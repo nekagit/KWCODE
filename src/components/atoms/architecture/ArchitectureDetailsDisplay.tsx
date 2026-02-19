@@ -1,3 +1,4 @@
+/** Architecture Details Display component. */
 import React from 'react';
 import { Badge } from "@/components/ui/badge";
 import type { ArchitectureRecord, ArchitectureCategory } from "@/types/architecture";

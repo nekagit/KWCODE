@@ -1,3 +1,6 @@
+/**
+ * Export project milestones as JSON. Used by Milestones tab and command palette.
+ */
 import { toast } from "sonner";
 import type { MilestoneRecord } from "@/types/milestone";
 import { filenameTimestamp, triggerFileDownload } from "@/lib/download-helpers";

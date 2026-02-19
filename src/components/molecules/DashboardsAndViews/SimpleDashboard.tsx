@@ -1,5 +1,6 @@
 "use client";
 
+/** Simple Dashboard component. */
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

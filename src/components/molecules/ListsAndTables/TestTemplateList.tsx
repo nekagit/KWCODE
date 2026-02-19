@@ -1,5 +1,6 @@
 "use client";
 
+/** Test Template List component. */
 import { useCallback } from "react";
 import { Card } from "@/components/shared/Card";
 import { ScrollArea } from "@/components/ui/scroll-area";

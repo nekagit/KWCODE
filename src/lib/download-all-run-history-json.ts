@@ -1,3 +1,6 @@
+/**
+ * Export full run history as JSON. Used by Run tab and command palette.
+ */
 import type { TerminalOutputHistoryEntry } from "@/types/run";
 import { toast } from "sonner";
 import { filenameTimestamp, triggerFileDownload } from "@/lib/download-helpers";

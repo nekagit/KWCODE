@@ -1,5 +1,6 @@
 "use client";
 
+/** Project Milestones Tab component. */
 import { useState, useCallback, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";

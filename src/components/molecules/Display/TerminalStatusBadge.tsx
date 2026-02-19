@@ -1,3 +1,4 @@
+/** Terminal Status Badge component. */
 import { Popover, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { Terminal } from "lucide-react";

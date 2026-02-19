@@ -1,3 +1,4 @@
+/** Sidebar Navigation component. */
 import { Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { LayoutDashboard, LayoutGrid, MessageSquare, Folders, Lightbulb, Cpu, Settings, Moon, BookOpen, Keyboard } from "lucide-react";

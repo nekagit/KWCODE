@@ -1,5 +1,8 @@
 "use client";
 
+/**
+ * Dashboard tab: "/" focuses the filter input. Used by SimpleDashboard.
+ */
 import { type RefObject } from "react";
 import { usePageFocusFilterShortcut } from "@/lib/page-focus-filter-shortcut";
 

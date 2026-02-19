@@ -1,3 +1,6 @@
+/**
+ * Download documentation info as JSON. Used by command palette.
+ */
 import { toast } from "sonner";
 import {
   filenameTimestamp,

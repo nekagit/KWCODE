@@ -1,5 +1,6 @@
 "use client";
 
+/** Project Backend Tab component. */
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Loader2,

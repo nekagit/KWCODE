@@ -1,5 +1,6 @@
 "use client";
 
+/** Database Data Tab Content component. */
 import { useState, useEffect, useCallback } from "react";
 import { Card } from "@/components/shared/Card";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";

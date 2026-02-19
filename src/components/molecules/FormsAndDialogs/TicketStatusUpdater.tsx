@@ -1,3 +1,4 @@
+/** Ticket Status Updater component. */
 import {
   Select,
   SelectContent,

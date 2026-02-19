@@ -1,3 +1,6 @@
+/**
+ * Converts design records to Markdown for export and project spec.
+ */
 import type { DesignConfig } from "@/types/design";
 
 export interface DesignRecordForExport {

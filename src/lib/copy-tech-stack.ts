@@ -1,3 +1,6 @@
+/**
+ * Copies tech stack (from first project or given path) as text or JSON to the clipboard.
+ */
 import { toast } from "sonner";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 

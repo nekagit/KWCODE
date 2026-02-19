@@ -1,5 +1,6 @@
 "use client";
 
+/** tickets-data-table component. */
 import * as React from "react";
 import {
   type ColumnDef,

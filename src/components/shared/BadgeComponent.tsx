@@ -1,3 +1,4 @@
+/** Badge Component component. */
 import React from 'react';
 import { Badge, BadgeProps } from "@/components/ui/badge";
 import { LucideIcon } from 'lucide-react';

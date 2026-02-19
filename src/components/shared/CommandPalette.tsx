@@ -1,5 +1,8 @@
 "use client";
 
+/**
+ * Global command palette (⌘K): search actions, navigate, run commands. Used by app-shell.
+ */
 import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {

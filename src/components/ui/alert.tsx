@@ -1,3 +1,4 @@
+/** Alert primitive with variants. Used for messages and banners. */
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 

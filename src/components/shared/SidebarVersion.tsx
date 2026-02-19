@@ -1,5 +1,6 @@
 "use client";
 
+/** Sidebar Version component. */
 import { useEffect, useState } from "react";
 import { getAppVersion } from "@/lib/app-version";
 

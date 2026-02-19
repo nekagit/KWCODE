@@ -1,3 +1,6 @@
+/**
+ * Download app info as JSON file. Tauri only.
+ */
 import { toast } from "sonner";
 import { invoke, isTauri } from "@/lib/tauri";
 import type { CopyAppInfoParams } from "@/lib/copy-app-info";

@@ -1,3 +1,4 @@
+/** Template Idea Card component. */
 import React from 'react';
 import { Card } from "@/components/shared/Card";
 import { Button } from "@/components/ui/button";

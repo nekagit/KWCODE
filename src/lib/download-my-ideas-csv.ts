@@ -1,3 +1,6 @@
+/**
+ * Export My Ideas as CSV. Used by command palette and Ideas page.
+ */
 import type { IdeaRecord } from "@/types/idea";
 import { toast } from "sonner";
 import { filenameTimestamp, downloadBlob } from "@/lib/download-helpers";

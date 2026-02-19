@@ -1,3 +1,4 @@
+/** layout component. */
 import type { Metadata } from "next";
 import "@/app/globals.css";
 import { RootLoadingOverlay } from "@/components/root-loading-overlay";

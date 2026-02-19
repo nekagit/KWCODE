@@ -1,3 +1,4 @@
+/** Active Projects Display component. */
 import { JsonDisplay } from "@/components/shared/JsonDisplay";
 
 interface ActiveProjectsDisplayProps {

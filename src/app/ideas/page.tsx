@@ -1,3 +1,4 @@
+/** page component. */
 import { IdeasPageContent } from "@/components/organisms/IdeasPageContent";
 
 export default function IdeasPage() {

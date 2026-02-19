@@ -1,5 +1,6 @@
 "use client";
 
+/** Design Visualization Fallback component. */
 import { LayoutTemplate, Palette, Type } from "lucide-react";
 
 interface DesignVisualizationFallbackProps {

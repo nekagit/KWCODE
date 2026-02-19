@@ -1,3 +1,4 @@
+/** Project Checkbox List Item component. */
 import React from 'react';
 import { Checkbox } from "@/components/ui/checkbox";
 

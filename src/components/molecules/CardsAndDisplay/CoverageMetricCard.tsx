@@ -1,5 +1,6 @@
 "use client";
 
+/** Coverage Metric Card component. */
 import { Progress } from "@/components/ui/progress";
 import { ReactNode } from "react";
 import { LucideIcon, Activity } from "lucide-react";

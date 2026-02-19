@@ -1,3 +1,6 @@
+/**
+ * Architecture types: categories (DDD, TDD, etc.) and template shape for My definitions.
+ */
 /** Architecture / best-practice category for filtering and display */
 export type ArchitectureCategory =
   | "ddd"           // Domain-Driven Design

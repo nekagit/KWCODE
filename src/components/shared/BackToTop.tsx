@@ -1,5 +1,6 @@
 "use client";
 
+/** Back To Top component. */
 import { useEffect, useState } from "react";
 import { ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";

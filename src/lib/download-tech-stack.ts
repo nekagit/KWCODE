@@ -1,3 +1,6 @@
+/**
+ * Download tech stack as JSON or copy to clipboard. Used by Technologies page and command palette.
+ */
 import { toast } from "sonner";
 import { filenameTimestamp, triggerFileDownload } from "@/lib/download-helpers";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";

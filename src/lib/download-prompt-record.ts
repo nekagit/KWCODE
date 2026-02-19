@@ -1,3 +1,6 @@
+/**
+ * Download a single prompt record as Markdown. Used by Prompts tab and command palette.
+ */
 import { toast } from "sonner";
 import {
   safeNameForFile,

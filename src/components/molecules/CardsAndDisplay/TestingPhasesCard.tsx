@@ -1,5 +1,6 @@
 "use client";
 
+/** Testing Phases Card component. */
 import { Card } from "@/components/shared/Card";
 import { TestingPhaseListItem } from "@/components/atoms/list-items/TestingPhaseListItem";
 import { TEST_PHASES } from "@/data/test-best-practices";

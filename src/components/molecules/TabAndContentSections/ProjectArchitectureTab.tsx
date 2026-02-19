@@ -1,5 +1,6 @@
 "use client";
 
+/** Project Architecture Tab component. */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Building2, Copy, Download, FileJson, FileText, RotateCcw, Search, X } from "lucide-react";
 import type { Project } from "@/types/project";

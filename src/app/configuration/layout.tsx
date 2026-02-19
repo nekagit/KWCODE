@@ -1,3 +1,4 @@
+/** layout component. */
 export default function ConfigurationLayout({
   children,
 }: {

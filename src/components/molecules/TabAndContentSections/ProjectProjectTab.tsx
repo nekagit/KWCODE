@@ -1,5 +1,6 @@
 "use client";
 
+/** Project Project Tab component. */
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Loader2, FileText, FolderOpen, RefreshCw, Play, Square, FolderGit2, Bot, Folder, Palette, Building2 } from "lucide-react";
 import { listProjectFiles, readProjectFileOrEmpty, updateProject, type FileEntry } from "@/lib/api-projects";

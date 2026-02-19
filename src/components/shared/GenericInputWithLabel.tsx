@@ -1,3 +1,4 @@
+/** Generic Input With Label component. */
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { FormField } from '@/components/shared/FormField';

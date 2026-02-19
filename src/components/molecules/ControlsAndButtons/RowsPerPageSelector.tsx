@@ -1,3 +1,4 @@
+/** Rows Per Page Selector component. */
 import {
   Select,
   SelectContent,

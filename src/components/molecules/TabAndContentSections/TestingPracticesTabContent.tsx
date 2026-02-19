@@ -1,3 +1,4 @@
+/** Testing Practices Tab Content component. */
 import { CuratedPracticesCard } from "@/components/molecules/CardsAndDisplay/CuratedPracticesCard.tsx";
 import { MyTestPracticesCard } from "@/components/molecules/CardsAndDisplay/MyTestPracticesCard.tsx";
 import { getClasses } from "@/components/molecules/tailwind-molecules";

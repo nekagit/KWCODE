@@ -1,5 +1,6 @@
 "use client";
 
+/** Prompt Record Form Dialog component. */
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/shared/Dialog";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";

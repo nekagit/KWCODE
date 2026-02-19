@@ -1,5 +1,6 @@
 "use client";
 
+/** Ai Generated Architectures Card component. */
 import { useState, useCallback } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sparkles } from "lucide-react";

@@ -1,5 +1,6 @@
 "use client";
 
+/** List item for a project architecture. */
 import React from "react";
 import { Card } from "@/components/shared/Card";
 import { Button } from "@/components/ui/button";

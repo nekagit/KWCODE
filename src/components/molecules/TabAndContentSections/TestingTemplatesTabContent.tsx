@@ -1,3 +1,4 @@
+/** Testing Templates Tab Content component. */
 import { TestGenerationCard } from "@/components/molecules/CardsAndDisplay/TestGenerationCard.tsx";
 import { TestTemplateList } from "@/components/molecules/ListsAndTables/TestTemplateList.tsx";
 import { getClasses } from "@/components/molecules/tailwind-molecules";

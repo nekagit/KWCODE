@@ -1,3 +1,5 @@
+//! Tauri app entry and commands: run scripts, SQLite, project/ticket CRUD. Invoked from the frontend via invoke().
+
 mod db;
 
 use base64::Engine;

@@ -1,5 +1,6 @@
 "use client";
 
+/** Project Versioning tab: "/" focuses the file path filter. Used by project Git/Versioning tab. */
 import { type RefObject } from "react";
 import { useProjectTabFocusFilterShortcut } from "@/lib/project-tab-focus-filter-shortcut";
 

@@ -1,5 +1,6 @@
 "use client";
 
+/** Run Label Card component. */
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/shared/Card";
 import { getClasses } from "@/components/molecules/tailwind-molecules";

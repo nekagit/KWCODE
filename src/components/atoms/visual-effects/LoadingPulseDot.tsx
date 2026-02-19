@@ -1,3 +1,4 @@
+/** Loading Pulse Dot component. */
 type LoadingPulseDotProps = {
   index: number;
 };
