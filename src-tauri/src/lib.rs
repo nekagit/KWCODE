@@ -6,7 +6,7 @@ use base64::Engine;
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-use std::io::{BufRead, BufReader, Read};
+use std::io::{BufRead, BufReader, Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::sync::{Arc, Mutex};
@@ -532,6 +532,54 @@ fn delete_plan_ticket(project_id: String, ticket_id: String) -> Result<(), Strin
 #[tauri::command]
 fn get_ideas_list(ProjectIdArgOptional { project_id }: ProjectIdArgOptional) -> Result<Vec<serde_json::Value>, String> {
     with_db(|conn| db::get_ideas_list(conn, project_id.as_deref()))
+}
+
+#[derive(serde::Deserialize)]
+struct CreateIdeaArgs {
+    #[serde(alias = "projectId")]
+    project_id: Option<String>,
+    title: String,
+    description: Option<String>,
+    category: Option<String>,
+    source: Option<String>,
+}
+
+/// Create one idea (for Idea-driven "create from description" flow). Returns the new idea row.
+#[tauri::command]
+fn create_idea(args: CreateIdeaArgs) -> Result<serde_json::Value, String> {
+    with_db(|conn| {
+        db::create_idea(
+            conn,
+            args.project_id.as_deref(),
+            args.title.trim(),
+            args.description.as_deref().unwrap_or("").trim(),
+            args.category.as_deref().unwrap_or("other").trim(),
+            args.source.as_deref().unwrap_or("manual").trim(),
+        )
+    })
+}
+
+#[derive(serde::Deserialize)]
+struct CreateProjectMilestoneArgs {
+    #[serde(alias = "projectId")]
+    project_id: String,
+    name: String,
+    slug: Option<String>,
+    content: Option<String>,
+}
+
+/// Create one milestone for a project (for Idea-driven "create from description" flow). Returns the new milestone row.
+#[tauri::command]
+fn create_project_milestone(args: CreateProjectMilestoneArgs) -> Result<serde_json::Value, String> {
+    with_db(|conn| {
+        db::create_milestone(
+            conn,
+            args.project_id.trim(),
+            args.name.trim(),
+            args.slug.as_deref().unwrap_or("").trim(),
+            args.content.as_deref(),
+        )
+    })
 }
 
 #[tauri::command]
@@ -2548,6 +2596,20 @@ fn run_run_terminal_agent_script_inner(
     // Write prompt file inside the project dir so the script (and sandboxed child) can always read it.
     let p = Path::new(&project_path).join(format!(".kwcode_run_prompt_{}.txt", run_id));
     std::fs::write(&p, &prompt_content).map_err(|e| format!("Failed to write prompt file in project: {}", e))?;
+    // #region agent log
+    let debug_log = std::path::PathBuf::from("/Users/nenadkalicanin/Documents/February/KW-February-KWCode/.cursor/debug-b99de4.log");
+    if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(&debug_log) {
+        let ts = SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_millis()).unwrap_or(0);
+        let line = format!(
+            r#"{{"sessionId":"b99de4","location":"lib.rs:run_run_terminal_agent_script_inner","message":"prompt file written","data":{{"agent_mode":{:?},"prompt_len":{},"prompt_path":"{}"}},"timestamp":{},"hypothesisId":"H1"}}"#,
+            agent_mode,
+            prompt_content.len(),
+            p.display(),
+            ts
+        );
+        let _ = f.write_all(format!("{}\n", line).as_bytes());
+    }
+    // #endregion
     let mut cmd = Command::new("bash");
     cmd.arg(script_path.as_os_str())
         .arg("-P")
@@ -3428,6 +3490,8 @@ pub fn run() {
             update_plan_ticket,
             delete_plan_ticket,
             get_ideas_list,
+            create_idea,
+            create_project_milestone,
             update_implementation_log_entry_status,
             append_implementation_log_entry,
             get_git_file_view,

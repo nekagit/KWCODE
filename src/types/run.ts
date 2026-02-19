@@ -22,7 +22,7 @@ export interface PromptRecordItem {
   content: string;
 }
 
-/** Night shift Circle phases (order: refactor → test → debugging → implement → create). */
+/** Night shift Circle phases (order: create → implement → test → debugging → refactor). */
 export type NightShiftCirclePhase = "refactor" | "test" | "debugging" | "implement" | "create";
 
 /** Metadata for post-run actions (write file, parse and notify). Used by temp tickets. */
@@ -53,6 +53,12 @@ export interface RunMeta {
   isNightShiftCircle?: boolean;
   /** Which Circle phase this run belongs to (refactor, test, debugging, implement, create). */
   circlePhase?: NightShiftCirclePhase;
+  /** Night shift Idea-driven run: one run per ticket+phase in plan mode. */
+  isNightShiftIdeaDriven?: boolean;
+  /** Ticket id for idea-driven run (matches current ticket). */
+  ideaDrivenTicketId?: string;
+  /** Phase for idea-driven run (create | implement | test | debugging | refactor). */
+  ideaDrivenPhase?: NightShiftCirclePhase;
   /** When set, this job reuses an existing placeholder run (e.g. Ask) so the run appears in the terminal section immediately. */
   placeholderRunId?: string;
   /** Cursor CLI agent mode: agent (default) | ask | plan | debug. Passed to run_run_terminal_agent and script -M. */
