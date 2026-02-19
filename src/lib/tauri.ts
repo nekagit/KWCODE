@@ -57,9 +57,23 @@ export function projectIdArgPayload(projectId: string | null): { projectIdArg: {
 
 /**
  * Payload for run_run_terminal_agent. In the built app, the IPC expects the parameter key `args`.
+ * Optional agentMode is forwarded to the script as -M for Cursor CLI --mode= (ask | plan | debug).
  */
-export function runRunTerminalAgentPayload(projectPath: string, promptContent: string, label: string): { args: { projectPath: string; promptContent: string; label: string } } {
-  return { args: { projectPath, promptContent, label } };
+export function runRunTerminalAgentPayload(
+  projectPath: string,
+  promptContent: string,
+  label: string,
+  agentMode?: string
+): { args: { projectPath: string; promptContent: string; label: string; agentMode?: string } } {
+  const args: { projectPath: string; promptContent: string; label: string; agentMode?: string } = {
+    projectPath,
+    promptContent,
+    label,
+  };
+  if (agentMode != null && agentMode !== "") {
+    args.agentMode = agentMode;
+  }
+  return { args };
 }
 
 /** Payload for create_plan_ticket. In the built app, the IPC expects the parameter key `args`. */

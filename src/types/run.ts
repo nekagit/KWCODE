@@ -52,6 +52,8 @@ export interface RunMeta {
   circlePhase?: NightShiftCirclePhase;
   /** When set, this job reuses an existing placeholder run (e.g. Ask) so the run appears in the terminal section immediately. */
   placeholderRunId?: string;
+  /** Cursor CLI agent mode: agent (default) | ask | plan | debug. Passed to run_run_terminal_agent and script -M. */
+  agentMode?: "agent" | "ask" | "plan" | "debug";
 }
 
 export interface Run {

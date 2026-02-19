@@ -6,18 +6,21 @@
 set -e
 
 usage() {
-    echo "Usage: $0 -P /path/to/project -F /path/to/prompt.txt"
+    echo "Usage: $0 -P /path/to/project -F /path/to/prompt.txt [-M mode]"
     echo "  -P /path   Project root (required)."
     echo "  -F file    Prompt file (required)."
+    echo "  -M mode    Cursor CLI mode: ask | plan | debug (optional; default = normal agent)."
 }
 
 PROJECT_PATH=""
 PROMPT_FILE=""
+MODE=""
 while [ $# -gt 0 ]; do
     case "$1" in
         -h|--help) usage; exit 0 ;;
         -P) shift; [ $# -gt 0 ] && PROJECT_PATH="$1" && shift ;;
         -F) shift; [ $# -gt 0 ] && PROMPT_FILE="$1" && shift ;;
+        -M) shift; [ $# -gt 0 ] && MODE="$1" && shift ;;
         *) echo "Unknown option: $1"; usage; exit 1 ;;
     esac
 done
@@ -58,8 +61,13 @@ if [ -z "$AGENT_CMD" ]; then
     exit 127
 fi
 
-echo "Running: $AGENT_CMD -F -p \"<from file>\" (print mode, -F = trust workspace)"
-"$AGENT_CMD" -p "$ESCAPED"
+if [ -n "$MODE" ]; then
+    echo "Running: $AGENT_CMD --mode=$MODE -p \"<from file>\""
+    "$AGENT_CMD" --mode="$MODE" -p "$ESCAPED"
+else
+    echo "Running: $AGENT_CMD -p \"<from file>\" (print mode, -F = trust workspace)"
+    "$AGENT_CMD" -p "$ESCAPED"
+fi
 AGENT_EXIT=$?
 echo ""
 echo "Done. Agent exited with code $AGENT_EXIT."

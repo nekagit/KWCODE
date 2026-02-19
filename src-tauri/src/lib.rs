@@ -2534,6 +2534,7 @@ fn run_run_terminal_agent_script_inner(
     run_label: String,
     project_path: String,
     prompt_content: String,
+    agent_mode: Option<String>,
 ) -> Result<(), String> {
     let run_label_clone = run_label.clone();
     if !script_path.exists() {
@@ -2549,8 +2550,13 @@ fn run_run_terminal_agent_script_inner(
         .arg("-P")
         .arg(project_path.as_str())
         .arg("-F")
-        .arg(p.as_os_str())
-        .current_dir(&current_dir)
+        .arg(p.as_os_str());
+    if let Some(m) = agent_mode.as_ref().filter(|s| !s.is_empty()) {
+        if m != "agent" {
+            cmd.arg("-M").arg(m);
+        }
+    }
+    cmd.current_dir(&current_dir)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
     // GUI apps (e.g. launched from Desktop) get a minimal PATH; extend so `agent` and other CLIs are found
@@ -3065,7 +3071,7 @@ async fn run_implement_all(
     Ok(RunIdResponse { run_id })
 }
 
-/// Args for run_run_terminal_agent; accept camelCase from frontend (projectPath, promptContent, label).
+/// Args for run_run_terminal_agent; accept camelCase from frontend (projectPath, promptContent, label, agentMode).
 #[derive(serde::Deserialize)]
 struct RunTerminalAgentArgs {
     #[serde(alias = "projectPath")]
@@ -3073,6 +3079,9 @@ struct RunTerminalAgentArgs {
     #[serde(alias = "promptContent")]
     prompt_content: String,
     label: String,
+    /// Cursor CLI mode: ask | plan | debug. Omit or "agent" = normal.
+    #[serde(alias = "agentMode")]
+    agent_mode: Option<String>,
 }
 
 #[tauri::command]
@@ -3085,6 +3094,7 @@ async fn run_run_terminal_agent(
         project_path,
         prompt_content,
         label,
+        agent_mode,
     } = args;
     let run_id = gen_run_id();
     let run_label = if label.trim().is_empty() {
@@ -3115,6 +3125,7 @@ async fn run_run_terminal_agent(
         run_label,
         project_path,
         prompt_content,
+        agent_mode,
     )?;
     Ok(RunIdResponse { run_id })
 }

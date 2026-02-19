@@ -57,6 +57,7 @@ import {
   X,
   RotateCcw,
   RotateCw,
+  ListChecks,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isImplementAllRun, parseTicketNumberFromRunLabel, formatElapsed } from "@/lib/run-helpers";
@@ -887,6 +888,9 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
 
       {/* ═══ Asking — questions only, no file create/modify/delete; same terminal agent ═══ */}
       <WorkerAskingSection projectId={projectId} projectPath={project.repoPath?.trim() ?? ""} />
+
+      {/* ═══ Plan — design approach first, then execute; Cursor CLI --mode=plan ═══ */}
+      <WorkerPlanSection projectId={projectId} projectPath={project.repoPath?.trim() ?? ""} />
 
       {/* ═══ Fast development — type command, run agent immediately ═══ */}
       <WorkerFastDevelopmentSection
@@ -1745,7 +1749,7 @@ function WorkerAskingSection({ projectId, projectPath }: { projectId: string; pr
     try {
       const agentsBlock = await loadAllAgentsContent(projectId, projectPath);
       const fullPrompt = ASK_ONLY_PROMPT_PREFIX + text + agentsBlock;
-      const runId = await runTempTicket(projectPath.trim(), fullPrompt, label, placeholderRunId ? { placeholderRunId } : undefined);
+      const runId = await runTempTicket(projectPath.trim(), fullPrompt, label, { ...(placeholderRunId ? { placeholderRunId } : {}), agentMode: "ask" });
       if (runId) {
         toast.success(placeholderRunId ? "Agent started. Check the terminal below." : "Added to queue. Agent will start when a slot is free.");
       } else {
@@ -1798,6 +1802,94 @@ function WorkerAskingSection({ projectId, projectPath }: { projectId: string; pr
               <Send className="size-3.5" />
             )}
             Ask
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Plan — design approach first (Cursor CLI --mode=plan), then execute
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+const PLAN_PROMPT_PREFIX = "Design the approach first. Create a plan (steps, files, and code references). Do not execute yet—only produce the plan. Then the user can approve and run execution separately.\n\n";
+
+function WorkerPlanSection({ projectId, projectPath }: { projectId: string; projectPath: string }) {
+  const runTempTicket = useRunStore((s) => s.runTempTicket);
+  const [planInput, setPlanInput] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handlePlan = async () => {
+    const text = planInput.trim();
+    if (!text) {
+      toast.error("Enter what you want to plan above, then run the agent.");
+      return;
+    }
+    if (!projectPath?.trim()) {
+      toast.error("Project path is missing. Set the project repo path in project details.");
+      return;
+    }
+    const labelSuffix = text.length > 40 ? `${text.slice(0, 37)}…` : text;
+    const label = `Plan: ${labelSuffix}`;
+    setLoading(true);
+    try {
+      const agentsBlock = await loadAllAgentsContent(projectId, projectPath);
+      const fullPrompt = PLAN_PROMPT_PREFIX + text + agentsBlock;
+      const runId = await runTempTicket(projectPath.trim(), fullPrompt, label, { agentMode: "plan" });
+      if (runId) {
+        toast.success(runId === "queued" ? "Added to queue. Agent will start when a slot is free." : "Plan agent started. Check the terminal below.");
+        setPlanInput("");
+      } else {
+        toast.error("Failed to start plan agent.");
+      }
+    } catch {
+      toast.error("Failed to start plan agent.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl surface-card border border-border/50 overflow-hidden">
+      <div className="flex items-center gap-2.5 px-5 pt-5 pb-4">
+        <div className="flex items-center justify-center size-7 rounded-lg bg-indigo-500/10">
+          <ListChecks className="size-3.5 text-indigo-400" />
+        </div>
+        <div>
+          <h3 className="text-xs font-semibold text-foreground tracking-tight">
+            Plan
+          </h3>
+          <p className="text-[10px] text-muted-foreground normal-case">
+            Design the approach first; the agent produces a plan (no execution), using the terminal below
+          </p>
+        </div>
+      </div>
+      <div className="px-5 pb-5 space-y-3">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="e.g. Add dark mode and refactor settings page"
+            value={planInput}
+            onChange={(e) => setPlanInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handlePlan()}
+            className="flex-1 min-w-0 rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-xs font-mono placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            disabled={loading}
+          />
+          <Button
+            variant="default"
+            size="sm"
+            onClick={handlePlan}
+            disabled={loading || !planInput.trim()}
+            className="gap-1.5 bg-indigo-500 hover:bg-indigo-600 text-indigo-50 shadow-sm text-xs h-8 rounded-lg shrink-0"
+            title="Run the terminal agent in plan mode (design approach first, no execution)"
+          >
+            {loading ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <ListChecks className="size-3.5" />
+            )}
+            Plan
           </Button>
         </div>
       </div>
@@ -2005,7 +2097,7 @@ function WorkerDebuggingSection({
       const promptWithLogs = basePrompt.endsWith("\n") ? basePrompt + logs : basePrompt + "\n\n" + logs;
       const agentsBlock = await loadAllAgentsContent(projectId, repoPath);
       const fullPrompt = (promptWithLogs + agentsBlock).trim();
-      const runId = await runTempTicket(projectPath.trim(), fullPrompt, "Debug: fix errors");
+      const runId = await runTempTicket(projectPath.trim(), fullPrompt, "Debug: fix errors", { agentMode: "debug" });
       if (runId) {
         toast.success(runId === "queued" ? "Added to queue. Agent will start when a slot is free." : "Debug agent started. Check the terminal below.");
       } else {

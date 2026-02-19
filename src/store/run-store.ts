@@ -196,7 +196,7 @@ function processTempTicketQueue(
 
   (async () => {
     try {
-      const { run_id } = await invoke<{ run_id: string }>("run_run_terminal_agent", runRunTerminalAgentPayload(job.projectPath, job.promptContent, job.label));
+      const { run_id } = await invoke<{ run_id: string }>("run_run_terminal_agent", runRunTerminalAgentPayload(job.projectPath, job.promptContent, job.label, job.meta?.agentMode));
       set((s) => ({
         runningRuns: s.runningRuns.map((r) =>
           r.runId === tempId ? { ...r, runId: run_id } : r
