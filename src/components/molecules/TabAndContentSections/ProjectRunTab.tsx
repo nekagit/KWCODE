@@ -3,10 +3,10 @@
 /** Project Run Tab component. */
 import { useState, useCallback, useEffect, useMemo, useRef, Fragment } from "react";
 import type { Project } from "@/types/project";
-import type { NightShiftCirclePhase } from "@/types/run";
-import { readProjectFileOrEmpty, listProjectFiles } from "@/lib/api-projects";
+import type { NightShiftCirclePhase, RunInfo } from "@/types/run";
+import { readProjectFileOrEmpty, listProjectFiles, updateProject } from "@/lib/api-projects";
 import { fetchProjectTicketsAndKanban } from "@/lib/fetch-project-tickets-and-kanban";
-import { invoke, isTauri, projectIdArgPayload, createPlanTicketPayload, setPlanKanbanStatePayload } from "@/lib/tauri";
+import { invoke, isTauri, projectIdArgPayload, projectIdArgOptionalPayload, createPlanTicketPayload, setPlanKanbanStatePayload } from "@/lib/tauri";
 import { fetchProjectMilestones } from "@/lib/fetch-project-milestones";
 import {
   buildKanbanFromTickets,
@@ -277,21 +277,22 @@ function WorkerRebuildDesktopSection() {
    Night shift — 3 agents run same prompt in a loop until stopped
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/** Badge order matches circle order: Create → Implement → Test → Debugging → Refactor. */
 const NIGHT_SHIFT_BADGES = [
-  { id: "refactor", label: "Refactor" },
+  { id: "create", label: "Create" },
+  { id: "implement", label: "Implement" },
   { id: "test", label: "Test" },
   { id: "debugging", label: "Debugging" },
-  { id: "implement", label: "Implement" },
-  { id: "create", label: "Create" },
+  { id: "refactor", label: "Refactor" },
 ] as const;
 
 /** Fallback one-line prompt when phase file is missing or empty. */
 const NIGHT_SHIFT_PHASE_FALLBACK: Record<NightShiftCirclePhase, string> = {
-  refactor: "Focus on refactoring: improve structure, naming, and patterns without changing behaviour. Prefer small, safe steps.\n\n",
-  test: "Focus on testing: add or extend tests (unit/integration) for the chosen feature. Ensure coverage and clear assertions.\n\n",
-  debugging: "Focus on debugging: reproduce, isolate, and fix the issue. Add minimal logging if needed; verify the fix.\n\n",
-  implement: "Focus on implementation: build the feature end-to-end. Prefer new files; wire into existing code only where necessary. This phase is for extending existing features and code.\n\n",
-  create: "Focus on creating: add something new (component, route, utility, or module). Prefer new files and clear boundaries. This phase is for adding new features and new code.\n\n",
+  refactor: "Focus on refactoring: identify scope, run tests before/after, improve structure and naming without changing behaviour. Run npm run verify when done.\n\n",
+  test: "Focus on testing: identify feature under test, use project test framework (.cursor/1. project/testing.md), write or extend tests, run npm run verify.\n\n",
+  debugging: "Focus on debugging: reproduce the issue, isolate cause, apply minimal fix, then run tests/build to verify.\n\n",
+  implement: "Focus on implementation: extend existing features per ticket/plan; match project patterns, wire only where needed, run npm run verify.\n\n",
+  create: "Focus on creating: add a new changelog-worthy capability; new files and clear boundaries, then run npm run verify.\n\n",
 };
 
 /** Load phase prompt from .cursor/8. worker/{phase}.md; fallback to default if missing or empty. */
@@ -305,8 +306,8 @@ async function loadPhasePrompt(
   return content ? content + "\n\n" : NIGHT_SHIFT_PHASE_FALLBACK[phase];
 }
 
-/** Circle phase order: refactor → test → debugging → implement → create; null after create = end. */
-const CIRCLE_PHASE_ORDER: NightShiftCirclePhase[] = ["refactor", "test", "debugging", "implement", "create"];
+/** Circle phase order: create → implement → test → debugging → refactor; null after refactor = end. */
+const CIRCLE_PHASE_ORDER: NightShiftCirclePhase[] = ["create", "implement", "test", "debugging", "refactor"];
 function nextCirclePhase(phase: NightShiftCirclePhase): NightShiftCirclePhase | null {
   const i = CIRCLE_PHASE_ORDER.indexOf(phase);
   return i < 0 || i >= CIRCLE_PHASE_ORDER.length - 1 ? null : CIRCLE_PHASE_ORDER[i + 1];
@@ -337,9 +338,11 @@ async function buildBadgeAndInstructionsBlock(
 function WorkerNightShiftSection({
   projectId,
   projectPath,
+  project,
 }: {
   projectId: string;
   projectPath: string;
+  project?: Project | null;
 }) {
   const runTempTicket = useRunStore((s) => s.runTempTicket);
   const nightShiftActive = useRunStore((s) => s.nightShiftActive);
@@ -349,8 +352,18 @@ function WorkerNightShiftSection({
   const nightShiftCirclePhase = useRunStore((s) => s.nightShiftCirclePhase);
   const setNightShiftCircleState = useRunStore((s) => s.setNightShiftCircleState);
   const incrementNightShiftCircleCompleted = useRunStore((s) => s.incrementNightShiftCircleCompleted);
+  const nightShiftIdeaDrivenMode = useRunStore((s) => s.nightShiftIdeaDrivenMode);
+  const nightShiftIdeaDrivenIdea = useRunStore((s) => s.nightShiftIdeaDrivenIdea);
+  const nightShiftIdeaDrivenTickets = useRunStore((s) => s.nightShiftIdeaDrivenTickets);
+  const nightShiftIdeaDrivenTicketIndex = useRunStore((s) => s.nightShiftIdeaDrivenTicketIndex);
+  const nightShiftIdeaDrivenPhase = useRunStore((s) => s.nightShiftIdeaDrivenPhase);
+  const nightShiftIdeaDrivenIdeasQueue = useRunStore((s) => s.nightShiftIdeaDrivenIdeasQueue);
+  const setNightShiftIdeaDrivenState = useRunStore((s) => s.setNightShiftIdeaDrivenState);
   const getState = useRunStore.getState;
   const [starting, setStarting] = useState(false);
+  const [startingIdeaDriven, setStartingIdeaDriven] = useState(false);
+  const [ideaDrivenDialogOpen, setIdeaDrivenDialogOpen] = useState(false);
+  const [ideaDrivenCreateDescription, setIdeaDrivenCreateDescription] = useState("");
   const [badges, setBadges] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(NIGHT_SHIFT_BADGES.map((b) => [b.id, false]))
   );
@@ -406,11 +419,11 @@ function WorkerNightShiftSection({
         toast.error("Night shift prompt is empty. Add content to .cursor/8. worker/night-shift.prompt.md");
         return;
       }
-      setNightShiftCircleState(true, "refactor", 0);
+      setNightShiftCircleState(true, "create", 0);
       setNightShiftActive(true);
-      const refactorBadgeBlock = await buildBadgeAndInstructionsBlock(projectId, projectPath, { refactor: true }, extraInstructions);
+      const createBadgeBlock = await buildBadgeAndInstructionsBlock(projectId, projectPath, { create: true }, extraInstructions);
       const agentsBlock = await loadAllAgentsContent(projectId, projectPath);
-      const promptContent = (basePrompt + refactorBadgeBlock + agentsBlock).trim();
+      const promptContent = (basePrompt + createBadgeBlock + agentsBlock).trim();
       setNightShiftReplenishCallback(async (slot: 1 | 2 | 3, exitingRun?: { meta?: { isNightShiftCircle?: boolean; circlePhase?: NightShiftCirclePhase } } | null) => {
         const state = getState();
         if (exitingRun?.meta?.isNightShiftCircle && exitingRun?.meta?.circlePhase === state.nightShiftCirclePhase) {
@@ -457,13 +470,13 @@ function WorkerNightShiftSection({
         }
       });
       for (const slot of [1, 2, 3] as const) {
-        runTempTicket(projectPath, promptContent, nightShiftCircleRunLabel(slot, "refactor"), {
+        runTempTicket(projectPath, promptContent, nightShiftCircleRunLabel(slot, "create"), {
           isNightShift: true,
           isNightShiftCircle: true,
-          circlePhase: "refactor",
+          circlePhase: "create",
         });
       }
-      toast.success("Circle started: Refactor (3 agents).");
+      toast.success("Circle started: Create (3 agents).");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to start Circle");
       setNightShiftCircleState(false, null, 0);
@@ -472,12 +485,431 @@ function WorkerNightShiftSection({
     }
   }, [projectId, projectPath, extraInstructions, runTempTicket, setNightShiftActive, setNightShiftReplenishCallback, setNightShiftCircleState, incrementNightShiftCircleCompleted, getState]);
 
+  const handleIdeaDrivenStart = useCallback(async () => {
+    if (!projectPath?.trim()) return;
+    if (!isTauri) {
+      toast.error("Idea-driven Night shift is available in the desktop app (Tauri).");
+      return;
+    }
+    setStartingIdeaDriven(true);
+    try {
+      type IdeaRow = { id: number; title: string; description?: string };
+      let ideasRaw = await invoke<IdeaRow[]>("get_ideas_list", projectIdArgOptionalPayload(projectId));
+      let ideas = Array.isArray(ideasRaw) ? ideasRaw.map((i) => ({ id: i.id, title: i.title ?? "", description: i.description })) : [];
+      const { tickets } = await fetchProjectTicketsAndKanban(projectId);
+      if (ideas.length === 0) {
+        ideasRaw = await invoke<IdeaRow[]>("get_ideas_list", projectIdArgOptionalPayload(null));
+        const allIdeas = Array.isArray(ideasRaw) ? ideasRaw.map((i) => ({ id: i.id, title: i.title ?? "", description: i.description })) : [];
+        ideas = allIdeas.filter((idea) => tickets.some((t) => t.ideaId === idea.id));
+      }
+      if (ideas.length === 0) {
+        toast.error("No ideas for this project. Add ideas and link tickets to ideas in the Planner.");
+        return;
+      }
+      let currentIdea = ideas[0];
+      let ticketsForIdea = tickets.filter((t) => t.ideaId === currentIdea.id);
+      let ideasQueue = ideas.slice(1);
+      while (ticketsForIdea.length === 0 && ideasQueue.length > 0) {
+        currentIdea = ideasQueue[0];
+        ideasQueue = ideasQueue.slice(1);
+        ticketsForIdea = tickets.filter((t) => t.ideaId === currentIdea.id);
+      }
+      if (ticketsForIdea.length === 0) {
+        toast.error("No tickets linked to any idea. Link tickets to ideas in the Planner.");
+        return;
+      }
+      const basePrompt =
+        (await readProjectFileOrEmpty(projectId, WORKER_NIGHT_SHIFT_PROMPT_PATH, projectPath))?.trim() ?? "";
+      if (!basePrompt) {
+        toast.error("Night shift prompt is empty. Add content to .cursor/8. worker/night-shift.prompt.md");
+        return;
+      }
+      const ticketSnapshots = ticketsForIdea.map((t) => ({
+        id: t.id,
+        number: t.number,
+        title: t.title,
+        description: t.description,
+        priority: t.priority,
+        featureName: t.featureName,
+        agents: t.agents,
+        milestoneId: t.milestoneId,
+        ideaId: t.ideaId,
+      }));
+      setNightShiftIdeaDrivenState({
+        mode: true,
+        idea: currentIdea,
+        tickets: ticketSnapshots,
+        ticketIndex: 0,
+        phase: "create",
+        completedInPhase: 0,
+        ideasQueue,
+      });
+      setNightShiftActive(true);
+      setNightShiftReplenishCallback(async (slot: 1 | 2 | 3, exitingRun?: RunInfo | null) => {
+        try {
+          const s = getState();
+          if (!s.nightShiftIdeaDrivenMode) return;
+          const runMeta = exitingRun?.meta;
+          const match =
+            runMeta?.isNightShiftIdeaDriven &&
+            runMeta.ideaDrivenTicketId === s.nightShiftIdeaDrivenTickets[s.nightShiftIdeaDrivenTicketIndex]?.id &&
+            runMeta.ideaDrivenPhase === s.nightShiftIdeaDrivenPhase;
+          if (!match) return;
+          const phase = s.nightShiftIdeaDrivenPhase;
+        const ticketIndex = s.nightShiftIdeaDrivenTicketIndex;
+        const ticketsList = s.nightShiftIdeaDrivenTickets;
+        const idea = s.nightShiftIdeaDrivenIdea;
+        const ideasQueueNext = s.nightShiftIdeaDrivenIdeasQueue;
+        const buildPromptForIdeaDriven = async (
+          ticket: { id: string; number: number; title: string; description?: string; priority: string; featureName: string; agents?: string[]; milestoneId?: number; ideaId?: number },
+          p: NightShiftCirclePhase
+        ) => {
+          const phasePrompt = await loadPhasePrompt(projectId, projectPath, p);
+          const agentMd = await (async () => {
+            if (!ticket.agents?.length) return null;
+            const parts: string[] = [];
+            for (const agentId of ticket.agents) {
+              const content = await readProjectFileOrEmpty(projectId, `${AGENTS_ROOT}/${agentId}.md`, projectPath);
+              if (content?.trim()) parts.push(content.trim());
+            }
+            return parts.length ? parts.join("\n\n---\n\n") : null;
+          })();
+          const ticketBlock = buildTicketPromptBlock(ticket, agentMd);
+          const header = `Night shift — ${p.charAt(0).toUpperCase() + p.slice(1)} for ticket #${ticket.number}: ${ticket.title}\n\n`;
+          const base =
+            (await readProjectFileOrEmpty(projectId, WORKER_NIGHT_SHIFT_PROMPT_PATH, projectPath))?.trim() ?? "";
+          const agents = await loadAllAgentsContent(projectId, projectPath);
+          return (header + base + "\n\n" + phasePrompt + "\n\n" + ticketBlock + "\n\n" + agents).trim();
+        };
+        if (phase !== "refactor") {
+          const nextPhase = nextCirclePhase(phase!);
+          setNightShiftIdeaDrivenState({
+            mode: true,
+            idea,
+            tickets: ticketsList,
+            ticketIndex,
+            phase: nextPhase!,
+            completedInPhase: 0,
+            ideasQueue: ideasQueueNext,
+          });
+          const ticket = ticketsList[ticketIndex];
+          const nextPrompt = await buildPromptForIdeaDriven(ticket, nextPhase!);
+          const label = `Night shift — ${nextPhase} #${ticket.number}: ${ticket.title}`;
+          runTempTicket(projectPath, nextPrompt, label, {
+            isNightShift: true,
+            isNightShiftIdeaDriven: true,
+            ideaDrivenTicketId: ticket.id,
+            ideaDrivenPhase: nextPhase!,
+            agentMode: "plan",
+          });
+          toast.success(`Idea-driven: ${nextPhase} for ticket #${ticket.number}.`);
+        } else {
+          const nextIndex = ticketIndex + 1;
+          if (nextIndex < ticketsList.length) {
+            setNightShiftIdeaDrivenState({
+              mode: true,
+              idea,
+              tickets: ticketsList,
+              ticketIndex: nextIndex,
+              phase: "create",
+              completedInPhase: 0,
+              ideasQueue: ideasQueueNext,
+            });
+            const ticket = ticketsList[nextIndex];
+            const nextPrompt = await buildPromptForIdeaDriven(ticket, "create");
+            const label = `Night shift — Create #${ticket.number}: ${ticket.title}`;
+            runTempTicket(projectPath, nextPrompt, label, {
+              isNightShift: true,
+              isNightShiftIdeaDriven: true,
+              ideaDrivenTicketId: ticket.id,
+              ideaDrivenPhase: "create",
+              agentMode: "plan",
+            });
+            toast.success(`Idea-driven: next ticket #${ticket.number} (Create).`);
+          } else {
+            if (ideasQueueNext.length === 0) {
+              setNightShiftIdeaDrivenState({
+                mode: false,
+                idea: null,
+                tickets: [],
+                ticketIndex: 0,
+                phase: null,
+                completedInPhase: 0,
+                ideasQueue: [],
+              });
+              setNightShiftActive(false);
+              setNightShiftReplenishCallback(null);
+              toast.success("Idea-driven finished: all ideas and tickets done.");
+              return;
+            }
+            const nextIdea = ideasQueueNext[0];
+            const remainingQueue = ideasQueueNext.slice(1);
+            const { tickets: nextTickets } = await fetchProjectTicketsAndKanban(projectId);
+            const nextTicketsForIdea = nextTickets.filter((t) => t.ideaId === nextIdea.id);
+            if (nextTicketsForIdea.length === 0) {
+              setNightShiftIdeaDrivenState({
+                mode: true,
+                idea: null,
+                tickets: [],
+                ticketIndex: 0,
+                phase: null,
+                completedInPhase: 0,
+                ideasQueue: remainingQueue,
+              });
+              setNightShiftReplenishCallback(null);
+              setNightShiftActive(false);
+              toast.success("Idea-driven finished: no more tickets for remaining ideas.");
+              return;
+            }
+            const nextSnapshots = nextTicketsForIdea.map((t) => ({
+              id: t.id,
+              number: t.number,
+              title: t.title,
+              description: t.description,
+              priority: t.priority,
+              featureName: t.featureName,
+              agents: t.agents,
+              milestoneId: t.milestoneId,
+              ideaId: t.ideaId,
+            }));
+            setNightShiftIdeaDrivenState({
+              mode: true,
+              idea: nextIdea,
+              tickets: nextSnapshots,
+              ticketIndex: 0,
+              phase: "create",
+              completedInPhase: 0,
+              ideasQueue: remainingQueue,
+            });
+            const ticket = nextSnapshots[0];
+            const nextPrompt = await buildPromptForIdeaDriven(ticket, "create");
+            const label = `Night shift — Create #${ticket.number}: ${ticket.title}`;
+            runTempTicket(projectPath, nextPrompt, label, {
+              isNightShift: true,
+              isNightShiftIdeaDriven: true,
+              ideaDrivenTicketId: ticket.id,
+              ideaDrivenPhase: "create",
+              agentMode: "plan",
+            });
+            toast.success(`Idea-driven: next idea "${nextIdea.title}" — ticket #${ticket.number}.`);
+          }
+        }
+        } catch (err) {
+          console.error("[night-shift] idea-driven replenish error:", err);
+          toast.error(err instanceof Error ? err.message : "Idea-driven step failed. Check console.");
+        }
+      });
+      const firstTicket = ticketSnapshots[0];
+      const firstPrompt = await (async () => {
+        const phasePrompt = await loadPhasePrompt(projectId, projectPath, "create");
+        let agentMd: string | null = null;
+        if (firstTicket.agents?.length) {
+          const parts: string[] = [];
+          for (const agentId of firstTicket.agents) {
+            const content = await readProjectFileOrEmpty(projectId, `${AGENTS_ROOT}/${agentId}.md`, projectPath);
+            if (content?.trim()) parts.push(content.trim());
+          }
+          agentMd = parts.length ? parts.join("\n\n---\n\n") : null;
+        }
+        const ticketBlock = buildTicketPromptBlock(firstTicket, agentMd);
+        const header = "Night shift — Create for ticket #" + firstTicket.number + ": " + firstTicket.title + "\n\n";
+        const agents = await loadAllAgentsContent(projectId, projectPath);
+        return (header + basePrompt + "\n\n" + phasePrompt + "\n\n" + ticketBlock + "\n\n" + agents).trim();
+      })();
+      const label = `Night shift — Create #${firstTicket.number}: ${firstTicket.title}`;
+      runTempTicket(projectPath, firstPrompt, label, {
+        isNightShift: true,
+        isNightShiftIdeaDriven: true,
+        ideaDrivenTicketId: firstTicket.id,
+        ideaDrivenPhase: "create",
+        agentMode: "plan",
+      });
+      toast.success(`Idea-driven started: "${currentIdea.title}" — ticket #${firstTicket.number} (Create).`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to start Idea-driven");
+    } finally {
+      setStartingIdeaDriven(false);
+    }
+  }, [projectId, projectPath, runTempTicket, setNightShiftActive, setNightShiftReplenishCallback, setNightShiftIdeaDrivenState, getState]);
+
+  const handleIdeaDrivenCreateAndRun = useCallback(async () => {
+    const raw = ideaDrivenCreateDescription.trim();
+    const title = raw ? (raw.includes("\n") ? raw.split("\n")[0].trim() : raw.slice(0, 80)).trim() || "New idea" : "New idea";
+    const description = raw && raw.includes("\n") ? raw.slice(raw.indexOf("\n") + 1).trim() : (raw && raw.length > 80 ? raw.slice(80).trim() : "");
+    if (!projectPath?.trim() || !isTauri) return;
+    setStartingIdeaDriven(true);
+    setIdeaDrivenDialogOpen(false);
+    try {
+      const ideaRow = await invoke<{ id: number; title: string; description: string }>("create_idea", {
+        projectId,
+        title,
+        description: description || title,
+        category: "other",
+        source: "idea-driven",
+      });
+      const milestoneRow = await invoke<{ id: number; name: string; slug: string }>("create_project_milestone", {
+        projectId,
+        name: title,
+        slug: "",
+      });
+      const ticketRow = await invoke<{ id: string; number: number; title: string; description?: string; milestone_id?: number; idea_id?: number }>(
+        "create_plan_ticket",
+        createPlanTicketPayload({
+          project_id: projectId,
+          title,
+          description: description || undefined,
+          milestone_id: milestoneRow.id,
+          idea_id: ideaRow.id,
+        })
+      );
+      await updateProject(projectId, { ideaIds: [...(project?.ideaIds ?? []), ideaRow.id] });
+      const sessionRunId = `session-${typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : Date.now()}`;
+      await invoke("append_implementation_log_entry", {
+        project_id: projectId,
+        run_id: sessionRunId,
+        ticket_number: 0,
+        ticket_title: `Idea-driven session: ${ideaRow.title}`,
+        milestone_id: null,
+        idea_id: ideaRow.id,
+        completed_at: new Date().toISOString(),
+        files_changed: "[]",
+        summary: "Idea created. 1 milestone. 1 ticket. Circle will run in plan mode.",
+      });
+      window.dispatchEvent(new CustomEvent("ticket-implementation-done", { detail: { projectId } }));
+      const basePrompt =
+        (await readProjectFileOrEmpty(projectId, WORKER_NIGHT_SHIFT_PROMPT_PATH, projectPath))?.trim() ?? "";
+      if (!basePrompt) {
+        toast.error("Night shift prompt is empty. Add content to .cursor/8. worker/night-shift.prompt.md");
+        setStartingIdeaDriven(false);
+        return;
+      }
+      const ticketSnapshot = {
+        id: ticketRow.id,
+        number: ticketRow.number,
+        title: ticketRow.title,
+        description: ticketRow.description,
+        priority: "P1" as const,
+        featureName: "General",
+        agents: [] as string[],
+        milestoneId: milestoneRow.id,
+        ideaId: ideaRow.id,
+      };
+      const currentIdea = { id: ideaRow.id, title: ideaRow.title, description: ideaRow.description ?? "" };
+      setNightShiftIdeaDrivenState({
+        mode: true,
+        idea: currentIdea,
+        tickets: [ticketSnapshot],
+        ticketIndex: 0,
+        phase: "create",
+        completedInPhase: 0,
+        ideasQueue: [],
+      });
+      setNightShiftActive(true);
+      setNightShiftReplenishCallback(async (slot: 1 | 2 | 3, exitingRun?: RunInfo | null) => {
+        try {
+          const s = getState();
+          if (!s.nightShiftIdeaDrivenMode) return;
+          const runMeta = exitingRun?.meta;
+          const match =
+            runMeta?.isNightShiftIdeaDriven &&
+            runMeta.ideaDrivenTicketId === s.nightShiftIdeaDrivenTickets[s.nightShiftIdeaDrivenTicketIndex]?.id &&
+            runMeta.ideaDrivenPhase === s.nightShiftIdeaDrivenPhase;
+          if (!match) return;
+          const phase = s.nightShiftIdeaDrivenPhase;
+          const ticketIndex = s.nightShiftIdeaDrivenTicketIndex;
+          const ticketsList = s.nightShiftIdeaDrivenTickets;
+          const idea = s.nightShiftIdeaDrivenIdea;
+          const buildPromptForIdeaDriven = async (
+            ticket: { id: string; number: number; title: string; description?: string; priority: string; featureName: string; agents?: string[]; milestoneId?: number; ideaId?: number },
+            p: NightShiftCirclePhase
+          ) => {
+            const phasePrompt = await loadPhasePrompt(projectId, projectPath, p);
+            const agentMd = await (async () => {
+              if (!ticket.agents?.length) return null;
+              const parts: string[] = [];
+              for (const agentId of ticket.agents) {
+                const content = await readProjectFileOrEmpty(projectId, `${AGENTS_ROOT}/${agentId}.md`, projectPath);
+                if (content?.trim()) parts.push(content.trim());
+              }
+              return parts.length ? parts.join("\n\n---\n\n") : null;
+            })();
+            const ticketBlock = buildTicketPromptBlock(ticket, agentMd);
+            const header = `Night shift — ${p.charAt(0).toUpperCase() + p.slice(1)} for ticket #${ticket.number}: ${ticket.title}\n\n`;
+            const base =
+              (await readProjectFileOrEmpty(projectId, WORKER_NIGHT_SHIFT_PROMPT_PATH, projectPath))?.trim() ?? "";
+            const agents = await loadAllAgentsContent(projectId, projectPath);
+            return (header + base + "\n\n" + phasePrompt + "\n\n" + ticketBlock + "\n\n" + agents).trim();
+          };
+          if (phase !== "refactor") {
+            const nextPhase = nextCirclePhase(phase!);
+            setNightShiftIdeaDrivenState({
+              mode: true,
+              idea,
+              tickets: ticketsList,
+              ticketIndex,
+              phase: nextPhase!,
+              completedInPhase: 0,
+              ideasQueue: [],
+            });
+            const ticket = ticketsList[ticketIndex];
+            const nextPrompt = await buildPromptForIdeaDriven(ticket, nextPhase!);
+            const label = `Night shift — ${nextPhase} #${ticket.number}: ${ticket.title}`;
+            runTempTicket(projectPath, nextPrompt, label, {
+              isNightShift: true,
+              isNightShiftIdeaDriven: true,
+              ideaDrivenTicketId: ticket.id,
+              ideaDrivenPhase: nextPhase!,
+              agentMode: "plan",
+            });
+            toast.success(`Idea-driven: ${nextPhase} for ticket #${ticket.number}.`);
+          } else {
+            setNightShiftIdeaDrivenState({ mode: false, idea: null, tickets: [], ticketIndex: 0, phase: null, completedInPhase: 0, ideasQueue: [] });
+            setNightShiftActive(false);
+            setNightShiftReplenishCallback(null);
+            toast.success("Idea-driven finished: idea created and circle completed.");
+          }
+        } catch (err) {
+          console.error("[night-shift] idea-driven create-and-run replenish error:", err);
+          toast.error(err instanceof Error ? err.message : "Idea-driven step failed.");
+        }
+      });
+      const phasePrompt = await loadPhasePrompt(projectId, projectPath, "create");
+      const ticketBlock = buildTicketPromptBlock(ticketSnapshot, null);
+      const header = "Night shift — Create for ticket #" + ticketSnapshot.number + ": " + ticketSnapshot.title + "\n\n";
+      const agents = await loadAllAgentsContent(projectId, projectPath);
+      const firstPrompt = (header + basePrompt + "\n\n" + phasePrompt + "\n\n" + ticketBlock + "\n\n" + agents).trim();
+      const label = `Night shift — Create #${ticketSnapshot.number}: ${ticketSnapshot.title}`;
+      runTempTicket(projectPath, firstPrompt, label, {
+        isNightShift: true,
+        isNightShiftIdeaDriven: true,
+        ideaDrivenTicketId: ticketSnapshot.id,
+        ideaDrivenPhase: "create",
+        agentMode: "plan",
+      });
+      setIdeaDrivenCreateDescription("");
+      toast.success(`Idea-driven: created "${currentIdea.title}" (1 milestone, 1 ticket). Circle running — see Control for log.`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to create idea and run");
+    } finally {
+      setStartingIdeaDriven(false);
+    }
+  }, [projectId, projectPath, project?.ideaIds, ideaDrivenCreateDescription, runTempTicket, setNightShiftActive, setNightShiftReplenishCallback, setNightShiftIdeaDrivenState, getState]);
+
   const handleStop = useCallback(() => {
     setNightShiftActive(false);
     setNightShiftReplenishCallback(null);
     setNightShiftCircleState(false, null, 0);
+    setNightShiftIdeaDrivenState({
+      mode: false,
+      idea: null,
+      tickets: [],
+      ticketIndex: 0,
+      phase: null,
+      completedInPhase: 0,
+      ideasQueue: [],
+    });
     toast.success("Night shift stopped. Current runs will finish; no new runs will start.");
-  }, [setNightShiftActive, setNightShiftReplenishCallback, setNightShiftCircleState]);
+  }, [setNightShiftActive, setNightShiftReplenishCallback, setNightShiftCircleState, setNightShiftIdeaDrivenState]);
 
   return (
     <div className="rounded-2xl surface-card border border-border/50 overflow-hidden">
@@ -524,10 +956,21 @@ function WorkerNightShiftSection({
                 className="h-8 text-xs gap-1.5 border-indigo-500/50 text-indigo-600 hover:bg-indigo-500/10"
                 disabled={!projectPath?.trim() || starting}
                 onClick={handleCircleStart}
-                title="Run Refactor → Test → Debugging → Implement → Create (3 agents per phase)"
+                title="Run Create → Implement → Test → Debugging → Refactor (3 agents per phase)"
               >
                 <RotateCw className="size-3.5" />
                 Circle
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs gap-1.5 border-emerald-500/50 text-emerald-600 hover:bg-emerald-500/10"
+                disabled={!projectPath?.trim() || starting || startingIdeaDriven || !isTauri}
+                onClick={() => setIdeaDrivenDialogOpen(true)}
+                title="One idea at a time: run Create → Implement → Test → Debug → Refactor in plan mode per ticket; create new idea from description or use existing (desktop only)"
+              >
+                {startingIdeaDriven ? <Loader2 className="size-3.5 animate-spin" /> : <ListTodo className="size-3.5" />}
+                Idea-driven
               </Button>
             </>
           )}
@@ -540,9 +983,14 @@ function WorkerNightShiftSection({
               <span className="text-[10px] text-muted-foreground">
                 {nightShiftCircleMode ? "Circle phase:" : "Mode (click to toggle):"}
               </span>
-              {nightShiftActive && nightShiftCircleMode && nightShiftCirclePhase && (
+              {nightShiftActive && nightShiftCircleMode && nightShiftCirclePhase && !nightShiftIdeaDrivenMode && (
                 <span className="text-[10px] font-medium text-indigo-600 dark:text-indigo-400" aria-live="polite">
                   Current: {NIGHT_SHIFT_BADGES.find((b) => b.id === nightShiftCirclePhase)?.label ?? nightShiftCirclePhase}
+                </span>
+              )}
+              {nightShiftActive && nightShiftIdeaDrivenMode && nightShiftIdeaDrivenIdea && nightShiftIdeaDrivenPhase && (
+                <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400" aria-live="polite">
+                  Idea: {nightShiftIdeaDrivenIdea.title} | Ticket #{nightShiftIdeaDrivenTickets[nightShiftIdeaDrivenTicketIndex]?.number ?? "—"}: {nightShiftIdeaDrivenTickets[nightShiftIdeaDrivenTicketIndex]?.title ?? "—"} | {NIGHT_SHIFT_BADGES.find((b) => b.id === nightShiftIdeaDrivenPhase)?.label ?? nightShiftIdeaDrivenPhase}
                 </span>
               )}
             </div>
@@ -596,6 +1044,54 @@ function WorkerNightShiftSection({
           )}
         </>
       )}
+
+      <Dialog open={ideaDrivenDialogOpen} onOpenChange={setIdeaDrivenDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Idea-driven Night shift</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Use existing ideas and tickets, or create a new idea from a description (one idea → one milestone → one ticket, then run the circle). All steps are logged in Control.
+          </p>
+          <div className="flex flex-col gap-3 pt-2">
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-2"
+              onClick={() => {
+                setIdeaDrivenDialogOpen(false);
+                handleIdeaDrivenStart();
+              }}
+            >
+              <ListTodo className="size-4" />
+              Use existing ideas and tickets
+            </Button>
+            <div className="space-y-2">
+              <label className="text-xs font-medium">Create from description</label>
+              <Textarea
+                placeholder="e.g. Add dark mode with system preference detection"
+                value={ideaDrivenCreateDescription}
+                onChange={(e) => setIdeaDrivenCreateDescription(e.target.value)}
+                className="min-h-[80px] text-sm resize-y"
+                rows={3}
+              />
+              <Button
+                variant="default"
+                className="w-full gap-2"
+                disabled={startingIdeaDriven}
+                onClick={handleIdeaDrivenCreateAndRun}
+              >
+                {startingIdeaDriven ? <Loader2 className="size-4 animate-spin" /> : <Play className="size-4" />}
+                Create & run
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIdeaDrivenDialogOpen(false)}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -885,7 +1381,7 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
       <WorkerRebuildDesktopSection />
 
       {/* ═══ Night shift — 3 agents, same prompt, loop until stop ═══ */}
-      <WorkerNightShiftSection projectId={projectId} projectPath={project.repoPath?.trim() ?? ""} />
+      <WorkerNightShiftSection projectId={projectId} projectPath={project.repoPath?.trim() ?? ""} project={project} />
 
       {/* ═══ Asking — questions only, no file create/modify/delete; same terminal agent ═══ */}
       <WorkerAskingSection projectId={projectId} projectPath={project.repoPath?.trim() ?? ""} />

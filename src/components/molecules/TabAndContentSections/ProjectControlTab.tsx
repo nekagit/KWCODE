@@ -129,14 +129,19 @@ export function ProjectControlTab({ projectId, refreshKey = 0 }: ProjectControlT
   const pendingEntries = entries.filter((e) => e.status !== "accepted");
   const acceptedEntries = entries.filter((e) => e.status === "accepted");
 
+  const isSessionEntry = (e: ImplementationLogEntry) => e.ticket_number === 0;
+
   const renderEntryCard = (entry: ImplementationLogEntry, showAcceptDecline: boolean) => (
     <div
       key={entry.id}
-      className="surface-card rounded-xl border border-border/50 p-4 space-y-3"
+      className={cn(
+        "surface-card rounded-xl border border-border/50 p-4 space-y-3",
+        isSessionEntry(entry) && "border-emerald-500/30 bg-emerald-500/5"
+      )}
     >
       <div className="flex flex-wrap items-center gap-2">
         <span className="font-semibold text-foreground">
-          Ticket #{entry.ticket_number}: {entry.ticket_title}
+          {isSessionEntry(entry) ? entry.ticket_title : `Ticket #${entry.ticket_number}: ${entry.ticket_title}`}
         </span>
         <span className="text-xs text-muted-foreground">
           {new Date(entry.completed_at).toLocaleString()}
@@ -153,7 +158,7 @@ export function ProjectControlTab({ projectId, refreshKey = 0 }: ProjectControlT
             Declined
           </span>
         )}
-        {showAcceptDecline && (entry.status === "pending" || !entry.status) && (
+        {showAcceptDecline && !isSessionEntry(entry) && (entry.status === "pending" || !entry.status) && (
           <div className="flex items-center gap-1 ml-auto">
             <Button
               variant="outline"

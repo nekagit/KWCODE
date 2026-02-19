@@ -61,6 +61,10 @@ if [ -z "$AGENT_CMD" ]; then
     exit 127
 fi
 
+# #region agent log
+DEBUG_LOG="${PROJECT_PATH}/.cursor/debug-b99de4.log"
+[ -n "$PROJECT_PATH" ] && [ -d "$(dirname "$DEBUG_LOG")" ] && printf '%s\n' "{\"sessionId\":\"b99de4\",\"location\":\"run_terminal_agent.sh\",\"message\":\"script about to run agent\",\"data\":{\"MODE\":\"$MODE\",\"has_F\":\"yes\",\"prompt_len\":${#ESCAPED}},\"timestamp\":$(date +%s000),\"hypothesisId\":\"H3\"}" >> "$DEBUG_LOG"
+# #endregion
 if [ -n "$MODE" ]; then
     echo "Running: $AGENT_CMD --mode=$MODE -F -p \"<from file>\""
     "$AGENT_CMD" --mode="$MODE" -F -p "$ESCAPED"
@@ -69,6 +73,9 @@ else
     "$AGENT_CMD" -F -p "$ESCAPED"
 fi
 AGENT_EXIT=$?
+# #region agent log
+[ -n "$PROJECT_PATH" ] && [ -d "$(dirname "$DEBUG_LOG")" ] && printf '%s\n' "{\"sessionId\":\"b99de4\",\"location\":\"run_terminal_agent.sh\",\"message\":\"agent exited\",\"data\":{\"AGENT_EXIT\":$AGENT_EXIT},\"timestamp\":$(date +%s000),\"hypothesisId\":\"H4\"}" >> "$DEBUG_LOG"
+# #endregion
 echo ""
 echo "Done. Agent exited with code $AGENT_EXIT."
 if [ "$AGENT_EXIT" -ne 0 ]; then

@@ -52,6 +52,15 @@ export interface RunState {
   nightShiftCircleMode: boolean;
   nightShiftCirclePhase: NightShiftCirclePhase | null;
   nightShiftCircleCompletedInPhase: number;
+  /** Night shift Idea-driven: one idea at a time, circle (Create→…→Refactor) per ticket in plan mode. */
+  nightShiftIdeaDrivenMode: boolean;
+  nightShiftIdeaDrivenIdea: { id: number; title: string; description?: string } | null;
+  nightShiftIdeaDrivenTickets: Array<{ id: string; number: number; title: string; description?: string; priority: string; featureName: string; agents?: string[]; milestoneId?: number; ideaId?: number }>;
+  nightShiftIdeaDrivenTicketIndex: number;
+  nightShiftIdeaDrivenPhase: NightShiftCirclePhase | null;
+  nightShiftIdeaDrivenCompletedInPhase: number;
+  /** Remaining ideas to process (id, title, description). */
+  nightShiftIdeaDrivenIdeasQueue: Array<{ id: number; title: string; description?: string }>;
   /** Timestamp (ms) when refreshData last completed successfully; null before first refresh. */
   lastRefreshedAt: number | null;
 }
@@ -130,6 +139,15 @@ export interface RunActions {
   setNightShiftReplenishCallback: (cb: ((slot: 1 | 2 | 3, exitingRun?: RunInfo | null) => Promise<void>) | null) => void;
   setNightShiftCircleState: (mode: boolean, phase: NightShiftCirclePhase | null, completed: number) => void;
   incrementNightShiftCircleCompleted: () => void;
+  setNightShiftIdeaDrivenState: (state: {
+    mode: boolean;
+    idea: { id: number; title: string; description?: string } | null;
+    tickets: Array<{ id: string; number: number; title: string; description?: string; priority: string; featureName: string; agents?: string[]; milestoneId?: number; ideaId?: number }>;
+    ticketIndex: number;
+    phase: NightShiftCirclePhase | null;
+    completedInPhase: number;
+    ideasQueue: Array<{ id: number; title: string; description?: string }>;
+  }) => void;
 }
 
 export type RunStore = RunState & RunActions;
@@ -200,7 +218,12 @@ function processTempTicketQueue(
 
   (async () => {
     try {
-      const { run_id } = await invoke<{ run_id: string }>("run_run_terminal_agent", runRunTerminalAgentPayload(job.projectPath, job.promptContent, job.label, job.meta?.agentMode));
+      // #region agent log
+      const payload = runRunTerminalAgentPayload(job.projectPath, job.promptContent, job.label, job.meta?.agentMode);
+      fetch('http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b99de4'},body:JSON.stringify({sessionId:'b99de4',location:'run-store.ts:invoke',message:'run_run_terminal_agent payload',data:{label:(job.label||'').slice(0,80),agentMode:job.meta?.agentMode,promptLen:(job.promptContent||'').length,hasArgsAgentMode:!!(payload?.args as { agentMode?: string })?.agentMode},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b99de4'},body:JSON.stringify({sessionId:'b99de4',location:'run-store.ts:invoke',message:'run label for failed run',data:{label:job.label},timestamp:Date.now(),hypothesisId:'H5'})}).catch(()=>{});
+      // #endregion
+      const { run_id } = await invoke<{ run_id: string }>("run_run_terminal_agent", payload);
       set((s) => ({
         runningRuns: s.runningRuns.map((r) =>
           r.runId === tempId ? { ...r, runId: run_id } : r
@@ -244,6 +267,13 @@ const initialState: RunState = {
   nightShiftCircleMode: false,
   nightShiftCirclePhase: null,
   nightShiftCircleCompletedInPhase: 0,
+  nightShiftIdeaDrivenMode: false,
+  nightShiftIdeaDrivenIdea: null,
+  nightShiftIdeaDrivenTickets: [],
+  nightShiftIdeaDrivenTicketIndex: 0,
+  nightShiftIdeaDrivenPhase: null,
+  nightShiftIdeaDrivenCompletedInPhase: 0,
+  nightShiftIdeaDrivenIdeasQueue: [],
   lastRefreshedAt: null,
 };
 
@@ -834,6 +864,16 @@ export const useRunStore = create<RunStore>()((set, get) => ({
     }),
   incrementNightShiftCircleCompleted: () =>
     set((s) => ({ nightShiftCircleCompletedInPhase: s.nightShiftCircleCompletedInPhase + 1 })),
+  setNightShiftIdeaDrivenState: (state) =>
+    set({
+      nightShiftIdeaDrivenMode: state.mode,
+      nightShiftIdeaDrivenIdea: state.idea,
+      nightShiftIdeaDrivenTickets: state.tickets,
+      nightShiftIdeaDrivenTicketIndex: state.ticketIndex,
+      nightShiftIdeaDrivenPhase: state.phase,
+      nightShiftIdeaDrivenCompletedInPhase: state.completedInPhase,
+      nightShiftIdeaDrivenIdeasQueue: state.ideasQueue,
+    }),
 }));
 
 /** Hook with same API as legacy useRunState from context. Use anywhere run state is needed. */
