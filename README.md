@@ -1,8 +1,16 @@
 # KWCode
 
-**Desktop app to manage projects and run Cursor CLI agents (Ask, Plan, Fast dev, Debug) from one place.**
+**Desktop app to manage projects and run Cursor CLI agents (Ask, Plan, Fast dev, Debug) from one place.**  
+One dashboard for your repos, Planner, Ideas, and agent runs — Cursor today; more CLIs and platforms on the roadmap.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)](https://tauri.app)
+[![Tauri](https://img.shields.io/badge/Tauri-2.0-24C8DB?logo=tauri)](https://tauri.app)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript)](https://www.typescriptlang.org)
+[![Rust](https://img.shields.io/badge/Rust-1.x-orange?logo=rust)](https://www.rust-lang.org)
+[![Node](https://img.shields.io/badge/Node-18%2B-339933?logo=node.js)](https://nodejs.org)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)](#contributing)
 
 ---
 
@@ -88,6 +96,22 @@ Builds the app and copies it to your Desktop (see [package.json](package.json) f
 | `src-tauri/` | Tauri (Rust) app, commands, SQLite, bundling |
 | `script/` | Build and worker scripts (e.g. `run_terminal_agent.sh`) |
 | `.cursor/` | Project-specific Cursor prompts, ADRs, docs (see [.cursor/README.md](.cursor/README.md)) |
+
+---
+
+## Future & coming soon
+
+We’re focusing on Cursor CLI today but want KWCode to be useful across tools and platforms. Planned or under consideration:
+
+- **Windows scripts** — PowerShell or batch equivalents of `run_terminal_agent.sh` / `implement_all.sh` so the Worker tab works the same on Windows.
+- **Claude Code / Claude CLI** — Optional integration so you can run Claude-based agents from the same UI (Ask, Plan, Debug) alongside or instead of Cursor.
+- **Other CLI integrations** — Support for more AI/IDE CLIs (e.g. Windsurf, Aider, or custom agents) so you can plug in your preferred tool and keep one dashboard.
+- **Cross-platform parity** — Smoother builds and docs for Windows and Linux, including installers and path handling.
+- **Templates & starters** — More project and `.cursor` templates (stacks, frameworks) for Initialize and Starter flows.
+
+**Ideas & improvements (optional):** Dark/light theme refinements, more export formats, keyboard shortcuts for every action, optional cloud sync for projects list, and better accessibility. If you have a “coming soon” you care about, open an issue or discuss in a PR.
+
+These are goals and ideas, not promises — contributions and feedback on priorities are welcome (see [Contributing](#contributing)).
 
 ---
 
