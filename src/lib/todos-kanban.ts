@@ -310,6 +310,3 @@ export function validateTicketsFormat(
     message: "Tickets parsed successfully.",
   };
 }
-
-// Deprecated/stubbed for compatibility during refactor if needed, or removed.
-// Removed validateFeaturesTicketsCorrelation, parseFeaturesMd, serializeFeaturesToMd.
