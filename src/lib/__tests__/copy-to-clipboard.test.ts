@@ -84,4 +84,46 @@ describe("copyTextToClipboard", () => {
     expect(mockToast.error).toHaveBeenCalledWith("Failed to copy");
     expect(mockToast.success).not.toHaveBeenCalled();
   });
+
+  it("when silent: true, does not show toasts on success", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(globalThis, "navigator", {
+      value: { clipboard: { writeText } },
+      writable: true,
+      configurable: true,
+    });
+
+    const result = await copyTextToClipboard("hello", { silent: true });
+
+    expect(result).toBe(true);
+    expect(writeText).toHaveBeenCalledWith("hello");
+    expect(mockToast.success).not.toHaveBeenCalled();
+    expect(mockToast.error).not.toHaveBeenCalled();
+  });
+
+  it("when silent: true, does not show toasts on empty text", async () => {
+    const nav = { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } };
+    Object.defineProperty(globalThis, "navigator", { value: nav, writable: true, configurable: true });
+
+    const result = await copyTextToClipboard("   ", { silent: true });
+
+    expect(result).toBe(false);
+    expect(mockToast.error).not.toHaveBeenCalled();
+    expect(mockToast.success).not.toHaveBeenCalled();
+  });
+
+  it("when silent: true, does not show toasts on failure", async () => {
+    const writeText = vi.fn().mockRejectedValue(new Error("Permission denied"));
+    Object.defineProperty(globalThis, "navigator", {
+      value: { clipboard: { writeText } },
+      writable: true,
+      configurable: true,
+    });
+
+    const result = await copyTextToClipboard("text", { silent: true });
+
+    expect(result).toBe(false);
+    expect(mockToast.error).not.toHaveBeenCalled();
+    expect(mockToast.success).not.toHaveBeenCalled();
+  });
 });

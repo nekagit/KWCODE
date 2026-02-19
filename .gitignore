@@ -7,6 +7,8 @@ out/
 
 # Tauri / Rust
 src-tauri/target/
+src-tauri/src-tauri/
+**/target/
 
 # Environment
 .env

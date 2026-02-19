@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Copy, ExternalLink, Printer } from "lucide-react";
+import { ArrowLeft, Copy, ExternalLink } from "lucide-react";
 import { RainEffect } from "@/components/molecules/VisualEffects/RainEffect";
 import { CursorLightGlow } from "@/components/molecules/VisualEffects/CursorLightGlow";
 import { StarField } from "@/components/molecules/VisualEffects/StarField";
 import { MoonGraphic } from "@/components/molecules/VisualEffects/MoonGraphic";
 import { KwcodeBranding } from "@/components/molecules/Display/KwcodeBranding";
+import { PrintButton } from "@/components/atoms/buttons/PrintButton";
 import { Breadcrumb } from "@/components/shared/Breadcrumb";
 import { getOrganismClasses } from "./organism-classes";
 import { getAppVersion } from "@/lib/app-version";
@@ -86,18 +87,13 @@ export function LoadingScreenPageContent() {
       </div>
 
       <footer className="absolute bottom-4 left-4 right-4 z-10 flex flex-wrap items-center justify-center gap-4 text-xs text-white/60">
-        <Button
-          type="button"
+        <PrintButton
+          title="Print loading screen (⌘P)"
           variant="ghost"
           size="sm"
           className="h-7 px-2 text-white/60 hover:text-white hover:bg-white/10 border border-white/30 hover:border-white/50"
-          onClick={() => window.print()}
-          aria-label="Print current page"
-          title="Print loading screen (⌘P)"
-        >
-          <Printer className="size-3.5 mr-1.5" aria-hidden />
-          Print
-        </Button>
+          iconClassName="size-3.5 mr-1.5"
+        />
         {version != null && (
           <span className="flex items-center gap-2">
             <span className="font-mono" aria-label="App version">

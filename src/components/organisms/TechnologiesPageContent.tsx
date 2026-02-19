@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { Copy, Cpu, Download, FileText, FolderOpen, Loader2, Pencil, Printer, RefreshCw, Save, Layout, Search, Server, Wrench, X } from "lucide-react";
+import { Copy, Cpu, Download, FileText, FolderOpen, Loader2, Pencil, RefreshCw, Save, Layout, Search, Server, Wrench, X } from "lucide-react";
 import { toast } from "sonner";
+import { PrintButton } from "@/components/atoms/buttons/PrintButton";
 import { Breadcrumb } from "@/components/shared/Breadcrumb";
 import { SingleContentPage } from "@/components/organisms/SingleContentPage";
 import { SectionCard } from "@/components/shared/DisplayPrimitives";
@@ -254,17 +255,12 @@ export function TechnologiesPageContent() {
         className="mb-3"
       />
       <div className="mb-3 flex justify-end gap-2">
-        <Button
-          type="button"
+        <PrintButton
+          title="Print technologies page (⌘P)"
           variant="outline"
           size="sm"
-          onClick={() => window.print()}
-          aria-label="Print current page"
-          title="Print technologies page (⌘P)"
-        >
-          <Printer className="h-4 w-4 mr-1.5" aria-hidden />
-          Print
-        </Button>
+          iconClassName="h-4 w-4 mr-1.5"
+        />
         <Button
           type="button"
           variant="outline"

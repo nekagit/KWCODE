@@ -67,14 +67,17 @@ export const PromptTableRow: React.FC<PromptTableRowProps> = ({
   );
 
   const handleCopy = useCallback(
-    (e: React.MouseEvent) => {
+    async (e: React.MouseEvent) => {
       e.stopPropagation();
       const text = p.content ?? "";
-      navigator.clipboard.writeText(text).then(() => {
+      const ok = await copyTextToClipboard(text, { silent: true });
+      if (ok) {
         setCopied(true);
         toast.success("Prompt copied to clipboard");
         setTimeout(() => setCopied(false), 2000);
-      });
+      } else {
+        toast.error("Failed to copy");
+      }
     },
     [p.content]
   );

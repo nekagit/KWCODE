@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles, Wand2, ClipboardCopy } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ButtonGroup } from "@/components/shared/ButtonGroup";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 import type { TodosKanbanData } from "@/lib/todos-kanban";
 
 interface GenerateKanbanPromptSectionProps {
@@ -51,7 +52,7 @@ export const GenerateKanbanPromptSection: React.FC<GenerateKanbanPromptSectionPr
                   size="sm"
                   variant="ghost"
                   className="h-8 w-8 p-0"
-                  onClick={() => navigator.clipboard.writeText(kanbanPrompt)}
+                  onClick={() => void copyTextToClipboard(kanbanPrompt)}
                 >
                   <ClipboardCopy className="h-4 w-4" />
                 </Button>

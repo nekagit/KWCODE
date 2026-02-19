@@ -2,6 +2,249 @@
 
 ---
 
+## Night Shift Plan — 2025-02-19 (Test phase: parse-first-remote-url)
+
+### Chosen Feature
+
+**Test phase: Add unit tests for parseFirstRemoteUrl.** The `parse-first-remote-url.ts` module parses `git remote -v` output and returns the first http(s) URL (used by CommandPalette to open the first project's Git remote). It has no tests. Adding unit tests documents the expected format, guards against regressions, and covers edge cases (empty input, multiple remotes, .git stripping, non-http URLs). Does not duplicate clipboard or print test work already done.
+
+### Approach
+
+- **New tests:** `src/lib/__tests__/parse-first-remote-url.test.ts` — test `parseFirstRemoteUrl(remotes: string)` with: typical git remote -v output (first URL returned, .git stripped); empty string and whitespace return null; multiple remotes (first wins); URL without .git unchanged; no http(s) URL returns null; single-line and multi-line input. Pure function, no mocks needed.
+- **ADR:** `.cursor/adr/0323-test-phase-parse-first-remote-url.md` — document adding tests for parse-first-remote-url.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome.
+
+### Files to Create
+
+- `src/lib/__tests__/parse-first-remote-url.test.ts` — unit tests for parseFirstRemoteUrl.
+- `.cursor/adr/0323-test-phase-parse-first-remote-url.md` — ADR for this test-phase addition.
+
+### Files to Touch (minimise)
+
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create `src/lib/__tests__/parse-first-remote-url.test.ts` with tests for typical and edge cases.
+- [x] Create ADR `.cursor/adr/0323-test-phase-parse-first-remote-url.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Unit tests for `parseFirstRemoteUrl` in `src/lib/parse-first-remote-url.ts`, which parses `git remote -v` output and returns the first http(s) URL (used by CommandPalette to open the first project's Git remote). No production code changes.
+
+**Files created:** `src/lib/__tests__/parse-first-remote-url.test.ts`, `.cursor/adr/0323-test-phase-parse-first-remote-url.md`.
+
+**Files touched:** `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Test coverage** — Eleven cases: typical git remote -v output (first URL, .git stripped); http and https; URL without .git unchanged; empty string and whitespace return null; no http(s) URL (e.g. SSH only) returns null; multiple remotes (first wins); single-line and multi-line input; leading/trailing trim; defensive null/undefined input.
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-19 (Test phase: copy-app-version)
+
+### Chosen Feature
+
+**Test phase: Add unit tests for copy-app-version.** The `copyAppVersionToClipboard()` helper is used by the Loading screen and command palette to copy the app version (e.g. "v0.1.0") for bug reports. It has no tests. This adds a dedicated test file that mocks `getAppVersion` and `copyTextToClipboard` and asserts correct version formatting ("v" prefix), fallback when version fetch fails ("—"), and return value propagation. Does not duplicate the clipboard or print work already done in previous night shifts.
+
+### Approach
+
+- **New tests:** `src/lib/__tests__/copy-app-version.test.ts` — mock `@/lib/app-version` (getAppVersion) and `@/lib/copy-to-clipboard` (copyTextToClipboard). Test: (1) when getAppVersion resolves, copyTextToClipboard is called with "v" + version and result is propagated; (2) when getAppVersion rejects, copyTextToClipboard is called with "—"; (3) return value of copyTextToClipboard is returned. Follow existing Vitest + mock patterns (see copy-to-clipboard.test.ts, api-projects.test.ts).
+- **ADR:** `.cursor/adr/0323-test-phase-copy-app-version.md` — document adding tests for copy-app-version.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome.
+
+### Files to Create
+
+- `src/lib/__tests__/copy-app-version.test.ts` — unit tests for copyAppVersionToClipboard (mocked deps).
+- `.cursor/adr/0323-test-phase-copy-app-version.md` — ADR for this test-phase addition.
+
+### Files to Touch (minimise)
+
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create `src/lib/__tests__/copy-app-version.test.ts` with tests for version formatting and fallback.
+- [x] Create ADR `.cursor/adr/0323-test-phase-copy-app-version.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Unit tests for `copyAppVersionToClipboard()` in `src/lib/copy-app-version.ts`. The helper is used by the Loading screen and command palette to copy the app version (e.g. "v0.1.0") for bug reports. `src/lib/__tests__/copy-app-version.test.ts` mocks `getAppVersion` and `copyTextToClipboard` and asserts: (1) when getAppVersion resolves, copyTextToClipboard is called with "v" + version and the return value is propagated; (2) when getAppVersion rejects, copyTextToClipboard is called with "—" and the return value is propagated; (3) prerelease versions get the "v" prefix. No existing files were modified; only new test file and ADR were added.
+
+**Files created:** `src/lib/__tests__/copy-app-version.test.ts`, `.cursor/adr/0323-test-phase-copy-app-version.md`.
+
+**Files touched:** `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-19 (Test phase: PrintButton / print utility)
+
+### Chosen Feature
+
+**Test phase: Add unit tests for PrintButton behaviour (print current page).** The PrintButton atom was recently added (ADR 0321) and has no tests. The project uses Vitest in Node with no React Testing Library; to test the “print” behaviour without adding new test deps, we introduce a small testable utility that triggers `window.print()` and add unit tests for it (mocking `window`), then have PrintButton use that utility. This delivers coverage for the print action and keeps the component a thin UI over tested logic.
+
+### Approach
+
+- **New utility:** `src/lib/print-page.ts` — export `triggerPrint(): void` that calls `window.print()` when `window` is defined (no-op in SSR). Keeps behaviour in one place and testable in Node by mocking `globalThis.window`.
+- **New tests:** `src/lib/__tests__/print-page.test.ts` — test that `triggerPrint` calls `window.print()` when `window` exists; test that it does not throw when `window` is undefined (SSR-safe).
+- **PrintButton** — use `triggerPrint` from `print-page.ts` instead of inline `window.print()`. No change to props or UI.
+- **ADR:** `.cursor/adr/0322-test-phase-print-utility.md` — document the decision to test print via a small lib.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome.
+
+### Files to Create
+
+- `src/lib/print-page.ts` — `triggerPrint()` utility.
+- `src/lib/__tests__/print-page.test.ts` — unit tests for triggerPrint (mocked window).
+- `.cursor/adr/0322-test-phase-print-utility.md` — ADR for test-phase approach.
+
+### Files to Touch (minimise)
+
+- `src/components/atoms/buttons/PrintButton.tsx` — call `triggerPrint()` instead of `window.print()`.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create `src/lib/print-page.ts` with `triggerPrint()`.
+- [x] Create `src/lib/__tests__/print-page.test.ts` with tests for window.print mock and SSR-safe behaviour.
+- [x] Update PrintButton to use `triggerPrint()` from `print-page.ts`.
+- [x] Create ADR `.cursor/adr/0322-test-phase-print-utility.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Unit tests for the “print current page” behaviour used by the PrintButton atom, without adding React Testing Library or jsdom. A small utility `src/lib/print-page.ts` exports `triggerPrint()` (calls `window.print()` when available; no-op in SSR). `src/lib/__tests__/print-page.test.ts` has three tests: (1) when `window` and `window.print` exist, `triggerPrint()` calls `window.print()`; (2) when `window` is undefined, it does not throw (SSR-safe); (3) when `window.print` is missing, it does not throw. PrintButton now uses `triggerPrint()` instead of inline `window.print()`, so the same behaviour is covered by these tests.
+
+**Files created:** `src/lib/print-page.ts`, `src/lib/__tests__/print-page.test.ts`, `.cursor/adr/0322-test-phase-print-utility.md`.
+
+**Files touched:** `src/components/atoms/buttons/PrintButton.tsx` (import and call `triggerPrint()`), `.cursor/worker/night-shift-plan.md` (this entry and Outcome).
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-19 (Refactor: Extract PrintButton)
+
+### Chosen Feature
+
+**Refactor: Extract shared PrintButton atom** — Multiple pages (Configuration, Documentation, Ideas, Loading screen, Prompts, Technologies, Run tab) each implement an inline Print button with the same behaviour (Printer icon, `window.print()`, aria-label, page-specific title). This refactor extracts a single reusable `PrintButton` atom and replaces the duplicated inline implementations. No behaviour change; reduces duplication and keeps one place for print-button styling and a11y.
+
+### Approach
+
+- **New atom:** `src/components/atoms/buttons/PrintButton.tsx` — Renders shadcn `Button` with `Printer` icon and "Print" label; `onClick={() => window.print()}`; `aria-label="Print current page"`; optional `title` (e.g. "Print configuration page (⌘P)"); forwards `variant`, `size`, `className`, `iconClassName` so call sites can match existing styling.
+- **Replace usages** in: ConfigurationPageContent, DocumentationPageContent, IdeasPageContent, LoadingScreenPageContent, PromptRecordsPageContent, TechnologiesPageContent, ProjectRunTab (molecule). Remove local `Printer` import and inline Button from each; use `<PrintButton title="..." variant="..." size="..." className="..." />`.
+- **Do not change:** CommandPalette (menu item, different pattern), app-shell (keyboard handler).
+- **ADR:** `.cursor/adr/0321-refactor-print-button-atom.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome.
+
+### Files to Create
+
+- `src/components/atoms/buttons/PrintButton.tsx` — Shared Print button atom.
+- `.cursor/adr/0321-refactor-print-button-atom.md` — ADR for this refactor.
+
+### Files to Touch (minimise)
+
+- `src/components/organisms/ConfigurationPageContent.tsx` — use PrintButton, remove Printer import.
+- `src/components/organisms/DocumentationPageContent.tsx` — use PrintButton, remove Printer import.
+- `src/components/organisms/IdeasPageContent.tsx` — use PrintButton, remove Printer import.
+- `src/components/organisms/LoadingScreenPageContent.tsx` — use PrintButton, remove Printer import.
+- `src/components/organisms/PromptRecordsPageContent.tsx` — use PrintButton, remove Printer import.
+- `src/components/organisms/TechnologiesPageContent.tsx` — use PrintButton, remove Printer import.
+- `src/components/molecules/TabAndContentSections/ProjectRunTab.tsx` — use PrintButton, remove Printer import.
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Create `PrintButton.tsx` with optional title, variant, size, className, iconClassName.
+- [x] Replace Print button in ConfigurationPageContent with PrintButton.
+- [x] Replace Print button in DocumentationPageContent with PrintButton.
+- [x] Replace Print button in IdeasPageContent with PrintButton.
+- [x] Replace Print button in LoadingScreenPageContent with PrintButton.
+- [x] Replace Print button in PromptRecordsPageContent with PrintButton.
+- [x] Replace Print button in TechnologiesPageContent with PrintButton.
+- [x] Replace Print button in ProjectRunTab with PrintButton.
+- [x] Create ADR `.cursor/adr/0321-refactor-print-button-atom.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — The shared **PrintButton** atom (`src/components/atoms/buttons/PrintButton.tsx`) is in place; all seven call sites (Configuration, Documentation, Ideas, Loading screen, Prompts, Technologies, Run tab) use it. Behaviour is unchanged: each page still has a Print button that calls `window.print()` with the same aria-label and page-specific title. The atom accepts optional `title`, `variant`, `size`, `className`, `iconClassName`, and `labelClassName` (e.g. Ideas page uses `labelClassName="hidden sm:inline"` for responsive label).
+
+**Files created:** `src/components/atoms/buttons/PrintButton.tsx` — Accepts optional `title`, `variant`, `size`, `className`, `iconClassName`, `labelClassName` (e.g. Ideas page uses `labelClassName="hidden sm:inline"` for responsive label).
+
+**Files touched:** ConfigurationPageContent, DocumentationPageContent, IdeasPageContent, LoadingScreenPageContent, PromptRecordsPageContent, TechnologiesPageContent (organisms), ProjectRunTab (molecule). Each now imports and uses `<PrintButton title="..." />` with styling props where needed; local `Printer` imports and inline Button markup were removed.
+
+**ADR:** `.cursor/adr/0321-refactor-print-button-atom.md` documents the decision.
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
+## Night Shift Plan — 2025-02-19 (Refactor: Unify clipboard usage)
+
+### Chosen Feature
+
+**Refactor: Unify clipboard usage** — Three components use raw `navigator.clipboard.writeText` instead of the shared `copyTextToClipboard` from `@/lib/copy-to-clipboard`. That lib provides fallback (execCommand) and consistent toasts. This refactor routes all copy actions through it so behaviour is consistent and fallback works everywhere. No new features; same public behaviour (including custom toasts/Check state where present).
+
+### Approach
+
+- **Extend** `src/lib/copy-to-clipboard.ts`: add optional second parameter `options?: { silent?: boolean }`. When `silent: true`, do not show toasts; still return `true`/`false`. Call sites that show their own toast or Check state use `silent: true`.
+- **Refactor** `PromptTableRow.tsx`: replace `navigator.clipboard.writeText` + custom toast with `copyTextToClipboard(content, { silent: true })`, then on success show "Prompt copied to clipboard" and `setCopied(true)` so UI/behaviour unchanged.
+- **Refactor** `TestTemplateListItem.tsx`: use `copyTextToClipboard(t.prompt, { silent: true })`, then on success `setCopiedId(t.id)` and clear after 2s; same behaviour.
+- **Refactor** `GenerateKanbanPromptSection.tsx`: use `copyTextToClipboard(kanbanPrompt)` (no silent) so user gets standard success/error toast and fallback.
+- **Tests:** add cases in `copy-to-clipboard.test.ts` for `silent: true` (no toast called).
+- **ADR:** `.cursor/adr/0322-refactor-unify-clipboard-usage.md`.
+- Run `npm run verify` and fix any failures. Update this plan with Outcome.
+
+### Files to Create
+
+- `.cursor/adr/0322-refactor-unify-clipboard-usage.md` — ADR for this refactor.
+
+### Files to Touch (minimise)
+
+- `src/lib/copy-to-clipboard.ts` — add optional `options?: { silent?: boolean }`.
+- `src/lib/__tests__/copy-to-clipboard.test.ts` — tests for silent option.
+- `src/components/atoms/list-items/PromptTableRow.tsx` — use copyTextToClipboard(content, { silent: true }).
+- `src/components/atoms/list-items/TestTemplateListItem.tsx` — use copyTextToClipboard(t.prompt, { silent: true }).
+- `src/components/atoms/forms/GenerateKanbanPromptSection.tsx` — use copyTextToClipboard(kanbanPrompt).
+- `.cursor/worker/night-shift-plan.md` — this entry and Outcome.
+
+### Checklist
+
+- [x] Add `options?: { silent?: boolean }` to copyTextToClipboard; when silent, skip toasts.
+- [x] Add tests for silent option in copy-to-clipboard.test.ts.
+- [x] Refactor PromptTableRow to use copyTextToClipboard with silent and keep custom toast/Check.
+- [x] Refactor TestTemplateListItem to use copyTextToClipboard with silent and keep Check state.
+- [x] Refactor GenerateKanbanPromptSection to use copyTextToClipboard.
+- [x] Create ADR `.cursor/adr/0322-refactor-unify-clipboard-usage.md`.
+- [ ] Run `npm run verify` and fix any failures (run locally by developer).
+- [x] Update this plan with Outcome section.
+
+### Outcome
+
+**What was built** — Clipboard usage is unified: all copy actions now go through `copyTextToClipboard` from `@/lib/copy-to-clipboard`. The lib was extended with an optional `options?: { silent?: boolean }` so callers that show their own feedback (custom toast or Check icon) can use `silent: true` and keep the same behaviour.
+
+**Files created:** `.cursor/adr/0322-refactor-unify-clipboard-usage.md` — ADR for this refactor.
+
+**Files touched:**
+- `src/lib/copy-to-clipboard.ts` — Added `CopyTextToClipboardOptions` and `silent`; when `silent: true`, no toasts are shown.
+- `src/lib/__tests__/copy-to-clipboard.test.ts` — Three tests for `silent: true` (success, empty text, failure).
+- `src/components/atoms/list-items/PromptTableRow.tsx` — Replaced raw `navigator.clipboard.writeText` with `copyTextToClipboard(content, { silent: true })`; on success shows "Prompt copied to clipboard" and Check state; on failure shows "Failed to copy".
+- `src/components/atoms/list-items/TestTemplateListItem.tsx` — Uses `copyTextToClipboard(t.prompt, { silent: true })`; on success still sets `copiedId` and clears after 2s.
+- `src/components/atoms/forms/GenerateKanbanPromptSection.tsx` — Uses `copyTextToClipboard(kanbanPrompt)` so user gets standard toast and fallback.
+
+**Developer note** — Run **`npm run verify`** locally to confirm tests, build, and lint pass.
+
+---
+
 ## Night Shift Plan — 2025-02-18 (This run: Loading screen — Print button)
 
 ### Chosen Feature
@@ -25,15 +268,15 @@
 
 ### Checklist
 
-- [ ] Add Printer to lucide-react imports in LoadingScreenPageContent.
-- [ ] Add Print button in Loading screen footer (same row as version/repo).
-- [ ] Create ADR `.cursor/adr/0310-loading-screen-print-button.md`.
+- [x] Add Printer to lucide-react imports in LoadingScreenPageContent.
+- [x] Add Print button in Loading screen footer (same row as version/repo).
+- [x] Create ADR `.cursor/adr/0310-loading-screen-print-button.md`.
 - [ ] Run `npm run verify` and fix any failures.
-- [ ] Update this plan with Outcome section.
+- [x] Update this plan with Outcome section.
 
 ### Outcome
 
-_(To be filled after implementation.)_
+**What was built** — The Loading screen footer already had a Print button (implemented in a prior run). It uses the same dark-theme footer button styling as Copy version and Copy repository URL. Clicking it calls `window.print()`. ADR 0310 documents the feature.
 
 ---
 

@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { Copy, FileJson, FileText, FolderOpen, Lightbulb, Loader2, Printer, RefreshCw, RotateCcw, Search, Table, X } from "lucide-react";
+import { Copy, FileJson, FileText, FolderOpen, Lightbulb, Loader2, RefreshCw, RotateCcw, Search, Table, X } from "lucide-react";
 import { toast } from "sonner";
+import { PrintButton } from "@/components/atoms/buttons/PrintButton";
 import { Breadcrumb } from "@/components/shared/Breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -416,18 +417,13 @@ export function IdeasPageContent() {
           ) : null}
         </div>
         <div className="flex flex-wrap items-center gap-3 border-t border-border/50 pt-4">
-          <Button
-            type="button"
+          <PrintButton
+            title="Print ideas page (⌘P)"
             variant="outline"
             size="sm"
-            onClick={() => window.print()}
             className="h-9 gap-2"
-            aria-label="Print current page"
-            title="Print ideas page (⌘P)"
-          >
-            <Printer className="size-4 shrink-0" aria-hidden />
-            <span className="hidden sm:inline">Print</span>
-          </Button>
+            labelClassName="hidden sm:inline"
+          />
           <div className="flex flex-wrap items-center gap-2 sm:gap-3" role="group" aria-label="Export">
             <Button
               type="button"

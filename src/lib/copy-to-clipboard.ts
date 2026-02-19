@@ -24,20 +24,30 @@ function copyViaExecCommand(text: string): boolean {
   return ok;
 }
 
+export interface CopyTextToClipboardOptions {
+  /** When true, do not show success or error toasts. Caller can show custom feedback. */
+  silent?: boolean;
+}
+
 /**
- * Copy text to the clipboard and show a success or error toast.
+ * Copy text to the clipboard and show a success or error toast (unless options.silent).
  * Uses navigator.clipboard when available; falls back to execCommand('copy') otherwise.
  * Returns true if the copy succeeded, false otherwise.
  */
-export async function copyTextToClipboard(text: string): Promise<boolean> {
+export async function copyTextToClipboard(
+  text: string,
+  options?: CopyTextToClipboardOptions
+): Promise<boolean> {
+  const silent = options?.silent === true;
+
   if (!text.trim()) {
-    toast.error("Nothing to copy");
+    if (!silent) toast.error("Nothing to copy");
     return false;
   }
   try {
     if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(text);
-      toast.success("Copied to clipboard");
+      if (!silent) toast.success("Copied to clipboard");
       return true;
     }
   } catch {
@@ -46,9 +56,9 @@ export async function copyTextToClipboard(text: string): Promise<boolean> {
   // Fallback when clipboard is undefined or writeText threw
   const fallbackOk = copyViaExecCommand(text);
   if (fallbackOk) {
-    toast.success("Copied to clipboard");
+    if (!silent) toast.success("Copied to clipboard");
     return true;
   }
-  toast.error("Failed to copy");
+  if (!silent) toast.error("Failed to copy");
   return false;
 }

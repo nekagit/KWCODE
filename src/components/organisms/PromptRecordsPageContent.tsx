@@ -10,6 +10,7 @@ import { useRunState } from "@/context/run-state";
 import { isTauri, invoke } from "@/lib/tauri";
 import { useRunStore, registerRunCompleteHandler } from "@/store/run-store";
 import type { Project } from "@/types/project";
+import { PrintButton } from "@/components/atoms/buttons/PrintButton";
 import { Breadcrumb } from "@/components/shared/Breadcrumb";
 import { PromptRecordActionButtons } from "@/components/molecules/ControlsAndButtons/PromptRecordActionButtons";
 import { PromptRecordTable } from "@/components/molecules/ListsAndTables/PromptRecordTable";
@@ -30,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Copy, FileJson, FileText, Loader2, Printer, RefreshCw, RotateCcw, Search, X } from "lucide-react";
+import { Copy, FileJson, FileText, Loader2, RefreshCw, RotateCcw, Search, X } from "lucide-react";
 import { getOrganismClasses } from "./organism-classes";
 import {
   copyAllPromptsAsJsonToClipboard,
@@ -579,17 +580,11 @@ export function PromptRecordsPageContent() {
                 setGenerateOpen={setGenerateOpen}
                 canEdit={canEdit}
               />
-              <Button
-                type="button"
+              <PrintButton
+                title="Print prompts page (⌘P)"
                 variant="outline"
                 size="sm"
-                onClick={() => window.print()}
-                aria-label="Print current page"
-                title="Print prompts page (⌘P)"
-              >
-                <Printer className="h-4 w-4" aria-hidden />
-                Print
-              </Button>
+              />
               <Button
                 variant="outline"
                 disabled={refreshing}

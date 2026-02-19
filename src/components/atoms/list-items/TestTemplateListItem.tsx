@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Copy, Check } from "lucide-react";
 import { ListItemCard } from "@/components/shared/ListItemCard";
+import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 import {
   TEST_TEMPLATE_CATEGORIES,
   type TestTemplate,
@@ -19,12 +20,12 @@ export const TestTemplateListItem: React.FC<TestTemplateListItemProps> = ({
   copiedId,
   setCopiedId,
 }) => {
-  const copyTemplate = useCallback(() => {
-    const text = t.prompt;
-    navigator.clipboard.writeText(text).then(() => {
+  const copyTemplate = useCallback(async () => {
+    const ok = await copyTextToClipboard(t.prompt, { silent: true });
+    if (ok) {
       setCopiedId(t.id);
       setTimeout(() => setCopiedId(null), 2000);
-    });
+    }
   }, [t.id, t.prompt, setCopiedId]);
 
   const children = (

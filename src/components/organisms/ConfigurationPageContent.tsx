@@ -9,11 +9,12 @@ import {
 import { useUITheme } from "@/context/ui-theme";
 import { useRunState } from "@/context/run-state";
 import { useQuickActions } from "@/context/quick-actions-context";
-import { Palette, Keyboard, Copy, FileText, FileJson, RefreshCw, Loader2, FolderOpen, ClipboardList, Check, XCircle, ExternalLink, Printer } from "lucide-react";
+import { Palette, Keyboard, Copy, FileText, FileJson, RefreshCw, Loader2, FolderOpen, ClipboardList, Check, XCircle, ExternalLink } from "lucide-react";
+import { PrintButton } from "@/components/atoms/buttons/PrintButton";
+import { Breadcrumb } from "@/components/shared/Breadcrumb";
 import { getOrganismClasses } from "./organism-classes";
 
 const c = getOrganismClasses("ConfigurationPageContent.tsx");
-import { Breadcrumb } from "@/components/shared/Breadcrumb";
 import { ThemeSelector } from "@/components/molecules/UtilitiesAndHelpers/ThemeSelector";
 import { SingleContentPage } from "@/components/organisms/SingleContentPage";
 import { Button } from "@/components/ui/button";
@@ -119,18 +120,12 @@ export function ConfigurationPageContent() {
         ]}
       />
       <div className="flex flex-wrap items-center justify-end gap-3">
-        <Button
-          type="button"
+        <PrintButton
+          title="Print configuration page (⌘P)"
           variant="outline"
           size="sm"
-          onClick={() => window.print()}
           className="h-9 gap-2"
-          aria-label="Print current page"
-          title="Print configuration page (⌘P)"
-        >
-          <Printer className="size-4 shrink-0" aria-hidden />
-          Print
-        </Button>
+        />
         <Button
           type="button"
           variant="outline"

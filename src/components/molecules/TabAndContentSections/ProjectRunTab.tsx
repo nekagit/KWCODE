@@ -52,7 +52,6 @@ import {
   FileJson,
   FileText,
   FileSpreadsheet,
-  Printer,
   Search,
   X,
   RotateCcw,
@@ -68,6 +67,7 @@ import { downloadAllRunHistory } from "@/lib/download-all-run-history";
 import { downloadAllRunHistoryCsv, copyAllRunHistoryCsvToClipboard } from "@/lib/download-all-run-history-csv";
 import { downloadAllRunHistoryJson, copyAllRunHistoryJsonToClipboard } from "@/lib/download-all-run-history-json";
 import { downloadAllRunHistoryMarkdown, copyAllRunHistoryMarkdownToClipboard } from "@/lib/download-all-run-history-md";
+import { PrintButton } from "@/components/atoms/buttons/PrintButton";
 import { RelativeTimeWithTooltip } from "@/components/atoms/displays/RelativeTimeWithTooltip";
 import { getRunHistoryPreferences, setRunHistoryPreferences, DEFAULT_RUN_HISTORY_PREFERENCES, RUN_HISTORY_FILTER_QUERY_MAX_LEN, RUN_HISTORY_PREFERENCES_RESTORED_EVENT } from "@/lib/run-history-preferences";
 import { groupRunHistoryByDate, RUN_HISTORY_DATE_GROUP_LABELS, getRunHistoryDateGroupOrder, getRunHistoryDateGroupTitle } from "@/lib/run-history-date-groups";
@@ -1064,17 +1064,13 @@ function WorkerHistorySection() {
         </div>
         {history.length > 0 && (
           <div className="flex items-center gap-2">
-            <Button
+            <PrintButton
+              title="Print run tab (⌘P)"
               variant="ghost"
               size="sm"
-              onClick={() => window.print()}
               className="gap-1.5 text-xs h-8 rounded-lg text-muted-foreground hover:text-foreground"
-              title="Print run tab (⌘P)"
-              aria-label="Print current page"
-            >
-              <Printer className="size-3" />
-              Print
-            </Button>
+              iconClassName="size-3"
+            />
             <Button
               variant="ghost"
               size="sm"
