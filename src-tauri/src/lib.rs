@@ -80,6 +80,26 @@ fn debug_log(location: &str, message: &str, data: &[(&str, &str)]) {
             .and_then(|mut f| std::io::Write::write_all(&mut f, format!("{}\n", line).as_bytes()));
     }
 }
+
+const DEBUG_SESSION_LOG: &str = "/Users/nenadkalicanin/Documents/February/KW-February-KWCode/.cursor/debug-b2093c.log";
+fn session_log(location: &str, message: &str, data: &[(&str, &str)], hypothesis_id: &str) {
+    let data_obj: std::collections::HashMap<String, String> = data.iter().map(|(k, v)| ((*k).to_string(), (*v).to_string())).collect();
+    let payload = serde_json::json!({
+        "sessionId": "b2093c",
+        "timestamp": SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis(),
+        "location": location,
+        "message": message,
+        "data": data_obj,
+        "hypothesisId": hypothesis_id
+    });
+    if let Ok(line) = serde_json::to_string(&payload) {
+        let _ = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(DEBUG_SESSION_LOG)
+            .and_then(|mut f| std::io::Write::write_all(&mut f, format!("{}\n", line).as_bytes()));
+    }
+}
 // #endregion
 
 fn gen_run_id() -> String {
@@ -3420,6 +3440,7 @@ pub fn run() {
             // 2) Retry navigating to app URL at 2s, 4s, 6s in case loader redirect fails.
             #[cfg(debug_assertions)]
             {
+                session_log("lib.rs:setup", "tauri_dev_workaround_start", &[], "H4");
                 let app_url = "http://127.0.0.1:4000/".to_string();
                 let app_handle = app.handle().clone();
 
@@ -3431,6 +3452,7 @@ pub fn run() {
                     let path = temp.canonicalize().ok()?;
                     Url::from_file_path(path).ok()
                 })();
+                session_log("lib.rs:setup", "loader_url", &[("has_url", if loader_url.is_some() { "true" } else { "false" })], "H1");
 
                 std::thread::spawn(move || {
                     // First: try to show loader (file://) so user sees something instead of white.
@@ -3439,26 +3461,28 @@ pub fn run() {
                         let handle = app_handle.clone();
                         let load_url = url.clone();
                         let _ = app_handle.run_on_main_thread(move || {
-                            for (_, w) in handle.webview_windows() {
+                            let windows: Vec<_> = handle.webview_windows().into_iter().collect();
+                            session_log("lib.rs:workaround", "loader_nav", &[("window_count", &windows.len().to_string())], "H2");
+                            if let Some((_, w)) = windows.into_iter().next() {
                                 let _ = w.navigate(load_url.as_str().parse().unwrap_or_else(|_| "http://127.0.0.1:4000/".parse().unwrap()));
-                                break;
                             }
                         });
                     }
 
                     // Fallback: force-navigate to dev server in case loader or initial load failed.
-                    for _ in 0..3 {
+                    for attempt in 0..3 {
                         std::thread::sleep(std::time::Duration::from_millis(2000));
                         let handle = app_handle.clone();
                         let url = app_url.clone();
                         let _ = app_handle.run_on_main_thread(move || {
-                            for (_, w) in handle.webview_windows() {
+                            let windows: Vec<_> = handle.webview_windows().into_iter().collect();
+                            session_log("lib.rs:workaround", "dev_nav", &[("window_count", &windows.len().to_string()), ("attempt", &attempt.to_string())], "H2");
+                            if let Some((_, w)) = windows.into_iter().next() {
                                 let _ = w.navigate(
                                     url.parse().unwrap_or_else(|_| "http://127.0.0.1:4000/".parse().unwrap()),
                                 );
                                 let js = format!("window.location.href = {}", serde_json::to_string(&url).unwrap_or_else(|_| "\"http://127.0.0.1:4000/\"".into()));
                                 let _ = w.eval(&js);
-                                break;
                             }
                         });
                     }
