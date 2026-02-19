@@ -10,7 +10,7 @@
     "start": "next start",
     "lint": "next lint",
     "tauri": "node script/tauri-with-local-target.mjs",
-    "tauri:build": "CI=false node script/tauri-with-local-target.mjs build --bundles app",
+    "tauri:build": "node script/tauri-build.mjs",
     "build:desktop": "npm run tauri:build && node script/copy-build-to-desktop.mjs",
     "scaffold:cursor-md": "node script/scaffold-cursor-md.mjs",
     "extract:tailwind-classes": "node script/extract-tailwind-classes.mjs",
