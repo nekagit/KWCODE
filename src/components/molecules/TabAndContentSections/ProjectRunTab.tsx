@@ -2094,7 +2094,8 @@ function WorkerDebuggingSection({
       const promptWithLogs = basePrompt.endsWith("\n") ? basePrompt + logs : basePrompt + "\n\n" + logs;
       const agentsBlock = await loadAllAgentsContent(projectId, repoPath);
       const fullPrompt = (promptWithLogs + agentsBlock).trim();
-      const runId = await runTempTicket(projectPath.trim(), fullPrompt, "Debug: fix errors", { agentMode: "debug" });
+      // Use default agent (no --mode): Cursor CLI --mode only supports agent|plan|ask; debug is editor-only and fails in headless.
+      const runId = await runTempTicket(projectPath.trim(), fullPrompt, "Debug: fix errors");
       if (runId) {
         toast.success(runId === "queued" ? "Added to queue. Agent will start when a slot is free." : "Debug agent started. Check the terminal below.");
       } else {

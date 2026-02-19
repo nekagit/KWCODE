@@ -2545,8 +2545,9 @@ fn run_run_terminal_agent_script_inner(
             script_path.to_string_lossy()
         ));
     }
-    let p = std::env::temp_dir().join(format!("kw_run_terminal_agent_prompt_{}.txt", run_id));
-    std::fs::write(&p, &prompt_content).map_err(|e| e.to_string())?;
+    // Write prompt file inside the project dir so the script (and sandboxed child) can always read it.
+    let p = Path::new(&project_path).join(format!(".kwcode_run_prompt_{}.txt", run_id));
+    std::fs::write(&p, &prompt_content).map_err(|e| format!("Failed to write prompt file in project: {}", e))?;
     let mut cmd = Command::new("bash");
     cmd.arg(script_path.as_os_str())
         .arg("-P")

@@ -62,11 +62,11 @@ if [ -z "$AGENT_CMD" ]; then
 fi
 
 if [ -n "$MODE" ]; then
-    echo "Running: $AGENT_CMD --mode=$MODE -p \"<from file>\""
-    "$AGENT_CMD" --mode="$MODE" -p "$ESCAPED"
+    echo "Running: $AGENT_CMD --mode=$MODE -F -p \"<from file>\""
+    "$AGENT_CMD" --mode="$MODE" -F -p "$ESCAPED"
 else
-    echo "Running: $AGENT_CMD -p \"<from file>\" (print mode, -F = trust workspace)"
-    "$AGENT_CMD" -p "$ESCAPED"
+    echo "Running: $AGENT_CMD -F -p \"<from file>\" (print mode, -F = trust workspace)"
+    "$AGENT_CMD" -F -p "$ESCAPED"
 fi
 AGENT_EXIT=$?
 echo ""

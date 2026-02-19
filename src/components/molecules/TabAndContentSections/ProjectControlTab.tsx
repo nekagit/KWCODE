@@ -8,7 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { invoke, isTauri, projectIdArgPayload } from "@/lib/tauri";
+import { invoke, isTauri, projectIdArgPayload, projectIdArgOptionalPayload } from "@/lib/tauri";
 import {
   fetchImplementationLogEntries,
   type ImplementationLogEntry,
@@ -52,7 +52,7 @@ export function ProjectControlTab({ projectId, refreshKey = 0 }: ProjectControlT
       const [milList, ideaList] = await Promise.all([
         fetchProjectMilestones(projectId),
         isTauri
-          ? invoke<{ id: number; title: string }[]>("get_ideas_list", projectIdArgPayload(projectId)).then((ideas) => ideas ?? [])
+          ? invoke<{ id: number; title: string }[]>("get_ideas_list", projectIdArgOptionalPayload(projectId)).then((ideas) => ideas ?? [])
           : fetch(`/api/data/ideas`).then((res) => (res.ok ? res.json() as Promise<{ id: number; title: string }[]> : [])),
       ]);
       const milMap: Record<number, string> = {};

@@ -56,8 +56,6 @@ export default function RootLayout({
           html, body { margin: 0; min-height: 100%; background: hsl(var(--background)); color: hsl(var(--foreground)); -webkit-font-smoothing: antialiased; }
           #root-loading { position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000;color:#fff;z-index:9999; }
           #root-loading[data-loaded=true] { opacity:0;pointer-events:none;transition:opacity .5s ease-out; }
-          #loading-hint { position:fixed;bottom:24px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,0.6);font-size:12px;text-align:center;z-index:10000;opacity:0;transition:opacity .4s ease;pointer-events:none; }
-          #loading-hint[data-visible] { opacity:1; }
           @keyframes root-loading-spin { to { transform: rotate(360deg); } }
           @keyframes root-loading-pulse { 0%,100% { opacity: 0.4; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1); } }
         `}} />
@@ -67,14 +65,6 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){setTimeout(function(){var el=document.getElementById("root-loading");if(el&&!el.getAttribute("data-loaded"))el.setAttribute("data-loaded","true");},15000);})();`,
-          }}
-        />
-        <div id="loading-hint" aria-hidden="true">
-          If this doesn&apos;t load, run <code style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: 4 }}>npm run dev</code> in a terminal, then run <code style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: 4 }}>npm run tauri dev</code> again.
-        </div>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){setTimeout(function(){var h=document.getElementById("loading-hint");if(h)h.setAttribute("data-visible","");},8000);})();`,
           }}
         />
         <RootLoadingOverlay />

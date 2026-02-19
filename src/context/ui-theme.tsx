@@ -66,10 +66,14 @@ function ThemeSync({ theme }: { theme: UIThemeId }) {
 }
 
 export function UIThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<UIThemeId>(() => {
+  // Always start with "light" so server and client match (avoids hydration mismatch).
+  // Stored theme is applied in useEffect after mount.
+  const [theme, setThemeState] = useState<UIThemeId>("light");
+
+  useEffect(() => {
     const stored = getStoredUITheme();
-    return stored && isValidUIThemeId(stored) ? stored : "light";
-  });
+    if (stored && isValidUIThemeId(stored)) setThemeState(stored);
+  }, []);
 
   const setTheme = useCallback((id: UIThemeId) => {
     setThemeState(id);

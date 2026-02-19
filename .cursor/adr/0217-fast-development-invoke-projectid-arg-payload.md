@@ -10,13 +10,13 @@ In **Tauri dev** (and built app), the Worker tab’s **Fast development** flow c
 
 ## Decision
 
-- For Tauri commands that take a single **ProjectIdArg** or **ProjectIdArgOptional** parameter, the frontend must pass the payload shape expected by the **built app** IPC: **`{ projectIdArg: { projectId } }`** (parameter name as key, struct as value). See ADR 0226.
-- Introduced **`projectIdArgPayload(projectId)`** in `@/lib/tauri` and use it for all such invokes.
+- For Tauri commands that take a single **ProjectIdArg** parameter, the frontend must pass **`{ projectIdArg: { projectId } }`**. For **ProjectIdArgOptional** (e.g. `get_ideas_list`), the built app IPC expects **`{ projectIdArgOptional: { projectId } }`**. See ADR 0226 and ADR 0327.
+- **`projectIdArgPayload(projectId)`** for ProjectIdArg commands; **`projectIdArgOptionalPayload(projectId)`** for `get_ideas_list` only.
 - Updated all invocations in:
-  - **ProjectRunTab.tsx**: Fast development section and Kanban/ticket loading (`get_project_milestones`, `get_project_kanban_state`, `get_project_tickets`).
-  - **ProjectTicketsTab.tsx**: `get_project_tickets`, `get_project_kanban_state`, `get_project_milestones`, `get_ideas_list`.
-  - **ProjectControlTab.tsx**: `get_implementation_log_entries`, `get_project_milestones`, `get_ideas_list`.
-  - **fetch-ideas.ts**: `get_ideas_list` (with `projectIdArgPayload(null)` for optional).
+  - **ProjectRunTab.tsx**: `get_project_milestones`, `get_project_kanban_state`, `get_project_tickets` (projectIdArgPayload).
+  - **ProjectTicketsTab.tsx**: `get_project_tickets`, `get_project_kanban_state`, `get_project_milestones` (projectIdArgPayload); `get_ideas_list` (projectIdArgOptionalPayload).
+  - **ProjectControlTab.tsx**: `get_implementation_log_entries`, `get_project_milestones` (projectIdArgPayload); `get_ideas_list` (projectIdArgOptionalPayload).
+  - **fetch-ideas.ts**: `get_ideas_list` with `projectIdArgOptionalPayload(null)`.
 - No changes to Rust commands or to `ProjectIdArg` / `ProjectIdArgOptional`; only the frontend invoke payload shape was corrected.
 
 ## Consequences

@@ -50,12 +50,22 @@ if (!isTauri) {
 const TAURI_API_WAIT_MS = 5000;
 
 /**
- * Payload for Tauri commands that take a single ProjectIdArg or ProjectIdArgOptional.
+ * Payload for Tauri commands that take a single ProjectIdArg.
  * In the built app, the IPC expects the parameter key `projectIdArg` (camelCase of the type);
  * the value is the struct with `projectId` (alias for project_id).
  */
 export function projectIdArgPayload(projectId: string | null): { projectIdArg: { projectId: string | null } } {
   return { projectIdArg: { projectId } };
+}
+
+/**
+ * Payload for Tauri commands that take ProjectIdArgOptional (e.g. get_ideas_list).
+ * In the built app, the IPC expects the parameter key `projectIdArgOptional` (camelCase of the type).
+ */
+export function projectIdArgOptionalPayload(projectId: string | null): {
+  projectIdArgOptional: { projectId: string | null };
+} {
+  return { projectIdArgOptional: { projectId } };
 }
 
 /**
