@@ -118,6 +118,9 @@ export const invoke = async <T>(cmd: string, args?: Record<string, unknown>): Pr
     await new Promise((resolve) => setTimeout(resolve, 50));
   }
   if (!tauriInvoke) {
+    // #region agent log
+    if (typeof fetch !== "undefined") { fetch('http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'c29a12'},body:JSON.stringify({sessionId:'c29a12',location:'tauri.ts:invoke',message:'tauriInvoke null',data:{cmd,isTauri},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{}); }
+    // #endregion
     const msg = `Tauri 'invoke' API not available yet. Command: ${cmd}`;
     console.warn(msg);
     return Promise.reject(new Error(msg));

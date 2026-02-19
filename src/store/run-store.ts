@@ -220,8 +220,7 @@ function processTempTicketQueue(
     try {
       // #region agent log
       const payload = runRunTerminalAgentPayload(job.projectPath, job.promptContent, job.label, job.meta?.agentMode);
-      fetch('http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b99de4'},body:JSON.stringify({sessionId:'b99de4',location:'run-store.ts:invoke',message:'run_run_terminal_agent payload',data:{label:(job.label||'').slice(0,80),agentMode:job.meta?.agentMode,promptLen:(job.promptContent||'').length,hasArgsAgentMode:!!(payload?.args as { agentMode?: string })?.agentMode},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
-      fetch('http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b99de4'},body:JSON.stringify({sessionId:'b99de4',location:'run-store.ts:invoke',message:'run label for failed run',data:{label:job.label},timestamp:Date.now(),hypothesisId:'H5'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'c29a12'},body:JSON.stringify({sessionId:'c29a12',location:'run-store.ts:processTempTicketQueue:beforeInvoke',message:'run_run_terminal_agent payload',data:{label:(job.label||'').slice(0,80),payloadKeys:Object.keys(payload),hasArgs:!!payload.args,agentMode:job.meta?.agentMode,promptLen:(job.promptContent||'').length},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
       // #endregion
       const { run_id } = await invoke<{ run_id: string }>("run_run_terminal_agent", payload);
       set((s) => ({
@@ -232,13 +231,17 @@ function processTempTicketQueue(
       }));
       processTempTicketQueue(get, set);
     } catch (e) {
+      // #region agent log
+      const errMsg = e instanceof Error ? e.message : String(e);
+      fetch('http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'c29a12'},body:JSON.stringify({sessionId:'c29a12',location:'run-store.ts:processTempTicketQueue:catch',message:'invoke run_run_terminal_agent failed',data:{error:errMsg,label:job.label},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
+      // #endregion
       set((s) => ({
         ...s,
-        error: e instanceof Error ? e.message : String(e),
+        error: errMsg,
         runningRuns: s.runningRuns.filter((r) => r.runId !== tempId),
         pendingTempTicketQueue: [job, ...s.pendingTempTicketQueue],
       }));
-      toast.error("Failed to start queued agent.");
+      toast.error(errMsg ? `Failed to start agent: ${errMsg}` : "Failed to start queued agent.");
       processTempTicketQueue(get, set);
     }
   })();
@@ -346,6 +349,9 @@ export const useRunStore = create<RunStore>()((set, get) => ({
 
   refreshData: async () => {
     set({ error: null, dataWarning: null });
+    // #region agent log
+    fetch("http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d", { method: "POST", headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "8a3da1" }, body: JSON.stringify({ sessionId: "8a3da1", location: "run-store.ts:refreshData", message: "refreshData_start", data: { isTauri }, timestamp: Date.now(), hypothesisId: "H2" }) }).catch(() => {});
+    // #endregion
     try {
       if (isTauri) {
         invoke("frontend_debug_log", { location: "run-store.ts:refreshData", message: "run-store: about to invoke list_february_folders, get_active_projects, get_prompts", data: {} }).catch(() => {});
@@ -406,6 +412,9 @@ export const useRunStore = create<RunStore>()((set, get) => ({
       // #endregion
       set({ error: errMsg });
     } finally {
+      // #region agent log
+      fetch("http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d", { method: "POST", headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "8a3da1" }, body: JSON.stringify({ sessionId: "8a3da1", location: "run-store.ts:refreshData", message: "refreshData_finally_loading_false", data: {}, timestamp: Date.now(), hypothesisId: "H2" }) }).catch(() => {});
+      // #endregion
       set({ loading: false });
     }
   },
@@ -591,6 +600,12 @@ export const useRunStore = create<RunStore>()((set, get) => ({
   },
 
   runSetupPrompt: async (projectPath, promptContent, label) => {
+    if (!isTauri) {
+      const msg = "Worker agents require the desktop app. Run the app with Tauri (from the repo or install the desktop build).";
+      set({ error: msg });
+      toast.error(msg);
+      return null;
+    }
     const path = projectPath?.trim();
     if (!path) {
       set({ error: "Project path is required" });
@@ -626,6 +641,12 @@ export const useRunStore = create<RunStore>()((set, get) => ({
   },
 
   runTempTicket: async (projectPath, promptContent, label, meta): Promise<string | null> => {
+    if (!isTauri) {
+      const msg = "Worker agents require the desktop app. Run the app with Tauri (from the repo or install the desktop build).";
+      set({ error: msg });
+      toast.error(msg);
+      return null;
+    }
     const path = projectPath?.trim();
     if (!path) {
       set({ error: "Project path is required" });

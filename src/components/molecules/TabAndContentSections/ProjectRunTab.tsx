@@ -1374,6 +1374,11 @@ export function ProjectRunTab({ project, projectId }: ProjectRunTabProps) {
 
   return (
     <div className="flex flex-col gap-5">
+      {!isTauri && (
+        <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
+          <strong>Worker agents require the desktop app.</strong> Run the app with Tauri (e.g. <code className="rounded bg-amber-500/20 px-1">npm run tauri dev</code> from the repo or install the desktop build) to use Asking, Plan, Fast development, Debugging, and Night shift.
+        </div>
+      )}
       {/* ═══ Status Bar ═══ */}
       <WorkerStatusBar />
 

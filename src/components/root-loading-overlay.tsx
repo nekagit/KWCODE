@@ -12,17 +12,17 @@ import { KwcodeBranding } from "@/components/molecules/Display/KwcodeBranding";
  * Root loading overlay: shown until the client has mounted, then fades out.
  * Branded kwcode screen with raindrops, mouse-reactive glow, flying stars, and moon.
  */
-function debugSessionLog(location: string, message: string, data: Record<string, unknown>) {
+function debugSessionLog(location: string, message: string, data: Record<string, unknown>, hypothesisId: string) {
   fetch("http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d", {
     method: "POST",
-    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "b2093c" },
+    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "8a3da1" },
     body: JSON.stringify({
-      sessionId: "b2093c",
+      sessionId: "8a3da1",
       location,
       message,
       data,
       timestamp: Date.now(),
-      hypothesisId: "H3",
+      hypothesisId,
     }),
   }).catch(() => {});
 }
@@ -34,8 +34,12 @@ export function RootLoadingOverlay() {
 
   // #region agent log
   useEffect(() => {
-    debugSessionLog("root-loading-overlay.tsx", "overlay_mounted", {});
+    debugSessionLog("root-loading-overlay.tsx", "overlay_mounted", {}, "H1");
   }, []);
+  useEffect(() => {
+    const el = document.getElementById("root-loading");
+    debugSessionLog("root-loading-overlay.tsx", "overlay_dom_state", { dataLoaded: el?.getAttribute("data-loaded") ?? "missing", loadedState: loaded }, "H5");
+  }, [loaded]);
   // #endregion
 
   const onMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -47,7 +51,7 @@ export function RootLoadingOverlay() {
   }, []);
 
   useEffect(() => {
-    debugSessionLog("root-loading-overlay.tsx", "overlay_setLoaded_true", {});
+    debugSessionLog("root-loading-overlay.tsx", "overlay_setLoaded_true", {}, "H1");
     setLoaded(true);
   }, []);
 
