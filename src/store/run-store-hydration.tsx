@@ -4,12 +4,36 @@
  * Hydrates the run store: Tauri detection, initial data load, and event listeners.
  * Mount once in the root layout.
  */
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { listen, invoke, isTauri } from "@/lib/tauri";
 import { writeProjectFile } from "@/lib/api-projects";
 import { stripTerminalArtifacts, MIN_DOCUMENT_LENGTH } from "@/lib/strip-terminal-artifacts";
 import { toast } from "sonner";
 import { useRunStore, takeRunCompleteHandler } from "./run-store";
+
+/** Cleanup all queues and stop all agents. Called on app close. */
+async function cleanupOnClose(): Promise<void> {
+  const store = useRunStore.getState();
+  store.clearPendingTempTicketQueue();
+  store.setNightShiftActive(false);
+  store.setNightShiftReplenishCallback(null);
+  store.setNightShiftIdeaDrivenState({
+    mode: false,
+    idea: null,
+    tickets: [],
+    ticketIndex: 0,
+    phase: null,
+    completedInPhase: 0,
+    ideasQueue: [],
+  });
+  if (isTauri) {
+    try {
+      await invoke("stop_script");
+    } catch {
+      // Ignore errors during cleanup
+    }
+  }
+}
 
 /** Match first localhost/127.0.0.1 URL in a line (e.g. from Next.js, Vite dev server output). */
 const LOCALHOST_URL_RE = /https?:\/\/(?:localhost|127\.0\.0\.1)(?::(\d+))?(?:\/[^\s]*)?/i;
@@ -53,6 +77,17 @@ export function RunStoreHydration() {
       clearTimeout(t2);
     };
   }, [setIsTauriEnv]);
+
+  // Cleanup all queues and agents when app closes (beforeunload for browser, Tauri close event for desktop)
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      cleanupOnClose();
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
 
   useEffect(() => {
     if (isTauriEnv === false) setLoading(false);

@@ -1,0 +1,147 @@
+Now I have a complete understanding of the current workflow. Here's the design plan:
+
+---
+
+## Design Plan: Simplify Idea-Driven Night Shift Workflow
+
+### Current Behavior
+
+The "Idea-driven" button opens a dialog with **two options**:
+1. **"Use existing ideas and tickets"** — fetches existing ideas from DB and runs circle for each ticket
+2. **"Create from description"** — textarea + "Create & run" button that creates 1 new idea → 1 milestone → 1 ticket → runs circle
+
+### Requested Change
+
+Simplify to **only** the "Create from description" workflow:
+- Remove the "Use existing ideas and tickets" button
+- Keep the textarea where user writes the idea
+- When done, creates exactly 1 new idea and runs the circle
+
+---
+
+## Files to Modify
+
+### 1. `src/components/molecules/TabAndContentSections/ProjectRunTab.tsx`
+
+**Location:** Lines 1048-1094 (Dialog component)
+
+#### Changes:
+
+**A) Remove "Use existing ideas and tickets" button (lines 1057-1067)**
+
+Current:
+
+```1056:1067:src/components/molecules/TabAndContentSections/ProjectRunTab.tsx
+          <div className="flex flex-col gap-3 pt-2">
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-2"
+              onClick={() => {
+                setIdeaDrivenDialogOpen(false);
+                handleIdeaDrivenStart();
+              }}
+            >
+              <ListTodo className="size-4" />
+              Use existing ideas and tickets
+            </Button>
+```
+
+**Remove this entire Button component** (lines 1057-1067)
+
+**B) Update dialog title and description (lines 1051-1055)**
+
+Current:
+
+```1051:1055:src/components/molecules/TabAndContentSections/ProjectRunTab.tsx
+            <DialogTitle>Idea-driven Night shift</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Use existing ideas and tickets, or create a new idea from a description (one idea → one milestone → one ticket, then run the circle). All steps are logged in Control.
+          </p>
+```
+
+**Change to:**
+- Title: `"Create Idea & Run"`
+- Description: `"Write your idea below. This creates 1 idea → 1 milestone → 1 ticket, then runs the circle (Create → Implement → Test → Debug → Refactor). All steps are logged in Control."`
+
+**C) Remove the "Create from description" label (line 1069)**
+
+Since there's now only one option, the label `"Create from description"` is redundant.
+
+```1068:1069:src/components/molecules/TabAndContentSections/ProjectRunTab.tsx
+            <div className="space-y-2">
+              <label className="text-xs font-medium">Create from description</label>
+```
+
+**Remove the `<label>` element.**
+
+**D) Update button text (line 1084)**
+
+Current: `"Create & run"`
+
+**Change to:** `"Create idea & run"` (more descriptive)
+
+---
+
+### 2. Optional: Remove dead code
+
+After removing the "Use existing ideas" button, the `handleIdeaDrivenStart` callback (lines 488-733) becomes unused.
+
+**Recommendation:** Remove the entire `handleIdeaDrivenStart` callback to reduce code complexity. This is ~245 lines of dead code.
+
+---
+
+### 3. Update button tooltip (line 970)
+
+Current:
+
+```970:970:src/components/molecules/TabAndContentSections/ProjectRunTab.tsx
+                title="One idea at a time: run Create → Implement → Test → Debug → Refactor in plan mode per ticket; create new idea from description or use existing (desktop only)"
+```
+
+**Change to:** `"Write an idea and run the full circle (Create → Implement → Test → Debug → Refactor) in plan mode (desktop only)"`
+
+---
+
+## Summary of Changes
+
+| Line(s) | Change |
+|---------|--------|
+| 1051 | Change title to "Create Idea & Run" |
+| 1053-1055 | Update description text |
+| 1057-1067 | **Remove** "Use existing ideas and tickets" button |
+| 1069 | **Remove** `<label>` "Create from description" |
+| 1084 | Change button text to "Create idea & run" |
+| 970 | Update button tooltip |
+| 488-733 | **Remove** `handleIdeaDrivenStart` callback (dead code) |
+
+---
+
+## Code References
+
+**Dialog location:**
+
+```1048:1094:src/components/molecules/TabAndContentSections/ProjectRunTab.tsx
+      <Dialog open={ideaDrivenDialogOpen} onOpenChange={setIdeaDrivenDialogOpen}>
+        // ... dialog content
+      </Dialog>
+```
+
+**handleIdeaDrivenCreateAndRun (stays unchanged):**
+
+```735:896:src/components/molecules/TabAndContentSections/ProjectRunTab.tsx
+  const handleIdeaDrivenCreateAndRun = useCallback(async () => {
+    // Creates 1 idea, 1 milestone, 1 ticket, then runs circle
+    // This function is already correct - no changes needed
+  }, [...]);
+```
+
+---
+
+## ADR File
+
+Will create: `.cursor/adr/0334-simplify-idea-driven-night-shift.md`
+
+---
+
+**Ready to execute?** Let me know and I'll implement these changes.

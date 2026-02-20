@@ -3551,6 +3551,23 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(RunningState::default())
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { .. } = event {
+                let app = window.app_handle();
+                if let Some(state) = app.try_state::<RunningState>() {
+                    if let Ok(mut guard) = state.runs.lock() {
+                        for (_run_id, mut entry) in guard.drain() {
+                            let pid = entry.child.id() as i32;
+                            #[cfg(unix)]
+                            {
+                                let _ = unsafe { libc::kill(-pid, libc::SIGKILL) };
+                            }
+                            let _ = entry.child.kill();
+                        }
+                    }
+                }
+            }
+        })
         .setup(|app| {
             // Workaround for macOS/Tauri bug: WebView often shows white instead of devUrl.
             // 1) Load a local loader HTML first (shows "kwcode" then redirects to dev server).
