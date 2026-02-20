@@ -62,19 +62,51 @@ if [ -z "$AGENT_CMD" ]; then
 fi
 
 # #region agent log
-DEBUG_LOG="${PROJECT_PATH}/.cursor/debug-b99de4.log"
-[ -n "$PROJECT_PATH" ] && [ -d "$(dirname "$DEBUG_LOG")" ] && printf '%s\n' "{\"sessionId\":\"b99de4\",\"location\":\"run_terminal_agent.sh\",\"message\":\"script about to run agent\",\"data\":{\"MODE\":\"$MODE\",\"has_F\":\"yes\",\"prompt_len\":${#ESCAPED}},\"timestamp\":$(date +%s000),\"hypothesisId\":\"H3\"}" >> "$DEBUG_LOG"
+DEBUG_LOG="${PROJECT_PATH}/.cursor/debug-415745.log"
+[ -n "$PROJECT_PATH" ] && [ -d "$(dirname "$DEBUG_LOG")" ] && printf '%s\n' "{\"sessionId\":\"415745\",\"location\":\"run_terminal_agent.sh:pre-run\",\"message\":\"script about to run agent\",\"data\":{\"MODE\":\"$MODE\",\"AGENT_CMD\":\"$AGENT_CMD\",\"prompt_len\":${#ESCAPED},\"PROJECT_PATH\":\"$PROJECT_PATH\"},\"timestamp\":$(date +%s000),\"hypothesisId\":\"H3\"}" >> "$DEBUG_LOG"
 # #endregion
+AGENT_OUTPUT_FILE="${PROJECT_PATH}/.cursor/agent_output_415745.txt"
+AGENT_STDERR_FILE="${PROJECT_PATH}/.cursor/agent_stderr_415745.txt"
+# #region agent log - test agent binary
+AGENT_VERSION=$("$AGENT_CMD" --version 2>&1 || echo "version_failed")
+AGENT_WHICH=$(which "$AGENT_CMD" 2>&1 || echo "which_failed")
+# Test if Cursor is reachable with a simple prompt (correct syntax: --print, prompt as positional arg)
+AGENT_TEST=$("$AGENT_CMD" --print "say hi" 2>&1 | head -c 200 || echo "test_failed")
+[ -n "$PROJECT_PATH" ] && [ -d "$(dirname "$DEBUG_LOG")" ] && printf '%s\n' "{\"sessionId\":\"415745\",\"location\":\"run_terminal_agent.sh:agent-check\",\"message\":\"agent binary info\",\"data\":{\"AGENT_VERSION\":\"$(echo "$AGENT_VERSION" | tr '\n' ' ' | tr '"' "'")\",\"AGENT_WHICH\":\"$AGENT_WHICH\",\"AGENT_TEST\":\"$(echo "$AGENT_TEST" | tr '\n' ' ' | tr '"' "'")\"},\"timestamp\":$(date +%s000),\"hypothesisId\":\"H1\"}" >> "$DEBUG_LOG"
+# #endregion
+# Log prompt length and first/last chars for debugging
+PROMPT_FIRST=$(echo "$ESCAPED" | head -c 100 | tr '\n' ' ' | tr '"' "'")
+PROMPT_LAST=$(echo "$ESCAPED" | tail -c 100 | tr '\n' ' ' | tr '"' "'")
+[ -n "$PROJECT_PATH" ] && [ -d "$(dirname "$DEBUG_LOG")" ] && printf '%s\n' "{\"sessionId\":\"415745\",\"location\":\"run_terminal_agent.sh:prompt-debug\",\"message\":\"prompt content check\",\"data\":{\"prompt_len\":${#ESCAPED},\"prompt_first\":\"$PROMPT_FIRST\",\"prompt_last\":\"$PROMPT_LAST\"},\"timestamp\":$(date +%s000),\"hypothesisId\":\"H3\"}" >> "$DEBUG_LOG"
 if [ -n "$MODE" ]; then
-    echo "Running: $AGENT_CMD --mode=$MODE -F -p \"<from file>\""
-    "$AGENT_CMD" --mode="$MODE" -F -p "$ESCAPED"
+    echo "Running: $AGENT_CMD --mode=$MODE --print --trust \"<prompt>\""
+    # #region agent log
+    [ -n "$PROJECT_PATH" ] && [ -d "$(dirname "$DEBUG_LOG")" ] && printf '%s\n' "{\"sessionId\":\"415745\",\"location\":\"run_terminal_agent.sh:with-mode\",\"message\":\"invoking agent with mode\",\"data\":{\"MODE\":\"$MODE\",\"AGENT_CMD\":\"$AGENT_CMD\"},\"timestamp\":$(date +%s000),\"hypothesisId\":\"H2\"}" >> "$DEBUG_LOG"
+    # #endregion
+    # Correct CLI usage: --print (non-interactive), --trust (trust workspace), prompt as positional arg
+    "$AGENT_CMD" --mode="$MODE" --print --trust "$PROMPT_CONTENT" > "$AGENT_OUTPUT_FILE" 2> "$AGENT_STDERR_FILE" &
+    AGENT_PID=$!
+    # Log that we started the agent
+    [ -n "$PROJECT_PATH" ] && [ -d "$(dirname "$DEBUG_LOG")" ] && printf '%s\n' "{\"sessionId\":\"415745\",\"location\":\"run_terminal_agent.sh:agent-started\",\"message\":\"agent process started\",\"data\":{\"AGENT_PID\":$AGENT_PID},\"timestamp\":$(date +%s000),\"hypothesisId\":\"H5\"}" >> "$DEBUG_LOG"
+    wait $AGENT_PID
+    AGENT_EXIT=$?
 else
-    echo "Running: $AGENT_CMD -F -p \"<from file>\" (print mode, -F = trust workspace)"
-    "$AGENT_CMD" -F -p "$ESCAPED"
+    echo "Running: $AGENT_CMD --print --trust \"<prompt>\" (print mode, trust workspace)"
+    # Correct CLI usage: --print (non-interactive), --trust (trust workspace), prompt as positional arg
+    "$AGENT_CMD" --print --trust "$PROMPT_CONTENT" > "$AGENT_OUTPUT_FILE" 2> "$AGENT_STDERR_FILE" &
+    AGENT_PID=$!
+    [ -n "$PROJECT_PATH" ] && [ -d "$(dirname "$DEBUG_LOG")" ] && printf '%s\n' "{\"sessionId\":\"415745\",\"location\":\"run_terminal_agent.sh:agent-started\",\"message\":\"agent process started\",\"data\":{\"AGENT_PID\":$AGENT_PID},\"timestamp\":$(date +%s000),\"hypothesisId\":\"H5\"}" >> "$DEBUG_LOG"
+    wait $AGENT_PID
+    AGENT_EXIT=$?
 fi
-AGENT_EXIT=$?
+# Capture output and stderr for logging
+AGENT_OUTPUT_SNIPPET=$(head -c 500 "$AGENT_OUTPUT_FILE" 2>/dev/null | tr '\n' ' ' | tr '"' "'" || echo "no_stdout")
+AGENT_STDERR_SNIPPET=$(head -c 500 "$AGENT_STDERR_FILE" 2>/dev/null | tr '\n' ' ' | tr '"' "'" || echo "no_stderr")
+# Also print to stdout/stderr so terminal sees it
+cat "$AGENT_OUTPUT_FILE" 2>/dev/null
+cat "$AGENT_STDERR_FILE" >&2 2>/dev/null
 # #region agent log
-[ -n "$PROJECT_PATH" ] && [ -d "$(dirname "$DEBUG_LOG")" ] && printf '%s\n' "{\"sessionId\":\"b99de4\",\"location\":\"run_terminal_agent.sh\",\"message\":\"agent exited\",\"data\":{\"AGENT_EXIT\":$AGENT_EXIT},\"timestamp\":$(date +%s000),\"hypothesisId\":\"H4\"}" >> "$DEBUG_LOG"
+[ -n "$PROJECT_PATH" ] && [ -d "$(dirname "$DEBUG_LOG")" ] && printf '%s\n' "{\"sessionId\":\"415745\",\"location\":\"run_terminal_agent.sh:post-run\",\"message\":\"agent exited\",\"data\":{\"AGENT_EXIT\":$AGENT_EXIT,\"MODE\":\"$MODE\",\"stdout\":\"$AGENT_OUTPUT_SNIPPET\",\"stderr\":\"$AGENT_STDERR_SNIPPET\"},\"timestamp\":$(date +%s000),\"hypothesisId\":\"H4\"}" >> "$DEBUG_LOG"
 # #endregion
 echo ""
 echo "Done. Agent exited with code $AGENT_EXIT."

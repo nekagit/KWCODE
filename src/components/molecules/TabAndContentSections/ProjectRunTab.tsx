@@ -2241,19 +2241,31 @@ function WorkerAskingSection({ projectId, projectPath }: { projectId: string; pr
     }
     const labelSuffix = text.length > 40 ? `${text.slice(0, 37)}…` : text;
     const label = `Ask: ${labelSuffix}`;
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'415745'},body:JSON.stringify({sessionId:'415745',location:'ProjectRunTab.tsx:handleAsk:start',message:'Ask button clicked',data:{projectId,projectPath:projectPath?.slice(0,80),textLen:text.length,label},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
+    // #endregion
     const placeholderRunId = addPlaceholderAskRun(label);
     setQuestion("");
     setLoading(true);
     try {
       const agentsBlock = await loadAllAgentsContent(projectId, projectPath);
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'415745'},body:JSON.stringify({sessionId:'415745',location:'ProjectRunTab.tsx:handleAsk:beforeRunTempTicket',message:'About to call runTempTicket',data:{placeholderRunId,agentsBlockLen:agentsBlock.length,agentMode:'ask'},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+      // #endregion
       const fullPrompt = ASK_ONLY_PROMPT_PREFIX + text + agentsBlock;
       const runId = await runTempTicket(projectPath.trim(), fullPrompt, label, { ...(placeholderRunId ? { placeholderRunId } : {}), agentMode: "ask" });
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'415745'},body:JSON.stringify({sessionId:'415745',location:'ProjectRunTab.tsx:handleAsk:afterRunTempTicket',message:'runTempTicket returned',data:{runId},timestamp:Date.now(),hypothesisId:'H2'})}).catch(()=>{});
+      // #endregion
       if (runId) {
         toast.success(placeholderRunId ? "Agent started. Check the terminal below." : "Added to queue. Agent will start when a slot is free.");
       } else {
         toast.error("Failed to start agent.");
       }
-    } catch {
+    } catch (err) {
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'415745'},body:JSON.stringify({sessionId:'415745',location:'ProjectRunTab.tsx:handleAsk:catch',message:'handleAsk caught error',data:{error:err instanceof Error ? err.message : String(err)},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
+      // #endregion
       toast.error("Failed to start agent.");
     } finally {
       setLoading(false);

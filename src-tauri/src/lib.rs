@@ -142,6 +142,27 @@ fn session_log_8a3da1(location: &str, message: &str, data: &[(&str, &str)], hypo
     }
 }
 // #endregion
+// #region agent log (session 415745)
+const DEBUG_LOG_415745: &str = "/Users/nenadkalicanin/Documents/February/KW-February-KWCode/.cursor/debug-415745.log";
+fn session_log_415745(location: &str, message: &str, data: &[(&str, &str)], hypothesis_id: &str) {
+    let data_obj: std::collections::HashMap<String, String> = data.iter().map(|(k, v)| ((*k).to_string(), (*v).to_string())).collect();
+    let payload = serde_json::json!({
+        "sessionId": "415745",
+        "timestamp": SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis(),
+        "location": location,
+        "message": message,
+        "data": data_obj,
+        "hypothesisId": hypothesis_id
+    });
+    if let Ok(line) = serde_json::to_string(&payload) {
+        let _ = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(DEBUG_LOG_415745)
+            .and_then(|mut f| std::io::Write::write_all(&mut f, format!("{}\n", line).as_bytes()));
+    }
+}
+// #endregion
 
 fn gen_run_id() -> String {
     let nanos = SystemTime::now()
@@ -2664,6 +2685,17 @@ fn run_run_terminal_agent_script_inner(
         &[("prompt_path", &p.display().to_string()), ("prompt_len", &format!("{}", prompt_content.len()))],
         "H4",
     );
+    session_log_415745(
+        "lib.rs:run_run_terminal_agent_script_inner",
+        "prompt file written, about to spawn",
+        &[
+            ("prompt_path", &p.display().to_string()),
+            ("prompt_len", &format!("{}", prompt_content.len())),
+            ("agent_mode", &agent_mode.clone().unwrap_or_default()),
+            ("script_path", &script_path.display().to_string()),
+        ],
+        "H3",
+    );
     // #endregion
     let mut cmd = Command::new("bash");
     cmd.arg(script_path.as_os_str())
@@ -2696,11 +2728,13 @@ fn run_run_terminal_agent_script_inner(
     let mut child = match cmd.spawn() {
         Ok(c) => {
             session_log_c29a12("lib.rs:run_run_terminal_agent_script_inner", "spawn ok", &[], "H5");
+            session_log_415745("lib.rs:run_run_terminal_agent_script_inner", "spawn ok", &[("run_id", &run_id)], "H5");
             c
         }
         Err(e) => {
             let err_s = e.to_string();
             session_log_c29a12("lib.rs:run_run_terminal_agent_script_inner", "spawn failed", &[("error", &err_s)], "H5");
+            session_log_415745("lib.rs:run_run_terminal_agent_script_inner", "spawn failed", &[("error", &err_s)], "H5");
             return Err(err_s);
         }
     };
@@ -3244,6 +3278,12 @@ async fn run_run_terminal_agent(
         "command entry",
         &[("project_path_len", &format!("{}", project_path.len())), ("label", &label)],
         "H2",
+    );
+    session_log_415745(
+        "lib.rs:run_run_terminal_agent",
+        "command entry",
+        &[("project_path", &project_path), ("label", &label), ("agent_mode", &agent_mode.clone().unwrap_or_default())],
+        "H1",
     );
     // #endregion
     let run_id = gen_run_id();
