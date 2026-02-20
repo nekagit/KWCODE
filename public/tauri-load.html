@@ -57,8 +57,18 @@
   </div>
   <script>
     (function() {
+      // #region agent log
+      try {
+        fetch('http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '8a3da1' }, body: JSON.stringify({ sessionId: '8a3da1', location: 'tauri-load.html', message: 'loader_page_loaded', data: {}, timestamp: Date.now(), hypothesisId: 'H3' }) }).catch(function(){});
+      } catch (e) {}
+      // #endregion
       var app = 'http://127.0.0.1:4000/';
-      setTimeout(function() { window.location.href = app; }, 1500);
+      setTimeout(function() {
+        try {
+          fetch('http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '8a3da1' }, body: JSON.stringify({ sessionId: '8a3da1', location: 'tauri-load.html', message: 'loader_redirecting', data: { to: app }, timestamp: Date.now(), hypothesisId: 'H3' }) }).catch(function(){});
+        } catch (e) {}
+        window.location.href = app;
+      }, 1500);
     })();
   </script>
 </body>

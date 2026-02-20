@@ -30,11 +30,23 @@ export function RunStoreHydration() {
 
   // Resolve Tauri vs browser quickly so refreshData runs without a long delay (was 2000ms, now 400ms).
   useEffect(() => {
-    const check = () => setIsTauriEnv(isTauri);
+    const check = () => {
+      const v = isTauri;
+      setIsTauriEnv(v);
+      // #region agent log
+      fetch("http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d", { method: "POST", headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "8a3da1" }, body: JSON.stringify({ sessionId: "8a3da1", location: "run-store-hydration.tsx", message: "isTauriEnv_check", data: { isTauri: v }, timestamp: Date.now(), hypothesisId: "H4" }) }).catch(() => {});
+      // #endregion
+    };
     check();
     const t1 = setTimeout(check, 150);
     const t2 = setTimeout(() => {
-      setIsTauriEnv((prev) => (prev === null ? false : prev));
+      setIsTauriEnv((prev) => {
+        const next = prev === null ? false : prev;
+        // #region agent log
+        fetch("http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d", { method: "POST", headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "8a3da1" }, body: JSON.stringify({ sessionId: "8a3da1", location: "run-store-hydration.tsx", message: "isTauriEnv_final", data: { resolved: next }, timestamp: Date.now(), hypothesisId: "H4" }) }).catch(() => {});
+        // #endregion
+        return next;
+      });
     }, 400);
     return () => {
       clearTimeout(t1);
@@ -47,7 +59,12 @@ export function RunStoreHydration() {
   }, [isTauriEnv, setLoading]);
 
   useEffect(() => {
-    if (isTauriEnv !== null) refreshData();
+    if (isTauriEnv !== null) {
+      // #region agent log
+      fetch("http://127.0.0.1:7245/ingest/ba92c391-787b-4b76-842e-308edcb0507d", { method: "POST", headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "8a3da1" }, body: JSON.stringify({ sessionId: "8a3da1", location: "run-store-hydration.tsx", message: "refreshData_called", data: { isTauriEnv }, timestamp: Date.now(), hypothesisId: "H2" }) }).catch(() => {});
+      // #endregion
+      refreshData();
+    }
   }, [isTauriEnv, refreshData]);
 
   useEffect(() => {

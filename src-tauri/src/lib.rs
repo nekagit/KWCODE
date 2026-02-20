@@ -80,6 +80,67 @@ fn debug_log(location: &str, message: &str, data: &[(&str, &str)]) {
             .and_then(|mut f| std::io::Write::write_all(&mut f, format!("{}\n", line).as_bytes()));
     }
 }
+
+const DEBUG_SESSION_LOG: &str = "/Users/nenadkalicanin/Documents/February/KW-February-KWCode/.cursor/debug-b2093c.log";
+fn session_log(location: &str, message: &str, data: &[(&str, &str)], hypothesis_id: &str) {
+    let data_obj: std::collections::HashMap<String, String> = data.iter().map(|(k, v)| ((*k).to_string(), (*v).to_string())).collect();
+    let payload = serde_json::json!({
+        "sessionId": "b2093c",
+        "timestamp": SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis(),
+        "location": location,
+        "message": message,
+        "data": data_obj,
+        "hypothesisId": hypothesis_id
+    });
+    if let Ok(line) = serde_json::to_string(&payload) {
+        let _ = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(DEBUG_SESSION_LOG)
+            .and_then(|mut f| std::io::Write::write_all(&mut f, format!("{}\n", line).as_bytes()));
+    }
+}
+// #region agent log (session c29a12)
+const DEBUG_LOG_C29A12: &str = "/Users/nenadkalicanin/Documents/February/KW-February-KWCode/.cursor/debug-c29a12.log";
+fn session_log_c29a12(location: &str, message: &str, data: &[(&str, &str)], hypothesis_id: &str) {
+    let data_obj: std::collections::HashMap<String, String> = data.iter().map(|(k, v)| ((*k).to_string(), (*v).to_string())).collect();
+    let payload = serde_json::json!({
+        "sessionId": "c29a12",
+        "timestamp": SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis(),
+        "location": location,
+        "message": message,
+        "data": data_obj,
+        "hypothesisId": hypothesis_id
+    });
+    if let Ok(line) = serde_json::to_string(&payload) {
+        let _ = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(DEBUG_LOG_C29A12)
+            .and_then(|mut f| std::io::Write::write_all(&mut f, format!("{}\n", line).as_bytes()));
+    }
+}
+// #endregion
+// #region agent log (session 8a3da1)
+const DEBUG_LOG_8A3DA1: &str = "/Users/nenadkalicanin/Documents/February/KW-February-KWCode/.cursor/debug-8a3da1.log";
+fn session_log_8a3da1(location: &str, message: &str, data: &[(&str, &str)], hypothesis_id: &str) {
+    let data_obj: std::collections::HashMap<String, String> = data.iter().map(|(k, v)| ((*k).to_string(), (*v).to_string())).collect();
+    let payload = serde_json::json!({
+        "sessionId": "8a3da1",
+        "timestamp": SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis(),
+        "location": location,
+        "message": message,
+        "data": data_obj,
+        "hypothesisId": hypothesis_id
+    });
+    if let Ok(line) = serde_json::to_string(&payload) {
+        let _ = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(DEBUG_LOG_8A3DA1)
+            .and_then(|mut f| std::io::Write::write_all(&mut f, format!("{}\n", line).as_bytes()));
+    }
+}
 // #endregion
 
 fn gen_run_id() -> String {
@@ -2597,18 +2658,12 @@ fn run_run_terminal_agent_script_inner(
     let p = Path::new(&project_path).join(format!(".kwcode_run_prompt_{}.txt", run_id));
     std::fs::write(&p, &prompt_content).map_err(|e| format!("Failed to write prompt file in project: {}", e))?;
     // #region agent log
-    let debug_log = std::path::PathBuf::from("/Users/nenadkalicanin/Documents/February/KW-February-KWCode/.cursor/debug-b99de4.log");
-    if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(&debug_log) {
-        let ts = SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_millis()).unwrap_or(0);
-        let line = format!(
-            r#"{{"sessionId":"b99de4","location":"lib.rs:run_run_terminal_agent_script_inner","message":"prompt file written","data":{{"agent_mode":{:?},"prompt_len":{},"prompt_path":"{}"}},"timestamp":{},"hypothesisId":"H1"}}"#,
-            agent_mode,
-            prompt_content.len(),
-            p.display(),
-            ts
-        );
-        let _ = f.write_all(format!("{}\n", line).as_bytes());
-    }
+    session_log_c29a12(
+        "lib.rs:run_run_terminal_agent_script_inner",
+        "prompt file written",
+        &[("prompt_path", &p.display().to_string()), ("prompt_len", &format!("{}", prompt_content.len()))],
+        "H4",
+    );
     // #endregion
     let mut cmd = Command::new("bash");
     cmd.arg(script_path.as_os_str())
@@ -2638,7 +2693,17 @@ fn run_run_terminal_agent_script_inner(
     #[cfg(unix)]
     cmd.process_group(0);
 
-    let mut child = cmd.spawn().map_err(|e| e.to_string())?;
+    let mut child = match cmd.spawn() {
+        Ok(c) => {
+            session_log_c29a12("lib.rs:run_run_terminal_agent_script_inner", "spawn ok", &[], "H5");
+            c
+        }
+        Err(e) => {
+            let err_s = e.to_string();
+            session_log_c29a12("lib.rs:run_run_terminal_agent_script_inner", "spawn failed", &[("error", &err_s)], "H5");
+            return Err(err_s);
+        }
+    };
     let stdout = child.stdout.take().ok_or("no stdout")?;
     let stderr = child.stderr.take().ok_or("no stderr")?;
 
@@ -3161,6 +3226,26 @@ async fn run_run_terminal_agent(
         label,
         agent_mode,
     } = args;
+    let project_path = project_path.trim();
+    if project_path.is_empty() {
+        return Err("Project path is required.".to_string());
+    }
+    let project_path_buf = PathBuf::from(project_path);
+    if !project_path_buf.is_dir() {
+        return Err(format!(
+            "Project path is not a directory or does not exist: {}",
+            project_path
+        ));
+    }
+    let project_path = project_path.to_string();
+    // #region agent log
+    session_log_c29a12(
+        "lib.rs:run_run_terminal_agent",
+        "command entry",
+        &[("project_path_len", &format!("{}", project_path.len())), ("label", &label)],
+        "H2",
+    );
+    // #endregion
     let run_id = gen_run_id();
     let run_label = if label.trim().is_empty() {
         "Terminal agent".to_string()
@@ -3181,6 +3266,18 @@ async fn run_run_terminal_agent(
             (resource, dir)
         }
     };
+    // #region agent log
+    session_log_c29a12(
+        "lib.rs:run_run_terminal_agent",
+        "script_path resolved",
+        &[
+            ("script_path", &script_path.to_string_lossy()),
+            ("script_exists", &format!("{}", script_path.exists())),
+            ("current_dir", &current_dir.to_string_lossy()),
+        ],
+        "H3",
+    );
+    // #endregion
     run_run_terminal_agent_script_inner(
         app,
         state,
@@ -3420,6 +3517,8 @@ pub fn run() {
             // 2) Retry navigating to app URL at 2s, 4s, 6s in case loader redirect fails.
             #[cfg(debug_assertions)]
             {
+                session_log("lib.rs:setup", "tauri_dev_workaround_start", &[], "H4");
+                session_log_8a3da1("lib.rs:setup", "tauri_dev_workaround_start", &[], "H3");
                 let app_url = "http://127.0.0.1:4000/".to_string();
                 let app_handle = app.handle().clone();
 
@@ -3431,6 +3530,7 @@ pub fn run() {
                     let path = temp.canonicalize().ok()?;
                     Url::from_file_path(path).ok()
                 })();
+                session_log("lib.rs:setup", "loader_url", &[("has_url", if loader_url.is_some() { "true" } else { "false" })], "H1");
 
                 std::thread::spawn(move || {
                     // First: try to show loader (file://) so user sees something instead of white.
@@ -3439,26 +3539,30 @@ pub fn run() {
                         let handle = app_handle.clone();
                         let load_url = url.clone();
                         let _ = app_handle.run_on_main_thread(move || {
-                            for (_, w) in handle.webview_windows() {
+                            let windows: Vec<_> = handle.webview_windows().into_iter().collect();
+                            session_log("lib.rs:workaround", "loader_nav", &[("window_count", &windows.len().to_string())], "H2");
+                                session_log_8a3da1("lib.rs:workaround", "loader_nav", &[("window_count", &windows.len().to_string())], "H3");
+                            if let Some((_, w)) = windows.into_iter().next() {
                                 let _ = w.navigate(load_url.as_str().parse().unwrap_or_else(|_| "http://127.0.0.1:4000/".parse().unwrap()));
-                                break;
                             }
                         });
                     }
 
                     // Fallback: force-navigate to dev server in case loader or initial load failed.
-                    for _ in 0..3 {
+                    for attempt in 0..3 {
                         std::thread::sleep(std::time::Duration::from_millis(2000));
                         let handle = app_handle.clone();
                         let url = app_url.clone();
                         let _ = app_handle.run_on_main_thread(move || {
-                            for (_, w) in handle.webview_windows() {
+                            let windows: Vec<_> = handle.webview_windows().into_iter().collect();
+                            session_log("lib.rs:workaround", "dev_nav", &[("window_count", &windows.len().to_string()), ("attempt", &attempt.to_string())], "H2");
+                                session_log_8a3da1("lib.rs:workaround", "dev_nav", &[("window_count", &windows.len().to_string()), ("attempt", &attempt.to_string())], "H3");
+                            if let Some((_, w)) = windows.into_iter().next() {
                                 let _ = w.navigate(
                                     url.parse().unwrap_or_else(|_| "http://127.0.0.1:4000/".parse().unwrap()),
                                 );
                                 let js = format!("window.location.href = {}", serde_json::to_string(&url).unwrap_or_else(|_| "\"http://127.0.0.1:4000/\"".into()));
                                 let _ = w.eval(&js);
-                                break;
                             }
                         });
                     }
